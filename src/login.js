@@ -22,11 +22,20 @@ console.log('🌐 [시작] 링크드인 자동 로그인 세션 획득 도구를
             args: ['--start-maximized'] // 화면 최대화 실행
         });
 
-        // 3. 브라우저 컨텍스트 생성 (사용자 친화적 viewport 크기 적용)
-        const context = await browser.newContext({
-            viewport: null, // 시스템 최대 창 크기를 사용하도록 설정
-            locale: 'ko-KR' // 한국어 선호 로케일 주입
-        });
+        // 3. 브라우저 컨텍스트 생성 (get_list.js와 쿠키 만료 방지를 위해 동일한 핑거프린트 주입)
+        const contextOptions = {
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            viewport: { width: 1280, height: 800 },
+            locale: 'en-US'
+        };
+        
+        // 기존 세션 파일이 있다면 불러와서 세션 연장을 지원
+        if (fs.existsSync(SESSION_PATH)) {
+            console.log('🔄 기존 로그인 세션을 불러와 브라우저를 기동합니다...');
+            contextOptions.storageState = SESSION_PATH;
+        }
+
+        const context = await browser.newContext(contextOptions);
 
         const page = await context.newPage();
 

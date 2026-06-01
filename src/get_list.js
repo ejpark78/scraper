@@ -15,11 +15,10 @@ if (!configFilePath) {
     process.exit(1);
 }
 
-// 세션 파일 존재 여부 선제적 검증
-if (!fs.existsSync(SESSION_PATH)) {
-    console.error('❌ 오류: 로그인 세션 파일이 존재하지 않습니다: ' + SESSION_PATH);
-    console.error('💡 [make login] 명령어를 통해 먼저 링크드인 로그인을 마쳐 주세요.');
-    process.exit(1);
+const isLoggedIn = fs.existsSync(SESSION_PATH);
+if (!isLoggedIn) {
+    console.log('⚠️  [안내] 로그인 세션 파일(session.json)이 발견되지 않아 비로그인(Public) 모드로 동작합니다.');
+    console.log('💡 direct_urls는 수집 대상에서 자동으로 제외되며, 일반 검색 결과 수집만 진행합니다.');
 }
 
 // 설정 파일 존재 여부 검증
@@ -104,7 +103,7 @@ async function autoScrollList(page) {
         if (ext === '.json') {
             const config = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
             const { generateUrls } = require('./url_generator');
-            urls = generateUrls(config);
+            urls = generateUrls(config, { skipDirectUrls: !isLoggedIn });
         } else {
             urls = fs.readFileSync(configFilePath, 'utf-8')
                 .split(/\r?\n/)
@@ -128,14 +127,17 @@ async function autoScrollList(page) {
         // 2. 무인 헤드리스(headless: true) 크롬 브라우저 기동
         browser = await playwright.chromium.launch({ headless: true });
 
-        // 3. session.json 정보를 주입하여 로그인 상태 컨텍스트 확보
-        const context = await browser.newContext({
-            storageState: SESSION_PATH,
+        // 3. 로그인 세션 주입 옵션 분기 처리
+        const contextOptions = {
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             viewport: { width: 1280, height: 800 },
             locale: 'en-US'
-        });
+        };
+        if (isLoggedIn) {
+            contextOptions.storageState = SESSION_PATH;
+        }
 
+        const context = await browser.newContext(contextOptions);
         const page = await context.newPage();
 
         // 4. URL 리스트 순회 수집
@@ -153,11 +155,15 @@ async function autoScrollList(page) {
             await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
             await page.waitForTimeout(3000); // 초기 데이터 수동 렌더링 3초 안전 대기
 
-            // 🛡️ 혹시 세션 만료로 로그인이 해제되었는지 검증
+            // 🛡️ 혹시 세션 만료로 로그인이 해제되었거나 로그인창으로 밀려났는지 검증
             const title = await page.title();
             if (title.includes('Sign In') || title.includes('로그인') || title.includes('Security Challenge')) {
-                console.error('⚠️  [경고] 세션이 유효하지 않아 로그인 페이지로 밀려났습니다.');
-                console.error('💡 다시 [make login]을 구동하여 로그인 세션을 최신 상태로 갱신해 주세요.');
+                console.error('⚠️  [경고] 로그인 또는 보안 인증(Captcha) 화면이 감지되었습니다.');
+                if (isLoggedIn) {
+                    console.error('💡 세션이 만료되었을 수 있으니 다시 [make login]을 실행하여 로그인 상태를 갱신해 주세요.');
+                } else {
+                    console.log('💡 비로그인 모드로 동작 중 발생한 제한입니다. 전체 데이터를 수집하려면 [make login]을 통해 세션을 덤프한 후 실행해 주세요.');
+                }
                 break;
             }
 

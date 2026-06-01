@@ -32,10 +32,6 @@ login:
 
 # 채용 목록 자동 스크롤 및 무인 덤프 실행
 list:
-	@if [ ! -f "config/session.json" ]; then \
-		echo "❌ 에러: 로그인 세션이 존재하지 않습니다. 먼저 [make login]을 기동하여 로그인해 주세요."; \
-		exit 1; \
-	fi
 	@if [ ! -f "$(LISTS)" ]; then \
 		echo "❌ 에러: 수집 대상 설정 파일이 존재하지 않습니다: $(LISTS)"; \
 		exit 1; \

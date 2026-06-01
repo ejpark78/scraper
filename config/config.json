@@ -1,49 +1,77 @@
 {
-  "_metadata": {
-    "geoIds": {
-      "105149562": "South Korea (Seoul)",
-      "100205264": "United Arab Emirates",
-      "103925994": "Japan"
+  "geo_registry": {
+    "Korea": 105149562,
+    "UAE": 100205264,
+    "Japan": 103925994,
+    "Switzerland": 106693272,
+    "Singapore": 102454443,
+    "United Kingdom": 101165590,
+    "Germany": 101282230,
+    "Canada": 101174742,
+    "Australia": 101452733,
+    "Netherlands": 102890719,
+    "United States": 103644278
+  },
+  "parameter_registry": {
+    "f_TPR": {
+      "past 24 hours": "r86400",
+      "past 1 week": "r604800"
     },
-    "parameters": {
-      "f_TPR": {
-        "r86400": "past 24 hours (최근 24시간 이내)",
-        "r604800": "past 1 week (최근 1주일 이내)"
-      },
-      "sortBy": {
-        "R": "relevant (관련성 높은 순)",
-        "DD": "recent (최신 등록 순)"
-      }
+    "sortBy": {
+      "relevant": "R",
+      "recent": "DD"
     }
   },
   "global_settings": {
     "distance": 100,
-    "f_TPR": "r86400",
-    "sortBy": "R",
+    "f_TPR": "past 24 hours",
+    "sortBy": "recent",
     "spellCorrectionEnabled": true
   },
   "search_targets": [
     {
-      "location": "South Korea",
-      "geoId": 105149562,
+      "location": "Korea",
+      "max_page": 3,
       "keywords": [
+        "LLM",
+        "Agent",
+        "Artificial Intelligence",
+        "Machine Learning",
         "AI Engineer",
         "MLOps",
         "Data Engineer"
       ]
     },
     {
-      "location": "United Arab Emirates",
-      "geoId": 100205264,
+      "location": "UAE",
+      "max_page": 3,
       "keywords": [
+        "LLM",
+        "Agent",
+        "Artificial Intelligence",
+        "Machine Learning",
         "AI Engineer",
-        "MLOps"
+        "MLOps",
+        "Data Engineer"
+      ]
+    },
+    {
+      "location": "Japan",
+      "max_page": 3,
+      "keywords": [
+        "LLM",
+        "Agent",
+        "Artificial Intelligence",
+        "Machine Learning",
+        "AI Engineer",
+        "MLOps",
+        "Data Engineer"
       ]
     }
   ],
   "direct_urls": [
-    "https://www.linkedin.com/jobs/collections/recommended",
     "https://www.linkedin.com/jobs-tracker",
-    "https://www.linkedin.com/jobs-tracker/?stage=applied"
+    "https://www.linkedin.com/jobs-tracker/?stage=applied",
+    "https://www.linkedin.com/jobs/collections/recommended"
   ]
 }
