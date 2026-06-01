@@ -2,7 +2,7 @@
   "name": "linkedin",
   "version": "1.0.0",
   "description": "",
-  "main": "get_html.js",
+  "main": "src/get_html.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,0 +1,46 @@
+# ⚙️ LinkedIn Job Scraper Makefile
+# 이 파일은 최상위(Root) 디렉토리에서 scripts/ 폴더 내부의 셸 스크립트를 편리하게 제어하기 위한 인터페이스입니다.
+
+.PHONY: help posts urls clean purge
+
+# 기본 대상 (아무런 인자 없이 'make'만 실행했을 때 도움말 표시)
+help:
+	@echo "========================================================================="
+	@echo "🌐 LinkedIn Job Scraper CLI"
+	@echo "========================================================================="
+	@echo "사용 가능한 명령어 목록:"
+	@echo "  make posts          - list/urls.txt의 URL을 순차 수집하여 마크다운으로 저장합니다."
+	@echo "                        (예: make posts URLS=list/custom_urls.txt)"
+	@echo "  make urls           - list/*.html 에서 공고 조회 URL을 추출하여 urls.txt에 저장합니다."
+	@echo "  make clean          - 작업 중 생성된 임시 파일 및 비어 있는 폴더를 정리합니다."
+	@echo "  make purge          - 수집된 html 및 posts 폴더를 완전히 삭제하고 초기화합니다."
+	@echo "========================================================================="
+
+# URLS 변수 기본값 설정 (make posts URLS=경로 형태로 덮어쓰기 가능)
+URLS ?= list/urls.txt
+
+# 채용 공고 일괄 수집 및 가공 파이프라인 구동
+posts:
+	@if [ ! -f "$(URLS)" ]; then \
+		echo "❌ 에러: 지정한 URL 목록 파일이 존재하지 않습니다: $(URLS)"; \
+		exit 1; \
+	fi
+	bash scripts/get_posts.sh $(URLS)
+
+# URL 추출 및 urls.txt 적재
+urls:
+	bash scripts/get_urls.sh
+
+# 작업용 임시 파일 및 new/ 아카이브 폴더 정리 (최상위 html, posts 폴더 자체는 보존)
+clean:
+	rm -rf html/new posts/new
+	rm -f temp_job_raw.md posts/temp_job_raw.md
+	find html posts -mindepth 1 -type d -empty -delete 2>/dev/null || true
+	@echo "🧹 임시 파일, new 폴더 및 빈 디렉토리 정리가 완료되었습니다."
+
+# 전체 데이터 초기화 (html 및 posts 디렉토리 완전 삭제)
+purge:
+	@echo "⚠️  [경고] 수집된 모든 HTML 파일과 마크다운 포스트를 완전히 삭제합니다."
+	@read -p "정말 진행하시겠습니까? [y/N]: " confirm && [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ] || (echo "❌ 중단되었습니다."; exit 1)
+	rm -rf html posts
+	@echo "✨ html/ 및 posts/ 디렉토리가 완전히 초기화되었습니다."
