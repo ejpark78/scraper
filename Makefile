@@ -1,7 +1,7 @@
 # ⚙️ LinkedIn Job Scraper Makefile
 # 이 파일은 최상위(Root) 디렉토리에서 scripts/ 폴더 내부의 셸 스크립트를 편리하게 제어하기 위한 인터페이스입니다.
 
-.PHONY: help posts urls html2md clean purge
+.PHONY: help posts urls html2md clean purge login list
 
 # 기본 대상 (아무런 인자 없이 'make'만 실행했을 때 도움말 표시)
 help:
@@ -9,6 +9,8 @@ help:
 	@echo "🌐 LinkedIn Job Scraper CLI"
 	@echo "========================================================================="
 	@echo "사용 가능한 명령어 목록:"
+	@echo "  make login          - 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
+	@echo "  make list           - list/list.list의 검색 URL에서 목록 HTML을 무인 수집하여 덤프합니다."
 	@echo "  make posts          - list/urls.txt의 URL을 순차 수집하여 마크다운으로 저장합니다."
 	@echo "                        (예: make posts URLS=list/custom_urls.txt)"
 	@echo "  make urls           - list/*.html 에서 공고 조회 URL을 추출하여 urls.txt에 저장합니다."
@@ -20,6 +22,24 @@ help:
 
 # URLS 변수 기본값 설정 (make posts URLS=경로 형태로 덮어쓰기 가능)
 URLS ?= list/urls.txt
+# LISTS 변수 기본값 설정 (make list LISTS=경로 형태로 덮어쓰기 가능)
+LISTS ?= list.list
+
+# 1회성 로그인 세션 획득기 기동
+login:
+	node src/login.js
+
+# 채용 목록 자동 스크롤 및 무인 덤프 실행
+list:
+	@if [ ! -f "list/session.json" ]; then \
+		echo "❌ 에러: 로그인 세션이 존재하지 않습니다. 먼저 [make login]을 기동하여 로그인해 주세요."; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(LISTS)" ]; then \
+		echo "❌ 에러: 수집 대상 목록 파일이 존재하지 않습니다: $(LISTS)"; \
+		exit 1; \
+	fi
+	node src/get_list.js $(LISTS)
 
 # 채용 공고 일괄 수집 및 가공 파이프라인 구동
 posts:
