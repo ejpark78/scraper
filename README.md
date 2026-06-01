@@ -1,8 +1,8 @@
-# 🌐 LinkedIn Job Posting Parser & Backup Pipeline
+# 🌐 LinkedIn Job Posts Clipper
 
-이 프로젝트는 링크드인(LinkedIn) 채용 공고 페이지의 데이터를 자동으로 수집, 백업, 파싱하여 직관적이고 미려한 마크다운(Markdown) 문서로 정제하는 강력한 자동화 파이프라인 도구입니다.
+> Playwright 기반 링크드인 채용 공고 백업 및 마크다운 자동 변환 파이프라인 도구
 
-Playwright를 통해 헤드리스 브라우저 기동 및 동적 렌더링("See more/더 보기" 자동 확장)을 처리하고, Cheerio 및 정교한 정규식을 사용해 메타데이터 정규화와 근무지 기준 그룹화 폴더 분류를 실행합니다.
+이 프로젝트는 링크드인(LinkedIn) 채용 공고 페이지의 데이터를 자동으로 수집, 백업, 파싱하여 직관적이고 미려한 마크다운(Markdown) 문서로 정제하는 강력한 자동화 스크랩 도구입니다.
 
 ---
 
@@ -53,6 +53,7 @@ Playwright를 통해 헤드리스 브라우저 기동 및 동적 렌더링("See 
 │   └── prettify.js           # Prettier 구동기반 최종 마크다운 서식 다듬기 스크립트
 ├── scripts/                  # 📁 셸 스크립트 보관 폴더
 │   ├── get_urls.sh           # 목록 HTML에서 Canonical URL 정밀 추출 및 청소 스크립트
+│   ├── html2md.sh            # HTML 파일을 기본 마크다운으로 파싱 및 변환해주는 셸 스크립트
 │   └── get_posts.sh          # 전체 수집, 캐시 검증, 포스팅날짜/근무지별 정렬 핵심 셸 스크립트
 ├── Makefile                  # ⚙️ 빌드 및 파이프라인 실행 제어용 메이크파일
 ├── package.json              # Node.js 의존성 설정 파일

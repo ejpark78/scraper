@@ -1,7 +1,7 @@
 # ⚙️ LinkedIn Job Scraper Makefile
 # 이 파일은 최상위(Root) 디렉토리에서 scripts/ 폴더 내부의 셸 스크립트를 편리하게 제어하기 위한 인터페이스입니다.
 
-.PHONY: help posts urls clean purge
+.PHONY: help posts urls html2md clean purge
 
 # 기본 대상 (아무런 인자 없이 'make'만 실행했을 때 도움말 표시)
 help:
@@ -12,6 +12,8 @@ help:
 	@echo "  make posts          - list/urls.txt의 URL을 순차 수집하여 마크다운으로 저장합니다."
 	@echo "                        (예: make posts URLS=list/custom_urls.txt)"
 	@echo "  make urls           - list/*.html 에서 공고 조회 URL을 추출하여 urls.txt에 저장합니다."
+	@echo "  make html2md        - html/inbox 내 HTML 캐시와 posts/inbox 내 MD 간 유실 파일을 동기화합니다."
+	@echo "                        (단일 변환 예시: make html2md HTML=입력.html MD=출력.md)"
 	@echo "  make clean          - 작업 중 생성된 임시 파일 및 비어 있는 폴더를 정리합니다."
 	@echo "  make purge          - 수집된 html 및 posts 폴더를 완전히 삭제하고 초기화합니다."
 	@echo "========================================================================="
@@ -30,6 +32,11 @@ posts:
 # URL 추출 및 urls.txt 적재
 urls:
 	bash scripts/get_urls.sh
+
+# HTML 백업본과 MD 파일 동기화 및 유실 파일 오프라인 일괄 복원
+html2md:
+	bash scripts/html2md.sh $(HTML) $(MD)
+
 
 # 작업용 임시 파일 및 new/ 아카이브 폴더 정리 (최상위 html, posts 폴더 자체는 보존)
 clean:
