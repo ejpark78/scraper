@@ -5,3 +5,4 @@ posts/
 tests/
 urls.txt
 temp_job_raw.md
+config/session.json

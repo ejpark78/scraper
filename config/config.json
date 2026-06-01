@@ -1,0 +1,49 @@
+{
+  "_metadata": {
+    "geoIds": {
+      "105149562": "South Korea (Seoul)",
+      "100205264": "United Arab Emirates",
+      "103925994": "Japan"
+    },
+    "parameters": {
+      "f_TPR": {
+        "r86400": "past 24 hours (최근 24시간 이내)",
+        "r604800": "past 1 week (최근 1주일 이내)"
+      },
+      "sortBy": {
+        "R": "relevant (관련성 높은 순)",
+        "DD": "recent (최신 등록 순)"
+      }
+    }
+  },
+  "global_settings": {
+    "distance": 100,
+    "f_TPR": "r86400",
+    "sortBy": "R",
+    "spellCorrectionEnabled": true
+  },
+  "search_targets": [
+    {
+      "location": "South Korea",
+      "geoId": 105149562,
+      "keywords": [
+        "AI Engineer",
+        "MLOps",
+        "Data Engineer"
+      ]
+    },
+    {
+      "location": "United Arab Emirates",
+      "geoId": 100205264,
+      "keywords": [
+        "AI Engineer",
+        "MLOps"
+      ]
+    }
+  ],
+  "direct_urls": [
+    "https://www.linkedin.com/jobs/collections/recommended",
+    "https://www.linkedin.com/jobs-tracker",
+    "https://www.linkedin.com/jobs-tracker/?stage=applied"
+  ]
+}

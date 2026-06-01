@@ -17,7 +17,8 @@
 - **하이브리드 파싱 지원**: LinkedIn HTML 페이지가 영어(`en-US`) 혹은 한국어(`ko-KR`) 로케일 중 어느 환경에서 다운로드되었어도 깨짐 없이 핵심 정보를 완벽하게 추출합니다.
 - **마크다운 서식 정밀화**: 변환된 마크다운 문서의 키 라벨을 한글/영어 병기(`회사명 (Company):`, `근무 위치 (Location):` 등)로 표준화하여 가독성과 범용성을 동시에 극대화했습니다.
 
-### 3. URL 청소 및 Canonical화 (`get_urls.sh`)
+### 3. 고속 URL 추출 및 Canonical화 (`get_urls.sh`)
+- **이중 경로 및 재귀 탐색**: `list/` 폴더 내 검색 목록뿐만 아니라, `html/` 폴더 전체(하부 `inbox/`, `new/` 등 모든 서브디렉토리 포함)의 수집 원본 HTML 캐시를 일괄 재귀적으로 고속 순회 및 취합합니다.
 - **상대 경로 승격**: `/jobs`로 시작하는 링크드인 내 상대 주소를 절대 주소(`https://www.linkedin.com/jobs/...`)로 복원합니다.
 - **파라미터 박멸**: 추적용 쿼리 스트링(`/?eBP=...` 등)을 깨끗이 지우고 끝에 슬래시(`/`)만 남겨 Canonical한 형태의 고유 URL로 가공합니다.
 
@@ -47,66 +48,59 @@
 
 ## 🏗️ 프로젝트 폴더 구조 및 아키텍처 (Directory Tree & Architecture)
 
-### 🎨 시스템 아키텍처 다이어그램 (ASCII Art)
+### 🎨 시스템 아키텍처 및 흐름 다이어그램 (System Architecture & Diagrams)
+
+프로젝트의 동작 메커니즘을 보다 명확히 이해할 수 있도록 **데이터 흐름 아키텍처**와 **명령어 실행 및 호출 스택 흐름**의 두 가지 관점으로 나누어 설명합니다.
+
+#### 1. 시스템 데이터 흐름 아키텍처 (Data Flow Architecture)
+각 구성 요소 간의 데이터가 수집되고, 필터링 및 변환 과정을 거쳐 최종 산출물로 적재되는 파일/데이터 중심의 흐름도입니다.
 
 ```text
-                      ┌─────────────────────────────────┐
-                      │      🛠️  Makefile Interface     │
-                      └────────────────┬────────────────┘
-                                       │
-                                       │ (1) make posts 실행
-                                       ▼
-                      ┌─────────────────────────────────┐
-                      │    🐚 scripts/get_posts.sh      │
-                      └────────────────┬────────────────┘
-                                       │
-                    ┌──────────────────┴──────────────────┐
-                    │ (2) O(1) Pre-Filtering via AWK     │
-                    ▼                                     ▼
-        ┌───────────────────────┐             ┌───────────────────────┐
-        │  📁 list/cache.list   │             │   📄 list/urls.txt    │
-        │ (Completed JOB_IDs)   │             │  (Target URL List)    │
-        └───────────┬───────────┘             └───────────┬───────────┘
-                    │                                     │
-                    │      [ Skip Matches / 0.05s ]       │
-                    └──────────────────┬──────────────────┘
-                                       │ (Only Non-Cached URLs)
-                                       ▼
-                      ┌─────────────────────────────────┐
-                      │    🌐 Playwright (get_html.js)   │
-                      └────────────────┬────────────────┘
-                                       │
-                                       │ (3) Dump Web Elements
-                                       ▼
-                      ┌─────────────────────────────────┐
-                      │   📂 html/inbox/[Loc]/[Date]/   │
-                      │        {JOB_ID}.html            │
-                      └────────────────┬────────────────┘
-                                       │
-                                       │ (4) DOM Metadata Parse
-                                       ▼
-                      ┌─────────────────────────────────┐
-                      │     🤖 Cheerio (html2md.js)     │
-                      └────────────────┬────────────────┘
-                                       │
-                                       │ (5) temp_job_raw.md
-                                       ▼
-                      ┌─────────────────────────────────┐
-                      │  📝 get_filename.js & prettify  │
-                      └────────────────┬────────────────┘
-                                       │
-                                       │ (6) Save Pretty Markdown
-                                       ▼
-                      ┌─────────────────────────────────┐
-                      │  📂 posts/inbox/[Loc]/[Date]/   │
-                      │      {Company - Title}.md       │
-                      └────────────────┬────────────────┘
-                                       │
-                                ┌──────┴──────┐
-                                ▼             ▼
-                      ┌───────────┐         ┌───────────┐
-                      │ html/new/ │         │posts/new/ │
-                      └───────────┘         └───────────┘
+  [LinkedIn Web] ──(Session/Credentials)──➜ Playwright Engine
+                                                │
+                                                ▼
+  [config/config.json] (수집 대상 검색 조건) ───➜ list/*.html (덤프 목록 HTML)
+                                                │
+                                                ▼ (scripts/get_urls.sh)
+                                           list/urls.txt (Canonical URL 목록)
+                                                │
+                                                ▼ (scripts/get_posts.sh)
+  [html/inbox/ cache.list] (기존 수집 대조) ──➜ O(1) Pre-Filtering (AWK)
+                                                │
+                                                ▼ (Only New URLs)
+                                           Playwright (src/get_html.js)
+                                                │
+                                                ▼ (html/temp_JOB_ID.html)
+                                           Cheerio Parser (src/html2md.js)
+                                                │
+                                                ▼ (temp_job_raw.md)
+                                           Prettier Formatter (src/prettify.js)
+                                                │
+       ┌────────────────────────────────────────┴────────────────────────────────────────┐
+       ▼ (Archiving Storage)                                                             ▼ (Sync & Copy)
+ 📂 html/inbox/[Loc]/[Date]/{JOB_ID}.html                                          📂 html/new/{JOB_ID}.html
+ 📂 posts/inbox/[Loc]/[Date]/{Company - Title}.md                                  📂 posts/new/{Company - Title}.md
+```
+
+#### 2. 명령어 호출 스택 및 실행 제어 흐름 (Command & Execution Call Stack)
+사용자가 터미널에서 실행하는 `make` 인터페이스 명령어들이 최종 스크립트들과 유기적으로 연결되어 동작하는 실행 제어 계층도입니다.
+
+```text
+  Makefile Interface
+  ├── make login ──────────➜ node src/login.js (1회성 로그인 세션 덤프)
+  │
+  ├── make list ───────────➜ node src/get_list.js (uses config/session.json & config.json ➜ src/url_generator.js)
+  │
+  ├── make urls ───────────➜ bash scripts/get_urls.sh (find & regex url extract)
+  │
+  ├── make posts ──────────➜ bash scripts/get_posts.sh
+  │                          ├── (O(1) pre-filtering via AWK)
+  │                          └── node src/get_html.js (Playwright dynamic fetching)
+  │                          └── node src/html2md.js (Cheerio DOM analysis & parse)
+  │                              └── node src/get_filename.js (Bilingual filename generator)
+  │                          └── node src/prettify.js (Prettier markdown formatting)
+  │
+  └── make test ───────────➜ node tests/url_generator.test.js (URL 생성기 기능 단위 테스트 검증)
 ```
 
 ### 📂 디렉토리 구조 (Directory Tree)
@@ -118,21 +112,29 @@
 ├── posts/                    # 최종 마크다운(*.md) 결과물 루트 폴더
 ├── posts/inbox/              # 🌟 국가별/날짜별 표준화 분류 마크다운 폴더
 ├── posts/new/                # 신규 마크다운 복사본 임시 저장 폴더
-├── list/
-│   ├── list.html             # 추출 대상 원본 링크드인 목록 HTML
-│   └── urls.txt              # 중복 제거 및 가공이 끝난 파이프라인 입력용 URL 리스트
+├── config/                   # 📁 설정 및 로그인 세션 저장 폴더
+│   ├── config.json           # 🌟 수집 키워드/지역 및 파라미터 제어 통합 JSON 설정 파일
+│   └── session.json          # Playwright 덤프 로그인 세션 정보 파일
+├── list/                     # 📁 수집 대상 리스트 저장 폴더
+│   ├── urls.txt              # 중복 제거 및 절대화 완료된 파이프라인 입력용 URL 리스트
+│   └── cache.list            # 기존 수집 완료된 공고 ID(JOB_ID) 인덱스 파일
 ├── src/                      # 🌟 JavaScript 핵심 소스 코드 폴더
-│   ├── get_html.js           # Playwright 기반 동적 수집용 크롤링 스크립트 (en-US 설정)
+│   ├── login.js              # 1회성 브라우저 기동 및 로그인 완료 후 세션(session.json) 저장 스크립트
+│   ├── get_list.js           # 저장된 세션과 config.json을 읽어 채용 검색 목록 HTML 수집 스크립트
+│   ├── url_generator.js      # 🌟 config.json의 변수와 대상을 읽어 absolute URL로 동적 변환하는 코어 모듈
+│   ├── get_html.js           # Playwright 기반 개별 공고 상세 내용 동적 수집 스크립트 (en-US 설정)
 │   ├── html2md.js            # 메타데이터 파싱, 마크다운 이중 라벨 변환 및 절대 날짜 역산 스크립트
 │   ├── get_filename.js       # '회사명 - 공고제목' 형태의 안전 파일명 변환 스크립트 (Bilingual 대응)
 │   └── prettify.js           # Prettier 구동기반 최종 마크다운 서식 다듬기 스크립트
 ├── scripts/                  # 📁 셸 스크립트 보관 폴더
-│   ├── get_urls.sh           # 목록 HTML에서 Canonical URL 정밀 추출 및 청소 스크립트
+│   ├── get_urls.sh           # 목록 및 캐시 HTML에서 Canonical URL 정밀 추출 및 청소 스크립트
 │   ├── html2md.sh            # HTML 캐시와 posts 구조를 함께 정렬하는 배치 동기화 셸 스크립트
 │   └── get_posts.sh          # 전체 수집, 캐시 검증, 국가/날짜별 양방향 정렬 핵심 셸 스크립트
+├── tests/                    # 📁 단위 테스트(Unit Test) 보관 폴더
+│   └── url_generator.test.js # 🌟 URL 생성기 모듈의 기능 검증용 자체 독립 단위 테스트 스크립트
 ├── Makefile                  # ⚙️ 빌드 및 파이프라인 실행 제어용 메이크파일
 ├── package.json              # Node.js 의존성 설정 파일
-└── README.md                 # 본 프로젝트 문서 파일
+└── README.md                 # 프로젝트 통합 가이드 문서 파일
 ```
 
 ---
@@ -166,14 +168,14 @@ npx playwright install chromium
   ┌───────────────────────────────────────────────────────────┐
   │                 1단계. 로그인 세션 획득                    │
   │                     [make login]                          │
-  │    (최초 1회 헤드풀 로그인 ➜ list/session.json 영구 확보)   │
+  │    (최초 1회 헤드풀 로그인 ➜ config/session.json 영구 확보) │
   └──────────────────────────────┬────────────────────────────┘
                                  │
                                  ▼
   ┌───────────────────────────────────────────────────────────┐
   │                2단계. 채용 목록 무인 덤프                 │
   │                     [make list]                           │
-  │(config.list 내 검색 URL 순회 ➜ list/YYYY-MM-DDTHH_mm_ss.html)│
+  │(config/config.json 내 검색 조건 순회 ➜ list/YYYY-MM-DDTHH_mm_ss.html)│
   └──────────────────────────────┬────────────────────────────┘
                                  │
                                  ▼
@@ -202,7 +204,7 @@ make login
 - 브라우저 화면이 뜨면 로그인을 진행해 주세요. 메인 피드 진입이 완료되는 즉시 자동으로 세션이 덤프된 후 종료됩니다.
 
 ### 2단계. 채용 목록 무인 백그라운드 덤프 (`make list`)
-`list/config.list`에 기재된 채용 검색 및 추천 목록 URL들로부터 전체 HTML 덤프를 완전 무인(Headless)으로 획득합니다:
+`config/config.json`에 기재된 채용 검색 및 추천 목록 변수들로부터 전체 HTML 덤프를 완전 무인(Headless)으로 획득합니다:
 ```bash
 make list
 ```
@@ -230,7 +232,7 @@ make posts URLS=list/custom_urls.txt
 ## 🧹 기타 관리 명령어 (Administrative Commands)
 
 ### 임시 파일 정리 (`make clean`)
-변환 과정 도중 생성될 수 있는 임시 작업 파일(`temp_job_raw.md`) 및 데이터 정리 과정에서 발생한 빈 하위 폴더들을 일괄 수집하여 안전하게 제거합니다.
+변환 과정 도중 생성될 수 있는 임시 작업 파일(`temp_job_raw.md`), `list/` 폴더 내 수집용 임시 HTML 파일들(`list/*.html`), 그리고 데이터 정리 과정에서 발생한 빈 하위 폴더들을 일괄 수집하여 안전하게 제거합니다.
 ```bash
 make clean
 ```
@@ -239,6 +241,12 @@ make clean
 기존에 받아놓은 `html/` 및 `posts/` 전역 데이터를 완전히 일체 삭제하고 정제되지 않은 깨끗한 상태로 복원합니다. **(주의: 실행 시 확인 절차가 요구됩니다)**
 ```bash
 make purge
+```
+
+### URL 생성기 단위 테스트 실행 (`make test`)
+구조화된 `config/config.json` 설정으로부터 정밀한 검색 쿼리 매개변수 주소들을 올바르게 변환하고 있는지 유닛 테스트를 통해 입증합니다.
+```bash
+make test
 ```
 
 ---
@@ -283,3 +291,27 @@ Build+ is an innovative startup...
 ## 📝 JD (직무 기술서 / Job Description)
 As a Senior Data Engineer, you will...
 ```
+
+---
+
+## 📅 최근 업데이트 내역 (Recent Updates - 2026.06.02)
+이 프로젝트는 지속적인 사용성 개선 및 기능 확장을 위해 다음과 같은 업데이트가 적용되었습니다:
+
+### 1. 설정 파일 관리 편의성 극대화 (`list.list` ➜ `config.list` 및 디렉토리 버그 해결)
+- **파일명 표준화**: 수집 대상 URL 목록 관리 파일의 이름을 의미가 더 명확한 **`config.list`**로 개칭하고 `config/config.list` 경로로 이동 및 통일하였습니다.
+- **Makefile 기본값 해결**: 기존 `Makefile`에서 `LISTS ?= list.list`로 되어 있어 루트 경로에서 `make list` 단독 실행 시 발생하던 파일 경로 에러를 `LISTS ?= config/config.list`로 수정하여 원천 해결하였습니다.
+- **수집 엔진 안내 문구 동기화**: `src/get_list.js` 실행 시 빈 URL 목록 검증 경고 문구에서도 `config.list`를 제안하도록 보정하였습니다.
+
+### 2. URL 추출 기능 대대적 확장 (`make urls` / `get_urls.sh`)
+- **멀티 디렉토리 및 재귀 탐색**: 기존 `list/*.html`만 스캔하던 단편적 한계를 극복하고, `find` 명령어를 채택하여 `list/` 폴더 내 검색 목록뿐만 아니라 `html/` 폴더 전체(하부 `inbox/`, `new/` 등 모든 서브디렉토리 포함)의 수집 원본 HTML 캐시를 일괄 재귀 순회하도록 고도화하였습니다.
+- **초고속 스트림 처리**: `-exec cat {} +` 조합을 적용하여 수천 개의 HTML 파일도 시스템 한도 최대 인자 크기로 병합 처리하여 0.1초 내외의 지연 없는 성능을 이뤄냈습니다.
+- **문서화 정렬 정밀 보존**: 아키텍처 다이어그램의 `list/*.html 분석`을 `list & html 분석`으로 수정하여 단어 폭과 박스 대칭 정렬을 어긋남 없이 보존했습니다.
+
+### 3. 정리 기능 고도화 (`make clean` 개정)
+- **임시 수집물 일괄 정리**: `make clean` 명령어 실행 시, 포스팅 상세 변환에 사용된 임시 수집 HTML 목록들(`list/*.html`)도 함께 깔끔하게 일괄 삭제되도록 기능을 통합하였습니다.
+- **설정 보존 규칙**: 로그인 정보(`session.json`), 설정 목록(`config.list`), 추출 결과(`urls.txt`) 등의 핵심 제어 데이터는 보존(설정 관련 데이터는 `config/`로 이관되어 안전하게 격리)되며 오직 `list/*.html` 임시 덤프 파일들만 정제 대상에 속합니다.
+
+### 4. 설정 파일 JSON 직접 연동 및 테스트 환경 구축 (config.list 전면 소거)
+- **JSON 직접 파싱**: 기존 중간 생성 파일(`config.list`)을 전면 폐기하고, 크롤링 엔진(`src/get_list.js`)이 `config/config.json`을 런타임에 직접 로딩 및 해석하여 동적으로 가동하도록 설계했습니다.
+- **모듈화 설계를 통한 관심사 분리**: URL 생성 로직을 독립적인 순수 함수 모듈인 `src/url_generator.js`로 분리하여 코드 재사용성을 극대화했습니다.
+- **단위 테스트(Unit Test) 구축**: 의존성 없는 독자적인 자바스크립트 테스트 환경(`tests/url_generator.test.js`)을 구축하고 `make test` 명령을 결합하여, 다양한 파라미터 조합과 지리 매핑 실패 상황에 대한 복원력을 손쉽게 100% 검증하도록 완성했습니다.

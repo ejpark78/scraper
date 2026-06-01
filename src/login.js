@@ -2,17 +2,17 @@ const playwright = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
-const SESSION_PATH = path.join(__dirname, '..', 'list', 'session.json');
+const SESSION_PATH = path.join(__dirname, '..', 'config', 'session.json');
 
 console.log('🌐 [시작] 링크드인 자동 로그인 세션 획득 도구를 시작합니다.');
 
 (async () => {
     let browser;
     try {
-        // 1. list/ 디렉토리 자동 생성
-        const listDir = path.dirname(SESSION_PATH);
-        if (!fs.existsSync(listDir)) {
-            fs.mkdirSync(listDir, { recursive: true });
+        // 1. config/ 디렉토리 자동 생성
+        const configDir = path.dirname(SESSION_PATH);
+        if (!fs.existsSync(configDir)) {
+            fs.mkdirSync(configDir, { recursive: true });
         }
 
         // 2. 사용자가 조작해야 하므로 헤드풀(headless: false) 브라우저 기동

@@ -3,15 +3,15 @@ const fs = require('fs');
 const path = require('path');
 
 // 경로 정의
-const SESSION_PATH = path.join(__dirname, '..', 'list', 'session.json');
+const SESSION_PATH = path.join(__dirname, '..', 'config', 'session.json');
 const LIST_DIR = path.join(__dirname, '..', 'list');
 
-// 터미널 인자 확인 (목록 파일 경로)
-const listFilePath = process.argv[2];
+// 터미널 인자 확인 (설정 파일 경로)
+const configFilePath = process.argv[2];
 
-if (!listFilePath) {
-    console.error('❌ 오류: 입력 대상 목록 파일 경로 인자가 누락되었습니다.');
-    console.error('사용법: node get_list.js <목록_파일_경로>');
+if (!configFilePath) {
+    console.error('❌ 오류: 입력 대상 설정 파일 경로 인자가 누락되었습니다.');
+    console.error('사용법: node get_list.js <설정_파일_경로>');
     process.exit(1);
 }
 
@@ -22,9 +22,9 @@ if (!fs.existsSync(SESSION_PATH)) {
     process.exit(1);
 }
 
-// 목록 파일 존재 여부 검증
-if (!fs.existsSync(listFilePath)) {
-    console.error('❌ 오류: 지정한 입력 대상 목록 파일을 찾을 수 없습니다: ' + listFilePath);
+// 설정 파일 존재 여부 검증
+if (!fs.existsSync(configFilePath)) {
+    console.error('❌ 오류: 지정한 입력 대상 설정 파일을 찾을 수 없습니다: ' + configFilePath);
     process.exit(1);
 }
 
@@ -97,20 +97,29 @@ async function autoScrollList(page) {
 (async () => {
     let browser;
     try {
-        // 1. 수집 타겟 URL 목록 파일 로드 및 파싱 (개행 대응 및 trailing backslash 정제)
-        const urls = fs.readFileSync(listFilePath, 'utf-8')
-            .split(/\r?\n/)
-            .map(line => {
-                let clean = line.trim();
-                if (clean.endsWith('\\')) {
-                    clean = clean.slice(0, -1).trim();
-                }
-                return clean;
-            })
-            .filter(line => line.length > 0 && !line.startsWith('#') && line.startsWith('http'));
+        // 1. 수집 타겟 URL 목록 로드 및 파싱 (JSON 또는 평문 리스트 자동 지원)
+        const ext = path.extname(configFilePath).toLowerCase();
+        let urls = [];
+
+        if (ext === '.json') {
+            const config = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
+            const { generateUrls } = require('./url_generator');
+            urls = generateUrls(config);
+        } else {
+            urls = fs.readFileSync(configFilePath, 'utf-8')
+                .split(/\r?\n/)
+                .map(line => {
+                    let clean = line.trim();
+                    if (clean.endsWith('\\')) {
+                        clean = clean.slice(0, -1).trim();
+                    }
+                    return clean;
+                })
+                .filter(line => line.length > 0 && !line.startsWith('#') && line.startsWith('http'));
+        }
 
         if (urls.length === 0) {
-            console.log('💡 [안내] 수집할 채용 목록 URL이 없습니다. config.list 내용을 확인해 주세요.');
+            console.log('💡 [안내] 수집할 채용 목록 URL이 없습니다. config.json 또는 config.list 내용을 확인해 주세요.');
             process.exit(0);
         }
 
