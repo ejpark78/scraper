@@ -1,0 +1,7 @@
+html/
+list/
+node_modules/
+posts/
+tests/
+urls.txt
+temp_job_raw.md
