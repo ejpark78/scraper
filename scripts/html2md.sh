@@ -19,14 +19,14 @@ if [ -n "$1" ] && [ -n "$2" ]; then
     exit 0
 fi
 
-# 2. 인자가 없는 경우 (html/inbox/ 폴더와 posts/inbox/ 폴더 간 오프라인 일치성 동기화)
-echo "🔄 [동기화 검사 시작] html/inbox 내의 HTML 캐시와 posts/inbox 내 마크다운 일치성을 검사합니다."
+# 2. 인자가 없는 경우 (data/jobs/html/ 폴더와 data/jobs/markdown/ 폴더 간 오프라인 일치성 동기화)
+echo "🔄 [동기화 검사 시작] data/jobs/html 내의 HTML 캐시와 data/jobs/markdown 내 마크다운 일치성을 검사합니다."
 
-TEMP_RAW_MD="posts/temp_job_raw.md"
-mkdir -p html/inbox posts/inbox
+TEMP_RAW_MD="data/jobs/temp_job_raw.md"
+mkdir -p data/jobs/html data/jobs/markdown
 
-# html/inbox 하위의 모든 html 파일들을 찾아 순회
-find html/inbox -type f -name "*.html" | while read -r html_file; do
+# data/jobs/html 하위의 모든 html 파일들을 찾아 순회
+find data/jobs/html -type f -name "*.html" | while read -r html_file; do
     # 임시 마크다운 생성하여 메타 정보 로드
     node src/html2md.js "$html_file" "$TEMP_RAW_MD" 2>/dev/null
 
@@ -74,7 +74,7 @@ find html/inbox -type f -name "*.html" | while read -r html_file; do
     fi
 
     # 최종 md 파일의 대상 디렉토리 및 경로 계산
-    TARGET_DIR="posts/inbox/${LOCATION}/${POST_DATE}"
+    TARGET_DIR="data/jobs/markdown/${LOCATION}/${POST_DATE}"
     FILE_INFO=$(node src/get_filename.js "$TEMP_RAW_MD" 2>/dev/null)
     
     if [ -z "$FILE_INFO" ]; then
@@ -94,7 +94,7 @@ find html/inbox -type f -name "*.html" | while read -r html_file; do
     fi
 
     # HTML 파일의 표준화 경로 계산 및 이동 (html 디렉토리 구조도 posts와 완전 동기화)
-    CORRECT_HTML_DIR="html/inbox/${LOCATION}/${POST_DATE}"
+    CORRECT_HTML_DIR="data/jobs/html/${LOCATION}/${POST_DATE}"
     JOB_ID=$(basename "$html_file")
     CORRECT_HTML_PATH="${CORRECT_HTML_DIR}/${JOB_ID}"
 
@@ -108,7 +108,7 @@ find html/inbox -type f -name "*.html" | while read -r html_file; do
     rm -f "$TEMP_RAW_MD"
 done
 
-# 작업 중 비어버린 하위 폴더들 자동 정리 (최상위 html, posts 폴더 자체는 보존)
-find html posts -mindepth 1 -type d -empty -delete 2>/dev/null || true
+# 작업 중 비어버린 하위 폴더들 자동 정리 (data/jobs 폴더 자체는 보존)
+find data/jobs -mindepth 1 -type d -empty -delete 2>/dev/null || true
 
-echo "✨ [동기화 완료] html/ 과 posts/ 디렉토리 구조가 완벽하게 일치합니다."
+echo "✨ [동기화 완료] data/jobs/html/ 과 data/jobs/markdown/ 디렉토리 구조가 완벽하게 일치합니다."

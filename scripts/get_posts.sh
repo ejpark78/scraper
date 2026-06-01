@@ -16,14 +16,14 @@ fi
 
 echo "🚀 [시작] $URLS_FILE 기반 채용 공고 추출 및 백업 자동화 파이프라인 가동"
 
-# 📂 'new' 및 'inbox' 폴더 자동 생성 (초기화는 make clean 시점에 실행)
-mkdir -p posts/new html/new posts/inbox html/inbox
+# 📂 'recent' 및 'html/markdown' 폴더 자동 생성 (초기화는 make clean 시점에 실행)
+mkdir -p data/jobs/recent/markdown data/jobs/recent/html data/jobs/markdown data/jobs/html
 
 # 📝 cache.list 경로 정의 및 갱신
-CACHE_LIST="list/cache.list"
+CACHE_LIST="data/jobs/lists/cache.list"
 echo "🔍 기존 수집된 HTML 기반으로 cache.list 갱신 중..."
 # 기존 수집된 모든 *.html 파일의 JOB_ID를 수집하여 cache.list에 적재 (중복 제거)
-find html -type f -name "*.html" 2>/dev/null | xargs -I {} basename {} .html | sort -u > "$CACHE_LIST"
+find data/jobs/html -type f -name "*.html" 2>/dev/null | xargs -I {} basename {} .html | sort -u > "$CACHE_LIST"
 echo "✅ 총 $(wc -l < "$CACHE_LIST" 2>/dev/null || echo 0) 개의 기존 수집본을 cache.list에 등록했습니다."
 
 # 📝 urls.txt에서 이미 수집된 JOB_ID가 포함된 URL을 미리 필터링
@@ -63,8 +63,8 @@ FILTERED_COUNT=$(grep -v '^#' "$TEMP_URLS_FILE" | grep -v '^$' | wc -l)
 SKIP_COUNT=$((ORIG_COUNT - FILTERED_COUNT))
 echo "📊 전체 대상: ${ORIG_COUNT}건 | 스킵(이미 완료): ${SKIP_COUNT}건 | 신규 처리 대상: ${FILTERED_COUNT}건"
 
-# 임시 마크다운 파일명 정의 (posts/ 폴더 하위에 임시 생성)
-TEMP_RAW_MD="posts/temp_job_raw.md"
+# 임시 마크다운 파일명 정의 (data/jobs/ 폴더 하위에 임시 생성)
+TEMP_RAW_MD="data/jobs/temp_job_raw.md"
 
 # 2. 파라미터로 전달된 파일의 각 줄(URL)을 읽어서 처리
 while IFS= read -r url || [ -n "$url" ]; do
@@ -83,7 +83,7 @@ while IFS= read -r url || [ -n "$url" ]; do
     echo "=================================================="
 
     # 🔍 기존 HTML 파일 검색 (모든 하위 구조 탐색) - 사전 필터링 후라 거의 실행되지 않음
-    SAVED_HTML=$(find html -type f -name "${JOB_ID}.html" | head -n 1)
+    SAVED_HTML=$(find data/jobs/html -type f -name "${JOB_ID}.html" 2>/dev/null | head -n 1)
 
     IS_NEW=false
     if [ -n "$SAVED_HTML" ] && [ -f "$SAVED_HTML" ] && [ -s "$SAVED_HTML" ]; then
@@ -91,7 +91,7 @@ while IFS= read -r url || [ -n "$url" ]; do
         HTML_TO_PROCESS="$SAVED_HTML"
     else
         # HTML 파일이 없을 때만 임시 경로에 새롭게 다운로드
-        TEMP_HTML="html/temp_${JOB_ID}.html"
+        TEMP_HTML="data/jobs/temp_${JOB_ID}.html"
         echo "📥 [1/4] 웹페이지 새 데이터 덤프 진행 중 (get_html.js)..."
         node src/get_html.js "$url" "$TEMP_HTML"
 
@@ -147,12 +147,12 @@ while IFS= read -r url || [ -n "$url" ]; do
     fi
 
     # 위치 및 날짜 기준 저장 폴더 정의 (inbox 폴더의 하위 경로로 완벽 적재)
-    TARGET_DIR="posts/inbox/${LOCATION}/${POST_DATE}"
-    HTML_DIR="html/inbox/${LOCATION}/${POST_DATE}"
+    TARGET_DIR="data/jobs/markdown/${LOCATION}/${POST_DATE}"
+    HTML_DIR="data/jobs/html/${LOCATION}/${POST_DATE}"
     mkdir -p "$TARGET_DIR" "$HTML_DIR"
 
     # HTML 파일 이동 및 경로 정렬 (임시 파일이거나 다른 날짜/경로에 있으면 올바른 위치/날짜 폴더로 이동)
-    if [ "$HTML_TO_PROCESS" = "html/temp_${JOB_ID}.html" ] || [ "$HTML_TO_PROCESS" != "${HTML_DIR}/${JOB_ID}.html" ]; then
+    if [ "$HTML_TO_PROCESS" = "data/jobs/temp_${JOB_ID}.html" ] || [ "$HTML_TO_PROCESS" != "${HTML_DIR}/${JOB_ID}.html" ]; then
         mv "$HTML_TO_PROCESS" "${HTML_DIR}/${JOB_ID}.html"
         SAVED_HTML="${HTML_DIR}/${JOB_ID}.html"
         echo "💾 [완료] 원본 HTML 백업 완료 -> $SAVED_HTML"
@@ -170,11 +170,11 @@ while IFS= read -r url || [ -n "$url" ]; do
     echo "🧹 [3/4] 오픈소스 Prettier 기반 마크다운 정제 중 (prettify.js)..."
     node src/prettify.js "$TEMP_RAW_MD" "$FINAL_PATH"
 
-    # 🆕 신규 수집 공고인 경우 'new/' 폴더에 각각 추가 복사본 보관
+    # 🆕 신규 수집 공고인 경우 'recent/' 폴더에 각각 추가 복사본 보관
     if [ "$IS_NEW" = true ]; then
-        cp "${HTML_DIR}/${JOB_ID}.html" "html/new/${JOB_ID}.html" 2>/dev/null || true
-        cp "$FINAL_PATH" "posts/new/${FILE_INFO}.md" 2>/dev/null || true
-        echo "🆕 [신규 추가] 새 공고 복사본을 posts/new/ 및 html/new/ 에 저장 완료!"
+        cp "${HTML_DIR}/${JOB_ID}.html" "data/jobs/recent/html/${JOB_ID}.html" 2>/dev/null || true
+        cp "$FINAL_PATH" "data/jobs/recent/markdown/${FILE_INFO}.md" 2>/dev/null || true
+        echo "🆕 [신규 추가] 새 공고 복사본을 data/jobs/recent/ 하위에 저장 완료!"
     fi
 
     echo "✨ [4/4] 완료! 최종 마크다운 파일이 생성되었습니다."
@@ -184,7 +184,7 @@ done < "$TEMP_URLS_FILE"
 # 3. 작업용 임시 파일 정리
 rm -f "$TEMP_RAW_MD" "$TEMP_URLS_FILE"
 
-# 4. 작업 중 비어버린 임시/이동된 상위 폴더들 자동 정리 (최상위 html, posts 폴더 자체는 보존)
-find html posts -mindepth 1 -type d -empty -delete 2>/dev/null || true
+# 4. 작업 중 비어버린 임시/이동된 상위 폴더들 자동 정리 (data/jobs 폴더 자체는 보존)
+find data/jobs -mindepth 1 -type d -empty -delete 2>/dev/null || true
 
-echo -e "\n🎉 [종료] 일괄 처리 완료! 결과는 './html/inbox/[근무위치]/[포스팅날짜]/' 및 './posts/inbox/[근무위치]/[포스팅날짜]/' 폴더를 확인하세요."
+echo -e "\n🎉 [종료] 일괄 처리 완료! 결과는 './data/jobs/html/[근무위치]/[포스팅날짜]/' 및 './data/jobs/markdown/[근무위치]/[포스팅날짜]/' 폴더를 확인하세요."

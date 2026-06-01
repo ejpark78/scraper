@@ -160,7 +160,7 @@ npx playwright install chromium
 
 ## 🛠️ 가동 방법 (Usage Flow)
 
-프로젝트 루트에 있는 `Makefile`을 통해 전 과정이 유기적으로 자동 기동됩니다.
+이 프로젝트는 `Makefile`을 통해 전 과정이 유기적으로 자동 기동됩니다.
 
 ### 🔄 전체 파이프라인 실행 흐름 (Pipeline Flow)
 
@@ -175,21 +175,21 @@ npx playwright install chromium
   ┌───────────────────────────────────────────────────────────┐
   │                2단계. 채용 목록 무인 덤프                 │
   │                     [make list]                           │
-  │(config/config.json 내 검색 조건 순회 ➜ list/YYYY-MM-DDTHH_mm_ss.html)│
+  │(config/config.json 내 검색 조건 순회 ➜ data/jobs/lists/YYYY-MM-DDTHH_mm_ss.html)│
   └──────────────────────────────┬────────────────────────────┘
                                  │
                                  ▼
   ┌───────────────────────────────────────────────────────────┐
   │                3단계. 공고 상세 URL 추출                  │
   │                     [make urls]                           │
-  │     (list & html 분석 ➜ list/urls.txt에 Canonical URL 적재) │
+  │(data/jobs/lists/ & data/jobs/html/ 분석 ➜ data/jobs/lists/urls.txt에 Canonical URL 적재)│
   └──────────────────────────────┬────────────────────────────┘
                                  │
                                  ▼
   ┌───────────────────────────────────────────────────────────┐
   │               4단계. 최종 포스트 일괄 변환                │
   │                     [make posts]                          │
-  │  (cache.list 대조 O(1) 초고속 스킵 ➜ posts/inbox/ 완벽 가공)│
+  │(cache.list 대조 O(1) 초고속 스킵 ➜ data/jobs/markdown/ 완벽 가공)│
   └──────────────────────────────┬────────────────────────────┘
                                  │
                                  ▼
@@ -201,30 +201,30 @@ npx playwright install chromium
 ```bash
 make login
 ```
-- 브라우저 화면이 뜨면 로그인을 진행해 주세요. 메인 피드 진입이 완료되는 즉시 자동으로 세션이 덤프된 후 종료됩니다.
+- 브라우저 화면이 뜨면 로그인을 진행해 주세요. 메인 피드 진입이 완료되는 즉시 자동으로 세션이 덤프된 후 종료됩니다. (로그인되지 않은 퍼블릭 상태에서도 `direct_urls` 크롤링 시 Soft Public Crawling으로 우회 기동 가능합니다.)
 
 ### 2단계. 채용 목록 무인 백그라운드 덤프 (`make list`)
 `config/config.json`에 기재된 채용 검색 및 추천 목록 변수들로부터 전체 HTML 덤프를 완전 무인(Headless)으로 획득합니다:
 ```bash
 make list
 ```
-- 저장된 세션을 활용하여 로그인 벽 없이 즉시 진입한 뒤, 목록 전체를 자동 스크롤 다운하여 렌더링된 결과를 `list/<date>.html` 파일로 자동 저장합니다.
+- 저장된 세션을 활용하여 로그인 벽 없이 즉시 진입한 뒤, 목록 전체를 자동 스크롤 다운하며 `max_page` 설정(Pagination 루프)에 맞춰 목록을 탐색하고 결과를 `data/jobs/lists/<date>.html` 파일로 자동 저장합니다.
 
 ### 3단계. 링크드인 목록 파싱 및 상세 URL 추출 (`make urls`)
-수집 및 덤프 완료된 목록 HTML들(`list/` 및 `html/` 하위의 모든 `.html`)에서 채용공고의 Canonical(고유) 상세 주소들을 깨끗하게 정제하여 추출합니다:
+수집 및 덤프 완료된 목록 HTML들(`data/jobs/lists/` 및 `data/jobs/html/` 하위의 모든 `.html`)에서 채용공고의 Canonical(고유) 상세 주소들을 깨끗하게 정제하여 추출합니다:
 ```bash
 make urls
 ```
-- 상대 주소 복원 및 추적용 파라미터가 모두 청소된 Canonical URL들이 `list/urls.txt`에 누적 및 자동 병합됩니다.
+- 상대 주소 복원 및 추적용 파라미터가 모두 청소된 Canonical URL들이 `data/jobs/lists/urls.txt`에 누적 및 자동 병합됩니다.
 
 ### 4단계. 일괄 파이프라인 가동 및 분류 배정 (`make posts`)
-추출된 상세 주소 목록 `list/urls.txt`를 바탕으로 마크다운 변환 파이프라인을 최종 실행합니다:
+추출된 상세 주소 목록 `data/jobs/lists/urls.txt`를 바탕으로 마크다운 변환 파이프라인을 최종 실행합니다:
 ```bash
 make posts
 ```
 *기본 입력 파일 외에 특정 URL 목록을 지정하고 싶은 경우 `URLS` 매개변수를 덮어써서 실행할 수 있습니다:*
 ```bash
-make posts URLS=list/custom_urls.txt
+make posts URLS=data/jobs/lists/custom_urls.txt
 ```
 
 ---
@@ -232,13 +232,13 @@ make posts URLS=list/custom_urls.txt
 ## 🧹 기타 관리 명령어 (Administrative Commands)
 
 ### 임시 파일 정리 (`make clean`)
-변환 과정 도중 생성될 수 있는 임시 작업 파일(`temp_job_raw.md`), `list/` 폴더 내 수집용 임시 HTML 파일들(`list/*.html`), 그리고 데이터 정리 과정에서 발생한 빈 하위 폴더들을 일괄 수집하여 안전하게 제거합니다.
+변환 과정 도중 생성될 수 있는 임시 작업 파일(`temp_job_raw.md`), `data/jobs/lists/` 폴더 내 수집용 임시 HTML 파일들(`data/jobs/lists/*.html`), 그리고 데이터 정리 과정에서 발생한 빈 하위 폴더들을 일괄 수집하여 안전하게 제거합니다.
 ```bash
 make clean
 ```
 
 ### 데이터 완전 초기화 (`make purge`)
-기존에 받아놓은 `html/` 및 `posts/` 전역 데이터를 완전히 일체 삭제하고 정제되지 않은 깨끗한 상태로 복원합니다. **(주의: 실행 시 확인 절차가 요구됩니다)**
+기존에 받아놓은 `data/jobs/` 전역 데이터를 완전히 일체 삭제하고 정제되지 않은 깨끗한 상태로 복원합니다. **(주의: 실행 시 확인 절차가 요구됩니다)**
 ```bash
 make purge
 ```
@@ -252,21 +252,21 @@ make test
 ---
 
 ## 💡 파이프라인 내부 동작 메커니즘
-1. `html/` 디렉토리 전역을 재귀적으로 검색하여 `[공고ID].html` 캐시가 존재하는지 탐색합니다.
+1. `data/jobs/html/` 디렉토리 전역을 재귀적으로 검색하여 `[공고ID].html` 캐시가 존재하는지 탐색합니다.
 2. 이미 수집 이력이 있다면 **[스킵]**하여 불필요한 크롤링 트래픽을 아끼며 초고속으로 파싱 단계로 진입합니다.
 3. 최초 수집하는 공고의 경우 Playwright 브라우저를 통해 동적 로드 후 백업합니다.
 4. 캐시된 HTML 파일을 분석하여 회사명, 공고명, 근무지, 고용형태, canonical 주소를 획득합니다.
 5. HTML 캐시 파일의 생성 시간(`mtime`)과 공고 내 상대일자(`3 days ago`), 정확한 meta 공고 시간/일자를 정교히 계산하여 **`YYYY-MM-DD` 포스팅 절대 날짜**를 복원해 냅니다.
-6. 근무지 문자열을 읽고 확장된 지리 표준화 필터(`Korea`, `United Kingdom`, `Japan` 등)를 거쳐 폴더명을 정합니다.
-7. HTML 백업 파일과 생성된 마크다운 결과물을 각각 `html/inbox/[근무지]/[포스팅날짜]/` 및 `posts/inbox/[근무지]/[포스팅날짜]/`에 안전하게 배치(필요시 자동 폴더 이동)합니다.
-8. 새로 추가된 공고(신규 다운로드 건)의 경우 별도의 복사본을 `html/new/` 및 `posts/new/`에 추가 백업합니다.
+6. 근무지 문자열을 읽고 정밀한 다국어 지리 표준화 규칙(`Korea`, `Abu Dhabi`, `Singapore`, `United Kingdom` 등)을 거쳐 정규화된 폴더명을 정합니다.
+7. HTML 백업 파일과 생성된 마크다운 결과물을 각각 `data/jobs/html/[근무지]/[포스팅날짜]/` 및 `data/jobs/markdown/[근무지]/[포스팅날짜]/`에 안전하게 배치(필요시 자동 폴더 이동)합니다.
+8. 새로 추가된 공고(신규 다운로드 건)의 경우 별도의 복사본을 `data/jobs/recent/html/` 및 `data/jobs/recent/markdown/`에 추가 백업합니다.
 9. 최종적으로 Prettier를 호출하여 문단과 마크다운 가독성 서식을 매끄럽게 보정한 최종 결과 파일을 출력합니다.
 
 ---
 
 ## 📌 마크다운 문서 요약본 최종 서식 예시
 
-모든 문서(`posts/inbox/Japan/2026-05-25/Build+ - Fully Remote - No Japanese needed - Senior Data Engineer.md` 등)는 아래와 같이 완벽한 이중 언어(Bilingual) 표준 서식을 유지합니다:
+모든 문서(`data/jobs/markdown/Japan/2026-05-25/Build+ - Fully Remote - No Japanese needed - Senior Data Engineer.md` 등)는 아래와 같이 완벽한 이중 언어(Bilingual) 표준 서식을 유지합니다:
 
 ```markdown
 # 📌 채용 공고 핵심 요약 (Job Summary)
@@ -295,23 +295,24 @@ As a Senior Data Engineer, you will...
 ---
 
 ## 📅 최근 업데이트 내역 (Recent Updates - 2026.06.02)
-이 프로젝트는 지속적인 사용성 개선 및 기능 확장을 위해 다음과 같은 업데이트가 적용되었습니다:
+이 프로젝트는 유기적이고 일관성 있는 데이터 파이프라인 구축 및 다국어 환경 복원력 강화를 위해 다음과 같은 대대적인 업데이트가 적용되었습니다:
 
-### 1. 설정 파일 관리 편의성 극대화 (`list.list` ➜ `config.list` 및 디렉토리 버그 해결)
-- **파일명 표준화**: 수집 대상 URL 목록 관리 파일의 이름을 의미가 더 명확한 **`config.list`**로 개칭하고 `config/config.list` 경로로 이동 및 통일하였습니다.
-- **Makefile 기본값 해결**: 기존 `Makefile`에서 `LISTS ?= list.list`로 되어 있어 루트 경로에서 `make list` 단독 실행 시 발생하던 파일 경로 에러를 `LISTS ?= config/config.list`로 수정하여 원천 해결하였습니다.
-- **수집 엔진 안내 문구 동기화**: `src/get_list.js` 실행 시 빈 URL 목록 검증 경고 문구에서도 `config.list`를 제안하도록 보정하였습니다.
+### 1. Unified Data Architecture 도입 (`data/jobs/` 도메인 통합)
+- **도메인 기반 격리**: 수집 데이터와 최종 결과물의 파편화를 해결하기 위해 모든 데이터 파일군(`lists/`, `html/`, `markdown/`, `recent/`)을 단일 통합 데이터 폴더인 `data/jobs/` 산하로 격리시켰습니다.
+- **파이프라인 전역 경로 동기화**: `Makefile`, `scripts/get_posts.sh`, `scripts/get_urls.sh`, `scripts/html2md.sh`, `src/get_list.js`, `src/html2md.js` 등 수집부터 가공, 정리 기능에 이르는 모든 로직의 데이터 참조 경로를 새 아키텍처 규칙에 완벽히 동기화하였습니다.
 
-### 2. URL 추출 기능 대대적 확장 (`make urls` / `get_urls.sh`)
-- **멀티 디렉토리 및 재귀 탐색**: 기존 `list/*.html`만 스캔하던 단편적 한계를 극복하고, `find` 명령어를 채택하여 `list/` 폴더 내 검색 목록뿐만 아니라 `html/` 폴더 전체(하부 `inbox/`, `new/` 등 모든 서브디렉토리 포함)의 수집 원본 HTML 캐시를 일괄 재귀 순회하도록 고도화하였습니다.
-- **초고속 스트림 처리**: `-exec cat {} +` 조합을 적용하여 수천 개의 HTML 파일도 시스템 한도 최대 인자 크기로 병합 처리하여 0.1초 내외의 지연 없는 성능을 이뤄냈습니다.
-- **문서화 정렬 정밀 보존**: 아키텍처 다이어그램의 `list/*.html 분석`을 `list & html 분석`으로 수정하여 단어 폭과 박스 대칭 정렬을 어긋남 없이 보존했습니다.
+### 2. 다국어 지리 정제 및 국가 표준화 규칙 강화
+- **Bilingual 정규식 고도화**: 다국어/이중 로케일 수집 과정에서 생성될 수 있는 한글 및 영문 혼용 근무지명(예: `대한민국`, `서울`, `Korea`, `South Korea` 등)을 정규식 검사를 통해 깔끔하게 **`Korea`** 폴더 하위로 통합하였습니다.
+- **아랍에미리트 지명 단축 및 정밀화**: `Abu Dhabi`, `Dubai`, `United Arab Emirates`, `아랍에미리트` 등 다양한 형식의 근무지 역시 일관되게 **`Abu Dhabi`**로 정밀 정제하여 폴더 관리의 난잡함을 완전히 소거했습니다.
 
-### 3. 정리 기능 고도화 (`make clean` 개정)
-- **임시 수집물 일괄 정리**: `make clean` 명령어 실행 시, 포스팅 상세 변환에 사용된 임시 수집 HTML 목록들(`list/*.html`)도 함께 깔끔하게 일괄 삭제되도록 기능을 통합하였습니다.
-- **설정 보존 규칙**: 로그인 정보(`session.json`), 설정 목록(`config.list`), 추출 결과(`urls.txt`) 등의 핵심 제어 데이터는 보존(설정 관련 데이터는 `config/`로 이관되어 안전하게 격리)되며 오직 `list/*.html` 임시 덤프 파일들만 정제 대상에 속합니다.
+### 3. English-only Parameter Registry Mapping 도입
+- **직관적 기간 설정 매핑**: `config/config.json`에 사용자가 이해하기 쉬운 직관적인 영문 텍스트 기간(예: `"past 24 hours"`, `"past week"`, `"past month"`)을 작성하면, 시스템이 링크드인 API 내부 고유 파라미터 값(`"r86400"`, `"r604800"`, `"r2592000"`)으로 자동 변환 매핑해주는 `parameter_registry` 메커니즘을 추가하여 사용 편의성을 극대화하였습니다.
 
-### 4. 설정 파일 JSON 직접 연동 및 테스트 환경 구축 (config.list 전면 소거)
-- **JSON 직접 파싱**: 기존 중간 생성 파일(`config.list`)을 전면 폐기하고, 크롤링 엔진(`src/get_list.js`)이 `config/config.json`을 런타임에 직접 로딩 및 해석하여 동적으로 가동하도록 설계했습니다.
-- **모듈화 설계를 통한 관심사 분리**: URL 생성 로직을 독립적인 순수 함수 모듈인 `src/url_generator.js`로 분리하여 코드 재사용성을 극대화했습니다.
-- **단위 테스트(Unit Test) 구축**: 의존성 없는 독자적인 자바스크립트 테스트 환경(`tests/url_generator.test.js`)을 구축하고 `make test` 명령을 결합하여, 다양한 파라미터 조합과 지리 매핑 실패 상황에 대한 복원력을 손쉽게 100% 검증하도록 완성했습니다.
+### 4. 무한 루프 방지형 다중 페이지 크롤링 (`max_page` Pagination)
+- **페이지 오프셋 자동 계산**: 검색 조건 설정에 기재된 `max_page` 값을 바탕으로, 스크립트가 링크드인 목록 검색 시의 `start` 파라미터(페이지 인덱스당 25개씩 증가: `start = index * 25`)를 동적으로 자동 부여하여, 누수 및 무한 루프 없이 정확한 다중 페이지 순회 수집이 가능하도록 구현했습니다.
+
+### 5. Soft Public Crawling 우회 기동 기능 추가
+- **비인증 예외 처리**: `config/session.json` 파일이 존재하지 않는 최초 또는 세션 소실 환경에서도, 개별 절대 공고 주소(`direct_urls`)를 안전하게 퍼블릭(Public) 모드로 건너뛰어 크롤링을 속행할 수 있도록 예외 처리를 유연하고 안전하게 개선하였습니다.
+
+### 6. 단위 테스트(Unit Test) 안정성 확보 및 100% 성공
+- **단위 테스트 수립 및 검증**: 복잡해진 쿼리 매개변수 빌더와 URL 매핑 로직의 안정성을 확인하기 위한 테스트 케이스(`tests/url_generator.test.js`)를 구축하고 `make test` 명령어와 연동하였습니다. 6가지 핵심 케이스에 대해 철저한 오류 복원 검증 과정을 완벽하게 통과했습니다.

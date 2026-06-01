@@ -4,7 +4,7 @@ const path = require('path');
 
 // 경로 정의
 const SESSION_PATH = path.join(__dirname, '..', 'config', 'session.json');
-const LIST_DIR = path.join(__dirname, '..', 'list');
+const LIST_DIR = path.join(__dirname, '..', 'data', 'jobs', 'lists');
 
 // 터미널 인자 확인 (설정 파일 경로)
 const configFilePath = process.argv[2];
