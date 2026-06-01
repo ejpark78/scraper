@@ -19,6 +19,50 @@ echo "🚀 [시작] $URLS_FILE 기반 채용 공고 추출 및 백업 자동화 
 # 📂 'new' 및 'inbox' 폴더 자동 생성 (초기화는 make clean 시점에 실행)
 mkdir -p posts/new html/new posts/inbox html/inbox
 
+# 📝 cache.list 경로 정의 및 갱신
+CACHE_LIST="list/cache.list"
+echo "🔍 기존 수집된 HTML 기반으로 cache.list 갱신 중..."
+# 기존 수집된 모든 *.html 파일의 JOB_ID를 수집하여 cache.list에 적재 (중복 제거)
+find html -type f -name "*.html" 2>/dev/null | xargs -I {} basename {} .html | sort -u > "$CACHE_LIST"
+echo "✅ 총 $(wc -l < "$CACHE_LIST" 2>/dev/null || echo 0) 개의 기존 수집본을 cache.list에 등록했습니다."
+
+# 📝 urls.txt에서 이미 수집된 JOB_ID가 포함된 URL을 미리 필터링
+TEMP_URLS_FILE=$(mktemp)
+if [ -s "$CACHE_LIST" ]; then
+    awk -F'/' '
+    FNR==NR { cache[$1]=1; next }
+    {
+        url = $0
+        if (url ~ /^#/ || url == "") {
+            print url
+            next
+        }
+        job_id = ""
+        if (url ~ /\/view\/[0-9]+/) {
+            match(url, /\/view\/([0-9]+)/, arr)
+            job_id = arr[1]
+        } else {
+            n = split(url, parts, "/")
+            if (n >= 2) {
+                job_id = parts[n-1]
+                if (job_id == "") job_id = parts[n]
+            }
+        }
+        if (!(job_id in cache)) {
+            print url
+        }
+    }
+    ' "$CACHE_LIST" "$URLS_FILE" > "$TEMP_URLS_FILE"
+else
+    cp "$URLS_FILE" "$TEMP_URLS_FILE"
+fi
+
+# 필터링 전후의 개수 차이 계산하여 안내
+ORIG_COUNT=$(grep -v '^#' "$URLS_FILE" | grep -v '^$' | wc -l)
+FILTERED_COUNT=$(grep -v '^#' "$TEMP_URLS_FILE" | grep -v '^$' | wc -l)
+SKIP_COUNT=$((ORIG_COUNT - FILTERED_COUNT))
+echo "📊 전체 대상: ${ORIG_COUNT}건 | 스킵(이미 완료): ${SKIP_COUNT}건 | 신규 처리 대상: ${FILTERED_COUNT}건"
+
 # 임시 마크다운 파일명 정의 (posts/ 폴더 하위에 임시 생성)
 TEMP_RAW_MD="posts/temp_job_raw.md"
 
@@ -38,7 +82,7 @@ while IFS= read -r url || [ -n "$url" ]; do
     echo "🌐 대상 ID: $JOB_ID | URL: $url"
     echo "=================================================="
 
-    # 🔍 기존 HTML 파일 검색 (모든 하위 구조 탐색)
+    # 🔍 기존 HTML 파일 검색 (모든 하위 구조 탐색) - 사전 필터링 후라 거의 실행되지 않음
     SAVED_HTML=$(find html -type f -name "${JOB_ID}.html" | head -n 1)
 
     IS_NEW=false
@@ -112,6 +156,8 @@ while IFS= read -r url || [ -n "$url" ]; do
         mv "$HTML_TO_PROCESS" "${HTML_DIR}/${JOB_ID}.html"
         SAVED_HTML="${HTML_DIR}/${JOB_ID}.html"
         echo "💾 [완료] 원본 HTML 백업 완료 -> $SAVED_HTML"
+        # 🆕 cache.list 파일에 실시간 갱신 (동일 ID 중복 처리 대비)
+        echo "$JOB_ID" >> "$CACHE_LIST"
     fi
 
     # 이전에 전달해 드린 HTML 특수문자(&amp; -> &) 디코딩이 포함된 스크립트 호출
@@ -133,10 +179,10 @@ while IFS= read -r url || [ -n "$url" ]; do
 
     echo "✨ [4/4] 완료! 최종 마크다운 파일이 생성되었습니다."
 
-done < "$URLS_FILE"
+done < "$TEMP_URLS_FILE"
 
-# 3. 작업용 임시 마크다운 파일 정리
-rm -f "$TEMP_RAW_MD"
+# 3. 작업용 임시 파일 정리
+rm -f "$TEMP_RAW_MD" "$TEMP_URLS_FILE"
 
 # 4. 작업 중 비어버린 임시/이동된 상위 폴더들 자동 정리 (최상위 html, posts 폴더 자체는 보존)
 find html posts -mindepth 1 -type d -empty -delete 2>/dev/null || true
