@@ -167,19 +167,84 @@ try {
 
         formattedText = formattedText.trim();
 
-        const positionRegex = /Position\s*:/i;
-        const splitIndex = formattedText.search(positionRegex);
+        // 🌟 고도화된 회사 소개와 JD 분리 로직 (Split Heuristic)
+        const companyEscaped = company ? company.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') : '';
+        let splitDone = false;
 
-        if (splitIndex !== -1) {
-            aboutCompanyText = formattedText.substring(0, splitIndex).trim();
-            jdText = formattedText.substring(splitIndex).trim();
-        } else {
+        // Heuristic 1: 회사 소개 전용 헤더 매칭 (예: "회사 소개", "About Us", "About [Company]")
+        if (companyEscaped) {
+            const aboutCompanyRegex = new RegExp(`(?:^|\\n)(?:#+\\s+)?(About\\s+Us|About\\s+${companyEscaped}|회사\\s*소개|${companyEscaped}\\s*소개)(?:\\s|\\n|:|$)`, 'i');
+            const match = formattedText.match(aboutCompanyRegex);
+            if (match) {
+                const splitIndex = match.index;
+                const remainingText = formattedText.substring(splitIndex);
+                const jdStartRegex = /(?:^|\n)(?:#+\\s+)?(Job\s+Description|Role\s+Description|Responsibilities|What\s+you'll\s+do|What\s+you\s+will\s+do|What\s+we\s+are\s+looking\s+for|Qualifications|Requirements|담당\s*업무|주요\s*업무|자격\s*요건|우대\s*사항)(?:\s|\n|:|$)/i;
+                const jdMatch = remainingText.match(jdStartRegex);
+                if (jdMatch) {
+                    const jdSplitIndex = splitIndex + jdMatch.index;
+                    aboutCompanyText = formattedText.substring(splitIndex, jdSplitIndex).trim();
+                    jdText = formattedText.substring(jdSplitIndex).trim();
+                    splitDone = true;
+                }
+            }
+        }
+
+        // Heuristic 2: 첫 부분부터 시작하여 명확한 JD 타이틀(담당업무, Responsibilities) 전까지를 회사 소개로 분리
+        if (!splitDone) {
+            const jdStartRegex = /(?:^|\n)(?:#+\\s+)?(Responsibilities|What\s+you'll\s+do|What\s+you\s+will\s+do|What\s+we\s+are\s+looking\s+for|Qualifications|Requirements|담당\s*업무|주요\s*업무|자격\s*요건|우대\s*사항)(?:\s|\n|:|$)/i;
+            const jdMatch = formattedText.match(jdStartRegex);
+            if (jdMatch && jdMatch.index > 0) {
+                const splitIndex = jdMatch.index;
+                const prospectiveCompanyText = formattedText.substring(0, splitIndex).trim();
+                
+                // 최소 20자 이상이고, 텍스트 상단에 실제 회사 설명이 있는 경우에만 분리 적용
+                if (prospectiveCompanyText.length >= 20) {
+                    aboutCompanyText = prospectiveCompanyText;
+                    jdText = formattedText.substring(splitIndex).trim();
+                    splitDone = true;
+                }
+            }
+        }
+
+        // Heuristic 3: 매칭되지 않은 경우 HTML 헤더의 og:description 메타데이터에서 요약본 추출 시도
+        if (!splitDone) {
             jdText = formattedText;
-            aboutCompanyText = '본문 내에서 명확한 회사 소개 섹션을 분리하지 못했습니다. (전체 내용은 하단 JD 본문을 참고하세요)';
+            
+            let metaDesc = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || '';
+            if (metaDesc) {
+                // Posted 날짜 문구 및 후반부 안내문(See this...)을 지능적으로 정제
+                let cleanMeta = metaDesc
+                    .replace(/^Posted\s+[^.]+\.\s*/i, '') // "Posted 3:14:38 PM. " 등 영어 제거
+                    .replace(/^Posted\s+[^.일년주월시분초]+\.\s*/i, '') // 한글 Posted 대비
+                    .split(/See\s+this\s+and\s+similar/i)[0] // 후반 안내 제거
+                    .trim();
+                
+                // 유의미한 길이이고, 구인 공고 직접 지원 안내가 아닌 회사 소개 목적의 설명인 경우 분리
+                if (cleanMeta && cleanMeta.length >= 15 && !cleanMeta.startsWith('Apply for') && !cleanMeta.startsWith('지원')) {
+                    aboutCompanyText = cleanMeta;
+                    splitDone = true;
+                }
+            }
+            
+            if (!splitDone) {
+                aboutCompanyText = '정보 없음';
+            }
         }
     }
 
     console.log(`📝 [4/5] 마크다운 문서 템플릿 렌더링 중...`);
+
+    // 🏢 회사 소개 정보가 존재할 때만 관련 마크다운 섹션과 구분선을 추가하고, 정보가 없을 경우 섹션 자체를 완전히 생략
+    let aboutCompanySection = '';
+    if (aboutCompanyText && aboutCompanyText !== '정보 없음') {
+        aboutCompanySection = `
+---
+
+## 🏢 About the Company (회사 소개)
+${aboutCompanyText}
+`;
+    }
+
     const markdownOutput = `
 # 📌 채용 공고 핵심 요약
 
@@ -192,11 +257,7 @@ try {
 * **지원 방식 (Apply Type):** ${applyType}
 * **포스팅 날짜 (Posted Date):** ${postedDate}
 * **공고 링크:** [바로가기](${jobLink})
-
----
-
-## 🏢 About the Company (회사 소개)
-${aboutCompanyText}
+${aboutCompanySection}
 
 ---
 

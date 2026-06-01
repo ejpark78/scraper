@@ -77,11 +77,11 @@ while IFS= read -r url || [ -n "$url" ]; do
     fi
 
     # 🗺️ 근무지 매핑 및 표준화 규칙 적용
-    if [[ "$LOCATION" =~ "South Korea" || "$LOCATION" =~ "Seoul" || "$LOCATION" =~ "Korea" || "$LOCATION" =~ "서울" || "$LOCATION" =~ "대한민국" ]]; then
+    if [[ "$LOCATION" =~ "South Korea" || "$LOCATION" =~ "Seoul" || "$LOCATION" =~ "Korea" ]]; then
         LOCATION="Korea"
-    elif [[ "$LOCATION" =~ "Abu Dhabi" || "$LOCATION" =~ "Dubai" || "$LOCATION" =~ "United Arab Emirates" || "$LOCATION" =~ "아부다비" || "$LOCATION" =~ "두바이" || "$LOCATION" =~ "아랍에미리트" ]]; then
+    elif [[ "$LOCATION" =~ "Abu Dhabi" || "$LOCATION" =~ "Dubai" || "$LOCATION" =~ "United Arab Emirates" ]]; then
         LOCATION="Abu Dhabi"
-    elif [[ "$LOCATION" =~ "Singapore" || "$LOCATION" =~ "싱가포르" ]]; then
+    elif [[ "$LOCATION" =~ "Singapore" ]]; then
         LOCATION="Singapore"
     fi
 
