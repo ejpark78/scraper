@@ -10,7 +10,7 @@ help:
 	@echo "========================================================================="
 	@echo "사용 가능한 명령어 목록:"
 	@echo "  make login          - 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
-	@echo "  make list           - list/list.list의 검색 URL에서 목록 HTML을 무인 수집하여 덤프합니다."
+	@echo "  make list           - list/config.list의 검색 URL에서 목록 HTML을 무인 수집하여 덤프합니다."
 	@echo "  make posts          - list/urls.txt의 URL을 순차 수집하여 마크다운으로 저장합니다."
 	@echo "                        (예: make posts URLS=list/custom_urls.txt)"
 	@echo "  make urls           - list/*.html 에서 공고 조회 URL을 추출하여 urls.txt에 저장합니다."
@@ -19,11 +19,11 @@ help:
 	@echo "  make clean          - 작업 중 생성된 임시 파일 및 비어 있는 폴더를 정리합니다."
 	@echo "  make purge          - 수집된 html 및 posts 폴더를 완전히 삭제하고 초기화합니다."
 	@echo "========================================================================="
-
+	
 # URLS 변수 기본값 설정 (make posts URLS=경로 형태로 덮어쓰기 가능)
 URLS ?= list/urls.txt
 # LISTS 변수 기본값 설정 (make list LISTS=경로 형태로 덮어쓰기 가능)
-LISTS ?= list.list
+LISTS ?= list/config.list
 
 # 1회성 로그인 세션 획득기 기동
 login:

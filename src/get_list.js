@@ -110,7 +110,7 @@ async function autoScrollList(page) {
             .filter(line => line.length > 0 && !line.startsWith('#') && line.startsWith('http'));
 
         if (urls.length === 0) {
-            console.log('💡 [안내] 수집할 채용 목록 URL이 없습니다. list.list 내용을 확인해 주세요.');
+            console.log('💡 [안내] 수집할 채용 목록 URL이 없습니다. config.list 내용을 확인해 주세요.');
             process.exit(0);
         }
 
