@@ -15,10 +15,10 @@ try {
 
     const md = fs.readFileSync(targetMdFile, 'utf-8');
     
-    // 🌟 [수정] 마크다운 변환 시 포함될 수 있는 별표(*) 개수 차이를 모두 수용하도록 정규식 개선
-    const titleMatch = md.match(/\* \*\*공고 제목:\*\* (.+)/) || md.match(/\* \*공고 제목:\* (.+)/);
-    const companyMatch = md.match(/\* \*\*회사명:\*\* (.+)/) || md.match(/\* \*회사명:\* (.+)/);
-    const locationMatch = md.match(/\* \*\*근무 위치:\*\* (.+)/) || md.match(/\* \*근무 위치:\* (.+)/);
+    // 🌟 [수정] 마크다운 변환 시 포함될 수 있는 별표(*) 개수 차이 및 한글/영어/바이링구얼 라벨을 모두 수용하도록 정규식 개선
+    const titleMatch = md.match(/\* \*\*(?:공고 제목|Job Title)(?: \([^)]+\))?:\*\* (.+)/) || md.match(/\* \*(?:공고 제목|Job Title)(?: \([^)]+\))?:\* (.+)/);
+    const companyMatch = md.match(/\* \*\*(?:회사명|Company)(?: \([^)]+\))?:\*\* (.+)/) || md.match(/\* \*(?:회사명|Company)(?: \([^)]+\))?:\* (.+)/);
+    const locationMatch = md.match(/\* \*\*(?:근무 위치|Location)(?: \([^)]+\))?:\*\* (.+)/) || md.match(/\* \*(?:근무 위치|Location)(?: \([^)]+\))?:\* (.+)/);
     
     let title = titleMatch ? titleMatch[1].trim() : '알 수 없는 공고';
     let company = companyMatch ? companyMatch[1].trim() : '알 수 없는 회사';

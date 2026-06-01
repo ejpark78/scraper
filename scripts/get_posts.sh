@@ -65,24 +65,41 @@ while IFS= read -r url || [ -n "$url" ]; do
     node src/html2md.js "$HTML_TO_PROCESS" "$TEMP_RAW_MD"
 
     # 포스팅 날짜 추출 및 날짜 포맷 변환 (YYYY-MM-DD)
-    POST_DATE=$(grep -oP '\*\*포스팅 날짜 \(Posted Date\):\*\* \K[0-9]{4}년 [0-9]{2}월 [0-9]{2}일' "$TEMP_RAW_MD" | sed 's/년 /-/g; s/월 /-/g; s/일//g')
+    RAW_DATE=$(grep -oP '\*\*(?:포스팅 날짜|Posted Date)(?: \([^)]+\))?:\*\* \K([0-9]{4}년 [0-9]{2}월 [0-9]{2}일|[0-9]{4}-[0-9]{2}-[0-9]{2})' "$TEMP_RAW_MD")
+    if [[ "$RAW_DATE" =~ "년" ]]; then
+        POST_DATE=$(echo "$RAW_DATE" | sed 's/년 /-/g; s/월 /-/g; s/일//g')
+    else
+        POST_DATE="$RAW_DATE"
+    fi
     if [ -z "$POST_DATE" ]; then
         POST_DATE=$(date +%Y-%m-%d)
     fi
 
     # 근무 위치 추출 및 안전 폴더명 처리
-    LOCATION=$(grep -oP '\*\*근무 위치:\*\* \K.+' "$TEMP_RAW_MD" | sed 's/[\/\\:\*\?"<>\|]/ /g' | xargs)
-    if [ -z "$LOCATION" ] || [ "$LOCATION" = "정보 없음" ]; then
+    LOCATION=$(grep -oP '\*\*(?:근무 위치|Location)(?: \([^)]+\))?:\*\* \K.+' "$TEMP_RAW_MD" | sed 's/[\/\\:\*\?"<>\|]/ /g' | xargs)
+    if [ -z "$LOCATION" ] || [ "$LOCATION" = "정보 없음" ] || [ "$LOCATION" = "No info" ]; then
         LOCATION="unknown-location"
     fi
 
     # 🗺️ 근무지 매핑 및 표준화 규칙 적용
-    if [[ "$LOCATION" =~ "South Korea" || "$LOCATION" =~ "Seoul" || "$LOCATION" =~ "Korea" ]]; then
+    if [[ "$LOCATION" =~ "South Korea" || "$LOCATION" =~ "Seoul" || "$LOCATION" =~ "Korea" || "$LOCATION" =~ "서울" || "$LOCATION" =~ "대한민국" ]]; then
         LOCATION="Korea"
-    elif [[ "$LOCATION" =~ "Abu Dhabi" || "$LOCATION" =~ "Dubai" || "$LOCATION" =~ "United Arab Emirates" ]]; then
+    elif [[ "$LOCATION" =~ "Abu Dhabi" || "$LOCATION" =~ "Dubai" || "$LOCATION" =~ "United Arab Emirates" || "$LOCATION" =~ "아부다비" || "$LOCATION" =~ "두바이" || "$LOCATION" =~ "아랍에미리트" ]]; then
         LOCATION="Abu Dhabi"
-    elif [[ "$LOCATION" =~ "Singapore" ]]; then
+    elif [[ "$LOCATION" =~ "Singapore" || "$LOCATION" =~ "싱가포르" ]]; then
         LOCATION="Singapore"
+    elif [[ "$LOCATION" =~ "United Kingdom" || "$LOCATION" =~ "London" || "$LOCATION" =~ "영국" ]]; then
+        LOCATION="United Kingdom"
+    elif [[ "$LOCATION" =~ "Canada" || "$LOCATION" =~ "Toronto" || "$LOCATION" =~ "캐나다" ]]; then
+        LOCATION="Canada"
+    elif [[ "$LOCATION" =~ "Ireland" || "$LOCATION" =~ "Dublin" || "$LOCATION" =~ "아일랜드" ]]; then
+        LOCATION="Ireland"
+    elif [[ "$LOCATION" =~ "Germany" || "$LOCATION" =~ "Marburg" || "$LOCATION" =~ "독일" ]]; then
+        LOCATION="Germany"
+    elif [[ "$LOCATION" =~ "Saudi Arabia" || "$LOCATION" =~ "Riyadh" || "$LOCATION" =~ "사우디" ]]; then
+        LOCATION="Saudi Arabia"
+    elif [[ "$LOCATION" =~ "Japan" || "$LOCATION" =~ "Tokyo" || "$LOCATION" =~ "Shibuya" || "$LOCATION" =~ "일본" ]]; then
+        LOCATION="Japan"
     fi
 
     # 위치 및 날짜 기준 저장 폴더 정의 (inbox 폴더의 하위 경로로 완벽 적재)

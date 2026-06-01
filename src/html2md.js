@@ -8,6 +8,8 @@ function parseRelativeDate(relativeStr, timeStr, baseDateInput) {
     }
     
     let daysAgo = 0;
+    let foundRelative = false;
+    
     if (relativeStr) {
         let match = relativeStr.match(/(\d+)\s*(day|week|month|year|hour|minute|second|일|주|달|개월|년|시간|분|초)s?\s*ago/i) ||
                     relativeStr.match(/(\d+)\s*(일|주|달|개월|년|시간|분|초)\s*전/i) ||
@@ -24,9 +26,32 @@ function parseRelativeDate(relativeStr, timeStr, baseDateInput) {
             } else if (unit.startsWith('year') || unit === '년') {
                 daysAgo = val * 365;
             }
+            foundRelative = true;
         }
     }
     
+    // If not found in relativeStr, check if timeStr contains relative date format
+    if (!foundRelative && timeStr) {
+        let match = timeStr.match(/(\d+)\s*(day|week|month|year|hour|minute|second|일|주|달|개월|년|시간|분|초)s?\s*ago/i) ||
+                    timeStr.match(/(\d+)\s*(일|주|달|개월|년|시간|분|초)\s*전/i) ||
+                    timeStr.match(/(\d+)\s*(day|week|month|year|hour|minute|second)s?/i);
+        if (match) {
+            let val = parseInt(match[1]);
+            let unit = match[2].toLowerCase();
+            if (unit.startsWith('day') || unit === '일') {
+                daysAgo = val;
+            } else if (unit.startsWith('week') || unit === '주') {
+                daysAgo = val * 7;
+            } else if (unit.startsWith('month') || unit === '달' || unit === '개월') {
+                daysAgo = val * 30;
+            } else if (unit.startsWith('year') || unit === '년') {
+                daysAgo = val * 365;
+            }
+            foundRelative = true;
+        }
+    }
+    
+    // Calculate the absolute date
     baseDate.setDate(baseDate.getDate() - daysAgo);
     
     let year = baseDate.getFullYear();
@@ -34,7 +59,7 @@ function parseRelativeDate(relativeStr, timeStr, baseDateInput) {
     let day = String(baseDate.getDate()).padStart(2, '0');
     
     let formattedTime = "";
-    if (timeStr) {
+    if (timeStr && !foundRelative) {
         let timeMatch = timeStr.match(/(\d+):(\d+):(\d+)\s*(AM|PM)/i);
         if (timeMatch) {
             let hour = parseInt(timeMatch[1]);
@@ -45,11 +70,19 @@ function parseRelativeDate(relativeStr, timeStr, baseDateInput) {
             if (ampm === 'AM' && hour === 12) hour = 0;
             formattedTime = ` ${String(hour).padStart(2, '0')}:${min}:${sec}`;
         } else {
-            formattedTime = ` ${timeStr}`;
+            // If it's a date representation like "March 15, 2026", parse it directly if valid
+            let parsedTimeDate = new Date(timeStr);
+            if (!isNaN(parsedTimeDate.getTime())) {
+                year = parsedTimeDate.getFullYear();
+                month = String(parsedTimeDate.getMonth() + 1).padStart(2, '0');
+                day = String(parsedTimeDate.getDate()).padStart(2, '0');
+            } else {
+                formattedTime = ` ${timeStr}`;
+            }
         }
     }
     
-    return `${year}년 ${month}월 ${day}일${formattedTime}`;
+    return `${year}-${month}-${day}${formattedTime}`;
 }
 
 // 1. 인자 입력 확인
@@ -77,21 +110,22 @@ try {
     console.log(`🔍 [3/5] 채용 공고 핵심 데이터 추출 중...`);
 
     // 🌟 [핵심 수정] Posted 문구가 들어간 og:description 대신 실제 상단 카드에서 회사명 직접 추출
-    let company = $('.topcard__flavor a, .job-details-jobs-unified-top-card__company-name, [data-tracking-control-name="public_jobs_topcard-company-name"]').first().text().trim();
+    let company = $('.topcard__flavor a, .job-details-jobs-unified-top-card__company-name, [data-tracking-control-name="public_jobs_topcard-company-name"]').first().text().trim().replace(/\s+/g, ' ');
     if (!company) {
         let ogDesc = $('meta[property="og:description"]').attr('content') || '';
         if (ogDesc.includes(' hiring ')) {
-            company = ogDesc.split(' hiring ')[0].replace(/Posted.*?\.\s*/i, '').trim();
+            company = ogDesc.split(' hiring ')[0].replace(/Posted.*?\.\s*/i, '').trim().replace(/\s+/g, ' ');
         } else {
-            company = ogDesc.replace(/Posted.*?\.\s*/i, '').substring(0, 20).trim();
+            company = ogDesc.replace(/Posted.*?\.\s*/i, '').substring(0, 20).trim().replace(/\s+/g, ' ');
         }
     }
 
     // 공고 제목 추출
-    let jobTitle = $('.topcard__title, h1, .job-details-jobs-unified-top-card__job-title').first().text().trim();
+    let jobTitle = $('.topcard__title, h1, .job-details-jobs-unified-top-card__job-title').first().text().trim().replace(/\s+/g, ' ');
     if (!jobTitle) {
         let ogTitle = $('meta[property="og:title"]').attr('content') || '';
         jobTitle = ogTitle.includes(' hiring ') ? ogTitle.split(' hiring ')[1]?.split(' in ')[0] : ogTitle;
+        if (jobTitle) jobTitle = jobTitle.trim().replace(/\s+/g, ' ');
     }
 
     // 근무 위치 추출 및 깔끔하게 줄바꿈 정리
@@ -246,17 +280,17 @@ ${aboutCompanyText}
     }
 
     const markdownOutput = `
-# 📌 채용 공고 핵심 요약
+# 📌 채용 공고 핵심 요약 (Job Summary)
 
-## 🏢 기본 및 근무 정보
-* **공고 제목:** ${jobTitle || '정보 없음'}
-* **회사명:** ${company || '정보 없음'}
-* **근무 위치:** ${location || '정보 없음'}
-* **근무 형태 (Workplace):** ${workplaceType}
+## 🏢 기본 및 근무 정보 (Basic Info)
+* **공고 제목 (Job Title):** ${jobTitle || '정보 없음'}
+* **회사명 (Company):** ${company || '정보 없음'}
+* **근무 위치 (Location):** ${location || '정보 없음'}
+* **근무 형태 (Workplace Type):** ${workplaceType}
 * **고용 형태 (Job Type):** ${jobType || '정보 없음'}
 * **지원 방식 (Apply Type):** ${applyType}
 * **포스팅 날짜 (Posted Date):** ${postedDate}
-* **공고 링크:** [바로가기](${jobLink})
+* **공고 링크 (Job Link):** [바로가기 (Link)](${jobLink})
 ${aboutCompanySection}
 
 ---

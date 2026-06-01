@@ -36,14 +36,19 @@ find html/inbox -type f -name "*.html" | while read -r html_file; do
     fi
 
     # 포스팅 날짜 추출 및 포맷팅 (YYYY-MM-DD)
-    POST_DATE=$(grep -oP '\*\*포스팅 날짜 \(Posted Date\):\*\* \K[0-9]{4}년 [0-9]{2}월 [0-9]{2}일' "$TEMP_RAW_MD" | sed 's/년 /-/g; s/월 /-/g; s/일//g')
+    RAW_DATE=$(grep -oP '\*\*(?:포스팅 날짜|Posted Date)(?: \([^)]+\))?:\*\* \K([0-9]{4}년 [0-9]{2}월 [0-9]{2}일|[0-9]{4}-[0-9]{2}-[0-9]{2})' "$TEMP_RAW_MD")
+    if [[ "$RAW_DATE" =~ "년" ]]; then
+        POST_DATE=$(echo "$RAW_DATE" | sed 's/년 /-/g; s/월 /-/g; s/일//g')
+    else
+        POST_DATE="$RAW_DATE"
+    fi
     if [ -z "$POST_DATE" ]; then
         POST_DATE=$(date +%Y-%m-%d)
     fi
 
     # 근무 위치 추출 및 안전 폴더명 처리
-    LOCATION=$(grep -oP '\*\*근무 위치:\*\* \K.+' "$TEMP_RAW_MD" | sed 's/[\/\\:\*\?"<>\|]/ /g' | xargs)
-    if [ -z "$LOCATION" ] || [ "$LOCATION" = "정보 없음" ]; then
+    LOCATION=$(grep -oP '\*\*(?:근무 위치|Location)(?: \([^)]+\))?:\*\* \K.+' "$TEMP_RAW_MD" | sed 's/[\/\\:\*\?"<>\|]/ /g' | xargs)
+    if [ -z "$LOCATION" ] || [ "$LOCATION" = "정보 없음" ] || [ "$LOCATION" = "No info" ]; then
         LOCATION="unknown-location"
     fi
 
@@ -54,6 +59,18 @@ find html/inbox -type f -name "*.html" | while read -r html_file; do
         LOCATION="Abu Dhabi"
     elif [[ "$LOCATION" =~ "Singapore" || "$LOCATION" =~ "싱가포르" ]]; then
         LOCATION="Singapore"
+    elif [[ "$LOCATION" =~ "United Kingdom" || "$LOCATION" =~ "London" || "$LOCATION" =~ "영국" ]]; then
+        LOCATION="United Kingdom"
+    elif [[ "$LOCATION" =~ "Canada" || "$LOCATION" =~ "Toronto" || "$LOCATION" =~ "캐나다" ]]; then
+        LOCATION="Canada"
+    elif [[ "$LOCATION" =~ "Ireland" || "$LOCATION" =~ "Dublin" || "$LOCATION" =~ "아일랜드" ]]; then
+        LOCATION="Ireland"
+    elif [[ "$LOCATION" =~ "Germany" || "$LOCATION" =~ "Marburg" || "$LOCATION" =~ "독일" ]]; then
+        LOCATION="Germany"
+    elif [[ "$LOCATION" =~ "Saudi Arabia" || "$LOCATION" =~ "Riyadh" || "$LOCATION" =~ "사우디" ]]; then
+        LOCATION="Saudi Arabia"
+    elif [[ "$LOCATION" =~ "Japan" || "$LOCATION" =~ "Tokyo" || "$LOCATION" =~ "Shibuya" || "$LOCATION" =~ "일본" ]]; then
+        LOCATION="Japan"
     fi
 
     # 최종 md 파일의 대상 디렉토리 및 경로 계산
@@ -74,6 +91,17 @@ find html/inbox -type f -name "*.html" | while read -r html_file; do
         mkdir -p "$TARGET_DIR"
         node src/prettify.js "$TEMP_RAW_MD" "$FINAL_PATH"
         echo "💾 [복원 완료] -> $FINAL_PATH"
+    fi
+
+    # HTML 파일의 표준화 경로 계산 및 이동 (html 디렉토리 구조도 posts와 완전 동기화)
+    CORRECT_HTML_DIR="html/inbox/${LOCATION}/${POST_DATE}"
+    JOB_ID=$(basename "$html_file")
+    CORRECT_HTML_PATH="${CORRECT_HTML_DIR}/${JOB_ID}"
+
+    if [ "$html_file" != "$CORRECT_HTML_PATH" ]; then
+        echo "🚚 [HTML 재배치] $html_file -> $CORRECT_HTML_PATH"
+        mkdir -p "$CORRECT_HTML_DIR"
+        mv "$html_file" "$CORRECT_HTML_PATH"
     fi
 
     # 임시 작업 파일 제거

@@ -6,31 +6,42 @@
 
 ---
 
-## ✨ 핵심 핵심 기능 (Key Features)
+## ✨ 핵심 기능 (Key Features)
 
-### 1. 동적 데이터 수집 및 캐싱
-- **본문 자동 확장 (Playwright)**: 채용공고의 숨겨진 설명("See more" 버튼)을 자동으로 감지하고 클릭하여 본문 전체를 완벽하게 로드한 뒤 저장합니다.
+### 1. 동적 데이터 수집 및 캐싱 (Playwright `en-US` 로케일 적용)
+- **본문 자동 확장**: 채용공고의 숨겨진 설명("See more" 버튼)을 자동으로 감지하고 클릭하여 본문 전체를 완벽하게 로드한 뒤 저장합니다.
+- **`en-US` 로케일 표준화**: Playwright 브라우저 컨텍스트의 로케일을 `en-US`로 표준 기입하여, LinkedIn 인터페이스 레이아웃을 영어 기준으로 균일하게 수집하며 수집 보안 차단을 최소화합니다.
 - **스마트 재배치 및 무중단 캐싱**: 하위 디렉토리에 캐싱된 HTML 파일이 존재한다면, 네트워크 요청을 즉시 스킵하여 가속합니다. 기존 다른 디렉토리에 흩어져 있던 캐시는 정제 시점에 새 분류 체계에 맞춰 자동으로 위치를 바로잡아 정렬합니다.
 
-### 2. URL 청소 및 Canonical화 (`get_urls.sh`)
+### 2. 다국어/이중 로케일 (Bilingual) 파싱 엔진
+- **하이브리드 파싱 지원**: LinkedIn HTML 페이지가 영어(`en-US`) 혹은 한국어(`ko-KR`) 로케일 중 어느 환경에서 다운로드되었어도 깨짐 없이 핵심 정보를 완벽하게 추출합니다.
+- **마크다운 서식 정밀화**: 변환된 마크다운 문서의 키 라벨을 한글/영어 병기(`회사명 (Company):`, `근무 위치 (Location):` 등)로 표준화하여 가독성과 범용성을 동시에 극대화했습니다.
+
+### 3. URL 청소 및 Canonical화 (`get_urls.sh`)
 - **상대 경로 승격**: `/jobs`로 시작하는 링크드인 내 상대 주소를 절대 주소(`https://www.linkedin.com/jobs/...`)로 복원합니다.
 - **파라미터 박멸**: 추적용 쿼리 스트링(`/?eBP=...` 등)을 깨끗이 지우고 끝에 슬래시(`/`)만 남겨 Canonical한 형태의 고유 URL로 가공합니다.
 
-### 3. 포스팅 상대 일자를 절대 시각으로 변환 (`html2md.js`)
-- **수집일 기준 역산**: 단순 상대 시간(`1 week ago`, `3 days ago`)을 HTML 캐시 파일의 생성/수정 시간(`mtime`) 메타데이터를 기준으로 계산하여 실제 포스팅 연/월/일로 자동 역산합니다.
-- **고정 시각 결합**: 메타 정보의 정확한 배포 시각(예: `2:55:21 PM`)을 디코딩 및 24시간 형식으로 결합하여 한국 표준형 시간으로 렌더링합니다.
-- **출력 서식**: `2026년 05월 18일 14:23:51` 형식으로 마크다운에 최종 기입됩니다.
+### 4. 포스팅 상대 일자를 절대 시각으로 변환 (`html2md.js`)
+- **수집일 기준 역산**: 단순 상대 시간(`1 week ago`, `3 days ago`, `5시간 전`)을 HTML 캐시 파일의 생성/수정 시간(`mtime`) 메타데이터를 기준으로 계산하여 실제 포스팅 연/월/일로 자동 역산합니다.
+- **유연한 절대 날짜 파싱**: 메타 설명에 적힌 `Posted March 15, 2026`과 같은 절대 포스팅 일자 또한 유효한 타임스탬프로 해독하여 정확히 매칭합니다.
+- **표준화된 `YYYY-MM-DD` 포맷**: 역산되거나 획득된 날짜 정보를 프로그램 제어 및 정렬이 직관적인 **`YYYY-MM-DD`** 형태로 정제합니다.
 
-### 4. 근무지 표준화 분류 체계 (`get_posts.sh`)
+### 5. 근무지 표준화 분류 체계 (`get_posts.sh` & `html2md.sh`)
 - **위치 기반 계층 폴더**: `html/` 및 `posts/` 하위에 `[근무지]/[포스팅날짜]/` 구조로 깊게 분류합니다.
-- **지리 그룹화 규칙**:
-  - `South Korea`, `Seoul`, `Korea` 등이 포함된 근무지는 일관되게 **`Korea`** 폴더에 소속됩니다.
-  - `Abu Dhabi` 관련 주소는 **`Abu Dhabi`**로 정밀화합니다.
-  - `Dubai`, `Singapore` 등의 도시명 주소 역시 각각 표준화된 폴더명으로 매핑됩니다.
+- **지리 그룹화 및 국가 정규화 규칙**:
+  - `South Korea`, `Seoul`, `Korea`, `서울`, `대한민국` 등이 포함된 근무지는 일관되게 **`Korea`** 폴더에 소속됩니다.
+  - `Abu Dhabi`, `Dubai`, `United Arab Emirates`, `아랍에미리트` 등은 **`Abu Dhabi`** 폴더에 정밀화합니다.
+  - `Singapore` 관련 주소는 **`Singapore`** 폴더로 통합됩니다.
+  - `London Area`, `United Kingdom`, `영국` 등은 **`United Kingdom`** 폴더로 표준화됩니다.
+  - `Toronto`, `Canada`, `캐나다` 등은 **`Canada`** 폴더로 표준화됩니다.
+  - `Dublin`, `Ireland`, `아일랜드` 등은 **`Ireland`** 폴더로 표준화됩니다.
+  - `Marburg`, `Germany`, `독일` 등은 **`Germany`** 폴더로 표준화됩니다.
+  - `Riyadh`, `Saudi Arabia`, `사우디` 등은 **`Saudi Arabia`** 폴더로 표준화됩니다.
+  - `Shibuya-ku`, `Tokyo`, `Japan`, `일본` 등은 **`Japan`** 폴더로 표준화됩니다.
 
-### 5. 간결하고 깔끔한 파일명 (`get_filename.js`)
-- 기존 파일명에 포함되던 중복 국가/지역명 문자열을 완벽히 제외했습니다.
-- 가독성이 극대화된 **`[회사명] - [공고제목].md`** 템플릿 파일명 구조를 차용합니다.
+### 6. 캐시와 산출물의 양방향 동기화 (Double-Sync)
+- 셸 기반 일괄 정제 스크립트 실행 시, 마크다운 결과물(`posts/inbox/`) 뿐만 아니라 **수집 원본 HTML 캐시 파일(`html/inbox/`) 또한 표준화된 국가/날짜 분류 폴더 구조 하위로 완벽하게 이동 및 자동 정렬**됩니다.
+- 작업 완료 후, 비어 버린 이전 옛날 폴더(ex: `html/inbox/Tokyo, Japan`)들은 자동으로 식별되어 삭제됩니다.
 
 ---
 
@@ -38,23 +49,23 @@
 
 ```text
 ├── html/                     # 원본 HTML 캐시 백업 루트 폴더
-│   ├── inbox/                # 국가별/날짜별 메인 아카이빙 폴더
-│   └── new/                  # 신규 수집 HTML 복사본 임시 저장 폴더
+├── html/inbox/               # 🌟 국가별/날짜별 캐시 HTML이 완벽하게 분류 정렬되는 아카이빙 폴더
+├── html/new/                 # 신규 수집 HTML 복사본 임시 저장 폴더
 ├── posts/                    # 최종 마크다운(*.md) 결과물 루트 폴더
-│   ├── inbox/                # 국가별/날짜별 메인 마크다운 폴더
-│   └── new/                  # 신규 마크다운 복사본 임시 저장 폴더
+├── posts/inbox/              # 🌟 국가별/날짜별 표준화 분류 마크다운 폴더
+├── posts/new/                # 신규 마크다운 복사본 임시 저장 폴더
 ├── list/
 │   ├── list.html             # 추출 대상 원본 링크드인 목록 HTML
 │   └── urls.txt              # 중복 제거 및 가공이 끝난 파이프라인 입력용 URL 리스트
 ├── src/                      # 🌟 JavaScript 핵심 소스 코드 폴더
-│   ├── get_html.js           # Playwright 기반 동적 수집용 크롤링 스크립트
-│   ├── html2md.js            # 메타데이터 파싱, 마크다운 변환 및 절대 날짜 역산 스크립트
-│   ├── get_filename.js       # '회사명 - 공고제목' 형태의 안전 파일명 변환 스크립트
+│   ├── get_html.js           # Playwright 기반 동적 수집용 크롤링 스크립트 (en-US 설정)
+│   ├── html2md.js            # 메타데이터 파싱, 마크다운 이중 라벨 변환 및 절대 날짜 역산 스크립트
+│   ├── get_filename.js       # '회사명 - 공고제목' 형태의 안전 파일명 변환 스크립트 (Bilingual 대응)
 │   └── prettify.js           # Prettier 구동기반 최종 마크다운 서식 다듬기 스크립트
 ├── scripts/                  # 📁 셸 스크립트 보관 폴더
 │   ├── get_urls.sh           # 목록 HTML에서 Canonical URL 정밀 추출 및 청소 스크립트
-│   ├── html2md.sh            # HTML 파일을 기본 마크다운으로 파싱 및 변환해주는 셸 스크립트
-│   └── get_posts.sh          # 전체 수집, 캐시 검증, 포스팅날짜/근무지별 정렬 핵심 셸 스크립트
+│   ├── html2md.sh            # HTML 캐시와 posts 구조를 함께 정렬하는 배치 동기화 셸 스크립트
+│   └── get_posts.sh          # 전체 수집, 캐시 검증, 국가/날짜별 양방향 정렬 핵심 셸 스크립트
 ├── Makefile                  # ⚙️ 빌드 및 파이프라인 실행 제어용 메이크파일
 ├── package.json              # Node.js 의존성 설정 파일
 └── README.md                 # 본 프로젝트 문서 파일
@@ -107,7 +118,7 @@ make posts URLS=list/custom_urls.txt
 ## 🧹 기타 관리 명령어 (Administrative Commands)
 
 ### 임시 파일 정리 (`make clean`)
-변환 과정 도중 생성될 수 있는 임시 작업 파일(`temp_job_raw.md`) 및 데이터 정리 과정에서 발생한 빈 하위 폴더들을 일괄 수집하여 안전하게 파괴합니다.
+변환 과정 도중 생성될 수 있는 임시 작업 파일(`temp_job_raw.md`) 및 데이터 정리 과정에서 발생한 빈 하위 폴더들을 일괄 수집하여 안전하게 제거합니다.
 ```bash
 make clean
 ```
@@ -125,8 +136,8 @@ make purge
 2. 이미 수집 이력이 있다면 **[스킵]**하여 불필요한 크롤링 트래픽을 아끼며 초고속으로 파싱 단계로 진입합니다.
 3. 최초 수집하는 공고의 경우 Playwright 브라우저를 통해 동적 로드 후 백업합니다.
 4. 캐시된 HTML 파일을 분석하여 회사명, 공고명, 근무지, 고용형태, canonical 주소를 획득합니다.
-5. HTML 캐시 파일의 생성 시간(`mtime`)과 공고 내 상대일자(`3 days ago`), 정확한 meta 공고 시간(`11:06:22 AM`)을 정교히 계산하여 **`YYYY-MM-DD` 포스팅 절대 날짜**를 복원해 냅니다.
-6. 근무지 문자열을 읽고 지리 표준화 필터(`Korea`, `Abu Dhabi` 등)를 거쳐 폴더명을 정합니다.
+5. HTML 캐시 파일의 생성 시간(`mtime`)과 공고 내 상대일자(`3 days ago`), 정확한 meta 공고 시간/일자를 정교히 계산하여 **`YYYY-MM-DD` 포스팅 절대 날짜**를 복원해 냅니다.
+6. 근무지 문자열을 읽고 확장된 지리 표준화 필터(`Korea`, `United Kingdom`, `Japan` 등)를 거쳐 폴더명을 정합니다.
 7. HTML 백업 파일과 생성된 마크다운 결과물을 각각 `html/inbox/[근무지]/[포스팅날짜]/` 및 `posts/inbox/[근무지]/[포스팅날짜]/`에 안전하게 배치(필요시 자동 폴더 이동)합니다.
 8. 새로 추가된 공고(신규 다운로드 건)의 경우 별도의 복사본을 `html/new/` 및 `posts/new/`에 추가 백업합니다.
 9. 최종적으로 Prettier를 호출하여 문단과 마크다운 가독성 서식을 매끄럽게 보정한 최종 결과 파일을 출력합니다.
@@ -135,30 +146,28 @@ make purge
 
 ## 📌 마크다운 문서 요약본 최종 서식 예시
 
-모든 문서(`posts/Korea/2026-05-18/CJ OLIVE YOUNG - Product Manager - AI.md` 등)는 아래 규격을 완벽하게 유지합니다:
+모든 문서(`posts/inbox/Japan/2026-05-25/Build+ - Fully Remote - No Japanese needed - Senior Data Engineer.md` 등)는 아래와 같이 완벽한 이중 언어(Bilingual) 표준 서식을 유지합니다:
 
 ```markdown
-# 📌 채용 공고 핵심 요약
+# 📌 채용 공고 핵심 요약 (Job Summary)
 
-## 🏢 기본 및 근무 정보
-
-- **공고 제목:** Product Manager - AI
-- **회사명:** CJ OLIVE YOUNG
-- **근무 위치:** Seoul, Seoul, South Korea
-- **근무 형태 (Workplace):** On-site
-- **고용 형태 (Job Type):** Full-time
-- **지원 방식 (Apply Type):** 일반 지원 (External Apply)
-- **포스팅 날짜 (Posted Date):** 2026년 05월 18일 15:33:02
-- **공고 링크:** [바로가기](https://kr.linkedin.com/jobs/view/4404077756)
+## 🏢 기본 및 근무 정보 (Basic Info)
+* **공고 제목 (Job Title):** Senior Data Engineer
+* **회사명 (Company):** Build+
+* **근무 위치 (Location):** Tokyo, Japan
+* **근무 형태 (Workplace Type):** Remote
+* **고용 형태 (Job Type):** Full-time
+* **지원 방식 (Apply Type):** 간편 지원 (Easy Apply)
+* **포스팅 날짜 (Posted Date):** 2026-05-25
+* **공고 링크 (Job Link):** [바로가기 (Link)](https://www.linkedin.com/jobs/view/4410453924)
 
 ---
 
 ## 🏢 About the Company (회사 소개)
-CJ 올리브영은 대한민국 최고의 헬스앤뷰티(H&B) 스토어로서, 전 세계 시장으로 뷰티 플랫폼을 확장해 나가고 있습니다.
+Build+ is an innovative startup...
 
 ---
 
 ## 📝 JD (직무 기술서 / Job Description)
-- AI 제품의 로드맵 설계 및 백로그 정의를 주도합니다.
-- 데이터 사이언티스트와의 긴밀한 커뮤니케이션 및 성과 검증 모델을 설계합니다.
+As a Senior Data Engineer, you will...
 ```
