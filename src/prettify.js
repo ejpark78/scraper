@@ -17,7 +17,7 @@ async function run() {
         
         let text = fs.readFileSync(inputFile, 'utf-8');
         
-        console.log(`⚙️  [오픈소스 Prettier] 기반 마크다운 구문 분석 및 가독성 정제 중...`);
+        console.log(`⚙️ [오픈소스 Prettier] 기반 마크다운 구문 분석 및 가독성 정제 중...`);
 
         // 링크드인에서 딸려오는 잔재 텍스트 1차 정제
         text = text.replace(/Show\s+more\s*\n*\s*Show\s+less/gi, '');

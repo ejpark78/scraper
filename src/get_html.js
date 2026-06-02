@@ -20,14 +20,21 @@ console.error(`\n🌐 [1/4] 브라우저 기동 및 페이지 이동 중...`);
         // 1. 브라우저 실행
         browser = await playwright.chromium.launch({ headless: true });
         
-        // 2. 브라우저 컨텍스트 생성 (최신 User-Agent 및 언어 설정 주입으로 차단 방지)
-        const context = await browser.newContext({
+        // 2. 로그인 세션 정보 로드 옵션 설정
+        const SESSION_PATH = path.join(__dirname, '..', 'config', 'session.json');
+        const contextOptions = {
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             viewport: { width: 1280, height: 800 },
             locale: 'en-US'
-        });
+        };
+        if (fs.existsSync(SESSION_PATH)) {
+            contextOptions.storageState = SESSION_PATH;
+        }
+
+        // 3. 브라우저 컨텍스트 생성 (최신 User-Agent 및 로그인 세션 주입)
+        const context = await browser.newContext(contextOptions);
         
-        // 3. 새 페이지 열기
+        // 4. 새 페이지 열기
         const page = await context.newPage();
         
         // 4. 인자로 받은 URL로 이동 및 네트워크 안정화 대기
@@ -54,7 +61,7 @@ console.error(`\n🌐 [1/4] 브라우저 기동 및 페이지 이동 중...`);
             try {
                 const button = page.locator(selector).first();
                 if (await button.isVisible()) {
-                    console.error(`🖱️  [3/4] 버튼 발견 (${selector}), 클릭하여 본문 확장 중...`);
+                    console.error(`🖱️ [3/4] 버튼 발견 (${selector}), 클릭하여 본문 확장 중...`);
                     // 🚀 성능 최적화: Playwright의 무거운 Actionability checks(뷰포트 스크롤, 가림 감지 등)로 인한 30초 대기(병목)를 우회하기 위해
                     // DOM 레벨에서 직접 JavaScript 클릭 이벤트를 트리거합니다. (0초 만에 즉시 실행)
                     await button.evaluate(el => el.click());
