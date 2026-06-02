@@ -166,7 +166,8 @@ export class ScrapingPipeline {
 
                 const targetMdDir = path.join(baseDir, 'markdown', meta.locationDirName, meta.postedDate);
                 const correctHtmlDir = path.join(htmlDir, meta.locationDirName, meta.postedDate);
-                const finalPath = path.join(targetMdDir, `${jobId}.md`);
+                const safeMdFileName = NamingUtils.generateSafeFileName(meta.jobTitle, meta.company);
+                const finalPath = path.join(targetMdDir, `${safeMdFileName}.md`);
 
                 console.log(`📂 저장 경로 정의됨: ${finalPath}`);
                 console.log('🧹 [3/4] 오픈소스 Prettier 기반 마크다운 정제 중 (markdown_converter.ts)...');
@@ -198,7 +199,7 @@ export class ScrapingPipeline {
                 // 신규 추가 건에 한해 recent 복사본 저장
                 if (isNew) {
                     const recHtmlPath = path.join(recentHtmlDir, `${jobId}.html`);
-                    const recMdPath = path.join(recentMdDir, `${jobId}.md`);
+                    const recMdPath = path.join(recentMdDir, `${safeMdFileName}.md`);
                     fs.copyFileSync(correctHtmlPath, recHtmlPath);
                     fs.copyFileSync(finalPath, recMdPath);
                     console.log('🆕 [신규 추가] 새 공고 복사본을 data/jobs/recent/ 하위에 저장 완료!');

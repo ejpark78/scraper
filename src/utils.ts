@@ -54,32 +54,69 @@ export class UrlUtils {
     }
 
     /**
-     * 🛡️ 근무지 지리 매핑 및 표준화 규칙 적용
+     * 🛡️ 근무지 지리 매핑 및 표준화 규칙 적용 (국가명 기준 정렬)
      */
     public static standardizeLocation(rawLocation: string): string {
         if (!rawLocation || rawLocation === '정보 없음' || rawLocation === 'No info') {
             return 'unknown-location';
         }
         const cleanLoc = rawLocation.trim();
-        if (/[가-힣]/.test(cleanLoc) || /South Korea|Seoul|Korea|서울|대한민국|Pangyo|Bundang|Gyeonggi/i.test(cleanLoc)) {
+        
+        // 1. 대한민국 (Korea)
+        if (/[가-힣]/.test(cleanLoc) || /South Korea|Seoul|Korea|Busan|Incheon|Daegu|Daejeon|Gwangju|Ulsan|Suwon|Changwon|Pangyo|Bundang|Gyeonggi|서울|인천|대구|대전|광주|부산|울산|수원|창원|판교|분당|경기|대한민국/i.test(cleanLoc)) {
             return 'Korea';
-        } else if (/Abu Dhabi|Dubai|United Arab Emirates|아부다비|두바이|아랍에미리트|أبو ظبي|دبي|الإمارات|الشارقة|الخيمة/i.test(cleanLoc)) {
-            return 'Abu Dhabi';
-        } else if (/Singapore|싱가포르/i.test(cleanLoc)) {
-            return 'Singapore';
-        } else if (/United Kingdom|London|영국/i.test(cleanLoc)) {
-            return 'United Kingdom';
-        } else if (/Canada|Toronto|캐나다/i.test(cleanLoc)) {
-            return 'Canada';
-        } else if (/Ireland|Dublin|아일랜드/i.test(cleanLoc)) {
-            return 'Ireland';
-        } else if (/Germany|Marburg|독일/i.test(cleanLoc)) {
+        }
+        
+        // 2. 아랍에미리트 (United Arab Emirates)
+        if (/Abu Dhabi|Dubai|Ajman|Al Ain|Sharjah|Fujairah|Umm Al Quwain|Ras Al Khaimah|United Arab Emirates|UAE|아부다비|두바이|아랍에미리트|샤르자|아지만|알아인|أبو ظبي|دبي|الإمارات|الشارقة|الخيمة|العين|عجمان|الطَّوِيلَة/i.test(cleanLoc)) {
+            return 'United Arab Emirates';
+        }
+        
+        // 3. 독일 (Germany)
+        if (/Germany|Berlin|Munich|München|Frankfurt|Hamburg|Stuttgart|Düsseldorf|Cologne|Köln|Marburg|독일/i.test(cleanLoc)) {
             return 'Germany';
-        } else if (/Saudi Arabia|Riyadh|사우디/i.test(cleanLoc)) {
+        }
+        
+        // 4. 카타르 (Qatar)
+        if (/Qatar|Doha|카타르|도하/i.test(cleanLoc)) {
+            return 'Qatar';
+        }
+
+        // 5. 오스트리아 (Austria)
+        if (/Austria|Vienna|Wien|오스트리아|비엔나/i.test(cleanLoc)) {
+            return 'Austria';
+        }
+        
+        // 6. 싱가포르 (Singapore)
+        if (/Singapore|싱가포르/i.test(cleanLoc)) {
+            return 'Singapore';
+        }
+        
+        // 7. 영국 (United Kingdom)
+        if (/United Kingdom|UK|London|Great Britain|England|Scotland|Wales|영국|런던/i.test(cleanLoc)) {
+            return 'United Kingdom';
+        }
+        
+        // 8. 캐나다 (Canada)
+        if (/Canada|Toronto|Vancouver|Montreal|캐나다|토론토/i.test(cleanLoc)) {
+            return 'Canada';
+        }
+        
+        // 9. 아일랜드 (Ireland)
+        if (/Ireland|Dublin|아일랜드|더블린/i.test(cleanLoc)) {
+            return 'Ireland';
+        }
+        
+        // 10. 사우디아라비아 (Saudi Arabia)
+        if (/Saudi Arabia|Riyadh|사우디|리야드/i.test(cleanLoc)) {
             return 'Saudi Arabia';
-        } else if (/Japan|Tokyo|Shibuya|일본/i.test(cleanLoc)) {
+        }
+        
+        // 11. 일본 (Japan)
+        if (/Japan|Tokyo|Shibuya|Osaka|Kyoto|일본|도쿄|오사카/i.test(cleanLoc)) {
             return 'Japan';
         }
+
         return cleanLoc.replace(/[\/\\:\*\?"<>\|]/g, ' ').trim();
     }
 }

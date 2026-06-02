@@ -1,7 +1,7 @@
 # ⚙️ LinkedIn Job Scraper Makefile
 # 이 파일은 최상위(Root) 디렉토리에서 scripts/ 폴더 내부의 셸 스크립트를 편리하게 제어하기 위한 인터페이스입니다.
 
-.PHONY: help posts urls html2md clean purge login list test
+.PHONY: help posts urls html2md clean purge login list test migrate
 
 # 기본 대상 (아무런 인자 없이 'make'만 실행했을 때 도움말 표시)
 help:
@@ -16,6 +16,7 @@ help:
 	@echo "  make urls           - data/jobs/lists/*.html 에서 공고 조회 URL을 추출하여 urls.txt에 저장합니다."
 	@echo "  make html2md        - data/jobs/html 내 HTML 캐시와 data/jobs/markdown 내 MD 간 유실 파일을 동기화합니다."
 	@echo "                        (단일 변환 예시: make html2md HTML=입력.html MD=출력.md)"
+	@echo "  make migrate        - 수집된 HTML 및 MD 파일들을 새롭게 업그레이드된 표준 국가명 폴더로 일괄 마이그레이션합니다."
 	@echo "  make clean          - 작업 중 생성된 임시 파일, data/jobs/lists/*.html 및 빈 폴더를 정리합니다."
 	@echo "  make purge          - 수집된 data/jobs 폴더를 완전히 삭제하고 초기화합니다."
 	@echo "  make test           - URL 생성기 모듈의 단위 테스트를 기동하여 정밀 검증합니다."
@@ -52,8 +53,11 @@ urls:
 
 # HTML 백업본과 MD 파일 동기화 및 유실 파일 오프라인 일괄 복원
 html2md:
-html2md:
 	npx ts-node src/markdown_converter.ts $(HTML) $(MD)
+
+# 수집 완료된 전체 데이터를 표준 국가명 폴더로 정렬 및 일괄 마이그레이션
+migrate:
+	npx ts-node src/migrate_locations.ts
 
 clean:
 	rm -rf data/jobs/recent/html data/jobs/recent/markdown

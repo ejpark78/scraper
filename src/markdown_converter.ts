@@ -103,6 +103,24 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
         const fileStats = fs.statSync(htmlPath);
         const baseDateInput = fileStats.mtime;
 
+        // 🛡️ 고진감래 극강 강건성: HTML 타이틀 정보 사전 분석 및 폴백 데이터 수립
+        const pageTitle = $('title').first().text().trim();
+        let fallbackJobTitle = '';
+        let fallbackCompany = '';
+        if (pageTitle) {
+            const parts = pageTitle.split('|').map(p => p.trim());
+            if (parts.length >= 2) {
+                fallbackJobTitle = parts[0];
+                fallbackCompany = parts[1];
+            } else {
+                const atMatch = pageTitle.match(/^(.*)\s+at\s+(.*?)(?:\s*\||$)/i);
+                if (atMatch) {
+                    fallbackJobTitle = atMatch[1].trim();
+                    fallbackCompany = atMatch[2].trim();
+                }
+            }
+        }
+
         // 회사명 추출
         let company = $('.topcard__flavor a, .job-details-jobs-unified-top-card__company-name, [data-tracking-control-name="public_jobs_topcard-company-name"]').first().text().trim().replace(/\s+/g, ' ');
         if (!company) {
@@ -113,6 +131,9 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
                 company = ogDesc.replace(/Posted.*?\.\s*/i, '').substring(0, 20).trim().replace(/\s+/g, ' ');
             }
         }
+        if (!company || company === '정보 없음') {
+            company = fallbackCompany || '정보 없음';
+        }
 
         // 공고 제목 추출
         let jobTitle = $('.topcard__title, h1, .job-details-jobs-unified-top-card__job-title').first().text().trim().replace(/\s+/g, ' ');
@@ -121,10 +142,32 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
             jobTitle = ogTitle.includes(' hiring ') ? ogTitle.split(' hiring ')[1]?.split(' in ')[0] : ogTitle;
             if (jobTitle) jobTitle = jobTitle.trim().replace(/\s+/g, ' ');
         }
+        if (!jobTitle || jobTitle === '정보 없음') {
+            jobTitle = fallbackJobTitle || '정보 없음';
+        }
 
         // 근무 위치 추출
         let location = $('.topcard__flavor--metadata, .job-details-jobs-unified-top-card__flavor--bullet, .topcard__flavor:nth-child(2)').first().text().trim();
         location = location.replace(/\s+/g, ' ');
+        if (!location || location === '정보 없음') {
+            // 폴백: 다국어 난독화 클래스를 깨고 본문 내 텍스트에서 매칭
+            $('span, p, div').each((i, el) => {
+                const text = $(el).text().trim().replace(/\s+/g, ' ');
+                if (text && text.length < 100) {
+                    // Title 이나 Company Name과 겹치는 경우 매칭 차단 (Korean 이 Korea 에 오매칭되는 것 포함 방지)
+                    if (jobTitle && text.includes(jobTitle)) return;
+                    if (company && text.includes(company)) return;
+
+                    if (/\bSouth Korea\b|\bSeoul\b|\bKorea\b|\bIncheon\b|\bGyeonggi\b|\bPangyo\b|\bBundang\b|\bDubai\b|\bAbu Dhabi\b|\bUnited Arab Emirates\b|\bSingapore\b|\bUnited Kingdom\b|\bLondon\b|\bCanada\b|\bToronto\b|\bIreland\b|\bDublin\b|\bGermany\b|\bMarburg\b|\bSaudi Arabia\b|\bRiyadh\b|\bJapan\b|\bTokyo\b|서울|인천|경기|판교|분당|대한민국|두바이|아랍에미리트|싱가포르|영국|런던|캐나다|아일랜드|독일|사우디|일본|도쿄/i.test(text)) {
+                        if (!text.includes('ago') && !text.includes('전') && !text.includes('applicant') && !text.includes('지원자') && !text.includes('hiring') && !text.includes('채용') && !text.includes('Premium')) {
+                            location = text;
+                            return false; // break
+                        }
+                    }
+                }
+            });
+        }
+        if (!location) location = '정보 없음';
 
         // 근무 형태 및 고용 형태
         let workplaceType = '정보 없음';
@@ -134,21 +177,65 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
                 workplaceType = text.replace(/\s+/g, ' ').trim();
             }
         });
+        if (workplaceType === '정보 없음') {
+            $('span, a, p, div').each((i, el) => {
+                const text = $(el).text().trim().replace(/\s+/g, ' ');
+                if (text === 'Remote' || text === 'On-site' || text === 'Hybrid' || text === '원격' || text === '현장' || text === '하이브리드') {
+                    workplaceType = text;
+                    return false; // break
+                }
+            });
+        }
 
         let jobType = $('.description__job-criteria-item:nth-child(1), .ui-鈍').first().text().replace(/\s+/g, ' ').trim();
+        if (!jobType || jobType === '정보 없음') {
+            $('span, a, p, div').each((i, el) => {
+                const text = $(el).text().trim().replace(/\s+/g, ' ');
+                if (text === 'Contract' || text === 'Full-time' || text === 'Part-time' || text === 'Internship' || text === 'Temporary' || text === '계약직' || text === '정규직' || text === '인턴') {
+                    jobType = text;
+                    return false; // break
+                }
+            });
+        }
 
         let applyType = '일반 지원 (External Apply)';
         const applyBtn = $('.apply-button, .jobs-apply-button');
+        let hasEasyApply = false;
         if (applyBtn.length > 0) {
             if (applyBtn.text().trim().match(/Easy Apply|간편 지원/i)) {
-                applyType = '간편 지원 (Easy Apply)';
+                hasEasyApply = true;
             }
+        }
+        if (!hasEasyApply) {
+            $('button, span, a').each((i, el) => {
+                const text = $(el).text().trim();
+                const label = $(el).attr('aria-label') || '';
+                if (text.match(/Easy Apply|간편 지원/i) || label.match(/Easy Apply|간편 지원/i)) {
+                    hasEasyApply = true;
+                    return false; // break
+                }
+            });
+        }
+        if (hasEasyApply) {
+            applyType = '간편 지원 (Easy Apply)';
         }
 
         let jobLink = $('link[rel="canonical"]').attr('href') || '링크를 찾을 수 없음';
 
         // 포스팅 날짜 추출
         let dateClass = $('.posted-time-ago__text, .posted-time-ago, .job-details-jobs-unified-top-card__posted-date, .jobs-unified-top-card__posted-date').first().text().trim().replace(/\s+/g, ' ');
+        if (!dateClass) {
+            $('span, strong, p').each((i, el) => {
+                const text = $(el).text().trim().replace(/\s+/g, ' ');
+                if (text && text.length < 50) {
+                    if (/(\d+)\s*(day|week|month|year|hour|minute|second|일|주|달|개월|년|시간|분|초)s?\s*(ago|전)/i.test(text)) {
+                        dateClass = text;
+                        return false; // break
+                    }
+                }
+            });
+        }
+
         const metaDesc = $('meta[name="description"]').attr('content') || '';
         const metaMatch = metaDesc.match(/Posted\s+([^.]+)\./i);
         let dateMeta = metaMatch ? metaMatch[1].trim() : '';
@@ -163,13 +250,32 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
         const titleId = $('meta[name="titleId"]').attr('content') || '정보 없음';
 
         // 메인 채용 본문 컨테이너 타겟팅 및 리스트 정렬
-        const descriptionContainer = $('.description__text, .jobs-description__content, .jobs-box__html-content');
+        let descriptionContainer = $('.description__text, .jobs-description__content, .jobs-box__html-content');
+        
+        // 🛡️ 고극강 강건성: 난독화 레이아웃 대응을 위해 "About the job" 등 헤더 구조 역추적 매칭 폴백
+        if (descriptionContainer.length === 0 || descriptionContainer.text().trim().length < 100) {
+            $('h1, h2, h3, h4').each((i, el) => {
+                const headerText = $(el).text().trim();
+                if (/About the job|About the role|Job description|직무 소개|역할 소개/i.test(headerText)) {
+                    // h2의 부모/조상 div들 중 본문 텍스트가 충분히 있는 가장 가까운 div를 역추적
+                    $(el).parents('div').each((j, divEl) => {
+                        const divText = $(divEl).text().trim();
+                        if (divText.length > headerText.length + 50) {
+                            descriptionContainer = $(divEl);
+                            return false; // break parents loop
+                        }
+                    });
+                    if (descriptionContainer.length > 0) return false; // break each loop
+                }
+            });
+        }
+
         let aboutCompanyText = '정보 없음';
         let jdText = '정보 없음';
 
         if (descriptionContainer.length > 0) {
             const markup = descriptionContainer.find('.show-more-less-html__markup').first();
-            const target = markup.length > 0 ? markup : descriptionContainer;
+            const target = (markup.length > 0 && markup.text().trim().length > 0) ? markup : descriptionContainer;
             
             let rawMarkdown = this.elementToMarkdown($, target[0]);
             let formattedText = rawMarkdown
@@ -357,7 +463,8 @@ ${jdText}
                     const meta = this.convertHtmlToMarkdown(htmlContent, htmlPath);
 
                     const correctMdDir = path.join(mdBaseDir, meta.locationDirName, meta.postedDate);
-                    const targetMdPath = path.join(correctMdDir, `${jobId}.md`);
+                    const safeMdFileName = NamingUtils.generateSafeFileName(meta.jobTitle, meta.company);
+                    const targetMdPath = path.join(correctMdDir, `${safeMdFileName}.md`);
 
                     await this.prettifyAndSave(meta.rawContent, targetMdPath);
                     console.log(`✨ 복원 완료! [ID: ${jobId}] ➡️ ${targetMdPath}`);
