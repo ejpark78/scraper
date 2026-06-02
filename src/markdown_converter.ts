@@ -103,6 +103,39 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
         const fileStats = fs.statSync(htmlPath);
         const baseDateInput = fileStats.mtime;
 
+        // 메타 식별 정보 추출 (YAML Front Matter 및 링크 복원용)
+        const jobIdMatch = htmlPath.match(/(\d+)\.html$/);
+        let jobId = jobIdMatch ? jobIdMatch[1] : ($('link[rel="canonical"]').attr('href') || '').match(/(\d+)$/)?.[1];
+
+        // 🛡️ 극강 강건성: canonical link와 파일명에서 모두 ID가 안 찾아질 때를 대비한 HTML 분석 폴백
+        if (!jobId) {
+            // A. /jobs/view/ 또는 /view/ 링크에서 ID 추출 시도
+            $('a[href*="/jobs/view/"], a[href*="/view/"]').each((i, el) => {
+                const href = $(el).attr('href') || '';
+                const id = UrlUtils.extractJobId(href);
+                if (id && /^\d+$/.test(id)) {
+                    jobId = id;
+                    return false; // break cheerio loop
+                }
+            });
+        }
+
+        if (!jobId) {
+            // B. componentkey 속성에 포함된 ID 추출 시도 (예: JobDetails_AboutTheJob_4421894718)
+            $('[componentkey]').each((i, el) => {
+                const key = $(el).attr('componentkey') || '';
+                const match = key.match(/(\d+)$/);
+                if (match) {
+                    jobId = match[1];
+                    return false; // break cheerio loop
+                }
+            });
+        }
+
+        if (!jobId) {
+            jobId = '정보 없음';
+        }
+
         // 🛡️ 고진감래 극강 강건성: HTML 타이틀 정보 사전 분석 및 폴백 데이터 수립
         const pageTitle = $('title').first().text().trim();
         let fallbackJobTitle = '';
@@ -220,7 +253,13 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
             applyType = '간편 지원 (Easy Apply)';
         }
 
-        let jobLink = $('link[rel="canonical"]').attr('href') || '링크를 찾을 수 없음';
+        let jobLink = $('link[rel="canonical"]').attr('href') || '';
+        if (!jobLink && jobId && jobId !== '정보 없음') {
+            jobLink = `https://www.linkedin.com/jobs/view/${jobId}`;
+        }
+        if (!jobLink) {
+            jobLink = '링크를 찾을 수 없음';
+        }
 
         // 포스팅 날짜 추출
         let dateClass = $('.posted-time-ago__text, .posted-time-ago, .job-details-jobs-unified-top-card__posted-date, .jobs-unified-top-card__posted-date').first().text().trim().replace(/\s+/g, ' ');
@@ -242,9 +281,6 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
 
         let postedDate = DateUtils.parseRelativeDate(dateClass, dateMeta, baseDateInput);
 
-        // 메타 식별 정보 추출 (YAML Front Matter 용)
-        const jobIdMatch = htmlPath.match(/(\d+)\.html$/);
-        const jobId = jobIdMatch ? jobIdMatch[1] : ($('link[rel="canonical"]').attr('href') || '').match(/(\d+)$/)?.[1] || '정보 없음';
         const companyId = $('meta[name="companyId"]').attr('content') || '정보 없음';
         const industryId = $('meta[name="industryIds"]').attr('content') || '정보 없음';
         const titleId = $('meta[name="titleId"]').attr('content') || '정보 없음';
