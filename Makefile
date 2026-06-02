@@ -28,7 +28,7 @@ LISTS ?= config/config.json
 
 # 1회성 로그인 세션 획득기 기동
 login:
-	node src/login.js
+	npx ts-node src/crawler.ts login
 
 # 채용 목록 자동 스크롤 및 무인 덤프 실행
 list:
@@ -36,7 +36,7 @@ list:
 		echo "❌ 에러: 수집 대상 설정 파일이 존재하지 않습니다: $(LISTS)"; \
 		exit 1; \
 	fi
-	node src/get_list.js $(LISTS)
+	npx ts-node src/crawler.ts list $(LISTS)
 
 # 채용 공고 일괄 수집 및 가공 파이프라인 구동
 posts:
@@ -44,15 +44,16 @@ posts:
 		echo "❌ 에러: 지정한 URL 목록 파일이 존재하지 않습니다: $(URLS)"; \
 		exit 1; \
 	fi
-	bash scripts/get_posts.sh $(URLS)
+	npx ts-node src/pipeline.ts $(URLS)
 
 # URL 추출 및 urls.txt 적재
 urls:
-	bash scripts/get_urls.sh
+	npx ts-node src/url_manager.ts extract "data/jobs/lists/" "data/jobs/html/" "data/jobs/lists/urls.txt"
 
 # HTML 백업본과 MD 파일 동기화 및 유실 파일 오프라인 일괄 복원
 html2md:
-	bash scripts/html2md.sh $(HTML) $(MD)
+html2md:
+	npx ts-node src/markdown_converter.ts $(HTML) $(MD)
 
 clean:
 	rm -rf data/jobs/recent/html data/jobs/recent/markdown
@@ -71,4 +72,4 @@ purge:
 
 # 단위 테스트 구동 (URL 생성기 기능 검증)
 test:
-	node tests/url_generator.test.js
+	npx ts-node tests/url_manager.test.ts

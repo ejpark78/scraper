@@ -1,0 +1,437 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import * as cheerio from 'cheerio';
+import * as prettier from 'prettier';
+import { DateUtils, UrlUtils, NamingUtils } from './utils';
+
+// ⚙️ LinkedIn HTML ➡️ 마크다운 파서 및 오프라인 양방향 동기화(Double-Sync) OOP 엔진 (TypeScript)
+
+export interface JobMeta {
+    jobId: string;
+    company: string;
+    jobTitle: string;
+    rawLocation: string;
+    locationDirName: string;
+    postedDate: string; // YYYY-MM-DD 포맷
+    rawContent: string;
+}
+
+export interface IMarkdownConverter {
+    convertHtmlToMarkdown(htmlContent: string, htmlPath: string): JobMeta;
+    prettify(rawText: string): Promise<string>;
+    prettifyAndSave(rawText: string, outputPath: string): Promise<void>;
+    syncOffline(htmlBaseDir: string, mdBaseDir: string): Promise<void>;
+}
+
+export class LinkedInMarkdownConverter implements IMarkdownConverter {
+    /**
+     * DOM 엘리먼트를 마크다운으로 정밀 파싱하는 private 재귀 도구
+     */
+    private elementToMarkdown($: cheerio.CheerioAPI, el: any): string {
+        let markdown = '';
+        const tagName = el.name;
+        if (tagName === 'script' || tagName === 'style' || tagName === 'button' || tagName === 'icon' || tagName === 'svg') {
+            return '';
+        }
+        
+        $(el).contents().each((i, child: any) => {
+            if (child.type === 'text') {
+                markdown += $(child).text();
+            } else if (child.type === 'tag') {
+                const childTagName = child.name;
+                const childNode = $(child);
+                
+                if (childTagName === 'br') {
+                    markdown += '\n';
+                } else if (childTagName === 'strong' || childTagName === 'b') {
+                    const rawInner = this.elementToMarkdown($, child);
+                    const trimmedInner = rawInner.trim();
+                    if (trimmedInner) {
+                        const leadingSpace = rawInner.match(/^\s*/)?.[0] || '';
+                        const trailingSpace = rawInner.match(/\s*$/)?.[0] || '';
+                        markdown += `${leadingSpace}**${trimmedInner}**${trailingSpace}`;
+                    }
+                } else if (childTagName === 'em' || childTagName === 'i') {
+                    const rawInner = this.elementToMarkdown($, child);
+                    const trimmedInner = rawInner.trim();
+                    if (trimmedInner) {
+                        const leadingSpace = rawInner.match(/^\s*/)?.[0] || '';
+                        const trailingSpace = rawInner.match(/\s*$/)?.[0] || '';
+                        markdown += `${leadingSpace}*${trimmedInner}*${trailingSpace}`;
+                    }
+                } else if (childTagName === 'p') {
+                    const inner = this.elementToMarkdown($, child).trim();
+                    if (inner) {
+                        markdown += `\n\n${inner}\n\n`;
+                    }
+                } else if (childTagName === 'li') {
+                    const inner = this.elementToMarkdown($, child).trim();
+                    if (inner) {
+                        markdown += `\n- ${inner}`;
+                    }
+                } else if (childTagName.match(/^h[1-6]$/)) {
+                    const level = parseInt(childTagName.substring(1));
+                    const inner = this.elementToMarkdown($, child).trim();
+                    if (inner) {
+                        markdown += `\n\n${'#'.repeat(level)} ${inner}\n\n`;
+                    }
+                } else if (childTagName === 'a') {
+                    const href = childNode.attr('href') || '';
+                    const rawInner = this.elementToMarkdown($, child);
+                    const trimmedInner = rawInner.trim();
+                    if (trimmedInner) {
+                        const leadingSpace = rawInner.match(/^\s*/)?.[0] || '';
+                        const trailingSpace = rawInner.match(/\s*$/)?.[0] || '';
+                        markdown += `${leadingSpace}[${trimmedInner}](${href})${trailingSpace}`;
+                    }
+                } else if (childTagName === 'ul' || childTagName === 'ol') {
+                    markdown += `\n${this.elementToMarkdown($, child)}\n`;
+                } else {
+                    markdown += this.elementToMarkdown($, child);
+                }
+            }
+        });
+        
+        return markdown;
+    }
+
+    /**
+     * 🌟 HTML 원본 데이터 파싱 및 메타 요약 정보 객체 빌드 함수 (In-memory Core)
+     */
+    public convertHtmlToMarkdown(htmlContent: string, htmlPath: string): JobMeta {
+        const $ = cheerio.load(htmlContent);
+        const fileStats = fs.statSync(htmlPath);
+        const baseDateInput = fileStats.mtime;
+
+        // 회사명 추출
+        let company = $('.topcard__flavor a, .job-details-jobs-unified-top-card__company-name, [data-tracking-control-name="public_jobs_topcard-company-name"]').first().text().trim().replace(/\s+/g, ' ');
+        if (!company) {
+            let ogDesc = $('meta[property="og:description"]').attr('content') || '';
+            if (ogDesc.includes(' hiring ')) {
+                company = ogDesc.split(' hiring ')[0].replace(/Posted.*?\.\s*/i, '').trim().replace(/\s+/g, ' ');
+            } else {
+                company = ogDesc.replace(/Posted.*?\.\s*/i, '').substring(0, 20).trim().replace(/\s+/g, ' ');
+            }
+        }
+
+        // 공고 제목 추출
+        let jobTitle = $('.topcard__title, h1, .job-details-jobs-unified-top-card__job-title').first().text().trim().replace(/\s+/g, ' ');
+        if (!jobTitle) {
+            let ogTitle = $('meta[property="og:title"]').attr('content') || '';
+            jobTitle = ogTitle.includes(' hiring ') ? ogTitle.split(' hiring ')[1]?.split(' in ')[0] : ogTitle;
+            if (jobTitle) jobTitle = jobTitle.trim().replace(/\s+/g, ' ');
+        }
+
+        // 근무 위치 추출
+        let location = $('.topcard__flavor--metadata, .job-details-jobs-unified-top-card__flavor--bullet, .topcard__flavor:nth-child(2)').first().text().trim();
+        location = location.replace(/\s+/g, ' ');
+
+        // 근무 형태 및 고용 형태
+        let workplaceType = '정보 없음';
+        $('.description__job-criteria-item, .job-details-jobs-unified-top-card__job-insight').each((i, el) => {
+            const text = $(el).text();
+            if (text.includes('Remote') || text.includes('On-site') || text.includes('Hybrid') || text.includes('원격') || text.includes('현장')) {
+                workplaceType = text.replace(/\s+/g, ' ').trim();
+            }
+        });
+
+        let jobType = $('.description__job-criteria-item:nth-child(1), .ui-鈍').first().text().replace(/\s+/g, ' ').trim();
+
+        let applyType = '일반 지원 (External Apply)';
+        const applyBtn = $('.apply-button, .jobs-apply-button');
+        if (applyBtn.length > 0) {
+            if (applyBtn.text().trim().match(/Easy Apply|간편 지원/i)) {
+                applyType = '간편 지원 (Easy Apply)';
+            }
+        }
+
+        let jobLink = $('link[rel="canonical"]').attr('href') || '링크를 찾을 수 없음';
+
+        // 포스팅 날짜 추출
+        let dateClass = $('.posted-time-ago__text, .posted-time-ago, .job-details-jobs-unified-top-card__posted-date, .jobs-unified-top-card__posted-date').first().text().trim().replace(/\s+/g, ' ');
+        const metaDesc = $('meta[name="description"]').attr('content') || '';
+        const metaMatch = metaDesc.match(/Posted\s+([^.]+)\./i);
+        let dateMeta = metaMatch ? metaMatch[1].trim() : '';
+
+        let postedDate = DateUtils.parseRelativeDate(dateClass, dateMeta, baseDateInput);
+
+        // 메타 식별 정보 추출 (YAML Front Matter 용)
+        const jobIdMatch = htmlPath.match(/(\d+)\.html$/);
+        const jobId = jobIdMatch ? jobIdMatch[1] : ($('link[rel="canonical"]').attr('href') || '').match(/(\d+)$/)?.[1] || '정보 없음';
+        const companyId = $('meta[name="companyId"]').attr('content') || '정보 없음';
+        const industryId = $('meta[name="industryIds"]').attr('content') || '정보 없음';
+        const titleId = $('meta[name="titleId"]').attr('content') || '정보 없음';
+
+        // 메인 채용 본문 컨테이너 타겟팅 및 리스트 정렬
+        const descriptionContainer = $('.description__text, .jobs-description__content, .jobs-box__html-content');
+        let aboutCompanyText = '정보 없음';
+        let jdText = '정보 없음';
+
+        if (descriptionContainer.length > 0) {
+            const markup = descriptionContainer.find('.show-more-less-html__markup').first();
+            const target = markup.length > 0 ? markup : descriptionContainer;
+            
+            let rawMarkdown = this.elementToMarkdown($, target[0]);
+            let formattedText = rawMarkdown
+                .replace(/\r/g, '')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
+            // 회사 소개와 JD 분리 로직 (Split Heuristic)
+            const companyEscaped = company ? company.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') : '';
+            let splitDone = false;
+
+            if (companyEscaped) {
+                const aboutCompanyRegex = new RegExp(`(?:^|\\n)(?:#+\\s+)?(About\\s+Us|About\\s+${companyEscaped}|회사\\s*소개|${companyEscaped}\\s*소개)(?:\\s|\\n|:|$)`, 'i');
+                const match = formattedText.match(aboutCompanyRegex);
+                if (match && typeof match.index === 'number') {
+                    const splitIndex = match.index;
+                    const remainingText = formattedText.substring(splitIndex);
+                    const jdStartRegex = /(?:^|\n)(?:#+\\s+)?(Job\s+Description|Role\s+Description|Responsibilities|What\s+you'll\s+do|What\s+you\s+will\s+do|What\s+we\s+are\s+looking\s+for|Qualifications|Requirements|담당\s*업무|주요\s*업무|자격\s*요건|우대\s*사항)(?:\s|\n|:|$)/i;
+                    const jdMatch = remainingText.match(jdStartRegex);
+                    if (jdMatch && typeof jdMatch.index === 'number') {
+                        const jdSplitIndex = splitIndex + jdMatch.index;
+                        aboutCompanyText = formattedText.substring(splitIndex, jdSplitIndex).trim();
+                        jdText = formattedText.substring(jdSplitIndex).trim();
+                        splitDone = true;
+                    }
+                }
+            }
+
+            if (!splitDone) {
+                const jdStartRegex = /(?:^|\n)(?:#+\\s+)?(Responsibilities|What\s+you'll\s+do|What\s+you\s+will\s+do|What\s+we\s+are\s+looking\s+for|Qualifications|Requirements|담당\s*업무|주요\s*업무|자격\s*요건|우대\s*사항)(?:\s|\n|:|$)/i;
+                const jdMatch = formattedText.match(jdStartRegex);
+                if (jdMatch && typeof jdMatch.index === 'number' && jdMatch.index > 0) {
+                    const splitIndex = jdMatch.index;
+                    const prospectiveCompanyText = formattedText.substring(0, splitIndex).trim();
+                    if (prospectiveCompanyText.length >= 20) {
+                        aboutCompanyText = prospectiveCompanyText;
+                        jdText = formattedText.substring(splitIndex).trim();
+                        splitDone = true;
+                    }
+                }
+            }
+
+            if (!splitDone) {
+                jdText = formattedText;
+                let metaDesc = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || '';
+                if (metaDesc) {
+                    let cleanMeta = metaDesc
+                        .replace(/^Posted\s+[^.]+\.\s*/i, '')
+                        .replace(/^Posted\s+[^.일년주월시분초]+\.\s*/i, '')
+                        .split(/See\s+this\s+and\s+similar/i)[0]
+                        .trim();
+                    
+                    if (cleanMeta && cleanMeta.length >= 15 && !cleanMeta.startsWith('Apply for') && !cleanMeta.startsWith('지원')) {
+                        aboutCompanyText = cleanMeta;
+                        splitDone = true;
+                    }
+                }
+                if (!splitDone) {
+                    aboutCompanyText = '정보 없음';
+                }
+            }
+        }
+
+        const markdownOutput = `---
+job_id: "${jobId}"
+company_id: "${companyId}"
+industry_id: "${industryId}"
+title_id: "${titleId}"
+job_title: "${jobTitle || '정보 없음'}"
+company_name: "${company || '정보 없음'}"
+location: "${location || '정보 없음'}"
+posted_date: "${postedDate}"
+---
+
+# 📌 채용 공고 핵심 요약 (Job Summary)
+
+## 🏢 기본 및 근무 정보 (Basic Info)
+* **공고 제목 (Job Title):** ${jobTitle || '정보 없음'}
+* **회사명 (Company):** ${company || '정보 없음'}
+* **근무 위치 (Location):** ${location || '정보 없음'}
+* **근무 형태 (Workplace Type):** ${workplaceType}
+* **고용 형태 (Job Type):** ${jobType || '정보 없음'}
+* **지원 방식 (Apply Type):** ${applyType}
+* **포스팅 날짜 (Posted Date):** ${postedDate}
+* **공고 링크 (Job Link):** [바로가기 (Link)](${jobLink})
+
+---
+
+## 📝 JD (직무 기술서 / Job Description)
+${jdText}
+`;
+
+        return {
+            jobId,
+            company,
+            jobTitle,
+            rawLocation: location,
+            locationDirName: UrlUtils.standardizeLocation(location),
+            postedDate,
+            rawContent: markdownOutput
+        };
+    }
+
+    /**
+     * Prettier 마크다운 가독성 포맷팅 모듈 호출
+     */
+    public async prettify(rawText: string): Promise<string> {
+        const cleaned = rawText.replace(/Show\s+more\s*\n*\s*Show\s+less/gi, '');
+        return await prettier.format(cleaned, {
+            parser: 'markdown',
+            proseWrap: 'preserve',
+            tabWidth: 2,
+            printWidth: 100
+        });
+    }
+
+    /**
+     * 프리티어 적용 후 최종 저장
+     */
+    public async prettifyAndSave(rawText: string, outputPath: string): Promise<void> {
+        const result = await this.prettify(rawText);
+        const parentDir = path.dirname(outputPath);
+        if (!fs.existsSync(parentDir)) {
+            fs.mkdirSync(parentDir, { recursive: true });
+        }
+        fs.writeFileSync(outputPath, result, 'utf-8');
+    }
+
+    /**
+     * 🔄 HTML 디렉토리 내의 유실/손상 파일을 MD 문서와 오프라인으로 자동 동기화(Double-Sync)
+     */
+    public async syncOffline(htmlBaseDir: string, mdBaseDir: string): Promise<void> {
+        if (!fs.existsSync(htmlBaseDir)) {
+            console.log(`💡 HTML 폴더가 없습니다: ${htmlBaseDir}`);
+            return;
+        }
+
+        console.log('🔄 [Double-Sync] HTML 캐시와 MD 문서 간 오프라인 자동 동기화 분석 기동...');
+
+        function getFiles(dir: string, extension: string): string[] {
+            let results: string[] = [];
+            if (!fs.existsSync(dir)) return results;
+            const list = fs.readdirSync(dir);
+            list.forEach(file => {
+                const fullPath = path.join(dir, file);
+                const stat = fs.statSync(fullPath);
+                if (stat && stat.isDirectory()) {
+                    results = results.concat(getFiles(fullPath, extension));
+                } else if (file.endsWith(extension)) {
+                    results.push(fullPath);
+                }
+            });
+            return results;
+        }
+
+        const htmlFiles = getFiles(htmlBaseDir, '.html');
+        const mdFiles = getFiles(mdBaseDir, '.md');
+
+        const mdJobIds = new Set<string>();
+        mdFiles.forEach(file => {
+            try {
+                const content = fs.readFileSync(file, 'utf-8');
+                const match = content.match(/job_id:\s*"(\d+)"/) || content.match(/job_id:\s*(\d+)/);
+                if (match) {
+                    mdJobIds.add(match[1]);
+                }
+            } catch (e: any) {
+                console.error(`⚠️  MD 파일 분석 오류 [${file}]: ${e.message}`);
+            }
+        });
+
+        console.log(`📊 탐색 완료: HTML 백업본 ${htmlFiles.length}개 | 마크다운 포스트 ${mdJobIds.size}개`);
+
+        let syncCount = 0;
+
+        for (const htmlPath of htmlFiles) {
+            const jobId = path.basename(htmlPath, '.html');
+            if (!/^\d+$/.test(jobId)) continue;
+
+            if (!mdJobIds.has(jobId)) {
+                syncCount++;
+                console.log(`🤖 [${syncCount}] 유실본 감지 (ID: ${jobId}) ➡️ 복원 복구 기동 중...`);
+                try {
+                    const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
+                    const meta = this.convertHtmlToMarkdown(htmlContent, htmlPath);
+
+                    const correctMdDir = path.join(mdBaseDir, meta.locationDirName, meta.postedDate);
+                    const targetMdPath = path.join(correctMdDir, `${jobId}.md`);
+
+                    await this.prettifyAndSave(meta.rawContent, targetMdPath);
+                    console.log(`✨ 복원 완료! [ID: ${jobId}] ➡️ ${targetMdPath}`);
+                } catch (err: any) {
+                    console.error(`❌ ID ${jobId} 복구 복원 실패: ${err.message}`);
+                }
+            }
+        }
+
+        if (syncCount === 0) {
+            console.log('🎉 [동기화 완료] 유실되거나 복원이 필요한 오프라인 마크다운 문서가 없습니다. 완벽히 매칭됩니다!');
+        } else {
+            console.log(`🎉 [완료] 총 ${syncCount} 개의 유실된 마크다운 문서를 성공적으로 자동 복원했습니다.`);
+        }
+    }
+
+    /**
+     * 🚀 직접 실행 컨트롤러 엔트리 메서드
+     */
+    public async run(): Promise<void> {
+        const inputHtml = process.argv[2];
+        const outputMd = process.argv[3];
+
+        if (inputHtml && outputMd && inputHtml.endsWith('.html') && outputMd.endsWith('.md')) {
+            console.log(`🤖 [단일 변환] ${inputHtml} ➡️ ${outputMd} 마크다운 변환 기동...`);
+            try {
+                if (!fs.existsSync(inputHtml)) {
+                    throw new Error(`원본 HTML 파일이 존재하지 않습니다: ${inputHtml}`);
+                }
+                const htmlContent = fs.readFileSync(inputHtml, 'utf-8');
+                const meta = this.convertHtmlToMarkdown(htmlContent, inputHtml);
+                
+                await this.prettifyAndSave(meta.rawContent, outputMd);
+                console.log(`✨ 변환 및 프리티어 저장 완료: ${outputMd}`);
+                process.exit(0);
+            } catch (error: any) {
+                console.error(`❌ 단일 변환 에러 발생: ${error.message}`);
+                process.exit(1);
+            }
+        }
+
+        const baseDir = path.join(__dirname, '..', 'data', 'jobs');
+        const htmlBase = path.join(baseDir, 'html');
+        const mdBase = path.join(baseDir, 'markdown');
+
+        await this.syncOffline(htmlBase, mdBase);
+        process.exit(0);
+    }
+}
+
+// 🏭 변환기를 동적으로 생성하는 팩토리 클래스 (Factory Method Pattern 적용)
+export class MarkdownConverterFactory {
+    public static createConverter(platform: string): IMarkdownConverter {
+        const lowerPlatform = platform.toLowerCase().trim();
+        if (lowerPlatform === 'linkedin') {
+            return new LinkedInMarkdownConverter();
+        }
+        
+        // 💡 Wanted 등 향후 새로운 타겟 플랫폼 확장 시 이곳에 분기만 간단히 추가하면 됨.
+        // else if (lowerPlatform === 'wanted') {
+        //     return new WantedMarkdownConverter();
+        // }
+        
+        throw new Error(`[MarkdownConverterFactory] 지원하지 않는 가공 플랫폼입니다: ${platform}`);
+    }
+}
+
+if (require.main === module) {
+    const defaultPlatform = process.argv[4] || 'linkedin';
+    try {
+        const converter = MarkdownConverterFactory.createConverter(defaultPlatform) as LinkedInMarkdownConverter;
+        converter.run();
+    } catch (err: any) {
+        console.error(`❌ 가공엔진 구동 실패: ${err.message}`);
+        process.exit(1);
+    }
+}

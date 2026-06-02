@@ -15,5 +15,11 @@
     "playwright": "^1.60.0",
     "prettier": "^3.8.3",
     "turndown": "^7.2.4"
+  },
+  "devDependencies": {
+    "@types/cheerio": "^0.22.35",
+    "@types/node": "^25.9.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
   }
 }
