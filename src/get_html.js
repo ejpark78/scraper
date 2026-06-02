@@ -54,14 +54,25 @@ console.error(`\n🌐 [1/4] 브라우저 기동 및 페이지 이동 중...`);
             try {
                 const button = page.locator(selector).first();
                 if (await button.isVisible()) {
-                    console.error(`鼠标 🖱️  [3/4] 버튼 발견 (${selector}), 클릭하여 본문 확장 중...`);
-                    await button.click();
-                    await page.waitForTimeout(2000); // 렌더링을 위해 대기 시간 소폭 상향
+                    console.error(`🖱️  [3/4] 버튼 발견 (${selector}), 클릭하여 본문 확장 중...`);
+                    // 🚀 성능 최적화: Playwright의 무거운 Actionability checks(뷰포트 스크롤, 가림 감지 등)로 인한 30초 대기(병목)를 우회하기 위해
+                    // DOM 레벨에서 직접 JavaScript 클릭 이벤트를 트리거합니다. (0초 만에 즉시 실행)
+                    await button.evaluate(el => el.click());
+                    await page.waitForTimeout(2000); // 본문 펼쳐짐 렌더링을 위해 대기
                     clicked = true;
                     break;
                 }
             } catch (e) {
-                continue;
+                // DOM 클릭 실패 시 일반 Playwright click 시도 (짧은 타임아웃 3초 설정)
+                try {
+                    const button = page.locator(selector).first();
+                    await button.click({ timeout: 3000 });
+                    await page.waitForTimeout(2000);
+                    clicked = true;
+                    break;
+                } catch (clickErr) {
+                    continue;
+                }
             }
         }
 
