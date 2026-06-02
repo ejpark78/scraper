@@ -2,6 +2,7 @@ import { chromium, Browser, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 import { LinkedInUrlManager, Config } from './url_manager';
+import { HtmlMinifier } from './utils';
 
 // ⚙️ LinkedIn Playwright 스크래퍼 및 인증 통합 OOP 엔진 (TypeScript)
 
@@ -147,13 +148,14 @@ export class LinkedInCrawler implements ICrawler {
 
             console.log('💾 [4/4] 렌더링 완료! 파일 저장 중...');
             const htmlContent = await page.content();
+            const minifiedHtml = await HtmlMinifier.minify(htmlContent);
             
             const parentDir = path.dirname(outputPath);
             if (!fs.existsSync(parentDir)) {
                 fs.mkdirSync(parentDir, { recursive: true });
             }
-            fs.writeFileSync(outputPath, htmlContent, 'utf-8');
-            console.log(`✨ 백업 성공 -> ${outputPath}`);
+            fs.writeFileSync(outputPath, minifiedHtml, 'utf-8');
+            console.log(`✨ 백업 성공 (압축 및 포맷팅 완료: ${(minifiedHtml.length / 1024).toFixed(1)} KB) -> ${outputPath}`);
 
         } finally {
             await browser.close();
@@ -319,12 +321,14 @@ export class CrawlerFactory {
 }
 
 if (require.main === module) {
-    const defaultPlatform = process.argv[3] || 'linkedin';
+    const lastArg = process.argv[process.argv.length - 1];
+    const platform = (lastArg && ['linkedin'].includes(lastArg.toLowerCase())) ? lastArg : 'linkedin';
     try {
-        const crawler = CrawlerFactory.createCrawler(defaultPlatform) as LinkedInCrawler;
+        const crawler = CrawlerFactory.createCrawler(platform) as LinkedInCrawler;
         crawler.run();
     } catch (err: any) {
         console.error(`❌ 크롤러 구동 실패: ${err.message}`);
         process.exit(1);
     }
 }
+

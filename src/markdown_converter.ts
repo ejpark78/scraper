@@ -419,13 +419,17 @@ ${jdText}
      * Prettier 마크다운 가독성 포맷팅 모듈 호출
      */
     public async prettify(rawText: string): Promise<string> {
-        const cleaned = rawText.replace(/Show\s+more\s*\n*\s*Show\s+less/gi, '');
-        return await prettier.format(cleaned, {
+        let cleaned = rawText.replace(/Show\s+more\s*\n*\s*Show\s+less/gi, '');
+        cleaned = cleaned.replace(/(\r?\n\s*){3,}/g, '\n\n');
+        
+        const formatted = await prettier.format(cleaned, {
             parser: 'markdown',
             proseWrap: 'preserve',
             tabWidth: 2,
             printWidth: 100
         });
+        
+        return formatted.replace(/(\r?\n\s*){3,}/g, '\n\n').trim() + '\n';
     }
 
     /**
