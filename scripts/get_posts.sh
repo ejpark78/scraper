@@ -64,7 +64,7 @@ SKIP_COUNT=$((ORIG_COUNT - FILTERED_COUNT))
 echo "📊 전체 대상: ${ORIG_COUNT}건 | 스킵(이미 완료): ${SKIP_COUNT}건 | 신규 처리 대상: ${FILTERED_COUNT}건"
 
 # 임시 마크다운 파일명 정의 (data/jobs/ 폴더 하위에 임시 생성)
-TEMP_RAW_MD="data/jobs/temp_job_raw.md"
+TEMP_RAW_MD="data/jobs/temp_job_raw_$$.md"
 
 # 2. 파라미터로 전달된 파일의 각 줄(URL)을 읽어서 처리
 while IFS= read -r url || [ -n "$url" ]; do

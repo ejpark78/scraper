@@ -54,10 +54,9 @@ urls:
 html2md:
 	bash scripts/html2md.sh $(HTML) $(MD)
 
-# 작업용 임시 파일 및 recent/ 아카이브 폴더 정리 (최상위 data/jobs 폴더 자체는 보존)
 clean:
 	rm -rf data/jobs/recent/html data/jobs/recent/markdown
-	rm -f data/jobs/temp_job_raw.md
+	rm -f data/jobs/temp_job_raw.md data/jobs/temp_job_raw_*.md
 	rm -f data/jobs/lists/*.html
 	rm -f config/session.json
 	find data/jobs -mindepth 1 -type d -empty -delete 2>/dev/null || true

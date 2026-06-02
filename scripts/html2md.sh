@@ -22,7 +22,7 @@ fi
 # 2. 인자가 없는 경우 (data/jobs/html/ 폴더와 data/jobs/markdown/ 폴더 간 오프라인 일치성 동기화)
 echo "🔄 [동기화 검사 시작] data/jobs/html 내의 HTML 캐시와 data/jobs/markdown 내 마크다운 일치성을 검사합니다."
 
-TEMP_RAW_MD="data/jobs/temp_job_raw.md"
+TEMP_RAW_MD="data/jobs/temp_job_raw_$$.md"
 mkdir -p data/jobs/html data/jobs/markdown
 
 # data/jobs/html 하위의 모든 html 파일들을 찾아 순회
