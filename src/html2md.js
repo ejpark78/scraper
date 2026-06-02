@@ -59,7 +59,7 @@ function parseRelativeDate(relativeStr, timeStr, baseDateInput) {
     let day = String(baseDate.getDate()).padStart(2, '0');
     
     let formattedTime = "";
-    if (timeStr && !foundRelative) {
+    if (timeStr) {
         let timeMatch = timeStr.match(/(\d+):(\d+):(\d+)\s*(AM|PM)/i);
         if (timeMatch) {
             let hour = parseInt(timeMatch[1]);
@@ -72,17 +72,86 @@ function parseRelativeDate(relativeStr, timeStr, baseDateInput) {
         } else {
             // If it's a date representation like "March 15, 2026", parse it directly if valid
             let parsedTimeDate = new Date(timeStr);
-            if (!isNaN(parsedTimeDate.getTime())) {
+            if (!isNaN(parsedTimeDate.getTime()) && !foundRelative) {
                 year = parsedTimeDate.getFullYear();
                 month = String(parsedTimeDate.getMonth() + 1).padStart(2, '0');
                 day = String(parsedTimeDate.getDate()).padStart(2, '0');
-            } else {
+            } else if (isNaN(parsedTimeDate.getTime())) {
                 formattedTime = ` ${timeStr}`;
             }
         }
     }
     
     return `${year}-${month}-${day}${formattedTime}`;
+}
+
+function elementToMarkdown($, el) {
+    let markdown = '';
+    
+    const tagName = el.name;
+    if (tagName === 'script' || tagName === 'style' || tagName === 'button' || tagName === 'icon' || tagName === 'svg') {
+        return '';
+    }
+    
+    $(el).contents().each((i, child) => {
+        if (child.type === 'text') {
+            markdown += $(child).text();
+        } else if (child.type === 'tag') {
+            const childTagName = child.name;
+            const childNode = $(child);
+            
+            if (childTagName === 'br') {
+                markdown += '\n';
+            } else if (childTagName === 'strong' || childTagName === 'b') {
+                const rawInner = elementToMarkdown($, child);
+                const trimmedInner = rawInner.trim();
+                if (trimmedInner) {
+                    const leadingSpace = rawInner.match(/^\s*/)[0];
+                    const trailingSpace = rawInner.match(/\s*$/)[0];
+                    markdown += `${leadingSpace}**${trimmedInner}**${trailingSpace}`;
+                }
+            } else if (childTagName === 'em' || childTagName === 'i') {
+                const rawInner = elementToMarkdown($, child);
+                const trimmedInner = rawInner.trim();
+                if (trimmedInner) {
+                    const leadingSpace = rawInner.match(/^\s*/)[0];
+                    const trailingSpace = rawInner.match(/\s*$/)[0];
+                    markdown += `${leadingSpace}*${trimmedInner}*${trailingSpace}`;
+                }
+            } else if (childTagName === 'p') {
+                const inner = elementToMarkdown($, child).trim();
+                if (inner) {
+                    markdown += `\n\n${inner}\n\n`;
+                }
+            } else if (childTagName === 'li') {
+                const inner = elementToMarkdown($, child).trim();
+                if (inner) {
+                    markdown += `\n- ${inner}`;
+                }
+            } else if (childTagName.match(/^h[1-6]$/)) {
+                const level = parseInt(childTagName.substring(1));
+                const inner = elementToMarkdown($, child).trim();
+                if (inner) {
+                    markdown += `\n\n${'#'.repeat(level)} ${inner}\n\n`;
+                }
+            } else if (childTagName === 'a') {
+                const href = childNode.attr('href') || '';
+                const rawInner = elementToMarkdown($, child);
+                const trimmedInner = rawInner.trim();
+                if (trimmedInner) {
+                    const leadingSpace = rawInner.match(/^\s*/)[0];
+                    const trailingSpace = rawInner.match(/\s*$/)[0];
+                    markdown += `${leadingSpace}[${trimmedInner}](${href})${trailingSpace}`;
+                }
+            } else if (childTagName === 'ul' || childTagName === 'ol') {
+                markdown += `\n${elementToMarkdown($, child)}\n`;
+            } else {
+                markdown += elementToMarkdown($, child);
+            }
+        }
+    });
+    
+    return markdown;
 }
 
 // 1. 인자 입력 확인
@@ -164,42 +233,27 @@ try {
         postedDate = '정보 없음';
     }
 
+    // 메타 식별 정보 추출 (YAML Front Matter 용)
+    const jobIdMatch = inputFile.match(/(\d+)\.html$/);
+    const jobId = jobIdMatch ? jobIdMatch[1] : ($('link[rel="canonical"]').attr('href') || '').match(/(\d+)$/)?.[1] || '정보 없음';
+    const companyId = $('meta[name="companyId"]').attr('content') || '정보 없음';
+    const industryId = $('meta[name="industryIds"]').attr('content') || '정보 없음';
+    const titleId = $('meta[name="titleId"]').attr('content') || '정보 없음';
+
     // 메인 채용 본문 컨테이너 타겟팅 및 리스트 정렬
     const descriptionContainer = $('.description__text, .jobs-description__content, .jobs-box__html-content');
     let aboutCompanyText = '정보 없음';
     let jdText = '정보 없음';
 
     if (descriptionContainer.length > 0) {
-        let formattedText = '';
-
-        // 본문 태그 순회하며 완벽한 마크다운 기호 배치
-        descriptionContainer.find('p, li, h1, h2, h3, h4, h5, h6').each((index, element) => {
-            const node = $(element);
-            let lineHtml = node.html() || '';
-
-            lineHtml = lineHtml.replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
-                               .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**');
-
-            lineHtml = lineHtml.replace(/&amp;/g, '&')
-                               .replace(/&nbsp;/g, ' ')
-                               .replace(/&lt;/g, '<')
-                               .replace(/&gt;/g, '>');
-
-            let cleanLineText = cheerio.load(lineHtml).text().trim();
-
-            if (cleanLineText) {
-                if (element.name === 'li') {
-                    formattedText += `- ${cleanLineText}\n`;
-                } else if (element.name.match(/^h[1-6]$/)) {
-                    const level = element.name.substring(1);
-                    formattedText += `\n${ '#'.repeat(level) } ${cleanLineText}\n\n`;
-                } else {
-                    formattedText += `${cleanLineText}\n\n`;
-                }
-            }
-        });
-
-        formattedText = formattedText.trim();
+        const markup = descriptionContainer.find('.show-more-less-html__markup').first();
+        const target = markup.length > 0 ? markup : descriptionContainer;
+        
+        let rawMarkdown = elementToMarkdown($, target[0]);
+        let formattedText = rawMarkdown
+            .replace(/\r/g, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
 
         // 🌟 고도화된 회사 소개와 JD 분리 로직 (Split Heuristic)
         const companyEscaped = company ? company.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') : '';
@@ -268,18 +322,17 @@ try {
 
     console.log(`📝 [4/5] 마크다운 문서 템플릿 렌더링 중...`);
 
-    // 🏢 회사 소개 정보가 존재할 때만 관련 마크다운 섹션과 구분선을 추가하고, 정보가 없을 경우 섹션 자체를 완전히 생략
-    let aboutCompanySection = '';
-    if (aboutCompanyText && aboutCompanyText !== '정보 없음') {
-        aboutCompanySection = `
+    const markdownOutput = `---
+job_id: "${jobId}"
+company_id: "${companyId}"
+industry_id: "${industryId}"
+title_id: "${titleId}"
+job_title: "${jobTitle || '정보 없음'}"
+company_name: "${company || '정보 없음'}"
+location: "${location || '정보 없음'}"
+posted_date: "${postedDate}"
 ---
 
-## 🏢 About the Company (회사 소개)
-${aboutCompanyText}
-`;
-    }
-
-    const markdownOutput = `
 # 📌 채용 공고 핵심 요약 (Job Summary)
 
 ## 🏢 기본 및 근무 정보 (Basic Info)
@@ -291,7 +344,6 @@ ${aboutCompanyText}
 * **지원 방식 (Apply Type):** ${applyType}
 * **포스팅 날짜 (Posted Date):** ${postedDate}
 * **공고 링크 (Job Link):** [바로가기 (Link)](${jobLink})
-${aboutCompanySection}
 
 ---
 
