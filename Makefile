@@ -49,24 +49,24 @@ posts:
 		echo "❌ 에러: 지정한 URL 목록 파일이 존재하지 않습니다: $(URLS)"; \
 		exit 1; \
 	fi
-	npx ts-node src/pipeline.ts $(URLS)
+	npx ts-node src/jobs/jobs_pipeline.ts $(URLS)
 
 # URL 추출 및 urls.txt 적재
 urls:
-	npx ts-node src/url_manager.ts extract "data/jobs/lists/raw/" "data/jobs/html/" "data/jobs/lists/urls.txt"
+	npx ts-node src/jobs/url_manager.ts extract "data/jobs/lists/raw/" "data/jobs/html/" "data/jobs/lists/urls.txt"
 
 # HTML 백업본과 MD 파일 동기화 및 유실 파일 오프라인 일괄 복원
 html2md:
-	npx ts-node src/markdown_converter.ts $(HTML) $(MD)
-	npx ts-node src/reconvert_all.ts
+	npx ts-node src/jobs/jobs_converter.ts $(HTML) $(MD)
+	npx ts-node src/company/reconvert_all.ts
 
 # 수집 완료된 전체 데이터를 표준 국가명 폴더로 정렬 및 일괄 마이그레이션
 migrate:
-	npx ts-node src/migrate_locations.ts
+	npx ts-node src/jobs/migrate_locations.ts
 
 # 추출된 회사 URL 목록(compay.txt)을 기반으로 회사 정보(HTML 및 Markdown)를 수집하여 저장합니다.
 company:
-	npx ts-node src/company_pipeline.ts "data/jobs/lists/compay.txt"
+	npx ts-node src/company/company_pipeline.ts "data/jobs/lists/compay.txt"
 
 clean: clean-lists clean-recent
 	rm -f data/jobs/temp_job_raw.md data/jobs/temp_job_raw_*.md

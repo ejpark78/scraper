@@ -2,9 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
-import { DateUtils, UrlUtils, NamingUtils } from './utils';
-
-// ⚙️ LinkedIn HTML ➡️ 마크다운 파서 및 오프라인 양방향 동기화(Double-Sync) OOP 엔진 (TypeScript)
+import { DateUtils, UrlUtils, NamingUtils } from '../utils';
+import { IConverter } from '../core/IConverter';
 
 export interface JobMeta {
     jobId: string;
@@ -16,14 +15,7 @@ export interface JobMeta {
     rawContent: string;
 }
 
-export interface IMarkdownConverter {
-    convertHtmlToMarkdown(htmlContent: string, htmlPath: string): JobMeta;
-    prettify(rawText: string): Promise<string>;
-    prettifyAndSave(rawText: string, outputPath: string): Promise<void>;
-    syncOffline(htmlBaseDir: string, mdBaseDir: string): Promise<void>;
-}
-
-export class LinkedInMarkdownConverter implements IMarkdownConverter {
+export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
     /**
      * DOM 엘리먼트를 마크다운으로 정밀 파싱하는 private 재귀 도구
      */
@@ -98,29 +90,32 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
     /**
      * 🌟 HTML 원본 데이터 파싱 및 메타 요약 정보 객체 빌드 함수 (In-memory Core)
      */
-    public convertHtmlToMarkdown(htmlContent: string, htmlPath: string): JobMeta {
+    public convertHtmlToMarkdown(htmlContent: string, id: string, url: string, baseDateInput?: Date): JobMeta {
         const $ = cheerio.load(htmlContent);
-        const fileStats = fs.statSync(htmlPath);
-        const baseDateInput = fileStats.mtime;
-
-        // 메타 식별 정보 추출 (YAML Front Matter 및 링크 복원용)
-        const jobIdMatch = htmlPath.match(/(\d+)\.html$/);
-        let jobId = jobIdMatch ? jobIdMatch[1] : ($('link[rel="canonical"]').attr('href') || '').match(/(\d+)$/)?.[1];
+        let jobId = id;
 
         // 🛡️ 극강 강건성: canonical link와 파일명에서 모두 ID가 안 찾아질 때를 대비한 HTML 분석 폴백
-        if (!jobId) {
+        if (!jobId || jobId === '정보 없음') {
+            const canonicalHref = $('link[rel="canonical"]').attr('href') || '';
+            const match = canonicalHref.match(/(\d+)$/);
+            if (match) {
+                jobId = match[1];
+            }
+        }
+
+        if (!jobId || jobId === '정보 없음') {
             // A. /jobs/view/ 또는 /view/ 링크에서 ID 추출 시도
             $('a[href*="/jobs/view/"], a[href*="/view/"]').each((i, el) => {
                 const href = $(el).attr('href') || '';
-                const id = UrlUtils.extractJobId(href);
-                if (id && /^\d+$/.test(id)) {
-                    jobId = id;
+                const extracted = UrlUtils.extractJobId(href);
+                if (extracted && /^\d+$/.test(extracted)) {
+                    jobId = extracted;
                     return false; // break cheerio loop
                 }
             });
         }
 
-        if (!jobId) {
+        if (!jobId || jobId === '정보 없음') {
             // B. componentkey 속성에 포함된 ID 추출 시도 (예: JobDetails_AboutTheJob_4421894718)
             $('[componentkey]').each((i, el) => {
                 const key = $(el).attr('componentkey') || '';
@@ -253,7 +248,7 @@ export class LinkedInMarkdownConverter implements IMarkdownConverter {
             applyType = '간편 지원 (Easy Apply)';
         }
 
-        let jobLink = $('link[rel="canonical"]').attr('href') || '';
+        let jobLink = url || $('link[rel="canonical"]').attr('href') || '';
         if (!jobLink && jobId && jobId !== '정보 없음') {
             jobLink = `https://www.linkedin.com/jobs/view/${jobId}`;
         }
@@ -500,7 +495,8 @@ ${jdText}
                 console.log(`🤖 [${syncCount}] 유실본 감지 (ID: ${jobId}) ➡️ 복원 복구 기동 중...`);
                 try {
                     const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
-                    const meta = this.convertHtmlToMarkdown(htmlContent, htmlPath);
+                    const fileStats = fs.statSync(htmlPath);
+                    const meta = this.convertHtmlToMarkdown(htmlContent, jobId, `https://www.linkedin.com/jobs/view/${jobId}`, fileStats.mtime);
 
                     const correctMdDir = path.join(mdBaseDir, meta.locationDirName, meta.postedDate);
                     const safeMdFileName = NamingUtils.generateSafeFileName(meta.jobTitle, meta.company);
@@ -535,7 +531,9 @@ ${jdText}
                     throw new Error(`원본 HTML 파일이 존재하지 않습니다: ${inputHtml}`);
                 }
                 const htmlContent = fs.readFileSync(inputHtml, 'utf-8');
-                const meta = this.convertHtmlToMarkdown(htmlContent, inputHtml);
+                const fileStats = fs.statSync(inputHtml);
+                const jobId = path.basename(inputHtml, '.html');
+                const meta = this.convertHtmlToMarkdown(htmlContent, jobId, `https://www.linkedin.com/jobs/view/${jobId}`, fileStats.mtime);
                 
                 await this.prettifyAndSave(meta.rawContent, outputMd);
                 console.log(`✨ 변환 및 프리티어 저장 완료: ${outputMd}`);
@@ -546,7 +544,7 @@ ${jdText}
             }
         }
 
-        const baseDir = path.join(__dirname, '..', 'data', 'jobs');
+        const baseDir = path.join(__dirname, '..', '..', 'data', 'jobs');
         const htmlBase = path.join(baseDir, 'html');
         const mdBase = path.join(baseDir, 'markdown');
 
@@ -557,16 +555,11 @@ ${jdText}
 
 // 🏭 변환기를 동적으로 생성하는 팩토리 클래스 (Factory Method Pattern 적용)
 export class MarkdownConverterFactory {
-    public static createConverter(platform: string): IMarkdownConverter {
+    public static createConverter(platform: string): IConverter<JobMeta> {
         const lowerPlatform = platform.toLowerCase().trim();
         if (lowerPlatform === 'linkedin') {
             return new LinkedInMarkdownConverter();
         }
-        
-        // 💡 Wanted 등 향후 새로운 타겟 플랫폼 확장 시 이곳에 분기만 간단히 추가하면 됨.
-        // else if (lowerPlatform === 'wanted') {
-        //     return new WantedMarkdownConverter();
-        // }
         
         throw new Error(`[MarkdownConverterFactory] 지원하지 않는 가공 플랫폼입니다: ${platform}`);
     }

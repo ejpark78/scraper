@@ -1,8 +1,8 @@
 import { chromium, Browser, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
-import { LinkedInUrlManager, Config } from './url_manager';
-import { HtmlMinifier } from './utils';
+import { LinkedInUrlManager, Config } from './jobs/url_manager';
+import { HtmlMinifier, DateUtils } from './utils';
 
 // ⚙️ LinkedIn Playwright 스크래퍼 및 인증 통합 OOP 엔진 (TypeScript)
 
@@ -287,6 +287,9 @@ export class LinkedInCrawler implements ICrawler {
             const context = await browser.newContext(contextOptions);
             const page = await context.newPage();
 
+            const loginStatus = isLoggedIn ? '[로그인됨]' : '[로그인안됨]';
+            const startTime = Date.now();
+
             for (let i = 0; i < urls.length; i++) {
                 const url = urls[i];
                 
@@ -300,8 +303,21 @@ export class LinkedInCrawler implements ICrawler {
                 }
                 const savePath = path.join(this.listDir, outputFileName);
 
+                // 진행 시간 및 ETR(예상 완료 시간) 계산
+                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                const runtimeStr = DateUtils.formatSeconds(elapsedSeconds);
+                
+                let etrStr = '계산 중...';
+                if (i > 0) {
+                    const completedCount = i;
+                    const remainingCount = urls.length - completedCount;
+                    const avgSpeed = elapsedSeconds / completedCount;
+                    const remainingSeconds = Math.floor(avgSpeed * remainingCount);
+                    etrStr = DateUtils.formatSeconds(remainingSeconds);
+                }
+
                 console.log(`\n──────────────────────────────────────────────────`);
-                console.log(`📡 [${i + 1}/${urls.length}] 목록 수집 중: ${decodeURIComponent(url)}`);
+                console.log(`📡 [${i + 1}/${urls.length}][${runtimeStr}/${etrStr}]${loginStatus} 목록 수집 중: ${decodeURIComponent(url)}`);
                 console.log(`──────────────────────────────────────────────────`);
 
                 await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });

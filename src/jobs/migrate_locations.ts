@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { LinkedInMarkdownConverter } from './markdown_converter';
-import { NamingUtils, UrlUtils, IOUtils } from './utils';
+import { LinkedInMarkdownConverter } from './jobs_converter';
+import { NamingUtils, UrlUtils, IOUtils } from '../utils';
 
 // 📂 HTML 캐시 및 MD 포스트 국가명 표준화 마이그레이션 엔진
 
@@ -18,7 +18,7 @@ export class LocationMigrator {
     private readonly converter: LinkedInMarkdownConverter;
 
     constructor(config: MigrationConfig = {}) {
-        this.baseDir = config.baseDir || path.join(__dirname, '..', 'data', 'jobs');
+        this.baseDir = config.baseDir || path.join(__dirname, '..', '..', 'data', 'jobs');
         this.htmlDir = config.htmlDir || path.join(this.baseDir, 'html');
         this.mdDir = config.mdDir || path.join(this.baseDir, 'markdown');
         this.converter = new LinkedInMarkdownConverter();
@@ -71,7 +71,13 @@ export class LocationMigrator {
 
             try {
                 const htmlContent = fs.readFileSync(oldHtmlPath, 'utf-8');
-                const meta = this.converter.convertHtmlToMarkdown(htmlContent, oldHtmlPath);
+                const fileStats = fs.statSync(oldHtmlPath);
+                const meta = this.converter.convertHtmlToMarkdown(
+                    htmlContent, 
+                    jobId, 
+                    `https://www.linkedin.com/jobs/view/${jobId}`, 
+                    fileStats.mtime
+                );
 
                 const newHtmlFolder = path.join(this.htmlDir, meta.locationDirName, meta.postedDate);
                 const newHtmlPath = path.join(newHtmlFolder, `${jobId}.html`);

@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
+import { IConverter } from '../core/IConverter';
 
 export interface CompanyMeta {
     companyId: string;
@@ -26,7 +27,7 @@ export interface CompanyMeta {
     rawContent: string;
 }
 
-export class CompanyMarkdownConverter {
+export class CompanyMarkdownConverter implements IConverter<CompanyMeta> {
     /**
      * HTML 내용을 파싱하여 회사 메타정보와 마크다운 문서를 빌드합니다. (하이브리드 구조: JSON 우선 ➡️ DOM 폴백)
      */
@@ -410,4 +411,3 @@ ${specialties ? specialties.split(', ').map(s => `* ${s}`).join('\n') : '정보 
         fs.writeFileSync(outputPath, result, 'utf-8');
     }
 }
-

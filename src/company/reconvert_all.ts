@@ -2,10 +2,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import { CompanyMarkdownConverter } from './company_converter';
-import { NamingUtils, IOUtils } from './utils';
+import { NamingUtils, IOUtils } from '../utils';
 
 async function main() {
-    const baseDir = path.join(__dirname, '..', 'data', 'compay');
+    const baseDir = path.join(__dirname, '..', '..', 'data', 'compay');
     const htmlDir = path.join(baseDir, 'html');
     const mdDir = path.join(baseDir, 'markdown');
     
@@ -116,7 +116,7 @@ async function main() {
         console.log(`   📂 Migrated: [${countryDir}] ${companyName} -> ${safeFileName}.html / .md`);
     }
     
-    // 4. 빈 서브 디렉토리 정리 (KR, US, GB 등 예전 2자리 국가코드 빈 폴더 청소)
+    // 4. 빈 서브 디렉토리 정리 (예전 빈 폴더 청소)
     cleanEmptySubdirs(htmlDir);
     cleanEmptySubdirs(mdDir);
     
@@ -127,7 +127,6 @@ function cleanEmptySubdirs(dirPath: string) {
     if (!fs.existsSync(dirPath)) return;
     const subdirs = fs.readdirSync(dirPath).map(n => path.join(dirPath, n)).filter(p => fs.statSync(p).isDirectory());
     for (const subdir of subdirs) {
-        // 하위 폴더 내부에 또 폴더가 있거나 파일이 있는지 재귀적/단층 확인 후 삭제
         const files = fs.readdirSync(subdir);
         if (files.length === 0) {
             fs.rmdirSync(subdir);
