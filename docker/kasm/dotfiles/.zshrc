@@ -1,3 +1,4 @@
+export IN_CONTAINER=true
 export ZSH="$HOME/.oh-my-zsh"
 
 ZSH_THEME="robbyrussell"
@@ -14,6 +15,11 @@ plugins=(
 )
 
 source $ZSH/oh-my-zsh.sh
+
+# 컨테이너 전용 프롬프트 식별자 추가 (robbyrussell 테마 기반 커스텀)
+if [ "$IN_CONTAINER" = "true" ]; then
+  PROMPT="%(?:%{$fg_bold[blue]%}🐳 kasm-vdi %{$fg_bold[green]%}➜ :%{$fg_bold[blue]%}🐳 kasm-vdi %{$fg_bold[red]%}➜ ) %{$fg[cyan]%}%c%{$reset_color%} \$(git_prompt_info)"
+fi
 
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 
@@ -42,5 +48,4 @@ export LANGUAGE=ko_KR.UTF-8
 export LC_ALL=ko_KR.UTF-8
 
 # Kasm 컨테이너 내부임을 명시하여 Makefile이 직접 명령을 수행하도록 설정
-export IN_CONTAINER=true
 

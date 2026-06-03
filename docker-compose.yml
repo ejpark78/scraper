@@ -1,23 +1,25 @@
 services:
-  clipper:
-    build:
-      context: .
-      dockerfile: docker/clipper/Dockerfile
-    image: linkedin-clipper:latest
+  traefik:
+    image: traefik:v3.7.1
+    command:
+      - "--ping=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--serverstransport.insecureskipverify=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
     environment:
-      - AUTH=${AUTH:-}
-      - PARALLEL=${PARALLEL:-}
-      - LISTS=${LISTS:-}
-      - URLS=${URLS:-}
-      - HTML=${HTML:-}
-      - MD=${MD:-}
+      - DOCKER_API_VERSION=1.40
     volumes:
-      - ./config:/app/config
-      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('playwright')"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
       retries: 3
 
   kasm:
@@ -49,25 +51,23 @@ services:
       - "traefik.http.services.kasm.loadbalancer.server.port=6901"
       - "traefik.http.services.kasm.loadbalancer.server.scheme=https"
 
-  traefik:
-    image: traefik:v3.7.1
-    command:
-      - "--ping=true"
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--serverstransport.insecureskipverify=true"
-    ports:
-      - "80:80"
-      - "8080:8080"
+  clipper:
+    build:
+      context: .
+      dockerfile: docker/clipper/Dockerfile
+    image: linkedin-clipper:latest
     environment:
-      - DOCKER_API_VERSION=1.40
+      - AUTH=${AUTH:-}
+      - PARALLEL=${PARALLEL:-}
+      - LISTS=${LISTS:-}
+      - URLS=${URLS:-}
+      - HTML=${HTML:-}
+      - MD=${MD:-}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    restart: unless-stopped
+      - ./config:/app/config
+      - ./data:/app/data
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "node", "-e", "require('playwright')"]
+      interval: 30s
+      timeout: 10s
       retries: 3
