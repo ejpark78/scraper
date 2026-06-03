@@ -1,6 +1,6 @@
 # ⚙️ LinkedIn Job Scraper Makefile
 
-.PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build
+.PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm
 
 # URLS 변수 기본값 설정
 URLS ?= data/jobs/lists/urls.txt
@@ -22,6 +22,7 @@ help:
 	@echo "사용 가능한 명령어 목록 (자동 Docker 가동):"
 	@echo "  make build          - Docker 컨테이너 이미지를 빌드합니다."
 	@echo "  make login          - [Host] 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
+	@echo "  make kasm           - [Host] Kasm 컨테이너 내부 쉘(shell)에 진입합니다."
 	@echo "  make open           - [Host] 로그인 세션 기반 헤드풀 브라우저 기동"
 	@echo "  make list           - [Docker] config.json 조건 기반으로 목록 HTML을 무인 수집합니다."
 	@echo "  make jobs           - [Docker] urls.txt의 URL을 병렬 수집하여 마크다운으로 저장합니다."
@@ -43,6 +44,9 @@ login:
 
 open:
 	npx ts-node src/browser/open.ts
+
+kasm:
+	docker compose exec -it kasm /bin/bash
 
 logout:
 	rm -f config/session.json

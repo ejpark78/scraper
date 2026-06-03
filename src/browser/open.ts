@@ -22,7 +22,7 @@ async function runBrowser() {
 
     const browser = await chromium.launch({
         headless: false,
-        args: ['--start-maximized'] // 화면 최대화
+        args: ['--start-maximized', '--disable-blink-features=AutomationControlled'] // 화면 최대화 및 자동화 감지 방지
     });
 
     const contextOptions: any = {
@@ -40,6 +40,14 @@ async function runBrowser() {
     }
 
     const context = await browser.newContext(contextOptions);
+
+    // 🛡️ Google OAuth 로그인 시 "This browser or app may not be secure" 에러 방지를 위한 webdriver 감지 우회
+    await context.addInitScript(() => {
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => undefined,
+        });
+    });
+
     const page = await context.newPage();
 
     let lastSavedUrl = '';

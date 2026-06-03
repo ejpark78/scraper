@@ -1,6 +1,8 @@
 services:
   clipper:
-    build: .
+    build:
+      context: .
+      dockerfile: docker/clipper/Dockerfile
     image: linkedin-clipper:latest
     environment:
       - AUTH=${AUTH:-}
@@ -18,3 +20,59 @@ services:
       timeout: 10s
       retries: 3
 
+  kasm:
+    build:
+      context: .
+      dockerfile: docker/kasm/Dockerfile
+    image: linkedin-kasm:latest
+    container_name: linkedin-kasm
+    ports:
+      - "6901:6901"
+    environment:
+      - VNC_PW=password2026
+      - VNCOPTIONS=-disableBasicAuth
+    shm_size: "1gb"
+    volumes:
+      - .:/home/kasm-user/linkedin
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.zshrc:/home/kasm-user/.zshrc:ro
+      - ~/.oh-my-zsh:/home/kasm-user/.oh-my-zsh:ro
+      - ~/.zsh:/home/kasm-user/.zsh:ro
+      - ~/.zsh_history:/home/kasm-user/.zsh_history
+      - ~/.gitconfig:/home/kasm-user/.gitconfig:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-k", "https://localhost:6901/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kasm.rule=Host(`kasm.localhost`)"
+      - "traefik.http.routers.kasm.entrypoints=web"
+      - "traefik.http.services.kasm.loadbalancer.server.port=6901"
+      - "traefik.http.services.kasm.loadbalancer.server.scheme=https"
+
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    command:
+      - "--ping=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--serverstransport.insecureskipverify=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    environment:
+      - DOCKER_API_VERSION=1.40
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

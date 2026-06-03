@@ -79,12 +79,23 @@ export class LinkedInCrawler implements ICrawler {
             fs.mkdirSync(configDir, { recursive: true });
         }
 
-        const browser: Browser = await chromium.launch({ headless: false });
+        const browser: Browser = await chromium.launch({
+            headless: false,
+            args: ['--disable-blink-features=AutomationControlled']
+        });
         const context = await browser.newContext({
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             viewport: { width: 1280, height: 800 },
             locale: 'en-US'
         });
+
+        // 🛡️ Google OAuth 로그인 시 "This browser or app may not be secure" 에러 방지를 위한 webdriver 감지 우회
+        await context.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+            });
+        });
+
         const page: Page = await context.newPage();
 
         console.log('📡 LinkedIn 로그인 페이지로 이동합니다. 인증을 완료해 주세요...');
@@ -108,7 +119,11 @@ export class LinkedInCrawler implements ICrawler {
      */
     public async scrapeJob(url: string, outputPath: string): Promise<void> {
         const isLoggedIn = this.useLogin && fs.existsSync(this.sessionPath);
-        const browser: Browser = await chromium.launch({ headless: true });
+        const isHeadless = process.env.HEADLESS !== 'false';
+        const browser: Browser = await chromium.launch({
+            headless: isHeadless,
+            args: ['--disable-blink-features=AutomationControlled']
+        });
         
         try {
             const contextOptions: any = {
@@ -121,6 +136,11 @@ export class LinkedInCrawler implements ICrawler {
             }
 
             const context = await browser.newContext(contextOptions);
+            await context.addInitScript(() => {
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+            });
             const page: Page = await context.newPage();
 
             console.log('🌐 [1/4] 브라우저 기동 및 페이지 이동 중...');
@@ -183,7 +203,11 @@ export class LinkedInCrawler implements ICrawler {
             targetUrl = targetUrl.replace(/\/$/, '') + '/about/';
         }
 
-        const browser: Browser = await chromium.launch({ headless: true });
+        const isHeadless = process.env.HEADLESS !== 'false';
+        const browser: Browser = await chromium.launch({
+            headless: isHeadless,
+            args: ['--disable-blink-features=AutomationControlled']
+        });
         
         try {
             const contextOptions: any = {
@@ -196,6 +220,11 @@ export class LinkedInCrawler implements ICrawler {
             }
 
             const context = await browser.newContext(contextOptions);
+            await context.addInitScript(() => {
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+            });
             const page: Page = await context.newPage();
 
             console.log(`🌐 [1/4] 브라우저 기동 및 회사 정보 페이지 이동 중... (${decodeURIComponent(targetUrl)})`);
@@ -280,7 +309,11 @@ export class LinkedInCrawler implements ICrawler {
         const parallelLimit = parseInt(process.env.PARALLEL || '1', 10);
         console.log(`⚙️  동시 작업 스레드(Playwright) 제한 설정: ${parallelLimit}개`);
 
-        const browser: Browser = await chromium.launch({ headless: true });
+        const isHeadless = process.env.HEADLESS !== 'false';
+        const browser: Browser = await chromium.launch({
+            headless: isHeadless,
+            args: ['--disable-blink-features=AutomationControlled']
+        });
         
         try {
             const contextOptions: any = {
@@ -328,6 +361,11 @@ export class LinkedInCrawler implements ICrawler {
                 console.log(`──────────────────────────────────────────────────`);
 
                 const context = await browser.newContext(contextOptions);
+                await context.addInitScript(() => {
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined,
+                    });
+                });
                 const page = await context.newPage();
 
                 try {
