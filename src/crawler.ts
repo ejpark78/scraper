@@ -14,7 +14,7 @@ export interface ICrawler {
 
 export class LinkedInCrawler implements ICrawler {
     private readonly sessionPath: string = path.join(__dirname, '..', 'config', 'session.json');
-    private readonly listDir: string = path.join(__dirname, '..', 'data', 'jobs', 'lists');
+    private readonly listDir: string = path.join(__dirname, '..', 'data', 'jobs', 'lists', 'raw');
 
     /**
      * 지능형 스크롤 함수: 레이아웃 변화에 상관없이 채용 공고 카드가 다 나타나도록 스크롤다운 유도
@@ -256,7 +256,7 @@ export class LinkedInCrawler implements ICrawler {
                 const htmlContent = await page.content();
                 fs.writeFileSync(savePath, htmlContent, 'utf-8');
 
-                console.log(`💾 덤프 성공 -> list/${outputFileName} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
+                console.log(`💾 덤프 성공 -> lists/raw/${outputFileName} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
             }
 
             console.log('\n🎉 모든 목록 URL의 무인 백그라운드 수집을 정상적으로 마쳤습니다!');

@@ -192,7 +192,7 @@ npx playwright install chromium
   ┌───────────────────────────────────────────────────────────┐
   │                2단계. 채용 목록 무인 덤프                 │
   │                     [make list]                           │
-  │(config/config.json 내 검색 조건 순회 ➜ data/jobs/lists/YYYY-MM-DDTHH_mm_ss.html)│
+  │(config/config.json 내 검색 조건 순회 ➜ data/jobs/lists/raw/YYYY-MM-DDTHH_mm_ss.html)│
   └──────────────────────────────┬────────────────────────────┘
                                  │
                                  ▼
@@ -225,10 +225,10 @@ make login
 ```bash
 make list
 ```
-- 저장된 세션을 활용하여 로그인 벽 없이 즉시 진입한 뒤, 목록 전체를 자동 스크롤 다운하며 `max_page` 설정(Pagination 루프)에 맞춰 목록을 탐색하고 결과를 `data/jobs/lists/<date>.html` 파일로 자동 저장합니다.
+- 저장된 세션을 활용하여 로그인 벽 없이 즉시 진입한 뒤, 목록 전체를 자동 스크롤 다운하며 `max_page` 설정(Pagination 루프)에 맞춰 목록을 탐색하고 결과를 `data/jobs/lists/raw/<date>.html` 파일로 자동 저장합니다.
 
 ### 3단계. 링크드인 목록 파싱 및 상세 URL 추출 (`make urls`)
-수집 및 덤프 완료된 목록 HTML들(`data/jobs/lists/` 및 `data/jobs/html/` 하위의 모든 `.html`)에서 채용공고의 Canonical(고유) 상세 주소들을 깨끗하게 정제하여 추출합니다:
+수집 및 덤프 완료된 목록 HTML들(`data/jobs/lists/raw/` 및 `data/jobs/html/` 하위의 모든 `.html`)에서 채용공고의 Canonical(고유) 상세 주소들을 깨끗하게 정제하여 추출합니다:
 ```bash
 make urls
 ```
