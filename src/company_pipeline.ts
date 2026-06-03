@@ -40,9 +40,6 @@ export class CompanyScrapingPipeline {
         // 1. 로그인 상태 확인
         const sessionPath = path.join(__dirname, '..', 'config', 'session.json');
         const loginStatus = fs.existsSync(sessionPath) ? '[로그인됨]' : '[로그인안됨]';
-        if (!fs.existsSync(sessionPath)) {
-            console.warn('⚠️ [중요 경고] 로그인 세션이 존재하지 않습니다. 먼저 [make login]을 기동하여 로그인해 주세요.');
-        }
 
         // 2. cache.list 로드하여 기 수집된 companyId 셋 구축
         const cacheSet = new Set<string>();
@@ -175,6 +172,15 @@ export class CompanyScrapingPipeline {
                 console.error(`❌ 회사 ${companyId} 처리 도중 오류 발생: ${err.message}`);
                 if (fs.existsSync(tempHtmlPath)) {
                     fs.unlinkSync(tempHtmlPath);
+                }
+
+                // 세션 만료 및 Auth Wall(로그인 창) 감지 시 전체 파이프라인 중단 처리
+                if (err.message && (err.message.includes('세션 만료') || err.message.includes('Auth Wall') || err.message.includes('로그인 요청'))) {
+                    console.error('\n🛑 [핵심 차단] 링크드인 로그인 세션이 만료되었거나 풀렸습니다.');
+                    console.error('💡 [해결 방법]:');
+                    console.error('   1. 터미널에 [make login]을 다시 실행하여 링크드인 브라우저 로그인을 갱신해 주세요.');
+                    console.error('   2. 완료되면 다시 [make company]를 기동하시면 중단된 지점부터 이어서 수집이 가능해집니다.\n');
+                    process.exit(1);
                 }
             }
         }
