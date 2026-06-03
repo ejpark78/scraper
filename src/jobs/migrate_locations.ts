@@ -48,12 +48,38 @@ export class LocationMigrator {
         console.log('🎉 [국가명 표준화 마이그레이션] 성공적으로 종료!');
     }
 
+    private getStandardCountries(): Set<string> {
+        try {
+            const configPath = path.join(__dirname, '..', '..', 'config', 'country.json');
+            if (fs.existsSync(configPath)) {
+                const countryMapping = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                const standard = new Set(Object.keys(countryMapping));
+                standard.add('unknown-location');
+                return standard;
+            }
+        } catch (err) {
+            console.error('⚠️ country.json 로드 실패:', err);
+        }
+        const standard = new Set<string>();
+        standard.add('unknown-location');
+        return standard;
+    }
+
     /**
      * HTML 파일들을 새 국가명 표준에 맞게 재배치하고, MD 마이그레이션을 위한 매핑 테이블을 반환
      */
     private migrateHtmlFiles(): Map<string, any> {
-        const htmlFiles = IOUtils.getAllFiles(this.htmlDir, '.html');
-        console.log(`📊 총 ${htmlFiles.length} 개의 HTML 백업본을 찾았습니다.`);
+        const allHtmlFiles = IOUtils.getAllFiles(this.htmlDir, '.html');
+        const standardCountries = this.getStandardCountries();
+
+        // 미표준 폴더에 있는 파일들만 필터링
+        const mismatchFiles = allHtmlFiles.filter(filePath => {
+            const relativePath = path.relative(this.htmlDir, filePath);
+            const currentDir = relativePath.split(path.sep)[0];
+            return !standardCountries.has(currentDir);
+        });
+
+        console.log(`📊 총 ${allHtmlFiles.length} 개의 HTML 백업본 중 미스매칭된 ${mismatchFiles.length} 개의 HTML 파일 이동을 시작합니다.`);
 
         const jobMigrationMap = new Map<string, {
             newHtmlPath: string;
@@ -63,13 +89,21 @@ export class LocationMigrator {
             jobTitle: string;
         }>();
 
+        const htmlMigrateSummary = new Map<string, number>();
         let htmlMigrateCount = 0;
+        let processedCount = 0;
 
-        for (const oldHtmlPath of htmlFiles) {
+        for (const oldHtmlPath of mismatchFiles) {
             const jobId = path.basename(oldHtmlPath, '.html');
             if (!/^\d+$/.test(jobId)) continue;
 
+            processedCount++;
+            if (processedCount % 100 === 0 || processedCount === mismatchFiles.length) {
+                console.log(`- HTML 마이그레이션 진행률: [${processedCount}/${mismatchFiles.length}]...`);
+            }
+
             try {
+                if (!fs.existsSync(oldHtmlPath)) continue;
                 const htmlContent = fs.readFileSync(oldHtmlPath, 'utf-8');
                 const fileStats = fs.statSync(oldHtmlPath);
                 const meta = this.converter.convertHtmlToMarkdown(
@@ -96,10 +130,21 @@ export class LocationMigrator {
                     }
                     fs.renameSync(oldHtmlPath, newHtmlPath);
                     htmlMigrateCount++;
+
+                    const key = `"${meta.rawLocation}" ➡️ "${meta.locationDirName}"`;
+                    htmlMigrateSummary.set(key, (htmlMigrateSummary.get(key) || 0) + 1);
                 }
             } catch (e: any) {
                 console.error(`⚠️ HTML [${jobId}] 파싱/이동 실패: ${e.message}`);
             }
+        }
+
+        if (htmlMigrateSummary.size > 0) {
+            console.log('\n📦 [HTML 이동 상세 요약]');
+            for (const [mapping, count] of htmlMigrateSummary.entries()) {
+                console.log(`  [HTML 이동] ${mapping} (${count})`);
+            }
+            console.log('');
         }
 
         console.log(`💾 HTML 캐시 재배치 완료: 총 ${htmlMigrateCount} 개 파일 이동`);
@@ -110,13 +155,30 @@ export class LocationMigrator {
      * 모든 MD 파일을 검색하여 표준 구조로 마이그레이션
      */
     private migrateMarkdownFiles(jobMigrationMap: Map<string, any>): void {
-        const mdFiles = IOUtils.getAllFiles(this.mdDir, '.md');
-        console.log(`📊 총 ${mdFiles.length} 개의 마크다운 포스트를 찾았습니다.`);
+        const allMdFiles = IOUtils.getAllFiles(this.mdDir, '.md');
+        const standardCountries = this.getStandardCountries();
 
+        // 미표준 폴더에 있는 파일들만 필터링
+        const mismatchFiles = allMdFiles.filter(filePath => {
+            const relativePath = path.relative(this.mdDir, filePath);
+            const currentDir = relativePath.split(path.sep)[0];
+            return !standardCountries.has(currentDir);
+        });
+
+        console.log(`📊 총 ${allMdFiles.length} 개의 마크다운 포스트 중 미스매칭된 ${mismatchFiles.length} 개의 파일 이동을 시작합니다.`);
+
+        const mdMigrateSummary = new Map<string, number>();
         let mdMigrateCount = 0;
+        let processedCount = 0;
 
-        for (const oldMdPath of mdFiles) {
+        for (const oldMdPath of mismatchFiles) {
+            processedCount++;
+            if (processedCount % 100 === 0 || processedCount === mismatchFiles.length) {
+                console.log(`- MD 마이그레이션 진행률: [${processedCount}/${mismatchFiles.length}]...`);
+            }
+
             try {
+                if (!fs.existsSync(oldMdPath)) continue;
                 const content = fs.readFileSync(oldMdPath, 'utf-8');
                 const match = content.match(/job_id:\s*"(\d+)"/) || content.match(/job_id:\s*(\d+)/);
                 if (!match) continue;
@@ -140,14 +202,27 @@ export class LocationMigrator {
                             fs.renameSync(oldMdPath, newMdPath);
                         }
                         mdMigrateCount++;
+
+                        const relativePath = path.relative(this.mdDir, oldMdPath);
+                        const oldLoc = relativePath.split(path.sep)[0] || 'Unknown';
+                        const key = `"${oldLoc}" ➡️ "${migInfo.locationDirName}"`;
+                        mdMigrateSummary.set(key, (mdMigrateSummary.get(key) || 0) + 1);
                     }
                 } else {
                     // HTML이 없거나 매칭 실패한 경우 직접 MD Front-matter 파싱 후 마이그레이션 시도
-                    this.migrateMarkdownDirectly(oldMdPath, content) && mdMigrateCount++;
+                    this.migrateMarkdownDirectly(oldMdPath, content, mdMigrateSummary) && mdMigrateCount++;
                 }
             } catch (e: any) {
                 console.error(`⚠️ MD [${oldMdPath}] 이동 실패: ${e.message}`);
             }
+        }
+
+        if (mdMigrateSummary.size > 0) {
+            console.log('\n📦 [MD 이동 상세 요약]');
+            for (const [mapping, count] of mdMigrateSummary.entries()) {
+                console.log(`  [MD 이동] ${mapping} (${count})`);
+            }
+            console.log('');
         }
 
         console.log(`💾 마크다운 포스트 재배치 완료: 총 ${mdMigrateCount} 개 파일 이동`);
@@ -156,7 +231,7 @@ export class LocationMigrator {
     /**
      * HTML 백업이 없을 때 MD 내용 자체에서 직접 메타데이터를 파싱하여 개별 마이그레이션 처리
      */
-    private migrateMarkdownDirectly(oldMdPath: string, content: string): boolean {
+    private migrateMarkdownDirectly(oldMdPath: string, content: string, mdMigrateSummary: Map<string, number>): boolean {
         const locMatch = content.match(/location:\s*"([^"]+)"/) || content.match(/location:\s*([^\r\n]+)/);
         const dateMatch = content.match(/posted_date:\s*"([^"]+)"/) || content.match(/posted_date:\s*([^\r\n]+)/);
         const titleMatch = content.match(/job_title:\s*"([^"]+)"/) || content.match(/job_title:\s*([^\r\n]+)/);
@@ -184,6 +259,11 @@ export class LocationMigrator {
                 } else {
                     fs.renameSync(oldMdPath, newMdPath);
                 }
+
+                const relativePath = path.relative(this.mdDir, oldMdPath);
+                const oldLoc = relativePath.split(path.sep)[0] || 'Unknown';
+                const key = `"${oldLoc}" ➡️ "${locationDirName}"`;
+                mdMigrateSummary.set(key, (mdMigrateSummary.get(key) || 0) + 1);
                 return true;
             }
         }

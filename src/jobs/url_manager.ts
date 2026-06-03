@@ -199,111 +199,375 @@ export class LinkedInUrlManager implements IUrlManager {
         console.log(`📊 수집 완료된 캐시 인덱스: ${FormatUtils.formatThousand(cacheSet.size)} 개`);
         console.log('🔍 lists/ 및 html/ 내의 파일들에서 채용공고 및 회사 주소(URL)를 정밀 분석 및 추출하는 중...');
 
-        // 2. 🔍 lists/ 및 html/ 폴더 하위의 모든 HTML에서 링크 추출
-        const targetHtmlDirs = [listsDir, htmlDir];
-        const allHtmlFiles: string[] = [];
-        targetHtmlDirs.forEach(dir => {
-            if (fs.existsSync(dir)) {
-                allHtmlFiles.push(...IOUtils.getAllFiles(dir, '.html'));
+        const cheerio = require('cheerio');
+        const hrefRegex = /href="([^"]*\/view\/[^"]*)"/g;
+        const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
+
+        const directJobIds = new Set<string>();
+        const directJobsMetaMap = new Map<string, any>();
+        const recommendedJobIds = new Set<string>();
+        const extractedCompanyIds = new Set<string>();
+        const masterJobsMetaMap = new Map<string, any>();
+
+        // country.json 로드
+        let localCountryMapping: Record<string, string[]> = {};
+        try {
+            const countryJsonPath = path.join(__dirname, '..', '..', 'config', 'country.json');
+            if (fs.existsSync(countryJsonPath)) {
+                localCountryMapping = JSON.parse(fs.readFileSync(countryJsonPath, 'utf-8'));
+            }
+        } catch (e: any) {
+            console.warn(`⚠️ country.json 로드 실패: ${e.message}`);
+        }
+
+        // 2-A. 🔍 lists/ 폴더 하위의 검색 결과 목록 HTML에서 직접 수집된 공고 ID 및 상세 메타 추출
+        if (fs.existsSync(listsDir)) {
+            const listFiles = IOUtils.getAllFiles(listsDir, '.html');
+            let fileCount = 0;
+            for (const file of listFiles) {
+                fileCount++;
+                try {
+                    const content = fs.readFileSync(file, 'utf-8');
+                    const $ = cheerio.load(content);
+
+                    $('div.job-card-container').each((_: any, el: any) => {
+                        let jobId = $(el).attr('data-job-id');
+                        const titleLink = $(el).find('a.job-card-list__title--link, a.job-card-container__link').first();
+                        const href = titleLink.attr('href') || '';
+                        
+                        if (!jobId || !/^\d+$/.test(jobId)) {
+                            const m = href.match(/currentJobId=(\d+)/) || href.match(/\/view\/(\d+)/);
+                            if (m) {
+                                jobId = m[1];
+                            }
+                        }
+
+                        if (!jobId || !/^\d+$/.test(jobId)) {
+                            return;
+                        }
+
+                        const title = titleLink.text().replace(/\s+/g, ' ').trim();
+                        const company = $(el).find('.artdeco-entity-lockup__subtitle, .job-card-container__company-name').text().replace(/\s+/g, ' ').trim();
+                        
+                        let location = '';
+                        let workStyle = '';
+                        
+                        $(el).find('.job-card-container__metadata-wrapper li, span').each((__: any, item: any) => {
+                            const txt = $(item).text().replace(/\s+/g, ' ').trim();
+                            if (txt && !txt.includes('logo') && txt.length > 2 && txt.length < 100) {
+                                if (/\b(Hybrid|Remote|On-site|하이브리드|재택근무|상주)\b/i.test(txt)) {
+                                    workStyle = txt;
+                                } else if (txt.includes(',') && !location) {
+                                    location = txt;
+                                }
+                            }
+                        });
+
+                        if (!location) {
+                            const metadataText = $(el).find('.job-card-container__metadata-wrapper').text().replace(/\s+/g, ' ').trim();
+                            if (metadataText) location = metadataText;
+                        }
+
+                        const footerText = $(el).find('.job-card-list__footer-wrapper').text().replace(/\s+/g, ' ').trim();
+
+                        // 3개국 타겟 국가 필터링 적용 (South Korea, United Arab Emirates, Japan)
+                        const stdLoc = UrlUtils.standardizeLocation(location);
+                        const isTargetCountry = stdLoc === 'South Korea' || stdLoc === 'Korea' || stdLoc === 'United Arab Emirates' || stdLoc === 'Japan';
+
+                        if (isTargetCountry) {
+                            if (!directJobsMetaMap.has(jobId)) {
+                                directJobsMetaMap.set(jobId, {
+                                    jobId,
+                                    title,
+                                    company,
+                                    location,
+                                    workStyle,
+                                    footerText,
+                                    url: `https://www.linkedin.com/jobs/view/${jobId}`,
+                                    source: 'DIRECT'
+                                });
+                            }
+
+                            if (!cacheSet.has(jobId)) {
+                                directJobIds.add(jobId);
+                            }
+                        }
+                    });
+
+                    // 회사 URL도 검색 결과에서 추출
+                    let compMatch;
+                    companyHrefRegex.lastIndex = 0;
+                    while ((compMatch = companyHrefRegex.exec(content)) !== null) {
+                        let url = compMatch[1].trim().split('?')[0].replace(/\/$/, '');
+                        if (url.startsWith('/company') || url.startsWith('/compay')) {
+                            url = 'https://www.linkedin.com' + url;
+                        }
+                        if (url.startsWith('http') && (url.includes('/company/') || url.includes('/compay/'))) {
+                            const companyId = UrlUtils.extractCompanyId(url);
+                            if (companyId) extractedCompanyIds.add(companyId);
+                        }
+                    }
+                } catch (err: any) {
+                    console.error(`⚠️ 파일 읽기 오류 [${file}]: ${err.message}`);
+                }
+                if (fileCount % 100 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+            }
+        }
+
+        // 2-B. 📂 이미 다운로드 완료된 마크다운 파일 분석하여 상세 메타데이터 선탑재 (전체 마스터 구축용)
+        const mdDir = path.join(path.dirname(htmlDir), 'markdown');
+        if (fs.existsSync(mdDir)) {
+            const mdFiles = IOUtils.getAllFiles(mdDir, '.md');
+            mdFiles.forEach(file => {
+                try {
+                    const content = fs.readFileSync(file, 'utf-8');
+                    const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+                    if (!fmMatch) return;
+
+                    const fmContent = fmMatch[1];
+                    const meta: Record<string, string> = {};
+                    fmContent.split(/\r?\n/).forEach(line => {
+                        const parts = line.split(':');
+                        if (parts.length >= 2) {
+                            const key = parts[0].trim();
+                            let value = parts.slice(1).join(':').trim();
+                            if (value.startsWith('"') && value.endsWith('"')) {
+                                value = value.substring(1, value.length - 1);
+                            }
+                            meta[key] = value;
+                        }
+                    });
+
+                    const jobId = meta['job_id'];
+                    if (jobId && /^\d+$/.test(jobId)) {
+                        const isDirect = directJobsMetaMap.has(jobId);
+                        masterJobsMetaMap.set(jobId, {
+                            jobId,
+                            title: meta['job_title'] || '정보 없음',
+                            company: meta['company_name'] || '정보 없음',
+                            location: meta['location'] || '정보 없음',
+                            workStyle: '정보 없음',
+                            url: `https://www.linkedin.com/jobs/view/${jobId}`,
+                            source: isDirect ? 'DIRECT' : 'related'
+                        });
+                    }
+                } catch (e) {}
+            });
+        }
+
+        // 2-C. 🔍 html/ 폴더 하위의 수집완료 상세 페이지 HTML에서 추천/유사 공고 ID 추출 및 추천 카드 파싱
+        if (fs.existsSync(htmlDir)) {
+            const htmlFiles = IOUtils.getAllFiles(htmlDir, '.html');
+            let fileCount = 0;
+            for (const file of htmlFiles) {
+                fileCount++;
+                try {
+                    const content = fs.readFileSync(file, 'utf-8');
+                    const $ = cheerio.load(content);
+
+                    $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
+                        const href = $(el).attr('href') || '';
+                        const jobId = UrlUtils.extractJobId(href);
+                        
+                        if (!jobId || !/^\d+$/.test(jobId)) return;
+
+                        const isDirect = directJobsMetaMap.has(jobId);
+
+                        // 아직 다운로드되지 않았고 검색 결과에도 없는 경우 추천 대기열에 추가
+                        if (!cacheSet.has(jobId) && !directJobsMetaMap.has(jobId)) {
+                            recommendedJobIds.add(jobId);
+                        }
+
+                        // master JSON 메타 빌드 (다운로드 완료 기록이 없는 경우에만 추출하여 저장)
+                        if (!masterJobsMetaMap.has(jobId)) {
+                            const title = $(el).text().replace(/\s+/g, ' ').trim();
+                            if (!title || title.length < 2) return;
+
+                            let company = '';
+                            let location = '';
+
+                            const parent = $(el).closest('li, div, section');
+                            if (parent.length > 0) {
+                                company = parent.find('[class*="company"], [class*="subtitle"]').first().text().replace(/\s+/g, ' ').trim();
+                                const locText = parent.find('[class*="location"], [class*="metadata"]').first().text().replace(/\s+/g, ' ').trim();
+                                if (locText) {
+                                    location = locText.split(/\d+\s+days?\s+ago|\d+\s+weeks?\s+ago/i)[0].trim();
+                                }
+                            }
+
+                            // country.json 기준 맵핑
+                            const stdLoc = UrlUtils.standardizeLocation(location);
+                            let matchedCountry = 'Others';
+                            for (const country of Object.keys(localCountryMapping)) {
+                                if (stdLoc.toLowerCase() === country.toLowerCase()) {
+                                    matchedCountry = country;
+                                    break;
+                                }
+                            }
+                            if (matchedCountry === 'Others') {
+                                for (const [country, aliases] of Object.entries(localCountryMapping)) {
+                                    if (country === 'South Korea' && /[가-힣]/.test(location)) {
+                                        matchedCountry = country;
+                                        break;
+                                    }
+                                    const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+                                    if (escapedAliases.length > 0) {
+                                        const pattern = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
+                                        if (pattern.test(location)) {
+                                            matchedCountry = country;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            masterJobsMetaMap.set(jobId, {
+                                jobId,
+                                title,
+                                company: company || '정보 없음',
+                                location: location || '정보 없음',
+                                workStyle: '정보 없음',
+                                url: `https://www.linkedin.com/jobs/view/${jobId}`,
+                                source: isDirect ? 'DIRECT' : 'related',
+                                geo: matchedCountry
+                            });
+                        }
+                    });
+                } catch (err: any) {
+                    console.error(`⚠️ 파일 읽기 오류 [${file}]: ${err.message}`);
+                }
+                if (fileCount % 100 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+            }
+        }
+
+        // directJobsMetaMap에 있는 모든 항목을 masterJobsMetaMap에 DIRECT로 갱신 또는 추가
+        directJobsMetaMap.forEach((meta, jobId) => {
+            const existing = masterJobsMetaMap.get(jobId);
+            
+            // country.json 기준 맵핑
+            const stdLoc = UrlUtils.standardizeLocation(meta.location);
+            let matchedCountry = 'Others';
+            for (const country of Object.keys(localCountryMapping)) {
+                if (stdLoc.toLowerCase() === country.toLowerCase()) {
+                    matchedCountry = country;
+                    break;
+                }
+            }
+            if (matchedCountry === 'Others') {
+                for (const [country, aliases] of Object.entries(localCountryMapping)) {
+                    if (country === 'South Korea' && /[가-힣]/.test(meta.location)) {
+                        matchedCountry = country;
+                        break;
+                    }
+                    const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+                    if (escapedAliases.length > 0) {
+                        const pattern = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
+                        if (pattern.test(meta.location)) {
+                            matchedCountry = country;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            masterJobsMetaMap.set(jobId, {
+                jobId,
+                title: existing?.title || meta.title || '정보 없음',
+                company: existing?.company || meta.company || '정보 없음',
+                location: existing?.location || meta.location || '정보 없음',
+                workStyle: existing?.workStyle || meta.workStyle || '정보 없음',
+                url: meta.url,
+                source: 'DIRECT',
+                geo: existing?.geo || matchedCountry
+            });
+        });
+
+        // config.json에서 target locations 로드
+        let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
+        try {
+            const configPath = path.join(__dirname, '..', '..', 'config', 'config.json');
+            if (fs.existsSync(configPath)) {
+                const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                if (config.search_targets) {
+                    targetLocations = config.search_targets.map((t: any) => t.location);
+                }
+            }
+        } catch (e: any) {
+            console.warn(`⚠️ config.json 로드 실패, 기본 3개국 타겟 폴백 적용: ${e.message}`);
+        }
+
+        // target locations에 부합하는 건들만 필터링하여 큐 파일 및 Redis 주입용 Set 구성
+        const filteredDirectJobIds = new Set<string>();
+        directJobIds.forEach(jobId => {
+            const meta = masterJobsMetaMap.get(jobId);
+            if (meta && targetLocations.includes(meta.geo)) {
+                filteredDirectJobIds.add(jobId);
             }
         });
 
-        const extractedJobIds = new Set<string>();
-        const extractedCompanyIds = new Set<string>();
-
-        // HTML 본문에서 링크를 추출하기 위한 정밀 정규식 패턴 (/jobs/view/숫자 혹은 /view/숫자)
-        // 예: href="https://www.linkedin.com/jobs/view/4416396794/"
-        const hrefRegex = /href="([^"]*\/view\/[^"]*)"/g;
-        // /company/ 또는 /compay/ 가 들어간 링크 추출 패턴
-        const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
-
-        let fileCount = 0;
-        for (const file of allHtmlFiles) {
-            fileCount++;
-            try {
-                let content: string | null = fs.readFileSync(file, 'utf-8');
-                
-                // 채용공고 URL 추출
-                let match;
-                hrefRegex.lastIndex = 0;
-                while ((match = hrefRegex.exec(content)) !== null) {
-                    let url = match[1].trim();
-                    if (!url) continue;
-
-                    // A. Canonical 가공: 쿼리 파라미터(?...) 제거 및 끝 슬래시 제거
-                    url = url.split('?')[0].replace(/\/$/, '');
-
-                    // B. 상대 경로를 절대 주소로 안전 복원
-                    if (url.startsWith('/jobs')) {
-                        url = 'https://www.linkedin.com' + url;
-                    }
-
-                    if (url.startsWith('http') && url.includes('/view/')) {
-                        const jobId = UrlUtils.extractJobId(url);
-                        if (jobId && !cacheSet.has(jobId)) {
-                            extractedJobIds.add(jobId);
-                        }
-                    }
-                }
-
-                // 회사 URL 추출
-                let compMatch;
-                companyHrefRegex.lastIndex = 0;
-                while ((compMatch = companyHrefRegex.exec(content)) !== null) {
-                    let url = compMatch[1].trim();
-                    if (!url) continue;
-
-                    // A. Canonical 가공: 쿼리 파라미터(?...) 제거 및 끝 슬래시 제거
-                    url = url.split('?')[0].replace(/\/$/, '');
-
-                    // B. 상대 경로를 절대 주소로 안전 복원
-                    if (url.startsWith('/company') || url.startsWith('/compay')) {
-                        url = 'https://www.linkedin.com' + url;
-                    }
-
-                    if (url.startsWith('http') && (url.includes('/company/') || url.includes('/compay/'))) {
-                        const companyId = UrlUtils.extractCompanyId(url);
-                        if (companyId) {
-                            extractedCompanyIds.add(companyId);
-                        }
-                    }
-                }
-
-                // 메모리 누수 방지 및 릴리즈 촉진
-                content = null;
-
-            } catch (err: any) {
-                console.error(`⚠️ 파일 읽기 오류 [${file}]: ${err.message}`);
+        const filteredRecommendedJobIds = new Set<string>();
+        recommendedJobIds.forEach(jobId => {
+            const meta = masterJobsMetaMap.get(jobId);
+            if (meta && targetLocations.includes(meta.geo)) {
+                filteredRecommendedJobIds.add(jobId);
             }
-
-            // ⚡ 메모리 OOM 방지 핵심: 100개 파일마다 Node.js 이벤트 루프에 제어권을 양보하여 V8 GC 동작 유도
-            if (fileCount % 100 === 0) {
-                await new Promise<void>(resolve => setImmediate(resolve));
-            }
-        }
+        });
 
         const parentDir = path.dirname(outputUrlsPath);
         if (!fs.existsSync(parentDir)) {
             fs.mkdirSync(parentDir, { recursive: true });
         }
 
-        // 3. 🛡️ 수집본(cacheSet)에 있는 ID를 사전 배제(필터링)하여 최종 신규 대상 urls.txt 적재
-        let newUrlsCount = 0;
-        const outputWriter = fs.createWriteStream(outputUrlsPath, 'utf-8');
+        // 3-A. 🛡️ 마스터 공고 상세 메타데이터 대상 urls.json 및 history 스냅샷 에 저장 (구분 없음)
+        const jsonUrlsPath = path.join(parentDir, 'urls.json');
+        const masterList = Array.from(masterJobsMetaMap.values());
+        const jsonContent = JSON.stringify(masterList, null, 2);
+        fs.writeFileSync(jsonUrlsPath, jsonContent, 'utf-8');
+        console.log(`✅ 전체 채용공고(추천 포함) 상세 정보를 ${jsonUrlsPath}에 저장했습니다. 총 ${FormatUtils.formatThousand(masterList.length)} 개.`);
 
-        extractedJobIds.forEach(jobId => {
-            outputWriter.write(`https://www.linkedin.com/jobs/view/${jobId}\n`);
-            newUrlsCount++;
+        // 3안: 날짜/시간별 스냅샷 백업 저장
+        const historyDir = path.join(parentDir, 'urls');
+        if (!fs.existsSync(historyDir)) {
+            fs.mkdirSync(historyDir, { recursive: true });
+        }
+        const d = new Date();
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const timestamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+        const snapshotPath = path.join(historyDir, `${timestamp}.json`);
+        fs.writeFileSync(snapshotPath, jsonContent, 'utf-8');
+        console.log(`💾 urls.json 스냅샷 백업 저장 완료 ➡️ ${snapshotPath}`);
+
+        // 3-B. 📊 실시간 수집 현황 통계 대시보드 출력
+        let totalCount = masterList.length;
+        let targetTotal = 0;
+        let targetDownloaded = 0;
+        
+        masterList.forEach((job: any) => {
+            const isTarget = targetLocations.includes(job.geo);
+            if (isTarget) {
+                targetTotal++;
+                if (cacheSet.has(job.jobId)) {
+                    targetDownloaded++;
+                }
+            }
         });
 
-        outputWriter.end();
+        const totalPendingIds = new Set([
+            ...filteredDirectJobIds,
+            ...filteredRecommendedJobIds
+        ]);
+        const targetPending = totalPendingIds.size;
 
-        await new Promise<void>((resolve, reject) => {
-            outputWriter.on('finish', () => resolve());
-            outputWriter.on('error', (err) => reject(err));
-        });
-
-        console.log(`✅ 이미 수집된 대상을 제외하고 총 ${FormatUtils.formatThousand(newUrlsCount)} 개의 신규 URL을 ${outputUrlsPath}에 깔끔하게 저장했습니다.`);
+        console.log('\n==================================================');
+        console.log('📊 [수집 현황 통계 대시보드]');
+        console.log('==================================================');
+        console.log(`- 전체 수집된 마스터 공고 수량: ${FormatUtils.formatThousand(totalCount)} 개`);
+        console.log(`- 타겟 3개국 (${targetLocations.join(', ')}) 총 공고 수량: ${FormatUtils.formatThousand(targetTotal)} 개`);
+        console.log(`- 타겟 3개국 이미 수집된 수량 (HTML 소장): ${FormatUtils.formatThousand(targetDownloaded)} 개`);
+        console.log(`- 타겟 3개국 신규 크롤링 대상 수량 (Redis 큐 등록): ${FormatUtils.formatThousand(targetPending)} 개`);
+        console.log(`  └─ 직접 검색 공고: ${FormatUtils.formatThousand(filteredDirectJobIds.size)} 개`);
+        console.log(`  └─ 추천/유사 공고: ${FormatUtils.formatThousand(filteredRecommendedJobIds.size)} 개`);
+        console.log('==================================================\n');
 
         // 4. 🏢 회사 관련 URL을 정규화 및 중복 제거하여 compay/lists/urls.txt 에 저장
         const compayUrlsPath = path.join(__dirname, '..', '..', 'data', 'compay', 'lists', 'urls.txt');
@@ -325,7 +589,7 @@ export class LinkedInUrlManager implements IUrlManager {
 
         console.log(`✅ 총 ${FormatUtils.formatThousand(companyUrlsCount)} 개의 회사 URL을 정규화 및 중복 제거하여 ${compayUrlsPath}에 저장했습니다.`);
 
-        // 5. 🐳 Redis 연동: 기존 대기열을 비우고 신규 생성된 URL 대기열 주입
+        // 5. 🐳 Redis 연동: 기존 대기열을 비우고 신규 생성된 URL 대기열 주입 (필터링된 순수 검색 결과만 전송)
         const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
         try {
             console.log(`📡 [Redis Queue] Connecting to Redis at ${redisUrl} to sync queues...`);
@@ -347,9 +611,19 @@ export class LinkedInUrlManager implements IUrlManager {
             console.log('🧹 [Redis Queue] Clearing existing jobs_queue and company_queue...');
             await redis.del('jobs_queue', 'company_queue');
 
-            if (newUrlsCount > 0) {
-                const jobUrls = Array.from(extractedJobIds).map(id => `https://www.linkedin.com/jobs/view/${id}`);
-                console.log(`📥 [Redis Queue] Pushing ${newUrlsCount} job URLs to 'jobs_queue'...`);
+            if (cacheSet.size > 0) {
+                console.log(`📥 [Redis Cache] Synchronizing ${cacheSet.size} downloaded job IDs to Redis set 'completed_jobs'...`);
+                const chunkArray = Array.from(cacheSet);
+                const chunkSize = 1000;
+                for (let i = 0; i < chunkArray.length; i += chunkSize) {
+                    const chunk = chunkArray.slice(i, i + chunkSize);
+                    await redis.sadd('completed_jobs', ...chunk);
+                }
+            }
+
+            if (totalPendingIds.size > 0) {
+                const jobUrls = Array.from(totalPendingIds).map(id => `https://www.linkedin.com/jobs/view/${id}`);
+                console.log(`📥 [Redis Queue] Pushing ${totalPendingIds.size} job URLs to 'jobs_queue'...`);
                 
                 // Chunk pushing to prevent Redis request limit errors
                 const chunkSize = 1000;

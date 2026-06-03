@@ -3,18 +3,16 @@ import * as path from 'path';
 import { DateUtils, FormatUtils } from '../utils';
 
 export abstract class BasePipeline<TMeta> {
-    protected readonly cacheListPath: string;
     protected readonly htmlDir: string;
     protected readonly mdDir: string;
     protected readonly baseDir: string;
     // 🔒 동시 워커 간 중복 수집 타겟 선점 방지용 인메모리 뮤텍스 셋
     private readonly processingIds = new Set<string>();
     
-    constructor(baseDir: string, cacheListName: string = 'cache.list') {
+    constructor(baseDir: string) {
         this.baseDir = baseDir;
         this.htmlDir = path.join(baseDir, 'html');
         this.mdDir = path.join(baseDir, 'markdown');
-        this.cacheListPath = path.join(baseDir, 'lists', cacheListName);
     }
     
     // 🛡️ 하위 클래스에서 재정의할 추상 훅 메서드들
@@ -47,10 +45,6 @@ export abstract class BasePipeline<TMeta> {
             const paths = await this.saveResults(meta, id, tempHtmlPath);
             
             console.log(`✨ [성공] ID: ${id} | 분류: ${paths.targetDirName}`);
-            
-            // 기존 레거시와의 로컬 캐시 호환을 위해 cache.list도 병행 기록
-            fs.mkdirSync(path.dirname(this.cacheListPath), { recursive: true });
-            fs.appendFileSync(this.cacheListPath, `${id}\n`, 'utf-8');
             return id;
         } catch (err: any) {
             console.error(`❌ 대상 ${id} 처리 도중 오류 발생: ${err.message}`);
@@ -75,7 +69,6 @@ export abstract class BasePipeline<TMeta> {
         // 초기 디렉토리 구축
         fs.mkdirSync(this.htmlDir, { recursive: true });
         fs.mkdirSync(this.mdDir, { recursive: true });
-        fs.mkdirSync(path.dirname(this.cacheListPath), { recursive: true });
 
         // 로그인 상태 확인
         const useLoginEnv = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
@@ -84,41 +77,142 @@ export abstract class BasePipeline<TMeta> {
             ? (fs.existsSync(sessionPath) ? '[AUTHED]' : '[UNAUTHED]')
             : '[UNAUTHED]';
 
-        // 1. cache.list 로드하여 기 수집된 고유 ID 셋 구축
-        const cacheSet = new Set<string>();
-        if (fs.existsSync(this.cacheListPath)) {
-            const cacheContent = fs.readFileSync(this.cacheListPath, 'utf-8');
-            cacheContent.split(/\r?\n/).forEach(id => {
-                const trimmed = id.trim();
-                if (trimmed) cacheSet.add(trimmed);
+        // 0. Redis 연동 및 캐시 로드
+        const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+        let redis: any = null;
+        let useRedisCache = false;
+        try {
+            const Redis = require('ioredis');
+            redis = new Redis(redisUrl, { maxRetriesPerRequest: 1 });
+            await new Promise<void>((resolve, reject) => {
+                const timer = setTimeout(() => {
+                    redis.disconnect();
+                    reject(new Error('Connection Timeout'));
+                }, 1500);
+                redis.once('connect', () => {
+                    clearTimeout(timer);
+                    resolve();
+                });
             });
+            useRedisCache = true;
+            console.log(`📡 [Redis Cache] Redis 연결 성공 (${redisUrl}). 실시간 분산 캐시를 사용합니다.`);
+        } catch (e: any) {
+            console.warn(`⚠️ [Redis Cache Warning] Redis 연결 실패. 로컬 폴더 파일 스캔으로 대체합니다: ${e.message}`);
         }
-        console.log(`✅ 총 ${FormatUtils.formatThousand(cacheSet.size)} 개의 기존 수집 완료 정보를 cache.list에서 로드했습니다.`);
+
+        // 1. 캐시 로드 및 구축 (Redis 우선 사용)
+        const cacheSet = new Set<string>();
+        let redisLoadedCount = 0;
+
+        // Redis 캐시가 활성화된 경우 Redis에서 먼저 로드
+        if (useRedisCache) {
+            try {
+                const redisMembers = await redis.smembers('completed_jobs');
+                redisMembers.forEach((id: string) => {
+                    if (id && /^\d+$/.test(id)) {
+                        cacheSet.add(id);
+                    }
+                });
+                redisLoadedCount = cacheSet.size;
+                if (redisLoadedCount > 0) {
+                    console.log(`📡 [Redis Cache] Redis 'completed_jobs'에서 ${FormatUtils.formatThousand(redisLoadedCount)}개의 캐시를 로드하여 로컬 폴더 스캔을 건너뜁니다.`);
+                }
+            } catch (err: any) {
+                console.error(`⚠️ Redis 캐시 로드 실패: ${err.message}`);
+            }
+        }
+
+        // Redis 캐시가 비어있거나 Redis를 사용할 수 없는 경우에만 로컬 폴더 스캔 수행 (Fallback)
+        if (cacheSet.size === 0) {
+            const { IOUtils } = require('../utils');
+            if (fs.existsSync(this.htmlDir)) {
+                console.log(`🔍 [Local Cache] Redis 캐시가 비어있거나 연결할 수 없어 로컬 폴더(${this.htmlDir})를 스캔합니다...`);
+                const localHtmlFiles = IOUtils.getAllFiles(this.htmlDir, '.html');
+                localHtmlFiles.forEach((file: string) => {
+                    const id = path.basename(file, '.html');
+                    if (id && /^\d+$/.test(id)) {
+                        cacheSet.add(id);
+                    }
+                });
+            }
+            console.log(`✅ 총 ${FormatUtils.formatThousand(cacheSet.size)} 개의 기존 수집 완료 정보를 로컬 폴더 스캔을 통해 로드했습니다.`);
+
+            // 로컬 스캔으로 수집한 캐시를 Redis에 백업 동기화
+            if (useRedisCache && cacheSet.size > 0) {
+                try {
+                    const pipeline = redis.pipeline();
+                    cacheSet.forEach(id => {
+                        pipeline.sadd('completed_jobs', id);
+                    });
+                    await pipeline.exec();
+                    console.log(`📡 [Redis Cache] 로컬 캐시 ${cacheSet.size}개를 Redis 'completed_jobs'에 동기화 완료.`);
+                } catch (err: any) {
+                    console.error(`⚠️ Redis 캐시 동기화 실패: ${err.message}`);
+                }
+            }
+        }
 
         // 2. urlsFile 에서 고유 대상 URL 로드 및 필터링
-        const rawLines = fs.readFileSync(urlsFile, 'utf-8').split(/\r?\n/);
         const filteredUrls: string[] = [];
         const processedIds = new Set<string>(); // 파일 내부 중복 차단
+        let origCount = 0;
 
-        rawLines.forEach(line => {
-            const trimmed = line.trim();
-            if (!trimmed || trimmed.startsWith('#')) return;
+        if (urlsFile.endsWith('.json')) {
+            try {
+                const jobsList = JSON.parse(fs.readFileSync(urlsFile, 'utf-8'));
+                origCount = jobsList.length;
 
-            const id = this.extractId(trimmed);
-            if (!id) return;
+                // config.json에서 target locations 로드
+                let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
+                try {
+                    const configPath = path.join(__dirname, '..', '..', 'config', 'config.json');
+                    if (fs.existsSync(configPath)) {
+                        const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                        if (config.search_targets) {
+                            targetLocations = config.search_targets.map((t: any) => t.location);
+                        }
+                    }
+                } catch (e) {}
 
-            if (!cacheSet.has(id) && !processedIds.has(id)) {
-                filteredUrls.push(trimmed);
-                processedIds.add(id);
+                jobsList.forEach((job: any) => {
+                    // 오직 DIRECT 소스이고 타겟 국가에 매칭되는 건들 중 아직 캐시에 없는 건만 대기열에 추가
+                    if (job.source === 'DIRECT' && targetLocations.includes(job.geo)) {
+                        const id = job.jobId;
+                        if (!id) return;
+                        if (!cacheSet.has(id) && !processedIds.has(id)) {
+                            filteredUrls.push(job.url || `https://www.linkedin.com/jobs/view/${id}`);
+                            processedIds.add(id);
+                        }
+                    }
+                });
+            } catch (jsonErr: any) {
+                console.error(`❌ JSON 파일 파싱 실패: ${jsonErr.message}`);
+                process.exit(1);
             }
-        });
+        } else {
+            const rawLines = fs.readFileSync(urlsFile, 'utf-8').split(/\r?\n/);
+            origCount = rawLines.filter(l => l.trim() && !l.trim().startsWith('#')).length;
 
-        const origCount = rawLines.filter(l => l.trim() && !l.trim().startsWith('#')).length;
+            rawLines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed.startsWith('#')) return;
+
+                const id = this.extractId(trimmed);
+                if (!id) return;
+
+                if (!cacheSet.has(id) && !processedIds.has(id)) {
+                    filteredUrls.push(trimmed);
+                    processedIds.add(id);
+                }
+            });
+        }
+
         const filteredCount = filteredUrls.length;
         console.log(`📊 전체 대상: ${FormatUtils.formatThousand(origCount)}건 | 신규 처리 대상: ${FormatUtils.formatThousand(filteredCount)}건`);
 
         if (filteredCount === 0) {
             console.log(`🎉 [종료] 모든 ${this.getDomainName()} 정보가 이미 수집되었습니다.`);
+            if (redis) await redis.quit();
             process.exit(0);
         }
 
@@ -128,17 +222,6 @@ export abstract class BasePipeline<TMeta> {
 
         const startTime = Date.now();
         let currentIndex = 0;
-
-        // 경쟁 조건 방지 cache.list 쓰기 동기 함수
-        const synchronizedAppend = (filePath: string, text: string) => {
-            try {
-                fs.appendFileSync(filePath, text, 'utf-8');
-            } catch (e) {
-                setTimeout(() => {
-                    try { fs.appendFileSync(filePath, text, 'utf-8'); } catch (e2) {}
-                }, 50);
-            }
-        };
 
         // 개별 워커 실행 함수
         const worker = async (url: string) => {
@@ -194,8 +277,11 @@ export abstract class BasePipeline<TMeta> {
                 
                 console.log(`✨ [성공] ID: ${id} | 분류: ${paths.targetDirName}`);
 
-                // cache.list 기록
-                synchronizedAppend(this.cacheListPath, `${id}\n`);
+                // Redis 캐시 추가 및 메모리 캐시 갱신
+                cacheSet.add(id);
+                if (useRedisCache) {
+                    redis.sadd('completed_jobs', id).catch(() => {});
+                }
 
             } catch (err: any) {
                 console.error(`❌ 대상 ${id} 처리 도중 오류 발생: ${err.message}`);
@@ -210,6 +296,7 @@ export abstract class BasePipeline<TMeta> {
                         console.error(`💡 [해결 방법]:`);
                         console.error(`   1. 터미널에 [make login]을 다시 실행하여 링크드인 브라우저 로그인을 갱신해 주세요.`);
                         console.error(`   2. 완료되면 다시 파이프라인을 기동하시면 중단된 지점부터 이어서 수집이 가능해집니다.\n`);
+                        if (redis) await redis.quit();
                         process.exit(1);
                     } else {
                         console.warn(`⚠️ [경고] 비로그인 상태에서 Auth Wall(로그인 요구)을 감지했습니다. 전체 중단 없이 다음 URL로 넘어갑니다.`);
@@ -234,6 +321,10 @@ export abstract class BasePipeline<TMeta> {
             }
         }
         await Promise.all(executing);
+
+        if (redis) {
+            await redis.quit();
+        }
 
         console.log(`\n🎉 [종료] ${this.getDomainName()} 정보 일괄 수집 완료! ${this.baseDir} 폴더를 확인해 주세요.`);
     }

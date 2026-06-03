@@ -1,7 +1,7 @@
 {
   "geo_registry": {
-    "Korea": 105149562,
-    "UAE": 100205264,
+    "South Korea": 105149562,
+    "United Arab Emirates": 100205264,
     "Japan": 103925994,
     "Switzerland": 106693272,
     "Singapore": 102454443,
@@ -30,7 +30,7 @@
   },
   "search_targets": [
     {
-      "location": "Korea",
+      "location": "South Korea",
       "max_page": 3,
       "keywords": [
         "Forward Deployment Engineer",
@@ -44,7 +44,7 @@
       ]
     },
     {
-      "location": "UAE",
+      "location": "United Arab Emirates",
       "max_page": 3,
       "keywords": [
         "Forward Deployment Engineer",

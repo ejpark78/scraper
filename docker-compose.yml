@@ -56,6 +56,8 @@ services:
       context: .
       dockerfile: docker/clipper/Dockerfile
     image: linkedin-clipper:latest
+    profiles:
+      - tools
     environment:
       - AUTH=${AUTH:-}
       - PARALLEL=${PARALLEL:-}
@@ -66,11 +68,8 @@ services:
     volumes:
       - ./config:/app/config
       - ./data:/app/data
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('playwright')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - ./src:/app/src
+      - ./Makefile:/app/Makefile
 
   redis:
     image: redis:alpine
@@ -108,6 +107,7 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - AUTH=${AUTH:-}
+      - JSON_LOG=true
     volumes:
       - ./config:/app/config
       - ./data:/app/data

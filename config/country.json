@@ -1,18 +1,18 @@
 {
   "South Korea": [
-    "South Korea", "Seoul", "Korea", "Busan", "Incheon", "Daegu", "Daejeon", "Gwangju", "Ulsan", "Suwon", "Changwon", "Pangyo", "Bundang", "Gyeonggi", "서울", "인천", "대구", "대전", "광주", "부산", "울산", "수원", "창원", "판교", "분당", "경기", "대한민국", "Seongsan-gu"
+    "South Korea", "Seoul", "Korea", "Busan", "Incheon", "Daegu", "Daejeon", "Gwangju", "Ulsan", "Suwon", "Changwon", "Pangyo", "Bundang", "Gyeonggi", "서울", "인천", "대구", "대전", "광주", "부산", "울산", "수원", "창원", "판교", "분당", "경기", "대한민국", "Seongsan-gu", "성남", "강남구", "안산", "아산", "전주 지역", "청주시"
   ],
   "United Arab Emirates": [
-    "Abu Dhabi", "Dubai", "Ajman", "Al Ain", "Sharjah", "Fujairah", "Umm Al Quwain", "Ras Al Khaimah", "United Arab Emirates", "UAE", "아부다비", "두바이", "아랍에미리트", "샤르자", "아지만", "알아인", "أبو ظبي", "دبي", "الإمارات", "الشارقة", "الخيمة", "الع인", "عجمان", "الطَّوِيلَة", "مدينة محمد بن زايد"
+    "Abu Dhabi", "Dubai", "Ajman", "Al Ain", "Sharjah", "Fujairah", "Umm Al Quwain", "Ras Al Khaimah", "United Arab Emirates", "UAE", "아부다비", "두바이", "아랍에미리트", "샤르자", "아지만", "알아인", "أبو ظبي", "دبي", "الإمارات", "الشارقة", "الخيمة", "الع인", "مدينة محمد بن زايد", "العين"
   ],
   "Germany": [
-    "Germany", "Berlin", "Munich", "München", "Frankfurt", "Hamburg", "Stuttgart", "Düsseldorf", "Dusseldorf", "Cologne", "Köln", "Marburg", "독일", "Erfurt", "Bremen", "Karlsruhe", "Kassel", "Nuremberg", "Rostock", "Hannover", "Wolfsburg", "Göttingen", "Braunschweig", "Osnabrück", "Freilassing", "Friedrichshafen", "Aschaffenburg", "Kempten", "Leipzig", "Oldenburg", "Tubingen", "Tübingen", "Wurzburg", "Würzburg", "Bodensee", "Immenstaad", "Lindau", "Rhein-Neckar", "Ruhr", "DACH"
+    "Germany", "Berlin", "Munich", "München", "Frankfurt", "Hamburg", "Stuttgart", "Düsseldorf", "Dusseldorf", "Cologne", "Köln", "Marburg", "독일", "Erfurt", "Bremen", "Karlsruhe", "Kassel", "Nuremberg", "Rostock", "Hannover", "Wolfsburg", "Göttingen", "Braunschweig", "Osnabrück", "Freilassing", "Friedrichshafen", "Aschaffenburg", "Kempten", "Leipzig", "Oldenburg", "Tubingen", "Tübingen", "Wurzburg", "Würzburg", "Bodensee", "Immenstaad", "Lindau", "Rhein-Neckar", "Ruhr", "DACH", "슈투트가르트 지역", "뮌헨 지역", "프랑크푸르트암마인 지역", "베를린 지역", "빌레펠트 지역", "카를스루에 지역", "카셀 지역", "함부르크 지역", "Greater Passau Area"
   ],
   "Qatar": [
     "Qatar", "Doha", "카타르", "도하"
   ],
   "Austria": [
-    "Austria", "Vienna", "Wien", "오스트리아", "비엔나", "Amstetten", "Niederösterreich", "Österreich", "Gumpoldskirchen", "Hagenberg", "Mühlkreis", "Oberösterreich", "Linz", "Marchtrenk", "Sankt Valentin", "Schwertberg", "Wels", "Graz", "Innsbruck", "Salzburg", "Sankt Polten", "St.Pölten", "St. Pölten", "Umgebung"
+    "Austria", "Vienna", "Wien", "오스트리아", "비엔나", "Amstetten", "Niederösterreich", "Österreich", "Gumpoldskirchen", "Hagenberg", "Mühlkreis", "Oberösterreich", "Linz", "Marchtrenk", "Sankt Valentin", "Schwertberg", "Wels", "Graz", "Innsbruck", "Salzburg", "Sankt Polten", "St.Pölten", "St. Pölten", "Umgebung", "그라츠", "Bregenz-Bludenz Area", "Eisenstadt Area", "Klagenfurt-Villach Area"
   ],
   "Singapore": [
     "Singapore", "싱가포르"
@@ -30,7 +30,7 @@
     "Saudi Arabia", "Riyadh", "사우디", "리야드"
   ],
   "Japan": [
-    "Japan", "Tokyo", "Shibuya", "Osaka", "Kyoto", "일본", "도쿄", "오사카", "六本木", "千代田区", "府中", "東京", "東京都", "日本", "渋谷区", "港区", "荒川区", "西東京"
+    "Japan", "Tokyo", "Shibuya", "Osaka", "Kyoto", "일본", "도쿄", "오사카", "六本木", "千代田区", "府中", "東京", "東京都", "日本", "渋谷区", "港区", "荒川区", "西東京", "横浜", "厚木", "小平", "神奈川", "愛知", "福岡", "名古屋", "埼玉", "千葉", "北海道", "兵庫", "神戸", "広島", "仙台", "札幌", "川崎", "静岡", "Yokohama", "Atsugi", "Kodaira", "Kanagawa", "Nagoya", "Fukuoka", "Saitama", "Chiba", "Kobe", "Sapporo", "Kawasaki"
   ],
   "Switzerland": [
     "Switzerland", "Schaffhausen", "Beringen", "Thurgau", "Bottighofen", "Frauenfeld", "Mittelland", "Appenzell", "스위스", "Schweiz", "Sankt Gallen", "St. Gallen", "St.Gallen", "Buchs", "Grabs", "Haag", "Rheintal", "Mörschwil", "Sennwald", "Winkeln", "Wittenbach", "Zürich", "Zurich"
@@ -52,5 +52,59 @@
   ],
   "Romania": [
     "Romania", "Bucharest", "București", "루마니아", "부쿠레슈티"
+  ],
+  "United States": [
+    "United States", "US", "Denver, CO", "Denver", "Colorado", "USA", "미국"
+  ],
+  "Netherlands": [
+    "Netherlands", "NL", "Amsterdam", "네덜란드"
+  ],
+  "Slovakia": [
+    "Slovakia", "Bratislava", "Bratislava, Bratislava, Slovakia", "슬로바키아"
+  ],
+  "Hungary": [
+    "Hungary", "Sopron", "Sopron, Győr-Moson-Sopron, Hungary", "헝가리"
+  ],
+  "India": [
+    "India", "Bengaluru", "Bangalore", "Gurugram", "Gurgaon", "Hyderabad", "Mumbai", "Pune", "Noida", "Chennai", "Delhi", "인도", "맹갈로르", "벵갈루루", "뭄바이", "뉴델리"
+  ],
+  "Philippines": [
+    "Philippines", "Manila", "Metro Manila", "필리핀", "마닐라"
+  ],
+  "China": [
+    "China", "Beijing", "Shenzhen", "Shanghai", "Guangzhou", "Chengdu", "Hong Kong", "Hong Kong SAR", "Taiwan", "중국", "베이징", "상하이", "심천", "홍콩", "대만"
+  ],
+  "Sweden": [
+    "Sweden", "Stockholm", "스웨덴", "스톡홀름"
+  ],
+  "Portugal": [
+    "Portugal", "Lisbon", "포르투갈", "리스본"
+  ],
+  "Egypt": [
+    "Egypt", "Cairo", "이집트", "카이로"
+  ],
+  "Israel": [
+    "Israel", "Tel Aviv", "Tel Aviv-Yafo", "이스라엘", "텔아비브"
+  ],
+  "South Africa": [
+    "South Africa", "Cape Town", "Johannesburg", "남아프리카", "남아공", "케이프타운"
+  ],
+  "Italy": [
+    "Italy", "Rome", "Milano", "Milan", "Brenner", "이탈리아", "로마", "밀라노"
+  ],
+  "Denmark": [
+    "Denmark", "Copenhagen", "덴마크", "코펜하겐"
+  ],
+  "Estonia": [
+    "Estonia", "Tallinn", "에스토니아", "탈린"
+  ],
+  "Bulgaria": [
+    "Bulgaria", "Sofia", "불가리아", "소피아"
+  ],
+  "Türkiye": [
+    "Türkiye", "Turkey", "Istanbul", "Ankara", "터키", "튀르키예", "이스탄불"
+  ],
+  "Global": [
+    "APAC", "EMEA", "APJ", "MENA", "Middle East", "East Asia", "Global"
   ]
 }

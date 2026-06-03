@@ -46,7 +46,7 @@
   "HU": "Hungary",
   "RO": "Romania",
   "BM": "Bermuda",
-  "CY": "Cyrus",
+  "CY": "Cyprus",
   "EE": "Estonia",
   "HR": "Croatia",
   "KE": "Kenya",
@@ -66,5 +66,10 @@
   "PK": "Pakistan",
   "TG": "Togo",
   "UG": "Uganda",
-  "UY": "Uruguay"
+  "UY": "Uruguay",
+  "SK": "Slovakia",
+  "GL": "Global",
+  "JE": "Jersey",
+  "SC": "Seychelles",
+  "OO": "Global"
 }

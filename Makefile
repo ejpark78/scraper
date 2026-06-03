@@ -3,7 +3,7 @@
 .PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm
 
 # URLS 변수 기본값 설정
-URLS ?= data/jobs/lists/urls.txt
+URLS ?= data/jobs/lists/urls.json
 # LISTS 변수 기본값 설정
 LISTS ?= config/config.json
 # 동시 실행 브라우저 갯수 기본값
@@ -73,7 +73,7 @@ jobs:
 	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) npx ts-node src/jobs/jobs_pipeline.ts $(URLS)
 
 urls:
-	node --max-old-space-size=4096 -r ts-node/register src/jobs/url_manager.ts extract "data/jobs/lists/raw/" "data/jobs/html/" "data/jobs/lists/urls.txt"
+	node --max-old-space-size=4096 -r ts-node/register src/jobs/url_manager.ts extract "data/jobs/lists/html/" "data/jobs/html/" "data/jobs/lists/urls.json"
 
 html2md:
 	npx ts-node src/jobs/jobs_converter.ts $(HTML) $(MD)
@@ -135,8 +135,8 @@ clean-recent:
 	@echo "🧹 data/jobs/recent/ HTML/Markdown 파일이 모두 삭제되었습니다."
 
 clean-lists:
-	rm -rf data/jobs/lists/raw/*.html
-	@echo "🧹 data/jobs/lists/raw/ HTML 파일이 모두 삭제되었습니다."
+	rm -rf data/jobs/lists/html/*.html
+	@echo "🧹 data/jobs/lists/html/ HTML 파일이 모두 삭제되었습니다."
 
 purge:
 	@echo "⚠️  [경고] 수집된 모든 HTML 파일과 마크다운 포스트를 완전히 삭제합니다."
