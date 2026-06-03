@@ -208,8 +208,8 @@ export class LinkedInUrlManager implements IUrlManager {
             }
         });
 
-        const extractedUrls = new Set<string>();
-        const extractedCompanyUrls = new Set<string>();
+        const extractedJobIds = new Set<string>();
+        const extractedCompanyIds = new Set<string>();
 
         // HTML 본문에서 링크를 추출하기 위한 정밀 정규식 패턴 (/jobs/view/숫자 혹은 /view/숫자)
         // 예: href="https://www.linkedin.com/jobs/view/4416396794/"
@@ -217,9 +217,11 @@ export class LinkedInUrlManager implements IUrlManager {
         // /company/ 또는 /compay/ 가 들어간 링크 추출 패턴
         const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
 
-        allHtmlFiles.forEach(file => {
+        let fileCount = 0;
+        for (const file of allHtmlFiles) {
+            fileCount++;
             try {
-                const content = fs.readFileSync(file, 'utf-8');
+                let content: string | null = fs.readFileSync(file, 'utf-8');
                 
                 // 채용공고 URL 추출
                 let match;
@@ -237,7 +239,10 @@ export class LinkedInUrlManager implements IUrlManager {
                     }
 
                     if (url.startsWith('http') && url.includes('/view/')) {
-                        extractedUrls.add(url);
+                        const jobId = UrlUtils.extractJobId(url);
+                        if (jobId && !cacheSet.has(jobId)) {
+                            extractedJobIds.add(jobId);
+                        }
                     }
                 }
 
@@ -257,13 +262,25 @@ export class LinkedInUrlManager implements IUrlManager {
                     }
 
                     if (url.startsWith('http') && (url.includes('/company/') || url.includes('/compay/'))) {
-                        extractedCompanyUrls.add(url);
+                        const companyId = UrlUtils.extractCompanyId(url);
+                        if (companyId) {
+                            extractedCompanyIds.add(companyId);
+                        }
                     }
                 }
+
+                // 메모리 누수 방지 및 릴리즈 촉진
+                content = null;
+
             } catch (err: any) {
                 console.error(`⚠️ 파일 읽기 오류 [${file}]: ${err.message}`);
             }
-        });
+
+            // ⚡ 메모리 OOM 방지 핵심: 100개 파일마다 Node.js 이벤트 루프에 제어권을 양보하여 V8 GC 동작 유도
+            if (fileCount % 100 === 0) {
+                await new Promise<void>(resolve => setImmediate(resolve));
+            }
+        }
 
         const parentDir = path.dirname(outputUrlsPath);
         if (!fs.existsSync(parentDir)) {
@@ -274,12 +291,9 @@ export class LinkedInUrlManager implements IUrlManager {
         let newUrlsCount = 0;
         const outputWriter = fs.createWriteStream(outputUrlsPath, 'utf-8');
 
-        extractedUrls.forEach(url => {
-            const jobId = UrlUtils.extractJobId(url);
-            if (jobId && !cacheSet.has(jobId)) {
-                outputWriter.write(url + '\n');
-                newUrlsCount++;
-            }
+        extractedJobIds.forEach(jobId => {
+            outputWriter.write(`https://www.linkedin.com/jobs/view/${jobId}\n`);
+            newUrlsCount++;
         });
 
         outputWriter.end();
@@ -291,25 +305,14 @@ export class LinkedInUrlManager implements IUrlManager {
 
         console.log(`✅ 이미 수집된 대상을 제외하고 총 ${FormatUtils.formatThousand(newUrlsCount)} 개의 신규 URL을 ${outputUrlsPath}에 깔끔하게 저장했습니다.`);
 
-        // 4. 🏢 회사 관련 URL을 정규화 및 중복 제거하여 compay.txt 에 저장
-        const compayUrlsPath = path.join(parentDir, 'compay.txt');
-        const normalizedCompanyUrls = new Set<string>();
-
-        extractedCompanyUrls.forEach(url => {
-            // URL 정규화: https://www.linkedin.com/company/회사ID/뒤세그먼트 -> https://www.linkedin.com/company/회사ID
-            const normMatch = url.match(/^(https?:\/\/[^\/]+\/comp(?:any|ay)\/[^\/]+)/i);
-            if (normMatch) {
-                normalizedCompanyUrls.add(normMatch[1]);
-            } else {
-                normalizedCompanyUrls.add(url);
-            }
-        });
-
+        // 4. 🏢 회사 관련 URL을 정규화 및 중복 제거하여 compay/lists/urls.txt 에 저장
+        const compayUrlsPath = path.join(__dirname, '..', '..', 'data', 'compay', 'lists', 'urls.txt');
+        fs.mkdirSync(path.dirname(compayUrlsPath), { recursive: true });
         const companyWriter = fs.createWriteStream(compayUrlsPath, 'utf-8');
         let companyUrlsCount = 0;
 
-        normalizedCompanyUrls.forEach(url => {
-            companyWriter.write(url + '\n');
+        extractedCompanyIds.forEach(companyId => {
+            companyWriter.write(`https://www.linkedin.com/company/${companyId}\n`);
             companyUrlsCount++;
         });
 

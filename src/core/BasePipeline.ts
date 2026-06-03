@@ -39,8 +39,11 @@ export abstract class BasePipeline<TMeta> {
         fs.mkdirSync(path.dirname(this.cacheListPath), { recursive: true });
 
         // 로그인 상태 확인
+        const useLoginEnv = process.env.LOGIN === 'true';
         const sessionPath = path.join(__dirname, '..', '..', 'config', 'session.json');
-        const loginStatus = fs.existsSync(sessionPath) ? '[로그인됨]' : '[로그인안됨]';
+        const loginStatus = useLoginEnv 
+            ? (fs.existsSync(sessionPath) ? '[AUTHED]' : '[UNAUTHED]')
+            : '[UNAUTHED]';
 
         // 1. cache.list 로드하여 기 수집된 고유 ID 셋 구축
         const cacheSet = new Set<string>();
@@ -146,11 +149,15 @@ export abstract class BasePipeline<TMeta> {
 
                 // 세션 만료 및 Auth Wall(로그인 창) 감지 시 전체 파이프라인 중단 처리
                 if (err.message && (err.message.includes('세션 만료') || err.message.includes('Auth Wall') || err.message.includes('로그인 요청'))) {
-                    console.error(`\n🛑 [핵심 차단] 링크드인 로그인 세션이 만료되었거나 풀렸습니다.`);
-                    console.error(`💡 [해결 방법]:`);
-                    console.error(`   1. 터미널에 [make login]을 다시 실행하여 링크드인 브라우저 로그인을 갱신해 주세요.`);
-                    console.error(`   2. 완료되면 다시 파이프라인을 기동하시면 중단된 지점부터 이어서 수집이 가능해집니다.\n`);
-                    process.exit(1);
+                    if (process.env.LOGIN === 'true') {
+                        console.error(`\n🛑 [핵심 차단] 링크드인 로그인 세션이 만료되었거나 풀렸습니다.`);
+                        console.error(`💡 [해결 방법]:`);
+                        console.error(`   1. 터미널에 [make login]을 다시 실행하여 링크드인 브라우저 로그인을 갱신해 주세요.`);
+                        console.error(`   2. 완료되면 다시 파이프라인을 기동하시면 중단된 지점부터 이어서 수집이 가능해집니다.\n`);
+                        process.exit(1);
+                    } else {
+                        console.warn(`⚠️ [경고] 비로그인 상태에서 Auth Wall(로그인 요구)을 감지했습니다. 전체 중단 없이 다음 URL로 넘어갑니다.`);
+                    }
                 }
             }
         }

@@ -36,24 +36,24 @@ logout:
 	@echo "🔒 로그인 세션이 성공적으로 삭제되었습니다."
 
 # 채용 목록 자동 스크롤 및 무인 덤프 실행
-list:
+job-list:
 	@if [ ! -f "$(LISTS)" ]; then \
 		echo "❌ 에러: 수집 대상 설정 파일이 존재하지 않습니다: $(LISTS)"; \
 		exit 1; \
 	fi
-	npx ts-node src/crawler.ts list $(LISTS)
+	LOGIN=$(LOGIN) npx ts-node src/crawler.ts list $(LISTS)
 
 # 채용 공고 일괄 수집 및 가공 파이프라인 구동
-posts:
+jobs:
 	@if [ ! -f "$(URLS)" ]; then \
 		echo "❌ 에러: 지정한 URL 목록 파일이 존재하지 않습니다: $(URLS)"; \
 		exit 1; \
 	fi
-	npx ts-node src/jobs/jobs_pipeline.ts $(URLS)
+	LOGIN=$(LOGIN) npx ts-node src/jobs/jobs_pipeline.ts $(URLS)
 
 # URL 추출 및 urls.txt 적재
 urls:
-	npx ts-node src/jobs/url_manager.ts extract "data/jobs/lists/raw/" "data/jobs/html/" "data/jobs/lists/urls.txt"
+	node --max-old-space-size=4096 -r ts-node/register src/jobs/url_manager.ts extract "data/jobs/lists/raw/" "data/jobs/html/" "data/jobs/lists/urls.txt"
 
 # HTML 백업본과 MD 파일 동기화 및 유실 파일 오프라인 일괄 복원
 html2md:
@@ -64,9 +64,9 @@ html2md:
 migrate:
 	npx ts-node src/jobs/migrate_locations.ts
 
-# 추출된 회사 URL 목록(compay.txt)을 기반으로 회사 정보(HTML 및 Markdown)를 수집하여 저장합니다.
+# 추출된 회사 URL 목록(urls.txt)을 기반으로 회사 정보(HTML 및 Markdown)를 수집하여 저장합니다.
 company:
-	npx ts-node src/company/company_pipeline.ts "data/jobs/lists/compay.txt"
+	LOGIN=true npx ts-node src/company/company_pipeline.ts "data/compay/lists/urls.txt"
 
 clean: clean-lists clean-recent
 	rm -f data/jobs/temp_job_raw.md data/jobs/temp_job_raw_*.md

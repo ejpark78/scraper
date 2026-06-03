@@ -16,7 +16,7 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
         const baseDir = path.join(__dirname, '..', '..', 'data', 'jobs');
         super(baseDir);
         
-        this.crawler = new LinkedInCrawler();
+        this.crawler = new LinkedInCrawler({ login: process.env.LOGIN === 'true' });
         this.converter = new LinkedInMarkdownConverter();
         this.recentHtmlDir = path.join(baseDir, 'recent', 'html');
         this.recentMdDir = path.join(baseDir, 'recent', 'markdown');

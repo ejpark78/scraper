@@ -16,6 +16,11 @@ export interface ICrawler {
 export class LinkedInCrawler implements ICrawler {
     private readonly sessionPath: string = path.join(__dirname, '..', 'config', 'session.json');
     private readonly listDir: string = path.join(__dirname, '..', 'data', 'jobs', 'lists', 'raw');
+    private readonly useLogin: boolean;
+
+    constructor(options: { login?: boolean } = {}) {
+        this.useLogin = !!options.login;
+    }
 
     /**
      * 지능형 스크롤 함수: 레이아웃 변화에 상관없이 채용 공고 카드가 다 나타나도록 스크롤다운 유도
@@ -102,7 +107,7 @@ export class LinkedInCrawler implements ICrawler {
      * 단일 공고 내용 크롤러 (더보기 버튼 클릭 지원)
      */
     public async scrapeJob(url: string, outputPath: string): Promise<void> {
-        const isLoggedIn = fs.existsSync(this.sessionPath);
+        const isLoggedIn = this.useLogin && fs.existsSync(this.sessionPath);
         const browser: Browser = await chromium.launch({ headless: true });
         
         try {
@@ -167,9 +172,9 @@ export class LinkedInCrawler implements ICrawler {
      * 회사 정보 (/about/ 페이지) 크롤러
      */
     public async scrapeCompanyAbout(url: string, outputPath: string): Promise<void> {
-        const isLoggedIn = fs.existsSync(this.sessionPath);
+        const isLoggedIn = this.useLogin && fs.existsSync(this.sessionPath);
         if (!isLoggedIn) {
-            console.warn('⚠️ [경고] 로그인 세션 파일(session.json)이 없어 비로그인으로 동작합니다. 회사 정보 스크래핑은 실패할 확률이 매우 높습니다.');
+            console.warn('⚠️ [경고] 로그인 세션 파일(session.json)이 없거나 login 옵션이 활성화되지 않아 비로그인으로 동작합니다. 회사 정보 스크래핑은 실패할 확률이 매우 높습니다.');
         }
 
         // URL 정규화: 끝에 /about/ 이 없으면 자동으로 추가
@@ -233,9 +238,9 @@ export class LinkedInCrawler implements ICrawler {
      * 채용 목록 배치 수집 크롤러
      */
     public async scrapeList(configFilePath: string): Promise<void> {
-        const isLoggedIn = fs.existsSync(this.sessionPath);
+        const isLoggedIn = this.useLogin && fs.existsSync(this.sessionPath);
         if (!isLoggedIn) {
-            console.log('⚠️  [안내] 로그인 세션 파일(session.json)이 발견되지 않아 비로그인(Public) 모드로 동작합니다.');
+            console.log('⚠️  [안내] 로그인 세션 파일(session.json)이 발견되지 않았거나 login 옵션이 활성화되지 않아 비로그인(Public) 모드로 동작합니다.');
             console.log('💡 direct_urls는 수집 대상에서 자동으로 제외되며, 일반 검색 결과 수집만 진행합니다.');
         }
 
@@ -287,7 +292,7 @@ export class LinkedInCrawler implements ICrawler {
             const context = await browser.newContext(contextOptions);
             const page = await context.newPage();
 
-            const loginStatus = isLoggedIn ? '[로그인됨]' : '[로그인안됨]';
+            const loginStatus = isLoggedIn ? '[AUTHED]' : '[UNAUTHED]';
             const startTime = Date.now();
 
             for (let i = 0; i < urls.length; i++) {
