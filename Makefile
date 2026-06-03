@@ -1,7 +1,7 @@
 # ⚙️ LinkedIn Job Scraper Makefile
 # 이 파일은 최상위(Root) 디렉토리에서 scripts/ 폴더 내부의 셸 스크립트를 편리하게 제어하기 위한 인터페이스입니다.
 
-.PHONY: help posts urls html2md clean purge login list test migrate
+.PHONY: help posts urls html2md clean purge login list test migrate open
 
 # 기본 대상 (아무런 인자 없이 'make'만 실행했을 때 도움말 표시)
 help:
@@ -10,6 +10,7 @@ help:
 	@echo "========================================================================="
 	@echo "사용 가능한 명령어 목록:"
 	@echo "  make login          - 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
+	@echo "  make open           - 로그인 세션 기반의 헤드풀 브라우저를 띄워, 이동 페이지 HTML 및 비동기 API 데이터를 수집합니다."
 	@echo "  make list           - config/config.json의 조건 기반으로 목록 HTML을 무인 수집하여 덤프합니다."
 	@echo "  make posts          - data/jobs/lists/urls.txt의 URL을 순차 수집하여 마크다운으로 저장합니다."
 	@echo "                        (예: make posts URLS=data/jobs/lists/custom_urls.txt)"
@@ -27,6 +28,10 @@ URLS ?= data/jobs/lists/urls.txt
 # LISTS 변수 기본값 설정 (make list LISTS=경로 형태로 덮어쓰기 가능)
 LISTS ?= config/config.json
 
+# 세션 유지 대화형 수집 브라우저 기동
+open:
+	npx ts-node src/browser/open.ts
+
 # 1회성 로그인 세션 획득기 기동
 login:
 	npx ts-node src/crawler.ts login
@@ -34,6 +39,7 @@ login:
 logout:
 	rm -f config/session.json
 	@echo "🔒 로그인 세션이 성공적으로 삭제되었습니다."
+
 
 # 채용 목록 자동 스크롤 및 무인 덤프 실행
 job-list:
