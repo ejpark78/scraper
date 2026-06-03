@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "cheerio": "^1.2.0",
+    "ioredis": "^5.11.0",
     "playwright": "^1.60.0",
     "prettier": "^3.8.3",
     "turndown": "^7.2.4"

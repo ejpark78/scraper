@@ -71,3 +71,54 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redisinsight:
+    image: redis/redisinsight:3.4.2
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5540/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.redisinsight.rule=Host(`redis.localhost`)"
+      - "traefik.http.routers.redisinsight.entrypoints=web"
+      - "traefik.http.services.redisinsight.loadbalancer.server.port=5540"
+
+  clipper-worker:
+    build:
+      context: .
+      dockerfile: docker/clipper/Dockerfile
+    image: linkedin-clipper:latest
+    restart: unless-stopped
+    command: ["npx", "ts-node", "src/redis_worker.ts"]
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - AUTH=${AUTH:-}
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./src:/app/src
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "redis_worker.ts"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      replicas: 5

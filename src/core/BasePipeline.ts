@@ -25,6 +25,43 @@ export abstract class BasePipeline<TMeta> {
     protected abstract saveResults(meta: TMeta, id: string, tempHtmlPath: string): Promise<{ mdPath: string; htmlPath: string; targetDirName: string }>;
 
     /**
+     * 🚀 개별 URL 단일 수집 기동용 공개 메서드 (Redis 워커 등 외부 큐 연동용)
+     */
+    public async processSingleUrl(url: string): Promise<string | null> {
+        const id = this.extractId(url);
+        if (!id) return null;
+
+        const tempHtmlPath = path.join(this.htmlDir, `temp_${id}.html`);
+
+        try {
+            await this.executeScrape(url, tempHtmlPath);
+
+            if (!fs.existsSync(tempHtmlPath) || fs.statSync(tempHtmlPath).size === 0) {
+                console.error(`❌ [ID: ${id}] HTML을 정상적으로 가져오지 못했습니다.`);
+                if (fs.existsSync(tempHtmlPath)) fs.unlinkSync(tempHtmlPath);
+                return null;
+            }
+
+            const htmlContent = fs.readFileSync(tempHtmlPath, 'utf-8');
+            const meta = this.processMetadata(htmlContent, id, url);
+            const paths = await this.saveResults(meta, id, tempHtmlPath);
+            
+            console.log(`✨ [성공] ID: ${id} | 분류: ${paths.targetDirName}`);
+            
+            // 기존 레거시와의 로컬 캐시 호환을 위해 cache.list도 병행 기록
+            fs.mkdirSync(path.dirname(this.cacheListPath), { recursive: true });
+            fs.appendFileSync(this.cacheListPath, `${id}\n`, 'utf-8');
+            return id;
+        } catch (err: any) {
+            console.error(`❌ 대상 ${id} 처리 도중 오류 발생: ${err.message}`);
+            if (fs.existsSync(tempHtmlPath)) {
+                fs.unlinkSync(tempHtmlPath);
+            }
+            throw err;
+        }
+    }
+
+    /**
      * 🚀 파이프라인 구동 메인 템플릿 메서드
      */
     public async run(urlsFile: string): Promise<void> {

@@ -18,7 +18,7 @@ source $ZSH/oh-my-zsh.sh
 
 # 컨테이너 전용 프롬프트 식별자 추가 (robbyrussell 테마 기반 커스텀)
 if [ "$IN_CONTAINER" = "true" ]; then
-  PROMPT="%(?:%{$fg_bold[blue]%}🐳 kasm-vdi %{$fg_bold[green]%}➜ :%{$fg_bold[blue]%}🐳 kasm-vdi %{$fg_bold[red]%}➜ ) %{$fg[cyan]%}%c%{$reset_color%} \$(git_prompt_info)"
+  PROMPT="%(?:%{$fg_bold[blue]%}🐳 kasm %{$fg_bold[green]%}➜ :%{$fg_bold[blue]%}🐳 kasm %{$fg_bold[red]%}➜ ) %{$fg[cyan]%}%c%{$reset_color%} \$(git_prompt_info)"
 fi
 
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"

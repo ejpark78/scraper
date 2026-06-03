@@ -324,6 +324,57 @@ export class LinkedInUrlManager implements IUrlManager {
         });
 
         console.log(`✅ 총 ${FormatUtils.formatThousand(companyUrlsCount)} 개의 회사 URL을 정규화 및 중복 제거하여 ${compayUrlsPath}에 저장했습니다.`);
+
+        // 5. 🐳 Redis 연동: 기존 대기열을 비우고 신규 생성된 URL 대기열 주입
+        const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+        try {
+            console.log(`📡 [Redis Queue] Connecting to Redis at ${redisUrl} to sync queues...`);
+            const Redis = require('ioredis');
+            const redis = new Redis(redisUrl, { maxRetriesPerRequest: 1 });
+            
+            // 연결 제한 시간 설정
+            await new Promise<void>((resolve, reject) => {
+                const timer = setTimeout(() => {
+                    redis.disconnect();
+                    reject(new Error('Connection timeout'));
+                }, 2000);
+                redis.once('connect', () => {
+                    clearTimeout(timer);
+                    resolve();
+                });
+            });
+
+            console.log('🧹 [Redis Queue] Clearing existing jobs_queue and company_queue...');
+            await redis.del('jobs_queue', 'company_queue');
+
+            if (newUrlsCount > 0) {
+                const jobUrls = Array.from(extractedJobIds).map(id => `https://www.linkedin.com/jobs/view/${id}`);
+                console.log(`📥 [Redis Queue] Pushing ${newUrlsCount} job URLs to 'jobs_queue'...`);
+                
+                // Chunk pushing to prevent Redis request limit errors
+                const chunkSize = 1000;
+                for (let i = 0; i < jobUrls.length; i += chunkSize) {
+                    const chunk = jobUrls.slice(i, i + chunkSize);
+                    await redis.rpush('jobs_queue', ...chunk);
+                }
+            }
+
+            if (companyUrlsCount > 0) {
+                const companyUrls = Array.from(extractedCompanyIds).map(id => `https://www.linkedin.com/company/${id}`);
+                console.log(`📥 [Redis Queue] Pushing ${companyUrlsCount} company URLs to 'company_queue'...`);
+                
+                const chunkSize = 1000;
+                for (let i = 0; i < companyUrls.length; i += chunkSize) {
+                    const chunk = companyUrls.slice(i, i + chunkSize);
+                    await redis.rpush('company_queue', ...chunk);
+                }
+            }
+
+            console.log('✅ [Redis Queue] Successfully synchronized all queues in Redis.');
+            await redis.quit();
+        } catch (redisErr: any) {
+            console.warn(`⚠️ [Redis Queue Warning] Redis 연결에 실패하여 대기열 동기화를 건너뜁니다: ${redisErr.message}`);
+        }
     }
 
     /**

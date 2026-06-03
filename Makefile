@@ -52,6 +52,7 @@ logout:
 	rm -f config/session.json
 	@echo "🔒 로그인 세션이 성공적으로 삭제되었습니다."
 
+
 # 호스트 가동 시 컨테이너로 위임(Proxy), 컨테이너 내부일 경우 실제 작업 수행
 ifeq ($(IN_CONTAINER),true)
 
@@ -87,6 +88,10 @@ company:
 test:
 	npx ts-node tests/url_manager.test.ts
 
+push-urls:
+	REDIS_URL=redis://redis:6379 npx ts-node src/push_urls.ts $(URLS)
+
+
 else
 
 # 호스트 환경에서 컨테이너 구동으로 위임하는 인터페이스 프록시
@@ -112,6 +117,10 @@ company:
 
 test:
 	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make test
+
+push-urls:
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true -e REDIS_URL=redis://redis:6379 clipper make push-urls URLS=$(URLS)
+
 
 endif
 
