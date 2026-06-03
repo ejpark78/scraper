@@ -1,8 +1,9 @@
-FROM mcr.microsoft.com/playwright:v1.45.0-jammy
+FROM mcr.microsoft.com/playwright:v1.60.0-jammy
 
 # 한글 폰트 미설치 시 덤프 파일 내 한글 깨짐 현상 예방
 RUN apt-get update && apt-get install -y \
     fonts-nanum \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

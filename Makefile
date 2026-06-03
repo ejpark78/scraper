@@ -87,27 +87,27 @@ else
 
 # 호스트 환경에서 컨테이너 구동으로 위임하는 인터페이스 프록시
 list:
-	docker compose run --rm -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL)
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL)
 
 job-list: list
 
 jobs:
-	docker compose run --rm -e IN_CONTAINER=true clipper make jobs URLS=$(URLS) AUTH=$(AUTH) PARALLEL=$(PARALLEL)
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make jobs URLS=$(URLS) AUTH=$(AUTH) PARALLEL=$(PARALLEL)
 
 urls:
-	docker compose run --rm -e IN_CONTAINER=true clipper make urls
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make urls
 
 html2md:
-	docker compose run --rm -e IN_CONTAINER=true clipper make html2md HTML=$(HTML) MD=$(MD)
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make html2md HTML=$(HTML) MD=$(MD)
 
 migrate:
-	docker compose run --rm -e IN_CONTAINER=true clipper make migrate
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make migrate
 
 company:
-	docker compose run --rm -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
 
 test:
-	docker compose run --rm -e IN_CONTAINER=true clipper make test
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make test
 
 endif
 

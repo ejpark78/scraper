@@ -11,11 +11,15 @@ export class IOUtils {
         const list = fs.readdirSync(dir);
         list.forEach(file => {
             const fullPath = path.join(dir, file);
-            const stat = fs.statSync(fullPath);
-            if (stat && stat.isDirectory()) {
-                results = results.concat(this.getAllFiles(fullPath, extension));
-            } else if (file.endsWith(extension)) {
-                results.push(fullPath);
+            try {
+                const stat = fs.statSync(fullPath);
+                if (stat && stat.isDirectory()) {
+                    results = results.concat(this.getAllFiles(fullPath, extension));
+                } else if (file.endsWith(extension)) {
+                    results.push(fullPath);
+                }
+            } catch (err) {
+                // 파일이 도중에 삭제되거나 접근 불가능한 경우 예외 무시
             }
         });
         return results;
