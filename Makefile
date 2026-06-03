@@ -63,6 +63,11 @@ html2md:
 migrate:
 	npx ts-node src/migrate_locations.ts
 
+# 추출된 회사 URL 목록(compay.txt)을 기반으로 회사 정보(HTML 및 Markdown)를 수집하여 저장합니다.
+company:
+	npx ts-node src/company_pipeline.ts "data/jobs/lists/compay.txt"
+
+
 clean: clean-lists clean-recent
 	rm -f data/jobs/temp_job_raw.md data/jobs/temp_job_raw_*.md
 	find data/jobs -mindepth 1 -type d -empty -delete 2>/dev/null || true

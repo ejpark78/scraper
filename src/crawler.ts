@@ -10,6 +10,7 @@ export interface ICrawler {
     login(): Promise<void>;
     scrapeJob(url: string, outputPath: string): Promise<void>;
     scrapeList(configFilePath: string): Promise<void>;
+    scrapeCompanyAbout(url: string, outputPath: string): Promise<void>;
 }
 
 export class LinkedInCrawler implements ICrawler {
@@ -163,6 +164,72 @@ export class LinkedInCrawler implements ICrawler {
     }
 
     /**
+     * 회사 정보 (/about/ 페이지) 크롤러
+     */
+    public async scrapeCompanyAbout(url: string, outputPath: string): Promise<void> {
+        const isLoggedIn = fs.existsSync(this.sessionPath);
+        if (!isLoggedIn) {
+            console.warn('⚠️ [경고] 로그인 세션 파일(session.json)이 없어 비로그인으로 동작합니다. 회사 정보 스크래핑은 실패할 확률이 매우 높습니다.');
+        }
+
+        // URL 정규화: 끝에 /about/ 이 없으면 자동으로 추가
+        let targetUrl = url.trim();
+        if (!targetUrl.replace(/\/$/, '').endsWith('/about')) {
+            targetUrl = targetUrl.replace(/\/$/, '') + '/about/';
+        }
+
+        const browser: Browser = await chromium.launch({ headless: true });
+        
+        try {
+            const contextOptions: any = {
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                viewport: { width: 1280, height: 800 },
+                locale: 'en-US'
+            };
+            if (isLoggedIn) {
+                contextOptions.storageState = this.sessionPath;
+            }
+
+            const context = await browser.newContext(contextOptions);
+            const page: Page = await context.newPage();
+
+            console.log(`🌐 [1/4] 브라우저 기동 및 회사 정보 페이지 이동 중... (${decodeURIComponent(targetUrl)})`);
+            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // 페이지 타이틀 체크
+            const title = await page.title();
+            if (title.includes('Sign In') || title.includes('로그인') || title.includes('Sign Up') || page.url().includes('authwall')) {
+                throw new Error('⚠️ 세션 만료 또는 로그인 요청 화면(Auth Wall) 감지됨');
+            }
+
+            console.log(`🔗 [2/4] 페이지 로딩 완료 (타이틀: ${title})`);
+            
+            // 비동기 하이드레이션 완료를 위한 핵심 셀렉터 대기
+            console.log('⏳ [3/4] 회사 정보 카드 렌더링 대기 중...');
+            try {
+                await page.waitForSelector('.org-page-details-module__card-spacing, dl', { timeout: 10000 });
+            } catch (selErr) {
+                console.warn('⚠️ 회사 세부 정보 카드가 10초 이내에 나타나지 않았습니다. 계속해서 덤프를 진행합니다.');
+            }
+
+            console.log('💾 [4/4] 렌더링 완료! 파일 저장 중...');
+            const htmlContent = await page.content();
+            const minifiedHtml = await HtmlMinifier.minify(htmlContent);
+            
+            const parentDir = path.dirname(outputPath);
+            if (!fs.existsSync(parentDir)) {
+                fs.mkdirSync(parentDir, { recursive: true });
+            }
+            fs.writeFileSync(outputPath, minifiedHtml, 'utf-8');
+            console.log(`✨ 회사 정보 백업 성공 (압축 및 포맷팅 완료: ${(minifiedHtml.length / 1024).toFixed(1)} KB) -> ${outputPath}`);
+
+        } finally {
+            await browser.close();
+        }
+    }
+
+    /**
      * 채용 목록 배치 수집 크롤러
      */
     public async scrapeList(configFilePath: string): Promise<void> {
@@ -292,8 +359,17 @@ export class LinkedInCrawler implements ICrawler {
                 }
                 await this.scrapeList(configFile);
                 process.exit(0);
+            } else if (command === 'company') {
+                const url = process.argv[3];
+                const outputPath = process.argv[4];
+                if (!url || !outputPath) {
+                    console.error('❌ 사용법: npx ts-node crawler.ts company <회사_URL> <저장_HTML_경로>');
+                    process.exit(1);
+                }
+                await this.scrapeCompanyAbout(url, outputPath);
+                process.exit(0);
             } else {
-                console.error('❌ 알 수 없는 명령어입니다. 사용 가능한 명령: login, job, list');
+                console.error('❌ 알 수 없는 명령어입니다. 사용 가능한 명령: login, job, list, company');
                 process.exit(1);
             }
         } catch (err: any) {
