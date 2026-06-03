@@ -1,0 +1,56 @@
+{
+  "South Korea": [
+    "South Korea", "Seoul", "Korea", "Busan", "Incheon", "Daegu", "Daejeon", "Gwangju", "Ulsan", "Suwon", "Changwon", "Pangyo", "Bundang", "Gyeonggi", "서울", "인천", "대구", "대전", "광주", "부산", "울산", "수원", "창원", "판교", "분당", "경기", "대한민국", "Seongsan-gu"
+  ],
+  "United Arab Emirates": [
+    "Abu Dhabi", "Dubai", "Ajman", "Al Ain", "Sharjah", "Fujairah", "Umm Al Quwain", "Ras Al Khaimah", "United Arab Emirates", "UAE", "아부다비", "두바이", "아랍에미리트", "샤르자", "아지만", "알아인", "أبو ظبي", "دبي", "الإمارات", "الشارقة", "الخيمة", "الع인", "عجمان", "الطَّوِيلَة", "مدينة محمد بن زايد"
+  ],
+  "Germany": [
+    "Germany", "Berlin", "Munich", "München", "Frankfurt", "Hamburg", "Stuttgart", "Düsseldorf", "Dusseldorf", "Cologne", "Köln", "Marburg", "독일", "Erfurt", "Bremen", "Karlsruhe", "Kassel", "Nuremberg", "Rostock", "Hannover", "Wolfsburg", "Göttingen", "Braunschweig", "Osnabrück", "Freilassing", "Friedrichshafen", "Aschaffenburg", "Kempten", "Leipzig", "Oldenburg", "Tubingen", "Tübingen", "Wurzburg", "Würzburg", "Bodensee", "Immenstaad", "Lindau", "Rhein-Neckar", "Ruhr", "DACH"
+  ],
+  "Qatar": [
+    "Qatar", "Doha", "카타르", "도하"
+  ],
+  "Austria": [
+    "Austria", "Vienna", "Wien", "오스트리아", "비엔나", "Amstetten", "Niederösterreich", "Österreich", "Gumpoldskirchen", "Hagenberg", "Mühlkreis", "Oberösterreich", "Linz", "Marchtrenk", "Sankt Valentin", "Schwertberg", "Wels", "Graz", "Innsbruck", "Salzburg", "Sankt Polten", "St.Pölten", "St. Pölten", "Umgebung"
+  ],
+  "Singapore": [
+    "Singapore", "싱가포르"
+  ],
+  "United Kingdom": [
+    "United Kingdom", "UK", "London", "Great Britain", "England", "Scotland", "Wales", "영국", "런던", "Colchester"
+  ],
+  "Canada": [
+    "Canada", "Toronto", "Vancouver", "Montreal", "캐나다", "토론토"
+  ],
+  "Ireland": [
+    "Ireland", "Dublin", "아일랜드", "더블린"
+  ],
+  "Saudi Arabia": [
+    "Saudi Arabia", "Riyadh", "사우디", "리야드"
+  ],
+  "Japan": [
+    "Japan", "Tokyo", "Shibuya", "Osaka", "Kyoto", "일본", "도쿄", "오사카", "六本木", "千代田区", "府中", "東京", "東京都", "日本", "渋谷区", "港区", "荒川区", "西東京"
+  ],
+  "Switzerland": [
+    "Switzerland", "Schaffhausen", "Beringen", "Thurgau", "Bottighofen", "Frauenfeld", "Mittelland", "Appenzell", "스위스", "Schweiz", "Sankt Gallen", "St. Gallen", "St.Gallen", "Buchs", "Grabs", "Haag", "Rheintal", "Mörschwil", "Sennwald", "Winkeln", "Wittenbach", "Zürich", "Zurich"
+  ],
+  "Luxembourg": [
+    "Luxembourg", "Luxemburg", "Betzdorf", "Grevenmacher", "Findel", "Kirchberg", "Ville Haute", "Wasserbillig", "룩셈부르크"
+  ],
+  "Malaysia": [
+    "Malaysia", "Johor", "말레이시아"
+  ],
+  "Spain": [
+    "Spain", "Madrid", "스페인", "마드리드"
+  ],
+  "Poland": [
+    "Poland", "Warsaw", "Warszawa", "Mazowieckie", "폴란드", "바르샤바"
+  ],
+  "Liechtenstein": [
+    "Liechtenstein", "Eschen", "Schaan", "Vaduz", "리히텐슈타인"
+  ],
+  "Romania": [
+    "Romania", "Bucharest", "București", "루마니아", "부쿠레슈티"
+  ]
+}

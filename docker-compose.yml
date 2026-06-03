@@ -1,0 +1,15 @@
+services:
+  clipper:
+    build: .
+    image: linkedin-clipper:latest
+    network_mode: "host"
+    environment:
+      - AUTH=${AUTH}
+      - PARALLEL=${PARALLEL}
+      - LISTS=${LISTS}
+      - URLS=${URLS}
+      - HTML=${HTML}
+      - MD=${MD}
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data

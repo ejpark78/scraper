@@ -19,7 +19,7 @@ export class LinkedInCrawler implements ICrawler {
     private readonly useLogin: boolean;
 
     constructor(options: { login?: boolean } = {}) {
-        this.useLogin = !!options.login;
+        this.useLogin = options.login !== undefined ? options.login : (process.env.LOGIN === 'true' || process.env.AUTH === 'true');
     }
 
     /**
@@ -277,6 +277,9 @@ export class LinkedInCrawler implements ICrawler {
 
         console.log(`📋 총 ${urls.length} 개의 목록 URL이 감지되었습니다.`);
 
+        const parallelLimit = parseInt(process.env.PARALLEL || '1', 10);
+        console.log(`⚙️  동시 작업 스레드(Playwright) 제한 설정: ${parallelLimit}개`);
+
         const browser: Browser = await chromium.launch({ headless: true });
         
         try {
@@ -289,18 +292,17 @@ export class LinkedInCrawler implements ICrawler {
                 contextOptions.storageState = this.sessionPath;
             }
 
-            const context = await browser.newContext(contextOptions);
-            const page = await context.newPage();
-
             const loginStatus = isLoggedIn ? '[AUTHED]' : '[UNAUTHED]';
             const startTime = Date.now();
+            let currentIndex = 0;
 
-            for (let i = 0; i < urls.length; i++) {
-                const url = urls[i];
+            const worker = async (url: string) => {
+                currentIndex++;
+                const myIndex = currentIndex;
                 
                 const d = new Date();
                 const pad = (n: number) => String(n).padStart(2, '0');
-                const timestamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}_${pad(d.getMinutes())}_${pad(d.getSeconds())}`;
+                const timestamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}_${pad(d.getMinutes())}_${pad(d.getSeconds())}_${Math.random().toString(36).substring(2, 6)}`;
                 
                 const outputFileName = `${timestamp}.html`;
                 if (!fs.existsSync(this.listDir)) {
@@ -313,8 +315,8 @@ export class LinkedInCrawler implements ICrawler {
                 const runtimeStr = DateUtils.formatSeconds(elapsedSeconds);
                 
                 let etrStr = '계산 중...';
-                if (i > 0) {
-                    const completedCount = i;
+                if (myIndex > 1) {
+                    const completedCount = myIndex - 1;
                     const remainingCount = urls.length - completedCount;
                     const avgSpeed = elapsedSeconds / completedCount;
                     const remainingSeconds = Math.floor(avgSpeed * remainingCount);
@@ -322,32 +324,66 @@ export class LinkedInCrawler implements ICrawler {
                 }
 
                 console.log(`\n──────────────────────────────────────────────────`);
-                console.log(`📡 [${i + 1}/${urls.length}][${runtimeStr}/${etrStr}]${loginStatus} 목록 수집 중: ${decodeURIComponent(url)}`);
+                console.log(`📡 [${myIndex}/${urls.length}][${runtimeStr}/${etrStr}]${loginStatus} 목록 수집 중: ${decodeURIComponent(url)}`);
                 console.log(`──────────────────────────────────────────────────`);
 
-                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                const context = await browser.newContext(contextOptions);
+                const page = await context.newPage();
 
-                const title = await page.title();
-                if (title.includes('Sign In') || title.includes('로그인') || title.includes('Security Challenge')) {
-                    console.error('⚠️  [경고] 로그인 또는 보안 인증(Captcha) 화면이 감지되었습니다.');
-                    if (isLoggedIn) {
-                        console.error('💡 세션이 만료되었을 수 있으니 다시 [make login]을 실행하여 로그인 상태를 갱신해 주세요.');
-                    } else {
-                        console.log('💡 비로그인 모드로 동작 중 발생한 제한입니다. 전체 데이터를 수집하려면 [make login]을 통해 세션을 덤프한 후 실행해 주세요.');
+                try {
+                    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+
+                    const title = await page.title();
+                    if (title.includes('Sign In') || title.includes('로그인') || title.includes('Security Challenge')) {
+                        console.error('⚠️  [경고] 로그인 또는 보안 인증(Captcha) 화면이 감지되었습니다.');
+                        if (isLoggedIn) {
+                            console.error('💡 세션이 만료되었을 수 있으니 다시 [make login]을 실행하여 로그인 상태를 갱신해 주세요.');
+                        } else {
+                            console.log('💡 비로그인 모드로 동작 중 발생한 제한입니다. 전체 데이터를 수집하려면 [make login]을 통해 세션을 덤프한 후 실행해 주세요.');
+                        }
+                        throw new Error('AUTH_FAIL');
                     }
-                    break;
+
+                    await this.autoScroll(page);
+
+                    const htmlContent = await page.content();
+                    fs.writeFileSync(savePath, htmlContent, 'utf-8');
+
+                    console.log(`💾 덤프 성공 -> lists/raw/${outputFileName} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
+                } finally {
+                    await context.close();
                 }
+            };
 
-                await this.autoScroll(page);
+            const executing = new Set<Promise<void>>();
+            let authFailed = false;
 
-                const htmlContent = await page.content();
-                fs.writeFileSync(savePath, htmlContent, 'utf-8');
+            for (const url of urls) {
+                if (authFailed) break;
 
-                console.log(`💾 덤프 성공 -> lists/raw/${outputFileName} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
+                const p = worker(url).catch((err) => {
+                    if (err.message === 'AUTH_FAIL') {
+                        authFailed = true;
+                    } else {
+                        console.error(`⚠️ URL 수집 실패 (${url}): ${err.message}`);
+                    }
+                }).then(() => {
+                    executing.delete(p);
+                });
+                executing.add(p);
+                
+                if (executing.size >= parallelLimit) {
+                    await Promise.race(executing);
+                }
             }
+            await Promise.all(executing);
 
-            console.log('\n🎉 모든 목록 URL의 무인 백그라운드 수집을 정상적으로 마쳤습니다!');
+            if (authFailed) {
+                console.log('\n🛑 로그인 세션 또는 인증 오류로 인해 작업을 중단했습니다.');
+            } else {
+                console.log('\n🎉 모든 목록 URL의 무인 백그라운드 수집을 정상적으로 마쳤습니다!');
+            }
         } finally {
             await browser.close();
         }

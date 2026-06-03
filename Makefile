@@ -1,79 +1,117 @@
 # ⚙️ LinkedIn Job Scraper Makefile
-# 이 파일은 최상위(Root) 디렉토리에서 scripts/ 폴더 내부의 셸 스크립트를 편리하게 제어하기 위한 인터페이스입니다.
 
-.PHONY: help posts urls html2md clean purge login list test migrate open
+.PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build
 
-# 기본 대상 (아무런 인자 없이 'make'만 실행했을 때 도움말 표시)
+# URLS 변수 기본값 설정
+URLS ?= data/jobs/lists/urls.txt
+# LISTS 변수 기본값 설정
+LISTS ?= config/config.json
+# 동시 실행 브라우저 갯수 기본값
+PARALLEL ?= 1
+# AUTH 기본값
+AUTH ?= true
+
+# 컨테이너 실행 판별 플래그 (호스트 vs 컨테이너)
+IN_CONTAINER ?= false
+
+# 기본 도움말
 help:
 	@echo "========================================================================="
-	@echo "🌐 LinkedIn Job Scraper CLI"
+	@echo "🌐 LinkedIn Job Scraper CLI (Dockerized)"
 	@echo "========================================================================="
-	@echo "사용 가능한 명령어 목록:"
-	@echo "  make login          - 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
-	@echo "  make open           - 로그인 세션 기반의 헤드풀 브라우저를 띄워, 이동 페이지 HTML 및 비동기 API 데이터를 수집합니다."
-	@echo "  make list           - config/config.json의 조건 기반으로 목록 HTML을 무인 수집하여 덤프합니다."
-	@echo "  make posts          - data/jobs/lists/urls.txt의 URL을 순차 수집하여 마크다운으로 저장합니다."
-	@echo "                        (예: make posts URLS=data/jobs/lists/custom_urls.txt)"
-	@echo "  make urls           - data/jobs/lists/raw/*.html 에서 공고 조회 URL을 추출하여 urls.txt에 저장합니다."
-	@echo "  make html2md        - data/jobs/html 내 HTML 캐시와 data/jobs/markdown 내 MD 간 유실 파일을 동기화합니다."
-	@echo "                        (단일 변환 예시: make html2md HTML=입력.html MD=출력.md)"
-	@echo "  make migrate        - 수집된 HTML 및 MD 파일들을 새롭게 업그레이드된 표준 국가명 폴더로 일괄 마이그레이션합니다."
-	@echo "  make clean          - 작업 중 생성된 임시 파일, data/jobs/lists/raw/*.html 및 빈 폴더를 정리합니다."
-	@echo "  make purge          - 수집된 data/jobs 폴더를 완전히 삭제하고 초기화합니다."
-	@echo "  make test           - URL 생성기 모듈의 단위 테스트를 기동하여 정밀 검증합니다."
+	@echo "사용 가능한 명령어 목록 (자동 Docker 가동):"
+	@echo "  make build          - Docker 컨테이너 이미지를 빌드합니다."
+	@echo "  make login          - [Host] 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
+	@echo "  make open           - [Host] 로그인 세션 기반 헤드풀 브라우저 기동"
+	@echo "  make list           - [Docker] config.json 조건 기반으로 목록 HTML을 무인 수집합니다."
+	@echo "  make jobs           - [Docker] urls.txt의 URL을 병렬 수집하여 마크다운으로 저장합니다."
+	@echo "  make urls           - [Docker] lists/raw/*.html 에서 공고 조회 URL을 추출하여 urls.txt에 저장합니다."
+	@echo "  make company        - [Docker] urls.txt 기반 회사 정보를 수집하여 마크다운으로 저장합니다."
+	@echo "  make html2md        - [Docker] HTML 캐시와 MD 간 동기화 및 메타데이터 일괄 복원"
+	@echo "  make migrate        - [Docker] 수집 데이터 표준 국가명 폴더로 일괄 마이그레이션"
+	@echo "  make test           - [Docker] URL 생성기 단위 테스트 실행"
+	@echo "  make clean          - [Host] 임시 파일 및 빈 폴더 정리"
 	@echo "========================================================================="
-	
-# URLS 변수 기본값 설정 (make posts URLS=경로 형태로 덮어쓰기 가능)
-URLS ?= data/jobs/lists/urls.txt
-# LISTS 변수 기본값 설정 (make list LISTS=경로 형태로 덮어쓰기 가능)
-LISTS ?= config/config.json
 
-# 세션 유지 대화형 수집 브라우저 기동
-open:
-	npx ts-node src/browser/open.ts
+# Docker 이미지 빌드
+build:
+	docker compose build
 
-# 1회성 로그인 세션 획득기 기동
+# 호스트(Host) 구동 필수 타겟
 login:
 	npx ts-node src/crawler.ts login
+
+open:
+	npx ts-node src/browser/open.ts
 
 logout:
 	rm -f config/session.json
 	@echo "🔒 로그인 세션이 성공적으로 삭제되었습니다."
 
+# 호스트 가동 시 컨테이너로 위임(Proxy), 컨테이너 내부일 경우 실제 작업 수행
+ifeq ($(IN_CONTAINER),true)
 
-# 채용 목록 자동 스크롤 및 무인 덤프 실행
 job-list:
 	@if [ ! -f "$(LISTS)" ]; then \
 		echo "❌ 에러: 수집 대상 설정 파일이 존재하지 않습니다: $(LISTS)"; \
 		exit 1; \
 	fi
-	LOGIN=$(LOGIN) npx ts-node src/crawler.ts list $(LISTS)
+	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) npx ts-node src/crawler.ts list $(LISTS)
 
-# 채용 공고 일괄 수집 및 가공 파이프라인 구동
+list: job-list
+
 jobs:
 	@if [ ! -f "$(URLS)" ]; then \
 		echo "❌ 에러: 지정한 URL 목록 파일이 존재하지 않습니다: $(URLS)"; \
 		exit 1; \
 	fi
-	LOGIN=$(LOGIN) npx ts-node src/jobs/jobs_pipeline.ts $(URLS)
+	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) npx ts-node src/jobs/jobs_pipeline.ts $(URLS)
 
-# URL 추출 및 urls.txt 적재
 urls:
 	node --max-old-space-size=4096 -r ts-node/register src/jobs/url_manager.ts extract "data/jobs/lists/raw/" "data/jobs/html/" "data/jobs/lists/urls.txt"
 
-# HTML 백업본과 MD 파일 동기화 및 유실 파일 오프라인 일괄 복원
 html2md:
 	npx ts-node src/jobs/jobs_converter.ts $(HTML) $(MD)
 	npx ts-node src/company/reconvert_all.ts
 
-# 수집 완료된 전체 데이터를 표준 국가명 폴더로 정렬 및 일괄 마이그레이션
 migrate:
 	npx ts-node src/jobs/migrate_locations.ts
 
-# 추출된 회사 URL 목록(urls.txt)을 기반으로 회사 정보(HTML 및 Markdown)를 수집하여 저장합니다.
 company:
-	LOGIN=true npx ts-node src/company/company_pipeline.ts "data/compay/lists/urls.txt"
+	LOGIN=$(AUTH) npx ts-node src/company/company_pipeline.ts "data/compay/lists/urls.txt"
 
+test:
+	npx ts-node tests/url_manager.test.ts
+
+else
+
+# 호스트 환경에서 컨테이너 구동으로 위임하는 인터페이스 프록시
+list:
+	docker compose run --rm -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL)
+
+job-list: list
+
+jobs:
+	docker compose run --rm -e IN_CONTAINER=true clipper make jobs URLS=$(URLS) AUTH=$(AUTH) PARALLEL=$(PARALLEL)
+
+urls:
+	docker compose run --rm -e IN_CONTAINER=true clipper make urls
+
+html2md:
+	docker compose run --rm -e IN_CONTAINER=true clipper make html2md HTML=$(HTML) MD=$(MD)
+
+migrate:
+	docker compose run --rm -e IN_CONTAINER=true clipper make migrate
+
+company:
+	docker compose run --rm -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
+
+test:
+	docker compose run --rm -e IN_CONTAINER=true clipper make test
+
+endif
+
+# 데이터 청소 명령 (호스트에서 직접 파일 제어)
 clean: clean-lists clean-recent
 	rm -f data/jobs/temp_job_raw.md data/jobs/temp_job_raw_*.md
 	find data/jobs -mindepth 1 -type d -empty -delete 2>/dev/null || true
@@ -81,19 +119,14 @@ clean: clean-lists clean-recent
 
 clean-recent:
 	rm -rf data/jobs/recent/html data/jobs/recent/markdown
-	@echo "🧹 data/jobs/recent/ 디렉토리 내 HTML 및 Markdown 파일이 모두 삭제되었습니다."
+	@echo "🧹 data/jobs/recent/ HTML/Markdown 파일이 모두 삭제되었습니다."
 
 clean-lists:
 	rm -rf data/jobs/lists/raw/*.html
-	@echo "🧹 data/jobs/lists/raw/ 디렉토리 내 HTML 파일이 모두 삭제되었습니다."
+	@echo "🧹 data/jobs/lists/raw/ HTML 파일이 모두 삭제되었습니다."
 
-# 전체 데이터 초기화 (data/jobs 디렉토리 완전 삭제)
 purge:
 	@echo "⚠️  [경고] 수집된 모든 HTML 파일과 마크다운 포스트를 완전히 삭제합니다."
 	@read -p "정말 진행하시겠습니까? [y/N]: " confirm && [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ] || (echo "❌ 중단되었습니다."; exit 1)
 	rm -rf data/jobs
 	@echo "✨ data/jobs 디렉토리가 완전히 초기화되었습니다."
-
-# 단위 테스트 구동 (URL 생성기 기능 검증)
-test:
-	npx ts-node tests/url_manager.test.ts

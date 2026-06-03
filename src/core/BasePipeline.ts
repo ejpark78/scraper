@@ -7,6 +7,8 @@ export abstract class BasePipeline<TMeta> {
     protected readonly htmlDir: string;
     protected readonly mdDir: string;
     protected readonly baseDir: string;
+    // 🔒 동시 워커 간 중복 수집 타겟 선점 방지용 인메모리 뮤텍스 셋
+    private readonly processingIds = new Set<string>();
     
     constructor(baseDir: string, cacheListName: string = 'cache.list') {
         this.baseDir = baseDir;
@@ -39,7 +41,7 @@ export abstract class BasePipeline<TMeta> {
         fs.mkdirSync(path.dirname(this.cacheListPath), { recursive: true });
 
         // 로그인 상태 확인
-        const useLoginEnv = process.env.LOGIN === 'true';
+        const useLoginEnv = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
         const sessionPath = path.join(__dirname, '..', '..', 'config', 'session.json');
         const loginStatus = useLoginEnv 
             ? (fs.existsSync(sessionPath) ? '[AUTHED]' : '[UNAUTHED]')
@@ -83,63 +85,80 @@ export abstract class BasePipeline<TMeta> {
             process.exit(0);
         }
 
-        // 3. URL 순회 수집 시작
+        // 3. 동시성 워커 설정 파싱
+        const parallelLimit = parseInt(process.env.PARALLEL || '1', 10);
+        console.log(`⚙️  동시 작업 스레드(Playwright) 제한 설정: ${parallelLimit}개`);
+
         const startTime = Date.now();
         let currentIndex = 0;
 
-        for (const url of filteredUrls) {
-            currentIndex++;
-            const id = this.extractId(url);
+        // 경쟁 조건 방지 cache.list 쓰기 동기 함수
+        const synchronizedAppend = (filePath: string, text: string) => {
+            try {
+                fs.appendFileSync(filePath, text, 'utf-8');
+            } catch (e) {
+                setTimeout(() => {
+                    try { fs.appendFileSync(filePath, text, 'utf-8'); } catch (e2) {}
+                }, 50);
+            }
+        };
 
-            // 진행 시간 및 ETR(예상 완료 시간) 계산
+        // 개별 워커 실행 함수
+        const worker = async (url: string) => {
+            const id = this.extractId(url);
+            if (!id) return;
+
+            // 🛡️ 실시간 중복 수집 선점 차단 뮤텍스 검사
+            if (this.processingIds.has(id)) {
+                return;
+            }
+            this.processingIds.add(id);
+
+            currentIndex++;
+            const myIndex = currentIndex;
+
+            // 진행률 및 ETR 계산
             const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
             const runtimeStr = DateUtils.formatSeconds(elapsedSeconds);
             
             let etrStr = '계산 중...';
-            if (currentIndex > 1) {
-                const completedCount = currentIndex - 1;
+            if (myIndex > 1) {
+                const completedCount = myIndex - 1;
                 const remainingCount = filteredCount - completedCount;
                 const avgSpeed = elapsedSeconds / completedCount;
                 const remainingSeconds = Math.floor(avgSpeed * remainingCount);
                 etrStr = DateUtils.formatSeconds(remainingSeconds);
             }
 
-            const currentIndexFmt = FormatUtils.formatThousand(currentIndex);
+            const currentIndexFmt = FormatUtils.formatThousand(myIndex);
             const filteredCountFmt = FormatUtils.formatThousand(filteredCount);
 
-            console.log('\n==================================================');
-            console.log(`🏢 [${currentIndexFmt}/${filteredCountFmt}][${runtimeStr}/${etrStr}]${loginStatus} 대상 ID: ${id} | URL: ${decodeURIComponent(url)}`);
-            console.log('==================================================');
+            console.log(`🏢 [${currentIndexFmt}/${filteredCountFmt}][${runtimeStr}/${etrStr}] ${loginStatus} ID: ${id} | 시작`);
 
             const tempHtmlPath = path.join(this.htmlDir, `temp_${id}.html`);
 
             try {
                 // 1) HTML 스크래핑
-                console.log(`📥 [1/3] ${this.getDomainName()} 정보 웹페이지 덤프 중...`);
                 await this.executeScrape(url, tempHtmlPath);
 
                 if (!fs.existsSync(tempHtmlPath) || fs.statSync(tempHtmlPath).size === 0) {
-                    console.error('❌ HTML을 정상적으로 가져오지 못했습니다. 다음 타겟으로 넘어갑니다.');
+                    console.error(`❌ [ID: ${id}] HTML을 정상적으로 가져오지 못했습니다.`);
                     if (fs.existsSync(tempHtmlPath)) fs.unlinkSync(tempHtmlPath);
-                    continue;
+                    this.processingIds.delete(id);
+                    return;
                 }
 
                 // 2) 핵심 정보 파싱 및 변환
-                console.log('🔍 [2/3] 메타데이터 파싱 및 마크다운 변환 중...');
                 const htmlContent = fs.readFileSync(tempHtmlPath, 'utf-8');
                 const meta = this.processMetadata(htmlContent, id, url);
 
                 // 3) 최종 파일 저장
-                console.log('🧹 [3/3] Prettier 포맷팅 후 파일 최종 저장 중...');
                 const paths = await this.saveResults(meta, id, tempHtmlPath);
                 
-                console.log(`✨ 최종 저장 완료 (분류: ${paths.targetDirName}):`);
-                console.log(`   - Markdown: ${paths.mdPath}`);
-                console.log(`   - HTML: ${paths.htmlPath}`);
+                console.log(`✨ [성공] ID: ${id} | 분류: ${paths.targetDirName}`);
 
-                // cache.list 기록 및 갱신
-                cacheSet.add(id);
-                fs.appendFileSync(this.cacheListPath, `${id}\n`, 'utf-8');
+                // cache.list 기록
+                synchronizedAppend(this.cacheListPath, `${id}\n`);
 
             } catch (err: any) {
                 console.error(`❌ 대상 ${id} 처리 도중 오류 발생: ${err.message}`);
@@ -149,7 +168,7 @@ export abstract class BasePipeline<TMeta> {
 
                 // 세션 만료 및 Auth Wall(로그인 창) 감지 시 전체 파이프라인 중단 처리
                 if (err.message && (err.message.includes('세션 만료') || err.message.includes('Auth Wall') || err.message.includes('로그인 요청'))) {
-                    if (process.env.LOGIN === 'true') {
+                    if (useLoginEnv) {
                         console.error(`\n🛑 [핵심 차단] 링크드인 로그인 세션이 만료되었거나 풀렸습니다.`);
                         console.error(`💡 [해결 방법]:`);
                         console.error(`   1. 터미널에 [make login]을 다시 실행하여 링크드인 브라우저 로그인을 갱신해 주세요.`);
@@ -159,8 +178,25 @@ export abstract class BasePipeline<TMeta> {
                         console.warn(`⚠️ [경고] 비로그인 상태에서 Auth Wall(로그인 요구)을 감지했습니다. 전체 중단 없이 다음 URL로 넘어갑니다.`);
                     }
                 }
+            } finally {
+                // 🔒 뮤텍스 락 해제
+                this.processingIds.delete(id);
+            }
+        };
+
+        // 비동기 실행 풀
+        const executing = new Set<Promise<void>>();
+        for (const url of filteredUrls) {
+            const p = worker(url).then(() => {
+                executing.delete(p);
+            });
+            executing.add(p);
+            
+            if (executing.size >= parallelLimit) {
+                await Promise.race(executing);
             }
         }
+        await Promise.all(executing);
 
         console.log(`\n🎉 [종료] ${this.getDomainName()} 정보 일괄 수집 완료! ${this.baseDir} 폴더를 확인해 주세요.`);
     }

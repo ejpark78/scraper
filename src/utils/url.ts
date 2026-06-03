@@ -27,6 +27,9 @@ export class UrlUtils {
         return segment.substring(0, 50);
     }
 
+    // 💡 country.json 캐싱용 변수
+    private static countryMapping: Record<string, string[]> | null = null;
+
     /**
      * 🛡️ 근무지 지리 매핑 및 표준화 규칙 적용 (국가명 기준 정렬)
      */
@@ -35,85 +38,42 @@ export class UrlUtils {
             return 'unknown-location';
         }
         const cleanLoc = rawLocation.trim();
-        
-        // 1. 대한민국 (Korea)
-        if (/[가-힣]/.test(cleanLoc) || /South Korea|Seoul|Korea|Busan|Incheon|Daegu|Daejeon|Gwangju|Ulsan|Suwon|Changwon|Pangyo|Bundang|Gyeonggi|서울|인천|대구|대전|광주|부산|울산|수원|창원|판교|분당|경기|대한민국|Seongsan-gu/i.test(cleanLoc)) {
-            return 'Korea';
-        }
-        
-        // 2. 아랍에미리트 (United Arab Emirates)
-        if (/Abu Dhabi|Dubai|Ajman|Al Ain|Sharjah|Fujairah|Umm Al Quwain|Ras Al Khaimah|United Arab Emirates|UAE|아부다비|두바이|아랍에미리트|샤르자|아지만|알아인|أبو ظبي|دبي|الإمارات|الشارقة|الخيمة|العين|عجمان|الطَّوِيلَة|مدينة محمد بن زايد/i.test(cleanLoc)) {
-            return 'United Arab Emirates';
-        }
-        
-        // 3. 독일 (Germany)
-        if (/Germany|Berlin|Munich|München|Frankfurt|Hamburg|Stuttgart|Düsseldorf|Dusseldorf|Cologne|Köln|Marburg|독일|Erfurt|Bremen|Karlsruhe|Kassel|Nuremberg|Rostock|Hannover|Wolfsburg|Göttingen|Braunschweig|Osnabrück/i.test(cleanLoc)) {
-            return 'Germany';
-        }
-        
-        // 4. 카타르 (Qatar)
-        if (/Qatar|Doha|카타르|도하/i.test(cleanLoc)) {
-            return 'Qatar';
+
+        // 1. 동적으로 country.json 불러오기 및 캐싱
+        if (!UrlUtils.countryMapping) {
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const configPath = path.join(__dirname, '..', '..', 'config', 'country.json');
+                if (fs.existsSync(configPath)) {
+                    UrlUtils.countryMapping = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                }
+            } catch (err) {
+                console.warn('⚠️ country.json 설정 파일을 로드하지 못했습니다. 기본 한국어 검사 폴백을 진행합니다.', err);
+            }
         }
 
-        // 5. 오스트리아 (Austria)
-        if (/Austria|Vienna|Wien|오스트리아|비엔나|Amstetten|Niederösterreich|Österreich|Gumpoldskirchen|Hagenberg|Mühlkreis|Oberösterreich|Linz|Marchtrenk|Sankt Valentin|Schwertberg|Wels|Graz/i.test(cleanLoc)) {
-            return 'Austria';
-        }
-        
-        // 6. 싱가포르 (Singapore)
-        if (/Singapore|싱가포르/i.test(cleanLoc)) {
-            return 'Singapore';
-        }
-        
-        // 7. 영국 (United Kingdom)
-        if (/United Kingdom|UK|London|Great Britain|England|Scotland|Wales|영국|런던|Colchester/i.test(cleanLoc)) {
-            return 'United Kingdom';
-        }
-        
-        // 8. 캐나다 (Canada)
-        if (/Canada|Toronto|Vancouver|Montreal|캐나다|토론토/i.test(cleanLoc)) {
-            return 'Canada';
-        }
-        
-        // 9. 아일랜드 (Ireland)
-        if (/Ireland|Dublin|아일랜드|더블린/i.test(cleanLoc)) {
-            return 'Ireland';
-        }
-        
-        // 10. 사우디아라비아 (Saudi Arabia)
-        if (/Saudi Arabia|Riyadh|사우디|리야드/i.test(cleanLoc)) {
-            return 'Saudi Arabia';
-        }
-        
-        // 11. 일본 (Japan)
-        if (/Japan|Tokyo|Shibuya|Osaka|Kyoto|일본|도쿄|오사카|六本木|千代田区|府中|東京|東京都|日本|渋谷区|港区|荒川区|西東京/i.test(cleanLoc)) {
-            return 'Japan';
-        }
+        // 2. 외부 설정 값이 있을 경우 매핑 매칭 수행
+        if (UrlUtils.countryMapping) {
+            for (const [country, aliases] of Object.entries(UrlUtils.countryMapping)) {
+                // 한글 캐릭터셋이 있거나, 별칭 중 하나가 포함되는 경우 검사
+                // (일부 특수 로직 보존: 한국의 경우 /[가-힣]/ 매칭 지원)
+                if (country === 'Korea' && /[가-힣]/.test(cleanLoc)) {
+                    return 'Korea';
+                }
 
-        // 12. 스위스 (Switzerland)
-        if (/Switzerland|Schaffhausen|Beringen|Thurgau|Bottighofen|Frauenfeld|Mittelland|Appenzell|스위스/i.test(cleanLoc)) {
-            return 'Switzerland';
-        }
-
-        // 13. 룩셈부르크 (Luxembourg)
-        if (/Luxembourg|Luxemburg|Betzdorf|Grevenmacher|Findel|Kirchberg|Ville Haute|Wasserbillig|룩셈부르크/i.test(cleanLoc)) {
-            return 'Luxembourg';
-        }
-
-        // 14. 말레이시아 (Malaysia)
-        if (/Malaysia|Johor|말레이시아/i.test(cleanLoc)) {
-            return 'Malaysia';
-        }
-
-        // 15. 스페인 (Spain)
-        if (/Spain|Madrid|스페인|마드리드/i.test(cleanLoc)) {
-            return 'Spain';
-        }
-
-        // 16. 폴란드 (Poland)
-        if (/Poland|Warsaw|Warszawa|Mazowieckie|폴란드|바르샤바/i.test(cleanLoc)) {
-            return 'Poland';
+                // regex escape를 통해 안전하게 정규식 패턴 생성
+                const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+                const pattern = new RegExp(escapedAliases.join('|'), 'i');
+                if (pattern.test(cleanLoc)) {
+                    return country;
+                }
+            }
+        } else {
+            // Fallback (최소한의 예외 처리)
+            if (/[가-힣]/.test(cleanLoc) || /Korea|Seoul|서울|대한민국/i.test(cleanLoc)) {
+                return 'Korea';
+            }
         }
 
         return cleanLoc.replace(/[\/\\:\*\?"<>\|]/g, ' ').trim();

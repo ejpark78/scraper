@@ -1,0 +1,10 @@
+{
+  "scrollSelectors": [
+    ".jobs-search-results-list",
+    ".scaffold-layout__list",
+    "div[data-job-id]",
+    "main section"
+  ],
+  "showMoreSelector": "button.show-more-less-html__button--more, button[aria-label*=\"show more\" i], button.jobs-description__footer-button",
+  "companyCardSelector": ".org-page-details-module__card-spacing, dl"
+}

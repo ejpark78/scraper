@@ -22,7 +22,7 @@
 
 ### 3. 디폴트 비로그인(UNAUTHED) 기동 스펙 (New)
 * **보안 및 수집 안전성 극대화**: 기본적으로 모든 수집 파이프라인은 로그인 세션을 주입하지 않는 **비로그인(게스트) 모드로 작동**합니다.
-* **`LOGIN=true` 옵션 도입**: `session.json` 토큰 정보를 이용한 로그인이 강제 필요할 때만 명시적 명령어로 `LOGIN=true` 파라미터를 넘겨 작동시킵니다.
+* **`AUTH=true` 옵션 도입**: `session.json` 토큰 정보를 이용한 로그인이 강제 필요할 때만 명시적 명령어로 `AUTH=true` 파라미터를 넘겨 작동시킵니다.
 * **로그인 상태 태그 표준화**:
   * `[AUTHED]`: 로그인 세션이 유효하게 주입되어 가동 중인 상태입니다.
   * `[UNAUTHED]`: 비로그인(게스트) 모드이거나, 로그인 검증을 생략하고 안전 수집을 진행 중인 상태입니다. (비로그인 상태에서 로그인 챌린지 화면을 밟을 경우, 전체 차단 없이 해당 타겟만 스킵하고 다음 수집으로 유연하게 넘어갑니다.)
@@ -31,6 +31,10 @@
 * 16,000개 이상의 HTML 백업본 분석 시 힙 메모리가 가득 차서 프로그램이 뻗던 **JavaScript heap out of memory** 오류를 완벽히 격파했습니다.
 * 동기 `forEach`를 비동기 `for...of` 루프로 리팩토링하고 100개 파일 분석 단위마다 Node.js 이벤트 루프에 제어권(`setImmediate`)을 양보해 V8 가비지 컬렉션(GC)을 유도합니다.
 * 인메모리 Set에는 쿼리가 복잡한 긴 전체 URL 주소 대신 **고유 ID 값만 최소한으로 보관**하여 메모리 풋프린트를 기존 대비 80% 이상 절감하였고, `Makefile` 기동 시 V8 힙 리밋을 최대 4GB로 명시적 확장하여 가동 안전성을 2중 보증합니다.
+
+### 5. 다중 스크래핑(Playwright) 병렬 처리 (Parallel Control) (New)
+* `make list` 및 `make jobs` 실행 시 `PARALLEL=N` 파라미터를 인자로 넘겨주면, 복수의 Playwright 인스턴스를 동시에 가동시켜 스크래핑 속도를 향상시킬 수 있습니다. (기본값: `PARALLEL=1`)
+* `make jobs` 파이프라인의 경우 동일 타겟에 대한 병렬 중복 수집을 원천 차단하기 위해 **인메모리 선점 락(Mutex)** 로직을 내장하고 있습니다.
 
 ---
 
@@ -58,13 +62,13 @@
   Makefile Interface
   ├── make login ──────────────➜ npx ts-node src/crawler.ts login (1회성 로그인 세션 덤프)
   │
-  ├── make job-list ───────────➜ LOGIN=$(LOGIN) ts-node (채용 검색 결과 목록 HTML 덤프)
+  ├── make list ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용 검색 결과 목록 HTML 덤프)
   │
   ├── make urls ───────────────➜ node --max-old-space-size=4096 (신규 채용공고 URL & 회사 URL 추출)
   │
-  ├── make jobs ───────────────➜ LOGIN=$(LOGIN) ts-node (채용공고 수집/마크다운 변환 파이프라인 가동)
+  ├── make jobs ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용공고 수집/마크다운 변환 파이프라인 가동)
   │
-  ├── make company ────────────➜ LOGIN=$(LOGIN) ts-node (회사정보 수집/변환 파이프라인 가동)
+  ├── make company ────────────➜ AUTH=$(AUTH) ts-node (회사정보 수집/변환 파이프라인 가동)
   │
   ├── make html2md ────────────➜ jobs_converter.ts & reconvert_all.ts (유실 복원 및 마크다운 일괄 재생성)
   │
@@ -142,14 +146,14 @@ make login
 
 ## 💼 채용공고 수집 가동 흐름 (Job posts Flow)
 
-### 1단계. 채용공고 검색 결과 목록 수집 (`make job-list`)
+### 1단계. 채용공고 검색 결과 목록 수집 (`make list`)
 `config/config.json`의 조건에 따라 채용 정보 리스트 HTML 파일들을 다운로드합니다. (디폴트는 비로그인 가동입니다.)
 ```bash
 # 기본 비로그인 수집
-make job-list
+make list
 
-# 로그인 세션을 동원하여 수집할 때
-make job-list LOGIN=true
+# 3개 스레드 병렬 실행 및 로그인 세션 동원
+make list PARALLEL=3 AUTH=true
 ```
 
 ### 2단계. 상세 URL 추출 및 필터링 (`make urls`)
@@ -164,8 +168,8 @@ make urls
 # 기본 비로그인 수집
 make jobs
 
-# 로그인 세션을 동원하여 수집할 때 (세션 풀릴 시 자동 안내 및 수집 안전 중단 지원)
-make jobs LOGIN=true
+# 5개 스레드 병렬 실행 및 로그인 세션 동원 (세션 풀릴 시 자동 안내 및 수집 안전 중단 지원)
+make jobs PARALLEL=5 AUTH=true
 ```
 
 ---
@@ -181,7 +185,7 @@ make jobs LOGIN=true
 make company
 
 # 로그인 세션을 동원하여 수집할 때
-make company LOGIN=true
+make company AUTH=true
 ```
 * 회사 상세 정보가 수집되어 표준 영문 국가명 폴더별로 자동 정렬/아카이빙됩니다. (예: `data/compay/markdown/Germany/Roche.md`)
 

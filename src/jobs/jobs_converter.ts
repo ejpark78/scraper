@@ -186,7 +186,30 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
                     if (jobTitle && text.includes(jobTitle)) return;
                     if (company && text.includes(company)) return;
 
-                    if (/\bSouth Korea\b|\bSeoul\b|\bKorea\b|\bIncheon\b|\bGyeonggi\b|\bPangyo\b|\bBundang\b|\bDubai\b|\bAbu Dhabi\b|\bUnited Arab Emirates\b|\bSingapore\b|\bUnited Kingdom\b|\bLondon\b|\bCanada\b|\bToronto\b|\bIreland\b|\bDublin\b|\bGermany\b|\bMarburg\b|\bSaudi Arabia\b|\bRiyadh\b|\bJapan\b|\bTokyo\b|서울|인천|경기|판교|분당|대한민국|두바이|아랍에미리트|싱가포르|영국|런던|캐나다|아일랜드|독일|사우디|일본|도쿄/i.test(text)) {
+                    let locationRegex = /\bSouth Korea\b|\bSeoul\b|\bKorea\b|서울|대한민국|United Arab Emirates|Dubai|Germany|Berlin|Singapore|United Kingdom|London|Canada|Toronto|Ireland|Dublin|Japan|Tokyo/i;
+                    try {
+                        const fs = require('fs');
+                        const path = require('path');
+                        const configPath = path.join(__dirname, '..', '..', 'config', 'country.json');
+                        if (fs.existsSync(configPath)) {
+                            const countryMapping = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                            const allAliases: string[] = [];
+                            for (const [country, aliases] of Object.entries(countryMapping)) {
+                                allAliases.push(country);
+                                if (Array.isArray(aliases)) {
+                                    allAliases.push(...aliases);
+                                }
+                            }
+                            const uniqueAliases = Array.from(new Set(allAliases.filter(Boolean)));
+                            const escaped = uniqueAliases.map(a => a.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+                            const regexParts = escaped.map(a => /^[a-zA-Z0-9\s]+$/.test(a) ? `\\b${a}\\b` : a);
+                            locationRegex = new RegExp(regexParts.join('|'), 'i');
+                        }
+                    } catch (err) {
+                        // 기본 정규식 유지
+                    }
+
+                    if (locationRegex.test(text)) {
                         if (!text.includes('ago') && !text.includes('전') && !text.includes('applicant') && !text.includes('지원자') && !text.includes('hiring') && !text.includes('채용') && !text.includes('Premium')) {
                             location = text;
                             return false; // break
