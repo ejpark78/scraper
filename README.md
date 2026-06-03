@@ -212,3 +212,30 @@ make company AUTH=true
   make purge
   ```
   * `data/jobs/` 내부의 전체 데이터를 강제 초기화합니다. (수집된 회사 정보는 삭제되지 않고 안전하게 보존됩니다.)
+
+---
+
+## 🐳 Kasm VDI 개발 환경 가이드 (Kasm Development Guide)
+
+본 프로젝트는 Kasm VDI 컨테이너를 이용한 독립적이고 완성도 높은 원격 웹 브라우저 개발 및 디버깅 환경을 기본 지원합니다.
+
+### 1. 주요 특징 및 구성
+* **동일한 셀 환경 (Zsh + Oh My Zsh)**: 호스트의 Zsh 설정(`.zshrc`, `.gitconfig`) 및 주요 플러그인(`zsh-autosuggestions`, `zsh-syntax-highlighting`, `fzf-tab`), 시스템 의존성(`fzf`, `eza`)이 Docker 이미지 빌드 시 자동으로 반영됩니다.
+* **호스트 경로 호환성 보장**: `.zshrc` 내부에 호스트 홈 디렉토리 경로(`/home/ejpark`)가 하드코딩되어 있어도, 컨테이너 내부에 `/home/ejpark` -> `/home/kasm-user` 심볼릭 링크가 자동 생성되어 모든 설정과 에일리어스(alias)가 정상 동작합니다.
+* **무인 GUI 웹 접속**: `http://kasm.localhost`에 브라우저로 접속하여 GUI 가상 데스크톱 터미널을 확인하고 Playwright 수집 과정을 직접 시각적으로 관찰 및 제어할 수 있습니다.
+
+### 2. 가동 및 접속 방법
+1. **컨테이너 빌드 & 실행**:
+   ```bash
+   make build
+   docker compose up -d
+   ```
+2. **Kasm 내부 Zsh 쉘로 터미널 진입**:
+   ```bash
+   make kasm
+   ```
+   * 이 명령을 실행하면 즉시 Kasm 컨테이너 내부에서 로그인되어 호스트와 동일한 쉘 환경(Zsh)에서 개발 및 Playwright CLI 제어가 가능합니다.
+3. **가상 GUI 데스크톱 접속**:
+   * 브라우저에서 `http://kasm.localhost`로 접속합니다.
+   * 기본 비밀번호: `password2026` (변경 가능: `docker-compose.yml` 내 `VNC_PW` 참고)
+

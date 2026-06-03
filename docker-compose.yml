@@ -25,21 +25,17 @@ services:
       context: .
       dockerfile: docker/kasm/Dockerfile
     image: linkedin-kasm:latest
-    container_name: linkedin-kasm
     ports:
       - "6901:6901"
     environment:
       - VNC_PW=password2026
       - VNCOPTIONS=-disableBasicAuth
+      - USER_ID=1000
+      - GROUP_ID=1000
     shm_size: "1gb"
     volumes:
       - .:/home/kasm-user/linkedin
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.zshrc:/home/kasm-user/.zshrc:ro
-      - ~/.oh-my-zsh:/home/kasm-user/.oh-my-zsh:ro
-      - ~/.zsh:/home/kasm-user/.zsh:ro
-      - ~/.zsh_history:/home/kasm-user/.zsh_history
-      - ~/.gitconfig:/home/kasm-user/.gitconfig:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-k", "https://localhost:6901/api/health"]
@@ -54,8 +50,7 @@ services:
       - "traefik.http.services.kasm.loadbalancer.server.scheme=https"
 
   traefik:
-    image: traefik:latest
-    container_name: traefik
+    image: traefik:v3.7.1
     command:
       - "--ping=true"
       - "--api.insecure=true"

@@ -46,7 +46,7 @@ open:
 	npx ts-node src/browser/open.ts
 
 kasm:
-	docker compose exec -it kasm /bin/bash
+	docker compose exec -it kasm /bin/zsh
 
 logout:
 	rm -f config/session.json
