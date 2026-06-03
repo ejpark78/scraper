@@ -131,7 +131,7 @@ export class LinkedInCrawler implements ICrawler {
             const showMoreSelector = 'button.show-more-less-html__button--more, button[aria-label*="show more" i], button.jobs-description__footer-button';
             const button = await page.$(showMoreSelector);
             if (button) {
-                console.log('🖱️  [3/4] 버튼 발견, 클릭하여 본문 확장 중...');
+                console.log('🖱️ [3/4] 버튼 발견, 클릭하여 본문 확장 중...');
                 try {
                     // 🛡️ Playwright의 물리적 마우스 가로채기(Overlay interception) 타임아웃 오류를 완벽히 차단하기 위해 DOM 자바스크립트 직접 클릭 발송
                     await page.evaluate((selector) => {

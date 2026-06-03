@@ -65,17 +65,17 @@ export class UrlUtils {
         const cleanLoc = rawLocation.trim();
         
         // 1. 대한민국 (Korea)
-        if (/[가-힣]/.test(cleanLoc) || /South Korea|Seoul|Korea|Busan|Incheon|Daegu|Daejeon|Gwangju|Ulsan|Suwon|Changwon|Pangyo|Bundang|Gyeonggi|서울|인천|대구|대전|광주|부산|울산|수원|창원|판교|분당|경기|대한민국/i.test(cleanLoc)) {
+        if (/[가-힣]/.test(cleanLoc) || /South Korea|Seoul|Korea|Busan|Incheon|Daegu|Daejeon|Gwangju|Ulsan|Suwon|Changwon|Pangyo|Bundang|Gyeonggi|서울|인천|대구|대전|광주|부산|울산|수원|창원|판교|분당|경기|대한민국|Seongsan-gu/i.test(cleanLoc)) {
             return 'Korea';
         }
         
         // 2. 아랍에미리트 (United Arab Emirates)
-        if (/Abu Dhabi|Dubai|Ajman|Al Ain|Sharjah|Fujairah|Umm Al Quwain|Ras Al Khaimah|United Arab Emirates|UAE|아부다비|두바이|아랍에미리트|샤르자|아지만|알아인|أبو ظبي|دبي|الإمارات|الشارقة|الخيمة|العين|عجمان|الطَّوِيلَة/i.test(cleanLoc)) {
+        if (/Abu Dhabi|Dubai|Ajman|Al Ain|Sharjah|Fujairah|Umm Al Quwain|Ras Al Khaimah|United Arab Emirates|UAE|아부다비|두바이|아랍에미리트|샤르자|아지만|알아인|أبو ظبي|دبي|الإمارات|الشارقة|الخيمة|العين|عجمان|الطَّوِيلَة|مدينة محمد بن زايد/i.test(cleanLoc)) {
             return 'United Arab Emirates';
         }
         
         // 3. 독일 (Germany)
-        if (/Germany|Berlin|Munich|München|Frankfurt|Hamburg|Stuttgart|Düsseldorf|Cologne|Köln|Marburg|독일/i.test(cleanLoc)) {
+        if (/Germany|Berlin|Munich|München|Frankfurt|Hamburg|Stuttgart|Düsseldorf|Dusseldorf|Cologne|Köln|Marburg|독일|Erfurt|Bremen|Karlsruhe|Kassel|Nuremberg|Rostock|Hannover|Wolfsburg|Göttingen|Braunschweig|Osnabrück/i.test(cleanLoc)) {
             return 'Germany';
         }
         
@@ -85,7 +85,7 @@ export class UrlUtils {
         }
 
         // 5. 오스트리아 (Austria)
-        if (/Austria|Vienna|Wien|오스트리아|비엔나/i.test(cleanLoc)) {
+        if (/Austria|Vienna|Wien|오스트리아|비엔나|Amstetten|Niederösterreich|Österreich|Gumpoldskirchen|Hagenberg|Mühlkreis|Oberösterreich|Linz|Marchtrenk|Sankt Valentin|Schwertberg|Wels|Graz/i.test(cleanLoc)) {
             return 'Austria';
         }
         
@@ -95,7 +95,7 @@ export class UrlUtils {
         }
         
         // 7. 영국 (United Kingdom)
-        if (/United Kingdom|UK|London|Great Britain|England|Scotland|Wales|영국|런던/i.test(cleanLoc)) {
+        if (/United Kingdom|UK|London|Great Britain|England|Scotland|Wales|영국|런던|Colchester/i.test(cleanLoc)) {
             return 'United Kingdom';
         }
         
@@ -115,8 +115,33 @@ export class UrlUtils {
         }
         
         // 11. 일본 (Japan)
-        if (/Japan|Tokyo|Shibuya|Osaka|Kyoto|일본|도쿄|오사카/i.test(cleanLoc)) {
+        if (/Japan|Tokyo|Shibuya|Osaka|Kyoto|일본|도쿄|오사카|六本木|千代田区|府中|東京|東京都|日本|渋谷区|港区|荒川区|西東京/i.test(cleanLoc)) {
             return 'Japan';
+        }
+
+        // 12. 스위스 (Switzerland)
+        if (/Switzerland|Schaffhausen|Beringen|Thurgau|Bottighofen|Frauenfeld|Mittelland|Appenzell|스위스/i.test(cleanLoc)) {
+            return 'Switzerland';
+        }
+
+        // 13. 룩셈부르크 (Luxembourg)
+        if (/Luxembourg|Luxemburg|Betzdorf|Grevenmacher|Findel|Kirchberg|Ville Haute|Wasserbillig|룩셈부르크/i.test(cleanLoc)) {
+            return 'Luxembourg';
+        }
+
+        // 14. 말레이시아 (Malaysia)
+        if (/Malaysia|Johor|말레이시아/i.test(cleanLoc)) {
+            return 'Malaysia';
+        }
+
+        // 15. 스페인 (Spain)
+        if (/Spain|Madrid|스페인|마드리드/i.test(cleanLoc)) {
+            return 'Spain';
+        }
+
+        // 16. 폴란드 (Poland)
+        if (/Poland|Warsaw|Warszawa|Mazowieckie|폴란드|바르샤바/i.test(cleanLoc)) {
+            return 'Poland';
         }
 
         return cleanLoc.replace(/[\/\\:\*\?"<>\|]/g, ' ').trim();
