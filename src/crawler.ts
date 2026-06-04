@@ -329,19 +329,23 @@ export class LinkedInCrawler implements ICrawler {
             const startTime = Date.now();
             let currentIndex = 0;
 
+            const runDate = new Date();
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const batchFolderName = `${runDate.getFullYear()}${pad(runDate.getMonth() + 1)}${pad(runDate.getDate())}_${pad(runDate.getHours())}${pad(runDate.getMinutes())}${pad(runDate.getSeconds())}`;
+            const targetListDir = path.join(this.listDir, batchFolderName);
+            if (!fs.existsSync(targetListDir)) {
+                fs.mkdirSync(targetListDir, { recursive: true });
+            }
+
             const worker = async (url: string) => {
                 currentIndex++;
                 const myIndex = currentIndex;
                 
                 const d = new Date();
-                const pad = (n: number) => String(n).padStart(2, '0');
                 const timestamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}_${pad(d.getMinutes())}_${pad(d.getSeconds())}_${Math.random().toString(36).substring(2, 6)}`;
                 
                 const outputFileName = `${timestamp}.html`;
-                if (!fs.existsSync(this.listDir)) {
-                    fs.mkdirSync(this.listDir, { recursive: true });
-                }
-                const savePath = path.join(this.listDir, outputFileName);
+                const savePath = path.join(targetListDir, outputFileName);
 
                 // 진행 시간 및 ETR(예상 완료 시간) 계산
                 const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
@@ -388,7 +392,7 @@ export class LinkedInCrawler implements ICrawler {
                     const htmlContent = await page.content();
                     fs.writeFileSync(savePath, htmlContent, 'utf-8');
 
-                    console.log(`💾 덤프 성공 -> lists/raw/${outputFileName} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
+                    console.log(`💾 덤프 성공 -> lists/html/${batchFolderName}/${outputFileName} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
                 } finally {
                     await context.close();
                 }

@@ -71,10 +71,10 @@ services:
       - HTML=${HTML:-}
       - MD=${MD:-}
     volumes:
-      - ./config:/app/config
-      - ./data:/app/data
-      - ./src:/app/src
-      - ./Makefile:/app/Makefile
+      - ${HOST_PROJECT_PATH:-.}/config:/app/config
+      - ${HOST_PROJECT_PATH:-.}/data:/app/data
+      - ${HOST_PROJECT_PATH:-.}/src:/app/src
+      - ${HOST_PROJECT_PATH:-.}/Makefile:/app/Makefile
 
   redis:
     image: redis:alpine
@@ -135,6 +135,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./data/cronicle:/opt/cronicle/data
+      - .:/app
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3012/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s
