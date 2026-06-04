@@ -3,7 +3,7 @@ export class UrlUtils {
      * 🔗 다양한 링크드인 공고 URL에서 호환성 100%로 순수 숫자 JOB_ID를 추출하는 정밀 파서
      */
     public static extractJobId(url: string): string {
-        const cleanUrl = url.trim().replace(/\/$/, '').split('?')[0];
+        const cleanUrl = url.trim().split('?')[0].replace(/\/$/, '');
         const segment = cleanUrl.split('/').pop() || '';
         
         // 패턴 A: 다국어/SEO 주소 대응 (예: ...-at-company-4421619932)

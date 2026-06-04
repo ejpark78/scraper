@@ -40,12 +40,9 @@ help:
 	@echo "  make kasm           - [Host] Kasm 컨테이너 내부 쉘(shell)에 진입합니다."
 	@echo "  make open           - [Host] 로그인 세션 기반 헤드풀 브라우저 기동"
 	@echo "  make list           - [Docker] config.json 조건 기반으로 목록 HTML을 무인 수집합니다."
-	@echo "  make jobs           - [Docker] urls.txt의 URL을 병렬 수집하여 마크다운으로 저장합니다."
-	@echo "  make urls           - [Docker] lists/raw/*.html 에서 공고 조회 URL을 추출하여 urls.txt에 저장합니다."
 	@echo "  make company        - [Docker] urls.txt 기반 회사 정보를 수집하여 마크다운으로 저장합니다."
-	@echo "  make html2md        - [Docker] HTML 캐시와 MD 간 동기화 및 메타데이터 일괄 복원"
-	@echo "  make migrate        - [Docker] 수집 데이터 표준 국가명 폴더로 일괄 마이그레이션"
 	@echo "  make test           - [Docker] URL 생성기 단위 테스트 실행"
+	@echo "  make backfill       - [Docker] DB에 이미 저장된 상세 HTML의 추천공고 중 미수집 건 역추적하여 적재"
 	@echo "  make check-worker   - [Host] Redis의 다운로드 큐 상태와 워커 컨테이너 상태를 확인합니다."
 	@echo "  make clean          - [Host] 임시 파일 및 빈 폴더 정리"
 	@echo "  make export-cron    - [Host] 현재 Cronicle 이벤트를 docker/cronicle/default.json으로 내보냅니다."
@@ -98,32 +95,14 @@ job-list:
 
 list: job-list
 
-jobs:
-	@if [ ! -f "$(URLS)" ]; then \
-		echo "❌ 에러: 지정한 URL 목록 파일이 존재하지 않습니다: $(URLS)"; \
-		exit 1; \
-	fi
-	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) npx ts-node src/jobs/jobs_pipeline.ts $(URLS)
-
-urls:
-	node --max-old-space-size=4096 -r ts-node/register src/jobs/url_manager.ts extract "data/jobs/lists/html/" "data/jobs/html/" "data/jobs/lists/urls.json"
-
-html2md:
-	npx ts-node src/jobs/jobs_converter.ts $(HTML) $(MD)
-	npx ts-node src/company/reconvert_all.ts
-
-migrate:
-	npx ts-node src/jobs/migrate_locations.ts
-
 company:
 	LOGIN=$(AUTH) npx ts-node src/company/company_pipeline.ts "data/compay/lists/urls.txt"
 
 test:
 	npx ts-node tests/url_manager.test.ts
 
-push-urls:
-	REDIS_URL=redis://redis:6379 npx ts-node src/push_urls.ts
-
+backfill:
+	npx ts-node src/jobs/backfill.ts
 
 else
 
@@ -133,27 +112,14 @@ list:
 
 job-list: list
 
-jobs:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make jobs URLS=$(URLS) AUTH=$(AUTH) PARALLEL=$(PARALLEL)
-
-urls:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make urls
-
-html2md:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make html2md HTML=$(HTML) MD=$(MD)
-
-migrate:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make migrate
-
 company:
 	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
 
 test:
 	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make test
 
-push-urls:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true -e REDIS_URL=redis://redis:6379 clipper make push-urls
-
+backfill:
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make backfill
 
 endif
 

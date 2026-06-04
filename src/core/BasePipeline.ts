@@ -4,17 +4,10 @@ import * as os from 'os';
 import { DateUtils, FormatUtils } from '../utils';
 
 export abstract class BasePipeline<TMeta> {
-    protected readonly htmlDir: string;
-    protected readonly mdDir: string;
-    protected readonly baseDir: string;
     // 🔒 동시 워커 간 중복 수집 타겟 선점 방지용 인메모리 뮤텍스 셋
     private readonly processingIds = new Set<string>();
     
-    constructor(baseDir: string) {
-        this.baseDir = baseDir;
-        this.htmlDir = path.join(baseDir, 'html');
-        this.mdDir = path.join(baseDir, 'markdown');
-    }
+    constructor() {}
     
     // 🛡️ 하위 클래스에서 재정의할 추상 훅 메서드들
     protected abstract extractId(url: string): string;
@@ -67,10 +60,6 @@ export abstract class BasePipeline<TMeta> {
 
         console.log(`🚀 [시작] ${urlsFile} 기반 ${this.getDomainName()} 정보 수집 및 백업 자동화 파이프라인 가동`);
 
-        // 초기 디렉토리 구축
-        fs.mkdirSync(this.htmlDir, { recursive: true });
-        fs.mkdirSync(this.mdDir, { recursive: true });
-
         // 로그인 상태 확인
         const useLoginEnv = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
         const sessionPath = path.join(__dirname, '..', '..', 'config', 'session.json');
@@ -98,7 +87,7 @@ export abstract class BasePipeline<TMeta> {
             useRedisCache = true;
             console.log(`📡 [Redis Cache] Redis 연결 성공 (${redisUrl}). 실시간 분산 캐시를 사용합니다.`);
         } catch (e: any) {
-            console.warn(`⚠️ [Redis Cache Warning] Redis 연결 실패. 로컬 폴더 파일 스캔으로 대체합니다: ${e.message}`);
+            console.warn(`⚠️ [Redis Cache Warning] Redis 연결 실패. 데이터베이스 스캔으로 대체합니다: ${e.message}`);
         }
 
         // 1. 캐시 로드 및 구축 (Redis 우선 사용)
@@ -116,29 +105,43 @@ export abstract class BasePipeline<TMeta> {
                 });
                 redisLoadedCount = cacheSet.size;
                 if (redisLoadedCount > 0) {
-                    console.log(`📡 [Redis Cache] Redis 'completed_jobs'에서 ${FormatUtils.formatThousand(redisLoadedCount)}개의 캐시를 로드하여 로컬 폴더 스캔을 건너뜁니다.`);
+                    console.log(`📡 [Redis Cache] Redis 'completed_jobs'에서 ${FormatUtils.formatThousand(redisLoadedCount)}개의 캐시를 로드하여 DB 스캔을 건너뜁니다.`);
                 }
             } catch (err: any) {
                 console.error(`⚠️ Redis 캐시 로드 실패: ${err.message}`);
             }
         }
 
-        // Redis 캐시가 비어있거나 Redis를 사용할 수 없는 경우에만 로컬 폴더 스캔 수행 (Fallback)
+        // Redis 캐시가 비어있거나 Redis를 사용할 수 없는 경우에만 MongoDB 조회 수행 (Fallback)
         if (cacheSet.size === 0) {
-            const { IOUtils } = require('../utils');
-            if (fs.existsSync(this.htmlDir)) {
-                console.log(`🔍 [Local Cache] Redis 캐시가 비어있거나 연결할 수 없어 로컬 폴더(${this.htmlDir})를 스캔합니다...`);
-                const localHtmlFiles = IOUtils.getAllFiles(this.htmlDir, '.html');
-                localHtmlFiles.forEach((file: string) => {
-                    const id = path.basename(file, '.html');
-                    if (id && /^\d+$/.test(id)) {
-                        cacheSet.add(id);
-                    }
-                });
+            try {
+                console.log(`🔍 [DB Cache] Redis 캐시가 비어있거나 연결할 수 없어 MongoDB를 스캔합니다...`);
+                const { MongoDatabase } = require('../database/mongo');
+                const dbInstance = MongoDatabase.getInstance();
+                
+                if (this.getDomainName() === '채용공고') {
+                    const bronzeJobs = await dbInstance.getCollection('bronze.jobs');
+                    const jobs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
+                    jobs.forEach((job: any) => {
+                        if (job.jobId && /^\d+$/.test(job.jobId)) {
+                            cacheSet.add(job.jobId);
+                        }
+                    });
+                } else {
+                    const bronzeCompanies = await dbInstance.getCollection('bronze.companies');
+                    const companies = await bronzeCompanies.find({}, { projection: { companyId: 1, _id: 0 } }).toArray();
+                    companies.forEach((company: any) => {
+                        if (company.companyId) {
+                            cacheSet.add(company.companyId);
+                        }
+                    });
+                }
+                console.log(`✅ 총 ${FormatUtils.formatThousand(cacheSet.size)} 개의 기존 수집 완료 정보를 MongoDB에서 로드했습니다.`);
+            } catch (err: any) {
+                console.error(`⚠️ MongoDB 캐시 로드 실패: ${err.message}`);
             }
-            console.log(`✅ 총 ${FormatUtils.formatThousand(cacheSet.size)} 개의 기존 수집 완료 정보를 로컬 폴더 스캔을 통해 로드했습니다.`);
 
-            // 로컬 스캔으로 수집한 캐시를 Redis에 백업 동기화
+            // DB에서 수집한 캐시를 Redis에 백업 동기화
             if (useRedisCache && cacheSet.size > 0) {
                 try {
                     const pipeline = redis.pipeline();
@@ -146,7 +149,7 @@ export abstract class BasePipeline<TMeta> {
                         pipeline.sadd('completed_jobs', id);
                     });
                     await pipeline.exec();
-                    console.log(`📡 [Redis Cache] 로컬 캐시 ${cacheSet.size}개를 Redis 'completed_jobs'에 동기화 완료.`);
+                    console.log(`📡 [Redis Cache] DB 캐시 ${cacheSet.size}개를 Redis 'completed_jobs'에 동기화 완료.`);
                 } catch (err: any) {
                     console.error(`⚠️ Redis 캐시 동기화 실패: ${err.message}`);
                 }
@@ -327,6 +330,6 @@ export abstract class BasePipeline<TMeta> {
             await redis.quit();
         }
 
-        console.log(`\n🎉 [종료] ${this.getDomainName()} 정보 일괄 수집 완료! ${this.baseDir} 폴더를 확인해 주세요.`);
+        console.log(`\n🎉 [종료] ${this.getDomainName()} 정보 일괄 수집 완료! (MongoDB 데이터베이스에 저장됨)`);
     }
 }

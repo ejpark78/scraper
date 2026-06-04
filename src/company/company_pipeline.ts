@@ -10,8 +10,7 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
     private readonly converter: CompanyMarkdownConverter;
 
     constructor() {
-        // data/compay 디렉토리를 기본 경로로 지정
-        super(path.join(__dirname, '..', '..', 'data', 'compay'));
+        super();
         this.crawler = new LinkedInCrawler({ login: process.env.LOGIN === 'true' || process.env.AUTH === 'true' });
         this.converter = new CompanyMarkdownConverter();
     }

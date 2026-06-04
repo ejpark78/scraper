@@ -226,21 +226,29 @@ export class LinkedInUrlManager implements IUrlManager {
         const extractedCompanyIds = new Set<string>();
         const masterJobsMetaMap = new Map<string, any>();
 
-        // 0. 💾 기존 urls.json이 존재한다면 masterJobsMetaMap에 미리 채워 캐시로 활용
-        if (fs.existsSync(outputUrlsPath)) {
-            try {
-                const existingData = JSON.parse(fs.readFileSync(outputUrlsPath, 'utf-8'));
-                if (Array.isArray(existingData)) {
-                    existingData.forEach((item: any) => {
-                        if (item && item.jobId) {
-                            masterJobsMetaMap.set(item.jobId, item);
-                        }
+        // 0. 💾 기존 수집 대상 URL 목록이 존재한다면 MongoDB bronze.job_urls에서 불러와 masterJobsMetaMap에 캐시로 로드
+        try {
+            const { MongoDatabase } = require('../database/mongo');
+            const mongo = MongoDatabase.getInstance();
+            const jobUrlsColl = await mongo.getCollection('bronze.job_urls');
+            const existingUrls = await jobUrlsColl.find({}).toArray();
+            existingUrls.forEach((item: any) => {
+                if (item && item.jobId) {
+                    masterJobsMetaMap.set(item.jobId, {
+                        jobId: item.jobId,
+                        title: item.title || '정보 없음',
+                        company: item.company || '정보 없음',
+                        location: item.location || '정보 없음',
+                        workStyle: item.workStyle || '정보 없음',
+                        url: item.url,
+                        source: item.source || 'related',
+                        geo: item.geo || 'Others'
                     });
-                    console.log(`💾 기존 urls.json에서 ${FormatUtils.formatThousand(masterJobsMetaMap.size)}개의 메타데이터를 캐시로 로드했습니다.`);
                 }
-            } catch (e: any) {
-                console.warn(`⚠️ 기존 urls.json 로드 실패: ${e.message}`);
-            }
+            });
+            console.log(`🔌 [MongoDB] bronze.job_urls에서 ${FormatUtils.formatThousand(masterJobsMetaMap.size)}개의 메타데이터를 캐시로 로드했습니다.`);
+        } catch (dbErr: any) {
+            console.warn(`⚠️ bronze.job_urls 캐시 로드 실패: ${dbErr.message}`);
         }
 
         // country.json 로드
@@ -603,10 +611,12 @@ export class LinkedInUrlManager implements IUrlManager {
                             // country.json 기준 맵핑
                             const stdLoc = UrlUtils.standardizeLocation(location);
                             let matchedCountry = 'Others';
-                            for (const country of Object.keys(localCountryMapping)) {
-                                if (stdLoc.toLowerCase() === country.toLowerCase()) {
-                                    matchedCountry = country;
-                                    break;
+                            if (stdLoc !== 'unknown-location') {
+                                for (const country of Object.keys(localCountryMapping)) {
+                                    if (stdLoc.toLowerCase() === country.toLowerCase()) {
+                                        matchedCountry = country;
+                                        break;
+                                    }
                                 }
                             }
                             if (matchedCountry === 'Others') {
@@ -823,6 +833,8 @@ export class LinkedInUrlManager implements IUrlManager {
         if (!fs.existsSync(parentDir)) {
             fs.mkdirSync(parentDir, { recursive: true });
         }
+
+        const masterList = Array.from(masterJobsMetaMap.values());
 
         // 3-A. 🛡️ MongoDB에 마스터 공고 상세 메타데이터 및 스냅샷 히스토리 적재 (기존 urls.json 및 파일 스냅샷 대체)
         const d = new Date();

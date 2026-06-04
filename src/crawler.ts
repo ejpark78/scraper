@@ -2,7 +2,7 @@ import { chromium, Browser, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 import { LinkedInUrlManager, Config } from './jobs/url_manager';
-import { HtmlMinifier, DateUtils } from './utils';
+import { HtmlMinifier, DateUtils, UrlUtils } from './utils';
 
 // ⚙️ LinkedIn Playwright 스크래퍼 및 인증 통합 OOP 엔진 (TypeScript)
 
@@ -15,7 +15,6 @@ export interface ICrawler {
 
 export class LinkedInCrawler implements ICrawler {
     private readonly sessionPath: string = path.join(__dirname, '..', 'config', 'session.json');
-    private readonly listDir: string = path.join(__dirname, '..', 'data', 'jobs', 'lists', 'html');
     private readonly useLogin: boolean;
 
     constructor(options: { login?: boolean } = {}) {
@@ -404,6 +403,9 @@ export class LinkedInCrawler implements ICrawler {
                             { upsert: true }
                         );
                         console.log(`📡 [MongoDB Write] Successfully saved List ID ${timestamp} to bronze.lists. (${(minifiedHtml.length / 1024).toFixed(1)} KB)`);
+
+                        // ⚡ [대안 A] 자동 URL 추출 및 Redis 큐 적재 실행
+                        await this.extractAndPushJobs(minifiedHtml, url);
                     } catch (dbErr: any) {
                         console.error(`❌ [MongoDB Write Error] Failed to write list to DB: ${dbErr.message}`);
                     }
@@ -442,6 +444,181 @@ export class LinkedInCrawler implements ICrawler {
             }
         } finally {
             await browser.close();
+        }
+    }
+
+    /**
+     * ⚡ [대안 A] 목록 수집 완료 시 자동 URL 추출 및 Redis 큐 적재
+     */
+    private async extractAndPushJobs(htmlContent: string, listUrl: string): Promise<void> {
+        try {
+            console.log(`🔍 [Auto-Extract] Extracting job URLs from list: ${decodeURIComponent(listUrl)}`);
+            const cheerio = require('cheerio');
+            const $ = cheerio.load(htmlContent);
+            const { MongoDatabase } = require('./database/mongo');
+            const dbInstance = MongoDatabase.getInstance();
+            const jobUrlsColl = await dbInstance.getCollection('bronze.job_urls');
+            const companyUrlsColl = await dbInstance.getCollection('bronze.company_urls');
+            const bronzeJobs = await dbInstance.getCollection('bronze.jobs');
+
+            const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+            const Redis = require('ioredis');
+            const redis = new Redis(redisUrl);
+
+            // 1. target locations 로드
+            let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
+            try {
+                const configPath = path.join(__dirname, '..', 'config', 'config.json');
+                if (fs.existsSync(configPath)) {
+                    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                    if (config.search_targets) {
+                        targetLocations = config.search_targets.map((t: any) => t.location);
+                    }
+                }
+            } catch (e: any) {}
+
+            // 2. country mapping 로드
+            let countryMapping: Record<string, string[]> = {};
+            try {
+                const countryJsonPath = path.join(__dirname, '..', 'config', 'country.json');
+                if (fs.existsSync(countryJsonPath)) {
+                    countryMapping = JSON.parse(fs.readFileSync(countryJsonPath, 'utf-8'));
+                }
+            } catch (e: any) {}
+
+            const parseGeo = (loc: string): string => {
+                const std = UrlUtils.standardizeLocation(loc);
+                if (std === 'unknown-location') return 'Others';
+                for (const country of Object.keys(countryMapping)) {
+                    if (std.toLowerCase() === country.toLowerCase()) return country;
+                }
+                for (const [country, aliases] of Object.entries(countryMapping)) {
+                    if (country === 'South Korea' && /[가-힣]/.test(loc)) return country;
+                    const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+                    if (escapedAliases.length > 0) {
+                        const pattern = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
+                        if (pattern.test(loc)) return country;
+                    }
+                }
+                return 'Others';
+            };
+
+            // 3. 완료된 캐시 로드
+            const completedCache = new Set<string>();
+            const completedDocs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
+            completedDocs.forEach((d: any) => {
+                if (d.jobId) completedCache.add(d.jobId);
+            });
+
+            // 4. Job URL 추출
+            const foundJobs: any[] = [];
+            $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
+                const href = $(el).attr('href') || '';
+                const jobId = UrlUtils.extractJobId(href);
+                if (!jobId || !/^\d+$/.test(jobId)) return;
+
+                const title = $(el).text().replace(/\s+/g, ' ').trim();
+                if (!title || title.length < 2) return;
+
+                let company = '정보 없음';
+                let location = '정보 없음';
+
+                const parent = $(el).closest('li, div, section');
+                if (parent.length > 0) {
+                    const companyText = parent.find('[class*="company"], [class*="subtitle"]').first().text().replace(/\s+/g, ' ').trim();
+                    if (companyText) company = companyText;
+                    const locText = parent.find('[class*="location"], [class*="metadata"]').first().text().replace(/\s+/g, ' ').trim();
+                    if (locText) {
+                        location = locText.split(/\d+\s+days?\s+ago|\d+\s+weeks?\s+ago/i)[0].trim();
+                    }
+                }
+
+                const geo = parseGeo(location);
+                if (targetLocations.includes(geo)) {
+                    foundJobs.push({
+                        jobId,
+                        title,
+                        company,
+                        location,
+                        geo,
+                        url: `https://www.linkedin.com/jobs/view/${jobId}`
+                    });
+                }
+            });
+
+            // 5. 회사 URL 추출 및 MongoDB 저장
+            const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
+            let compMatch;
+            companyHrefRegex.lastIndex = 0;
+            while ((compMatch = companyHrefRegex.exec(htmlContent)) !== null) {
+                let url = compMatch[1].trim().split('?')[0].replace(/\/$/, '');
+                if (url.startsWith('/company') || url.startsWith('/compay')) {
+                    url = 'https://www.linkedin.com' + url;
+                }
+                if (url.startsWith('http') && (url.includes('/company/') || url.includes('/compay/'))) {
+                    const companyId = UrlUtils.extractCompanyId(url);
+                    if (companyId) {
+                        await companyUrlsColl.updateOne(
+                            { companyId },
+                            {
+                                $set: {
+                                    companyId,
+                                    url: `https://www.linkedin.com/company/${companyId}`,
+                                    status: 'new',
+                                    updatedAt: new Date()
+                                },
+                                $setOnInsert: { pushedToRedis: false }
+                            },
+                            { upsert: true }
+                        );
+                    }
+                }
+            }
+
+            // 6. DB 저장 및 Redis 큐 적재
+            let pushedCount = 0;
+            for (const job of foundJobs) {
+                const isCompleted = completedCache.has(job.jobId);
+                const currentDoc = await jobUrlsColl.findOne({ jobId: job.jobId });
+                const alreadyPushed = currentDoc?.pushedToRedis === true;
+
+                await jobUrlsColl.updateOne(
+                    { jobId: job.jobId },
+                    {
+                        $set: {
+                            jobId: job.jobId,
+                            url: job.url,
+                            title: job.title,
+                            company: job.company,
+                            location: job.location,
+                            geo: job.geo,
+                            source: 'DIRECT',
+                            status: isCompleted ? 'completed' : 'new',
+                            updatedAt: new Date()
+                        },
+                        $setOnInsert: {
+                            pushedToRedis: isCompleted ? true : false
+                        }
+                    },
+                    { upsert: true }
+                );
+
+                if (!isCompleted && !alreadyPushed) {
+                    await redis.rpush('jobs_queue', job.url);
+                    await jobUrlsColl.updateOne(
+                        { jobId: job.jobId },
+                        { $set: { pushedToRedis: true } }
+                    );
+                    pushedCount++;
+                }
+            }
+            if (foundJobs.length > 0) {
+                console.log(`📋 [Auto-Extract Details] Extracted target jobs:\n${JSON.stringify(foundJobs, null, 2)}`);
+            }
+            console.log(`✅ [Auto-Extract] Extracted ${foundJobs.length} target jobs. Pushed ${pushedCount} new jobs to Redis jobs_queue.`);
+            await redis.quit();
+        } catch (err: any) {
+            console.error(`❌ [Auto-Extract Error] Failed to extract/push: ${err.message}`);
         }
     }
 

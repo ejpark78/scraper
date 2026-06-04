@@ -82,7 +82,6 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/config:/app/config
-      - ${HOST_PROJECT_PATH:-.}/data:/app/data
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -185,7 +184,6 @@ services:
       - JSON_LOG=true
     volumes:
       - ./config:/app/config
-      - ./data:/app/data
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
