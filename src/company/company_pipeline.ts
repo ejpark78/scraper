@@ -39,34 +39,13 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
             countryDir = NamingUtils.convertCountryCodeToName(meta.hqCountry);
         }
 
-        const safeFileName = meta.companyName
-            .replace(/[\/\\:\*\?"<>\|]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim() || id;
+        // 임시 파일에서 원시 HTML 콘텐츠 읽기
+        const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
-        const finalHtmlDir = path.join(this.htmlDir, countryDir);
-        const finalMdDir = path.join(this.mdDir, countryDir);
-
-        fs.mkdirSync(finalHtmlDir, { recursive: true });
-        fs.mkdirSync(finalMdDir, { recursive: true });
-
-        const finalMdPath = path.join(finalMdDir, `${safeFileName}.md`);
-        const finalHtmlPath = path.join(finalHtmlDir, `${safeFileName}.html`);
-
-        // 1) 마크다운 포맷팅 저장
-        await this.converter.prettifyAndSave(meta.rawContent, finalMdPath);
-        
-        // 2) 임시 HTML 파일을 최종 회사명 HTML로 이동
-        if (fs.existsSync(finalHtmlPath)) {
-            fs.unlinkSync(finalHtmlPath); // 중복 덮어쓰기 대비 제거
-        }
-        fs.renameSync(tempHtmlPath, finalHtmlPath);
-
-        // ⚡ [MongoDB 이중 쓰기 (Dual Write)] ⚡
+        // ⚡ [MongoDB 적재] ⚡
         try {
             const { MongoDatabase } = require('../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
-            const rawHtml = fs.readFileSync(finalHtmlPath, 'utf-8');
 
             // 1. Bronze Layer (Raw) 저장
             const bronzeCompanies = await dbInstance.getCollection('bronze.companies');
@@ -107,14 +86,20 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
                 },
                 { upsert: true }
             );
-            console.log(`📡 [MongoDB Dual Write] Successfully saved Company ID ${id} to bronze.companies and silver.companies.`);
+            console.log(`📡 [MongoDB Write] Successfully saved Company ID ${id} to bronze.companies and silver.companies.`);
         } catch (dbErr: any) {
-            console.warn(`⚠️ [MongoDB Dual Write Warning] Failed to write Company ${id} to DB (falling back to disk only): ${dbErr.message}`);
+            console.error(`❌ [MongoDB Write Error] Failed to write Company ${id} to DB: ${dbErr.message}`);
+            throw dbErr;
+        } finally {
+            // 사용 완료된 임시 HTML 파일 삭제 (디스크 절약)
+            if (fs.existsSync(tempHtmlPath)) {
+                fs.unlinkSync(tempHtmlPath);
+            }
         }
 
         return {
-            mdPath: finalMdPath,
-            htmlPath: finalHtmlPath,
+            mdPath: '', // 마크다운 로컬 저장 해제
+            htmlPath: '', // HTML 경로 반환값 비워둠 (로컬 저장 해제)
             targetDirName: countryDir
         };
     }

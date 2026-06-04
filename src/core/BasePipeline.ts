@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { DateUtils, FormatUtils } from '../utils';
 
 export abstract class BasePipeline<TMeta> {
@@ -29,7 +30,7 @@ export abstract class BasePipeline<TMeta> {
         const id = this.extractId(url);
         if (!id) return null;
 
-        const tempHtmlPath = path.join(this.htmlDir, `temp_${id}.html`);
+        const tempHtmlPath = path.join(os.tmpdir(), `temp_${id}.html`);
 
         try {
             await this.executeScrape(url, tempHtmlPath);
@@ -255,7 +256,7 @@ export abstract class BasePipeline<TMeta> {
 
             console.log(`🏢 [${currentIndexFmt}/${filteredCountFmt}][${runtimeStr}/${etrStr}] ${loginStatus} ID: ${id} | 시작`);
 
-            const tempHtmlPath = path.join(this.htmlDir, `temp_${id}.html`);
+            const tempHtmlPath = path.join(os.tmpdir(), `temp_${id}.html`);
 
             try {
                 // 1) HTML 스크래핑

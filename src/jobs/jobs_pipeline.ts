@@ -40,28 +40,13 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
     }
 
     protected async saveResults(meta: JobMeta, id: string, tempHtmlPath: string): Promise<{ mdPath: string; htmlPath: string; targetDirName: string }> {
-        const targetMdDir = path.join(this.mdDir, meta.locationDirName, meta.postedDate);
-        const correctHtmlDir = path.join(this.htmlDir, meta.locationDirName, meta.postedDate);
-        const safeMdFileName = NamingUtils.generateSafeFileName(meta.jobTitle, meta.company);
-        
-        const finalMdPath = path.join(targetMdDir, `${safeMdFileName}.md`);
-        const finalHtmlPath = path.join(correctHtmlDir, `${id}.html`);
+        // 임시 파일에서 원시 HTML 콘텐츠 읽기
+        const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
-        // 1) 마크다운 포맷팅 저장
-        await this.converter.prettifyAndSave(meta.rawContent, finalMdPath);
-        
-        // 2) HTML 폴더 생성 및 임시 HTML 이동
-        fs.mkdirSync(correctHtmlDir, { recursive: true });
-        if (fs.existsSync(finalHtmlPath)) {
-            fs.unlinkSync(finalHtmlPath);
-        }
-        fs.renameSync(tempHtmlPath, finalHtmlPath);
-
-        // ⚡ [MongoDB 이중 쓰기 (Dual Write)] ⚡
+        // ⚡ [MongoDB 적재] ⚡
         try {
             const { MongoDatabase } = require('../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
-            const rawHtml = fs.readFileSync(finalHtmlPath, 'utf-8');
 
             // 1. Bronze Layer (Raw) 저장
             const bronzeJobs = await dbInstance.getCollection('bronze.jobs');
@@ -87,37 +72,31 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
                         jobId: id,
                         title: meta.jobTitle,
                         companyName: meta.company,
-                        // jobUrl에 등록할 수 있는 회사 ID 추출 시도
                         companyId: meta.company ? NamingUtils.generateSafeFileName(meta.company, '') : null, 
                         description: meta.rawContent,
                         location: meta.rawLocation,
                         geo: stdLoc || 'Unknown',
-                        workStyle: '정보 없음', // 상세 페이지 내에서 파싱하는 추가적인 정보가 생기면 매핑 가능
+                        workStyle: '정보 없음',
                         url: `https://www.linkedin.com/jobs/view/${id}`,
                         updatedAt: new Date()
                     }
                 },
                 { upsert: true }
             );
-            console.log(`📡 [MongoDB Dual Write] Successfully saved Job ID ${id} to bronze.jobs and silver.jobs.`);
+            console.log(`📡 [MongoDB Write] Successfully saved Job ID ${id} to bronze.jobs and silver.jobs.`);
         } catch (dbErr: any) {
-            console.warn(`⚠️ [MongoDB Dual Write Warning] Failed to write Job ${id} to DB (falling back to disk only): ${dbErr.message}`);
+            console.error(`❌ [MongoDB Write Error] Failed to write Job ${id} to DB: ${dbErr.message}`);
+            throw dbErr; // DB 적재가 실패할 경우 예외를 전파하여 중단
+        } finally {
+            // 사용 완료된 임시 HTML 파일 삭제 (디스크 절약)
+            if (fs.existsSync(tempHtmlPath)) {
+                fs.unlinkSync(tempHtmlPath);
+            }
         }
 
-        // 3) 신규 수집본이므로 recent 복사본 저장
-        fs.mkdirSync(this.recentHtmlDir, { recursive: true });
-        fs.mkdirSync(this.recentMdDir, { recursive: true });
-
-        const recHtmlPath = path.join(this.recentHtmlDir, `${id}.html`);
-        const recMdPath = path.join(this.recentMdDir, `${safeMdFileName}.md`);
-
-        fs.copyFileSync(finalHtmlPath, recHtmlPath);
-        fs.copyFileSync(finalMdPath, recMdPath);
-        console.log('🆕 [신규 추가] 새 공고 복사본을 data/jobs/recent/ 하위에 저장 완료!');
-
         return {
-            mdPath: finalMdPath,
-            htmlPath: finalHtmlPath,
+            mdPath: '', // 마크다운 로컬 저장 해제
+            htmlPath: '', // HTML 경로 반환값 비워둠 (로컬 저장 해제)
             targetDirName: `${meta.locationDirName}/${meta.postedDate}`
         };
     }
