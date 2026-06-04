@@ -182,6 +182,12 @@ export class LinkedInCrawler implements ICrawler {
             fs.writeFileSync(outputPath, minifiedHtml, 'utf-8');
             console.log(`✨ 백업 성공 (압축 및 포맷팅 완료: ${(minifiedHtml.length / 1024).toFixed(1)} KB) -> ${outputPath}`);
 
+            // 🔑 로그인 성공/세션 유효 시 세션 만료 시간 연장을 위해 최신 쿠키를 파일에 도로 저장
+            if (isLoggedIn) {
+                await context.storageState({ path: this.sessionPath });
+                console.log(`💾 [세션 자동 연장] 최신 로그인 세션 정보 업데이트 완료.`);
+            }
+
         } finally {
             await browser.close();
         }
@@ -256,6 +262,12 @@ export class LinkedInCrawler implements ICrawler {
             }
             fs.writeFileSync(outputPath, minifiedHtml, 'utf-8');
             console.log(`✨ 회사 정보 백업 성공 (압축 및 포맷팅 완료: ${(minifiedHtml.length / 1024).toFixed(1)} KB) -> ${outputPath}`);
+
+            // 🔑 로그인 성공/세션 유효 시 세션 만료 시간 연장을 위해 최신 쿠키를 파일에 도로 저장
+            if (isLoggedIn) {
+                await context.storageState({ path: this.sessionPath });
+                console.log(`💾 [세션 자동 연장] 최신 로그인 세션 정보 업데이트 완료.`);
+            }
 
         } finally {
             await browser.close();
@@ -450,6 +462,12 @@ export class LinkedInCrawler implements ICrawler {
                         await this.extractAndPushJobs(minifiedHtml, url);
                     } catch (dbErr: any) {
                         console.error(`❌ [MongoDB Write Error] Failed to write list to DB: ${dbErr.message}`);
+                    }
+
+                    // 🔑 로그인 성공/세션 유효 시 세션 만료 시간 연장을 위해 최신 쿠키를 파일에 도로 저장
+                    if (isLoggedIn) {
+                        await context.storageState({ path: this.sessionPath });
+                        console.log(`💾 [세션 자동 연장] 최신 로그인 세션 정보 업데이트 완료.`);
                     }
                 } finally {
                     await context.close();

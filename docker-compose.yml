@@ -225,3 +225,24 @@ services:
       - "traefik.http.routers.cronicle.rule=Host(`cron.localhost`)"
       - "traefik.http.routers.cronicle.entrypoints=web"
       - "traefik.http.services.cronicle.loadbalancer.server.port=3012"
+
+  jupyter:
+    build:
+      context: docker/jupyter
+      dockerfile: Dockerfile
+    image: linkedin/jupyter:latest
+    profiles:
+      - tools
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''"]
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jupyter.rule=Host(`jupyter.localhost`)"
+      - "traefik.http.routers.jupyter.entrypoints=web"
+      - "traefik.http.services.jupyter.loadbalancer.server.port=8888"

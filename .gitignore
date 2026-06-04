@@ -1,3 +1,6 @@
 data/
 node_modules/
 config/session.json
+.antigravity/
+data/sessions/
+notebooks/
