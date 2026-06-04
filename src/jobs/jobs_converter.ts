@@ -26,7 +26,7 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
             return '';
         }
         
-        $(el).contents().each((i, child: any) => {
+        $(el).contents().each((_, child: any) => {
             if (child.type === 'text') {
                 markdown += $(child).text();
             } else if (child.type === 'tag') {
@@ -105,7 +105,7 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
 
         if (!jobId || jobId === '정보 없음') {
             // A. /jobs/view/ 또는 /view/ 링크에서 ID 추출 시도
-            $('a[href*="/jobs/view/"], a[href*="/view/"]').each((i, el) => {
+            $('a[href*="/jobs/view/"], a[href*="/view/"]').each((_, el) => {
                 const href = $(el).attr('href') || '';
                 const extracted = UrlUtils.extractJobId(href);
                 if (extracted && /^\d+$/.test(extracted)) {
@@ -117,7 +117,7 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
 
         if (!jobId || jobId === '정보 없음') {
             // B. componentkey 속성에 포함된 ID 추출 시도 (예: JobDetails_AboutTheJob_4421894718)
-            $('[componentkey]').each((i, el) => {
+            $('[componentkey]').each((_, el) => {
                 const key = $(el).attr('componentkey') || '';
                 const match = key.match(/(\d+)$/);
                 if (match) {
@@ -179,7 +179,7 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
         location = location.replace(/\s+/g, ' ');
         if (!location || location === '정보 없음') {
             // 폴백: 다국어 난독화 클래스를 깨고 본문 내 텍스트에서 매칭
-            $('span, p, div').each((i, el) => {
+            $('span, p, div').each((_, el) => {
                 const text = $(el).text().trim().replace(/\s+/g, ' ');
                 if (text && text.length < 100) {
                     // Title 이나 Company Name과 겹치는 경우 매칭 차단 (Korean 이 Korea 에 오매칭되는 것 포함 방지)
@@ -222,14 +222,14 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
 
         // 근무 형태 및 고용 형태
         let workplaceType = '정보 없음';
-        $('.description__job-criteria-item, .job-details-jobs-unified-top-card__job-insight').each((i, el) => {
+        $('.description__job-criteria-item, .job-details-jobs-unified-top-card__job-insight').each((_, el) => {
             const text = $(el).text();
             if (text.includes('Remote') || text.includes('On-site') || text.includes('Hybrid') || text.includes('원격') || text.includes('현장')) {
                 workplaceType = text.replace(/\s+/g, ' ').trim();
             }
         });
         if (workplaceType === '정보 없음') {
-            $('span, a, p, div').each((i, el) => {
+            $('span, a, p, div').each((_, el) => {
                 const text = $(el).text().trim().replace(/\s+/g, ' ');
                 if (text === 'Remote' || text === 'On-site' || text === 'Hybrid' || text === '원격' || text === '현장' || text === '하이브리드') {
                     workplaceType = text;
@@ -240,7 +240,7 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
 
         let jobType = $('.description__job-criteria-item:nth-child(1), .ui-鈍').first().text().replace(/\s+/g, ' ').trim();
         if (!jobType || jobType === '정보 없음') {
-            $('span, a, p, div').each((i, el) => {
+            $('span, a, p, div').each((_, el) => {
                 const text = $(el).text().trim().replace(/\s+/g, ' ');
                 if (text === 'Contract' || text === 'Full-time' || text === 'Part-time' || text === 'Internship' || text === 'Temporary' || text === '계약직' || text === '정규직' || text === '인턴') {
                     jobType = text;
@@ -258,7 +258,7 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
             }
         }
         if (!hasEasyApply) {
-            $('button, span, a').each((i, el) => {
+            $('button, span, a').each((_, el) => {
                 const text = $(el).text().trim();
                 const label = $(el).attr('aria-label') || '';
                 if (text.match(/Easy Apply|간편 지원/i) || label.match(/Easy Apply|간편 지원/i)) {
@@ -282,7 +282,7 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
         // 포스팅 날짜 추출
         let dateClass = $('.posted-time-ago__text, .posted-time-ago, .job-details-jobs-unified-top-card__posted-date, .jobs-unified-top-card__posted-date').first().text().trim().replace(/\s+/g, ' ');
         if (!dateClass) {
-            $('span, strong, p').each((i, el) => {
+            $('span, strong, p').each((_, el) => {
                 const text = $(el).text().trim().replace(/\s+/g, ' ');
                 if (text && text.length < 50) {
                     if (/(\d+)\s*(day|week|month|year|hour|minute|second|일|주|달|개월|년|시간|분|초)s?\s*(ago|전)/i.test(text)) {
@@ -308,11 +308,11 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
         
         // 🛡️ 고극강 강건성: 난독화 레이아웃 대응을 위해 "About the job" 등 헤더 구조 역추적 매칭 폴백
         if (descriptionContainer.length === 0 || descriptionContainer.text().trim().length < 100) {
-            $('h1, h2, h3, h4').each((i, el) => {
+            $('h1, h2, h3, h4').each((_, el) => {
                 const headerText = $(el).text().trim();
                 if (/About the job|About the role|Job description|직무 소개|역할 소개/i.test(headerText)) {
                     // h2의 부모/조상 div들 중 본문 텍스트가 충분히 있는 가장 가까운 div를 역추적
-                    $(el).parents('div').each((j, divEl) => {
+                    $(el).parents('div').each((_, divEl) => {
                         const divText = $(divEl).text().trim();
                         if (divText.length > headerText.length + 50) {
                             descriptionContainer = $(divEl);

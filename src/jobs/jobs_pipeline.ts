@@ -33,7 +33,7 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
         return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
     }
 
-    protected async saveResults(meta: JobMeta, id: string, tempHtmlPath: string): Promise<{ mdPath: string; htmlPath: string; targetDirName: string }> {
+    protected async saveResults(meta: JobMeta, id: string, tempHtmlPath: string, redisInstance?: any): Promise<{ targetDirName: string }> {
         // 임시 파일에서 원시 HTML 콘텐츠 읽기
         const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
@@ -81,7 +81,7 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
 
             // 3. 추천 공고 실시간 파싱 및 Redis 큐 적재
             try {
-                await this.extractAndPushRecommendations(rawHtml, dbInstance, bronzeJobs);
+                await this.extractAndPushRecommendations(rawHtml, dbInstance, bronzeJobs, redisInstance);
             } catch (recErr: any) {
                 console.warn(`⚠️ [Auto-Extract Rec Warning] Failed to extract/push recommendations for Job ${id}: ${recErr.message}`);
             }
@@ -96,8 +96,6 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
         }
 
         return {
-            mdPath: '', // 마크다운 로컬 저장 해제
-            htmlPath: '', // HTML 경로 반환값 비워둠 (로컬 저장 해제)
             targetDirName: `${meta.locationDirName}/${meta.postedDate}`
         };
     }
@@ -105,14 +103,19 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
     /**
      * ⚡ [대안 A] 상세 페이지 수집 완료 시 자동 추천 공고 파싱 및 Redis 큐 적재
      */
-    private async extractAndPushRecommendations(htmlContent: string, dbInstance: any, bronzeJobs: any): Promise<void> {
+    private async extractAndPushRecommendations(htmlContent: string, dbInstance: any, bronzeJobs: any, redisInstance?: any): Promise<void> {
         const cheerio = require('cheerio');
         const $ = cheerio.load(htmlContent);
         const jobUrlsColl = await dbInstance.getCollection('bronze.job_urls');
         
-        const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
-        const Redis = require('ioredis');
-        const redis = new Redis(redisUrl);
+        let redis = redisInstance;
+        let shouldQuitRedis = false;
+        if (!redis) {
+            const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+            const Redis = require('ioredis');
+            redis = new Redis(redisUrl);
+            shouldQuitRedis = true;
+        }
 
         // 1. target locations 로드
         let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
@@ -144,14 +147,7 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
             return 'Others';
         };
 
-        // 3. 완료된 캐시 로드
-        const completedCache = new Set<string>();
-        const completedDocs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
-        completedDocs.forEach((d: any) => {
-            if (d.jobId) completedCache.add(d.jobId);
-        });
-
-        // 4. 추천 공고 파싱
+        // 3. 추천 공고 파싱
         const foundJobs: any[] = [];
         $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
             const href = $(el).attr('href') || '';
@@ -187,6 +183,57 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
                 url: `https://www.linkedin.com/jobs/view/${jobId}`
             });
         });
+
+        if (foundJobs.length === 0) {
+            if (shouldQuitRedis && redis) {
+                await redis.quit();
+            }
+            return;
+        }
+
+        // 4. 완료된 캐시 로드 ($in 쿼리 및 Redis sismember 활용으로 최적화)
+        const completedCache = new Set<string>();
+        const uniqueJobIds = Array.from(new Set(foundJobs.map(j => j.jobId)));
+        
+        // 4-1. Redis 캐시가 주입되어 있으면 Redis에서 우선 확인하여 속도 최적화
+        const redisCheckedCache = new Set<string>();
+        if (redis) {
+            try {
+                // Redis의 SISMEMBER를 통해 존재 확인
+                const pipeline = redis.pipeline();
+                uniqueJobIds.forEach(id => {
+                    pipeline.sismember('completed_jobs', id);
+                });
+                const results = await pipeline.exec();
+                if (results) {
+                    results.forEach((res: any, idx: number) => {
+                        const [err, isMember] = res;
+                        if (!err && isMember === 1) {
+                            completedCache.add(uniqueJobIds[idx]);
+                            redisCheckedCache.add(uniqueJobIds[idx]);
+                        }
+                    });
+                }
+            } catch (err: any) {
+                console.warn(`⚠️ [Redis Cache Check Warning] Failed checking completed_jobs cache in Redis: ${err.message}`);
+            }
+        }
+
+        // 4-2. Redis에 없는 공고들에 대해 MongoDB $in 조건으로 정밀 타겟 조회 (대용량 테이블 풀스캔 우회)
+        const mongoCheckIds = uniqueJobIds.filter(id => !redisCheckedCache.has(id));
+        if (mongoCheckIds.length > 0) {
+            try {
+                const completedDocs = await bronzeJobs.find(
+                    { jobId: { $in: mongoCheckIds } },
+                    { projection: { jobId: 1, _id: 0 } }
+                ).toArray();
+                completedDocs.forEach((d: any) => {
+                    if (d.jobId) completedCache.add(d.jobId);
+                });
+            } catch (mongoErr: any) {
+                console.error(`⚠️ [MongoDB Cache Check Error] Failed checking jobs in Mongo: ${mongoErr.message}`);
+            }
+        }
 
         // 5. DB 저장 및 Redis 큐 적재
         let pushedCount = 0;
@@ -232,10 +279,13 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
             }
         }
         if (pushedCount > 0) {
-            console.log(`📋 [Auto-Extract Rec Details] Extracted target recommendations:\n${JSON.stringify(foundJobs, null, 2)}`);
+            console.log(`📋 [Auto-Extract Rec Details] Extracted target recommendations:\n${JSON.stringify(foundJobs.filter(j => j.matchesTarget && !completedCache.has(j.jobId)), null, 2)}`);
             console.log(`✅ [Auto-Extract Rec] Found ${foundJobs.length} recommendations. Pushed ${pushedCount} new jobs to Redis jobs_queue.`);
         }
-        await redis.quit();
+        
+        if (shouldQuitRedis && redis) {
+            await redis.quit();
+        }
     }
 }
 

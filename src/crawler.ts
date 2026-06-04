@@ -14,7 +14,7 @@ export interface ICrawler {
 }
 
 export class LinkedInCrawler implements ICrawler {
-    private readonly sessionPath: string = path.join(__dirname, '..', 'config', 'session.json');
+    private readonly sessionPath: string = path.join(__dirname, '..', 'data', 'sessions', 'session.json');
     private readonly useLogin: boolean;
 
     constructor(options: { login?: boolean } = {}) {

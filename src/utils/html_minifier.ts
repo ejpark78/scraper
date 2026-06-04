@@ -35,7 +35,7 @@ export class HtmlMinifier {
                 'data-tracking-control-name'
             ]);
 
-            $('*').each((i, el) => {
+            $('*').each((_, el) => {
                 const $el = $(el);
                 const attribs = $el.attr();
                 if (attribs) {

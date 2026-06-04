@@ -216,9 +216,7 @@ export class LinkedInUrlManager implements IUrlManager {
         console.log(`📊 수집 완료된 캐시 인덱스: ${FormatUtils.formatThousand(cacheSet.size)} 개`);
         console.log('🔍 lists/ 및 html/ 내의 파일들에서 채용공고 및 회사 주소(URL)를 정밀 분석 및 추출하는 중...');
 
-        const cheerio = require('cheerio');
-        const hrefRegex = /href="([^"]*\/view\/[^"]*)"/g;
-        const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
+
 
         const directJobIds = new Set<string>();
         const directJobsMetaMap = new Map<string, any>();

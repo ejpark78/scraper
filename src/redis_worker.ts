@@ -92,7 +92,7 @@ async function main() {
       Logger.info(`Processing Job ID: ${jobId}`, { jobId, url });
 
       // 3. Process task
-      const resultId = await pipeline.processSingleUrl(url);
+      const resultId = await pipeline.processSingleUrl(url, redis);
 
       if (resultId) {
         // 4. Mark as completed in Redis cache

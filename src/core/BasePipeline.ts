@@ -14,12 +14,12 @@ export abstract class BasePipeline<TMeta> {
     protected abstract getDomainName(): string; // "채용공고" 또는 "회사정보"
     protected abstract executeScrape(url: string, tempHtmlPath: string): Promise<void>;
     protected abstract processMetadata(htmlContent: string, id: string, url: string): TMeta;
-    protected abstract saveResults(meta: TMeta, id: string, tempHtmlPath: string): Promise<{ mdPath: string; htmlPath: string; targetDirName: string }>;
+    protected abstract saveResults(meta: TMeta, id: string, tempHtmlPath: string, redisInstance?: any): Promise<{ targetDirName: string }>;
 
     /**
      * 🚀 개별 URL 단일 수집 기동용 공개 메서드 (Redis 워커 등 외부 큐 연동용)
      */
-    public async processSingleUrl(url: string): Promise<string | null> {
+    public async processSingleUrl(url: string, redisInstance?: any): Promise<string | null> {
         const id = this.extractId(url);
         if (!id) return null;
 
@@ -36,9 +36,9 @@ export abstract class BasePipeline<TMeta> {
 
             const htmlContent = fs.readFileSync(tempHtmlPath, 'utf-8');
             const meta = this.processMetadata(htmlContent, id, url);
-            const paths = await this.saveResults(meta, id, tempHtmlPath);
+            const result = await this.saveResults(meta, id, tempHtmlPath, redisInstance);
             
-            console.log(`✨ [성공] ID: ${id} | 분류: ${paths.targetDirName}`);
+            console.log(`✨ [성공] ID: ${id} | 분류: ${result.targetDirName}`);
             return id;
         } catch (err: any) {
             console.error(`❌ 대상 ${id} 처리 도중 오류 발생: ${err.message}`);
@@ -62,7 +62,7 @@ export abstract class BasePipeline<TMeta> {
 
         // 로그인 상태 확인
         const useLoginEnv = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
-        const sessionPath = path.join(__dirname, '..', '..', 'config', 'session.json');
+        const sessionPath = path.join(__dirname, '..', '..', 'data', 'sessions', 'session.json');
         const loginStatus = useLoginEnv 
             ? (fs.existsSync(sessionPath) ? '[AUTHED]' : '[UNAUTHED]')
             : '[UNAUTHED]';
@@ -277,9 +277,9 @@ export abstract class BasePipeline<TMeta> {
                 const meta = this.processMetadata(htmlContent, id, url);
 
                 // 3) 최종 파일 저장
-                const paths = await this.saveResults(meta, id, tempHtmlPath);
+                const result = await this.saveResults(meta, id, tempHtmlPath);
                 
-                console.log(`✨ [성공] ID: ${id} | 분류: ${paths.targetDirName}`);
+                console.log(`✨ [성공] ID: ${id} | 분류: ${result.targetDirName}`);
 
                 // Redis 캐시 추가 및 메모리 캐시 갱신
                 cacheSet.add(id);

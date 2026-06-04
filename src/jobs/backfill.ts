@@ -7,7 +7,7 @@ import * as path from 'path';
 async function main() {
     console.log('🏁 [Backfill] Starting comprehensive HTML backfill from bronze.jobs and bronze.lists...');
     const mongo = MongoDatabase.getInstance();
-    const db = await mongo.connect();
+    await mongo.connect();
     const bronzeJobs = await mongo.getCollection('bronze.jobs');
     const bronzeLists = await mongo.getCollection('bronze.lists');
     const jobUrlsColl = await mongo.getCollection('bronze.job_urls');

@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import * as path from 'path';
+
 import { BasePipeline } from '../core/BasePipeline';
 import { CompanyMeta, CompanyMarkdownConverter } from './company_converter';
 import { LinkedInCrawler } from '../crawler';
@@ -31,7 +31,7 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
         return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
     }
 
-    protected async saveResults(meta: CompanyMeta, id: string, tempHtmlPath: string): Promise<{ mdPath: string; htmlPath: string; targetDirName: string }> {
+    protected async saveResults(meta: CompanyMeta, id: string, tempHtmlPath: string): Promise<{ targetDirName: string }> {
         // 국가 코드 ➡️ 표준 영문 국가명 변환
         let countryDir = 'Unknown';
         if (meta.hqCountry && meta.hqCountry !== '정보 없음') {
@@ -97,8 +97,6 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
         }
 
         return {
-            mdPath: '', // 마크다운 로컬 저장 해제
-            htmlPath: '', // HTML 경로 반환값 비워둠 (로컬 저장 해제)
             targetDirName: countryDir
         };
     }

@@ -1,4 +1,4 @@
-import { chromium, BrowserContext, Page } from 'playwright';
+import { chromium } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -10,7 +10,7 @@ function getTimestamp(): string {
 }
 
 async function runBrowser() {
-    const sessionPath = path.join(__dirname, '..', '..', 'config', 'session.json');
+    const sessionPath = path.join(__dirname, '..', '..', 'data', 'sessions', 'session.json');
     const htmlDir = path.join(__dirname, '..', '..', 'data', 'browser', 'html');
     const jsonDir = path.join(__dirname, '..', '..', 'data', 'browser', 'json');
 
@@ -130,9 +130,8 @@ async function runBrowser() {
                 const text = await response.text();
                 
                 // 실제로 유효한 JSON인지 검사
-                let parsedJson: any = null;
                 try {
-                    parsedJson = JSON.parse(text);
+                    JSON.parse(text);
                 } catch (e) {
                     return; // JSON이 아닌 경우 패스
                 }
