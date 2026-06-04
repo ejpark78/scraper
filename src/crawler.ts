@@ -417,8 +417,18 @@ export class LinkedInCrawler implements ICrawler {
             const executing = new Set<Promise<void>>();
             let authFailed = false;
 
+            let isFirst = true;
             for (const url of urls) {
                 if (authFailed) break;
+
+                if (this.useLogin && parallelLimit === 1 && !isFirst) {
+                    const sleepSec = parseInt(process.env.SLEEP_TIME || '3', 10);
+                    if (sleepSec > 0) {
+                        console.log(`💤 [대기] 다음 요청까지 ${sleepSec}초 대기 중...`);
+                        await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
+                    }
+                }
+                isFirst = false;
 
                 const p = worker(url).catch((err) => {
                     if (err.message === 'AUTH_FAIL') {
@@ -492,14 +502,6 @@ export class LinkedInCrawler implements ICrawler {
                 for (const country of Object.keys(countryMapping)) {
                     if (std.toLowerCase() === country.toLowerCase()) return country;
                 }
-                for (const [country, aliases] of Object.entries(countryMapping)) {
-                    if (country === 'South Korea' && /[가-힣]/.test(loc)) return country;
-                    const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-                    if (escapedAliases.length > 0) {
-                        const pattern = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
-                        if (pattern.test(loc)) return country;
-                    }
-                }
                 return 'Others';
             };
 
@@ -512,6 +514,7 @@ export class LinkedInCrawler implements ICrawler {
 
             // 4. Job URL 추출
             const foundJobs: any[] = [];
+            const allDiscovered: any[] = [];
             $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
                 const href = $(el).attr('href') || '';
                 const jobId = UrlUtils.extractJobId(href);
@@ -520,12 +523,15 @@ export class LinkedInCrawler implements ICrawler {
                 const title = $(el).text().replace(/\s+/g, ' ').trim();
                 if (!title || title.length < 2) return;
 
+                // 목록 내 중복 제거
+                if (allDiscovered.some(j => j.jobId === jobId)) return;
+
                 let company = '정보 없음';
                 let location = '정보 없음';
 
-                const parent = $(el).closest('li, div, section');
+                const parent = $(el).closest('li');
                 if (parent.length > 0) {
-                    const companyText = parent.find('[class*="company"], [class*="subtitle"]').first().text().replace(/\s+/g, ' ').trim();
+                    const companyText = parent.find('[class*="company"], [class*="subtitle"], [class*="secondary"]').first().text().replace(/\s+/g, ' ').trim();
                     if (companyText) company = companyText;
                     const locText = parent.find('[class*="location"], [class*="metadata"]').first().text().replace(/\s+/g, ' ').trim();
                     if (locText) {
@@ -534,17 +540,30 @@ export class LinkedInCrawler implements ICrawler {
                 }
 
                 const geo = parseGeo(location);
-                if (targetLocations.includes(geo)) {
-                    foundJobs.push({
-                        jobId,
-                        title,
-                        company,
-                        location,
-                        geo,
-                        url: `https://www.linkedin.com/jobs/view/${jobId}`
-                    });
+                const matchesTarget = targetLocations.includes(geo);
+                
+                const jobMeta = {
+                    jobId,
+                    title,
+                    company,
+                    location,
+                    geo,
+                    matchesTarget,
+                    url: `https://www.linkedin.com/jobs/view/${jobId}`
+                };
+                allDiscovered.push(jobMeta);
+
+                if (matchesTarget) {
+                    foundJobs.push(jobMeta);
                 }
             });
+
+            if (allDiscovered.length > 0) {
+                console.log(`📋 [Auto-Extract] Discovered ${allDiscovered.length} jobs in HTML:`);
+                allDiscovered.forEach((j, index) => {
+                    console.log(`  [Card ${index + 1}] ID: ${j.jobId} | Title: ${j.title} | Company: ${j.company} | Location: ${j.location} | Geo: ${j.geo} | Matches Target: ${j.matchesTarget}`);
+                });
+            }
 
             // 5. 회사 URL 추출 및 MongoDB 저장
             const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
@@ -613,7 +632,7 @@ export class LinkedInCrawler implements ICrawler {
                 }
             }
             if (foundJobs.length > 0) {
-                console.log(`📋 [Auto-Extract Details] Extracted target jobs:\n${JSON.stringify(foundJobs, null, 2)}`);
+                console.log(`📋 [Auto-Extract Target] Matched target jobs:\n${JSON.stringify(foundJobs.map(j => ({ jobId: j.jobId, title: j.title, geo: j.geo })), null, 2)}`);
             }
             console.log(`✅ [Auto-Extract] Extracted ${foundJobs.length} target jobs. Pushed ${pushedCount} new jobs to Redis jobs_queue.`);
             await redis.quit();

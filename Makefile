@@ -26,6 +26,12 @@ ifeq ($(AUTH),)
   AUTH := true
 endif
 
+# SLEEP_TIME 기본값
+SLEEP_TIME ?= 3
+ifeq ($(SLEEP_TIME),)
+  SLEEP_TIME := 3
+endif
+
 # 컨테이너 실행 판별 플래그 (호스트 vs 컨테이너)
 IN_CONTAINER ?= false
 
@@ -91,7 +97,7 @@ job-list:
 		echo "❌ 에러: 수집 대상 설정 파일이 존재하지 않습니다: $(LISTS)"; \
 		exit 1; \
 	fi
-	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) npx ts-node src/crawler.ts list $(LISTS)
+	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) SLEEP_TIME=$(SLEEP_TIME) npx ts-node src/crawler.ts list $(LISTS)
 
 list: job-list
 
@@ -108,7 +114,7 @@ else
 
 # 호스트 환경에서 컨테이너 구동으로 위임하는 인터페이스 프록시
 list:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL)
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL) SLEEP_TIME=$(SLEEP_TIME)
 
 job-list: list
 

@@ -75,6 +75,7 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
       - AUTH=${AUTH:-}
       - PARALLEL=${PARALLEL:-}
+      - SLEEP_TIME=${SLEEP_TIME:-}
       - LISTS=${LISTS:-}
       - URLS=${URLS:-}
       - HTML=${HTML:-}

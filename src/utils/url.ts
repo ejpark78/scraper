@@ -30,9 +30,6 @@ export class UrlUtils {
     // 💡 country.json 캐싱용 변수
     private static countryMapping: Record<string, string[]> | null = null;
 
-    /**
-     * 🛡️ 근무지 지리 매핑 및 표준화 규칙 적용 (국가명 기준 정렬)
-     */
     public static standardizeLocation(rawLocation: string): string {
         if (!rawLocation || rawLocation === '정보 없음' || rawLocation === 'No info') {
             return 'unknown-location';
@@ -55,24 +52,24 @@ export class UrlUtils {
 
         // 2. 외부 설정 값이 있을 경우 매핑 매칭 수행
         if (UrlUtils.countryMapping) {
+            // 별칭(alias) 매칭 우선 진행 (예: 'APAC' 등 전역 별칭이 한국어 포함 문구보다 먼저 매칭되도록)
             for (const [country, aliases] of Object.entries(UrlUtils.countryMapping)) {
-                // 한글 캐릭터셋이 있거나, 별칭 중 하나가 포함되는 경우 검사
-                // (일부 특수 로직 보존: 한국의 경우 /[가-힣]/ 매칭 지원)
-                if (country === 'Korea' && /[가-힣]/.test(cleanLoc)) {
-                    return 'Korea';
-                }
-
-                // regex escape를 통해 안전하게 정규식 패턴 생성
                 const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-                const pattern = new RegExp(escapedAliases.join('|'), 'i');
-                if (pattern.test(cleanLoc)) {
-                    return country;
+                if (escapedAliases.length > 0) {
+                    const pattern = new RegExp(escapedAliases.join('|'), 'i');
+                    if (pattern.test(cleanLoc)) {
+                        return country;
+                    }
                 }
+            }
+            // 별칭 매칭 실패 시 한글 캐릭터셋 포함 시 한국으로 매핑
+            if (/[가-힣]/.test(cleanLoc)) {
+                return 'South Korea';
             }
         } else {
             // Fallback (최소한의 예외 처리)
             if (/[가-힣]/.test(cleanLoc) || /Korea|Seoul|서울|대한민국/i.test(cleanLoc)) {
-                return 'Korea';
+                return 'South Korea';
             }
         }
 

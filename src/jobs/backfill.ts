@@ -44,14 +44,6 @@ async function main() {
         for (const country of Object.keys(countryMapping)) {
             if (std.toLowerCase() === country.toLowerCase()) return country;
         }
-        for (const [country, aliases] of Object.entries(countryMapping)) {
-            if (country === 'South Korea' && /[가-힣]/.test(loc)) return country;
-            const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-            if (escapedAliases.length > 0) {
-                const pattern = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
-                if (pattern.test(loc)) return country;
-            }
-        }
         return 'Others';
     };
 
@@ -107,9 +99,9 @@ async function main() {
             let company = '정보 없음';
             let location = '정보 없음';
 
-            const parent = $(el).closest('li, div, section');
+            const parent = $(el).closest('li');
             if (parent.length > 0) {
-                const companyText = parent.find('[class*="company"], [class*="subtitle"]').first().text().replace(/\s+/g, ' ').trim();
+                const companyText = parent.find('[class*="company"], [class*="subtitle"], [class*="secondary"]').first().text().replace(/\s+/g, ' ').trim();
                 if (companyText) company = companyText;
                 const locText = parent.find('[class*="location"], [class*="metadata"]').first().text().replace(/\s+/g, ' ').trim();
                 if (locText) {
@@ -210,9 +202,9 @@ async function main() {
             let company = '정보 없음';
             let location = '정보 없음';
 
-            const parent = $(el).closest('li, div, section');
+            const parent = $(el).closest('li');
             if (parent.length > 0) {
-                const companyText = parent.find('[class*="company"], [class*="subtitle"]').first().text().replace(/\s+/g, ' ').trim();
+                const companyText = parent.find('[class*="company"], [class*="subtitle"], [class*="secondary"]').first().text().replace(/\s+/g, ' ').trim();
                 if (companyText) company = companyText;
                 const locText = parent.find('[class*="location"], [class*="metadata"]').first().text().replace(/\s+/g, ' ').trim();
                 if (locText) {
