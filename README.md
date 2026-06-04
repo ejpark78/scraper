@@ -148,6 +148,8 @@ make login
 
 ### 1단계. 채용공고 검색 결과 목록 수집 (`make list`)
 `config/config.json`의 조건에 따라 채용 정보 리스트 HTML 파일들을 다운로드합니다. (디폴트는 비로그인 가동입니다.)
+* 수집 시점마다 `data/jobs/lists/html/[YYYYMMDD_HHMMSS]/` 형식의 하위 폴더가 자동으로 생성되어 수집 배치(Batch)별로 HTML 파일들이 덤프됩니다.
+
 ```bash
 # 기본 비로그인 수집
 make list
@@ -207,11 +209,24 @@ make company AUTH=true
   ```bash
   make clean
   ```
+  * `data/jobs/lists/html/` 하위의 모든 날짜별 폴더 및 임시 파일들을 청소합니다.
 * **데이터 영구 초기화 (`make purge`)**:
   ```bash
   make purge
   ```
   * `data/jobs/` 내부의 전체 데이터를 강제 초기화합니다. (수집된 회사 정보는 삭제되지 않고 안전하게 보존됩니다.)
+* **Cronicle 스케줄러 설정 백업 및 동기화 (`make export-cron`, `make init-cron`)**:
+  * **설정 내보내기 (Export)**:
+    ```bash
+    make export-cron
+    ```
+    현재 컨테이너에 등록된 모든 Cronicle 이벤트 스케줄, 사용자 및 플러그인 설정을 `docker/cronicle/default.json`으로 내보냅니다. (이전 환경의 IP 주소는 빈 문자열 `""`로 자동 치환되어 새로운 환경에서도 매끄럽게 호환되도록 구성됩니다.)
+  * **설정 불러오기 (Import/Restore)**:
+    ```bash
+    make init-cron
+    ```
+    새로운 컴퓨터로 환경을 이전했거나 컨테이너를 처음 구동했을 때, 백업된 `docker/cronicle/default.json` 데이터를 새롭게 기동된 Cronicle 서버 인스턴스에 일괄 임포트한 뒤 서비스를 재시작합니다.
+
 
 ---
 

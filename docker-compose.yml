@@ -22,12 +22,12 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik-dashboard.rule=Host(`proxy.localhost`)"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`route.localhost`)"
       - "traefik.http.routers.traefik-dashboard.entrypoints=web"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
       - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-redirect"
-      - "traefik.http.middlewares.dashboard-redirect.redirectregex.regex=^http://proxy.localhost/$$"
-      - "traefik.http.middlewares.dashboard-redirect.redirectregex.replacement=http://proxy.localhost/dashboard/"
+      - "traefik.http.middlewares.dashboard-redirect.redirectregex.regex=^http://route.localhost/$$"
+      - "traefik.http.middlewares.dashboard-redirect.redirectregex.replacement=http://route.localhost/dashboard/"
 
   kasm:
     build:

@@ -71,7 +71,7 @@ logout:
 
 export-cron:
 	@mkdir -p docker/cronicle
-	docker compose exec -T cronicle /opt/cronicle/bin/storage-cli.js export /app/docker/cronicle/default.json
+	docker compose exec -T cronicle /opt/cronicle/bin/control.sh export /app/docker/cronicle/default.json
 	@echo "💾 Cronicle 이벤트가 docker/cronicle/default.json으로 성공적으로 백업되었습니다."
 
 init-cron:
@@ -79,11 +79,9 @@ init-cron:
 		echo "❌ 에러: docker/cronicle/default.json 파일이 존재하지 않습니다. 먼저 'make export-cron'을 실행해 주세요."; \
 		exit 1; \
 	fi
-	docker compose up -d cronicle
-	@echo "⏳ Cronicle 컨테이너가 시작될 때까지 5초간 대기합니다..."
-	@sleep 5
-	docker compose exec -T cronicle /opt/cronicle/bin/storage-cli.js import /app/docker/cronicle/default.json
-	docker compose restart cronicle
+	docker compose stop cronicle
+	docker compose run --rm cronicle /opt/cronicle/bin/storage-cli.js import /app/docker/cronicle/default.json
+	docker compose start cronicle
 	@echo "✅ Cronicle 이벤트 복원 및 재시작이 완료되었습니다."
 
 
