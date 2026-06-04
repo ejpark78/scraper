@@ -27,8 +27,6 @@ services:
       context: .
       dockerfile: docker/kasm/Dockerfile
     image: linkedin-kasm:latest
-    ports:
-      - "6901:6901"
     environment:
       - VNC_PW=password2026
       - VNCOPTIONS=-disableBasicAuth
@@ -122,3 +120,22 @@ services:
       retries: 3
     deploy:
       replicas: 5
+
+  cronicle:
+    image: bluet/cronicle-docker:latest
+    hostname: localhost
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/cronicle:/opt/cronicle/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3012/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cronicle.rule=Host(`cron.localhost`)"
+      - "traefik.http.routers.cronicle.entrypoints=web"
+      - "traefik.http.services.cronicle.loadbalancer.server.port=3012"
+
