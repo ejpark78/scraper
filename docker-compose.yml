@@ -33,7 +33,7 @@ services:
     build:
       context: docker/kasm
       dockerfile: Dockerfile
-    image: linkedin-kasm:latest
+    image: linkedin/kasm:latest
     environment:
       - VNC_PW=password2026
       - VNCOPTIONS=-disableBasicAuth
@@ -60,7 +60,7 @@ services:
     build:
       context: .
       dockerfile: docker/clipper/Dockerfile
-    image: linkedin-clipper:latest
+    image: linkedin/clipper:latest
     profiles:
       - runtime
     environment:
@@ -78,7 +78,7 @@ services:
     image: redis:alpine
     restart: unless-stopped
     volumes:
-      - ./data/redis:/data
+      - ./data/.services/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -106,7 +106,7 @@ services:
     build:
       context: .
       dockerfile: docker/clipper/Dockerfile
-    image: linkedin-clipper:latest
+    image: linkedin/clipper:latest
     restart: unless-stopped
     command: ["npx", "ts-node", "src/redis_worker.ts"]
     environment:
@@ -131,13 +131,12 @@ services:
     build:
       context: docker/cronicle
       dockerfile: Dockerfile
-    image: linkedin-cronicle:latest
+    image: linkedin/cronicle:latest
     hostname: localhost
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./data/cronicle:/opt/cronicle/data
-      - .:/app
+      - ./data/.services/cronicle:/opt/cronicle/data
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3012/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s

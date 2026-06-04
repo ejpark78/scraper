@@ -81,6 +81,9 @@
 
 ```text
 ├── data/                     # 📁 수집 및 정제 데이터 저장 물리 디렉토리
+│   ├── .services/            # ⚙️ 서비스 퍼시스턴스 데이터 (cronicle, redis 등)
+│   │   ├── cronicle/         # Cronicle 서비스 데이터
+│   │   └── redis/            # Redis 퍼시스턴스 데이터
 │   ├── jobs/                 # 💼 채용공고 수집 공간
 │   │   ├── html/             # 아카이빙된 공고 HTML (근무지역/포스팅날짜 분류)
 │   │   ├── markdown/         # 정제 완료된 공고 마크다운 (근무지역/포스팅날짜 분류)
