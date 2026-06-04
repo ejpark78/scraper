@@ -209,6 +209,23 @@ export class LinkedInUrlManager implements IUrlManager {
         const extractedCompanyIds = new Set<string>();
         const masterJobsMetaMap = new Map<string, any>();
 
+        // 0. 💾 기존 urls.json이 존재한다면 masterJobsMetaMap에 미리 채워 캐시로 활용
+        if (fs.existsSync(outputUrlsPath)) {
+            try {
+                const existingData = JSON.parse(fs.readFileSync(outputUrlsPath, 'utf-8'));
+                if (Array.isArray(existingData)) {
+                    existingData.forEach((item: any) => {
+                        if (item && item.jobId) {
+                            masterJobsMetaMap.set(item.jobId, item);
+                        }
+                    });
+                    console.log(`💾 기존 urls.json에서 ${FormatUtils.formatThousand(masterJobsMetaMap.size)}개의 메타데이터를 캐시로 로드했습니다.`);
+                }
+            } catch (e: any) {
+                console.warn(`⚠️ 기존 urls.json 로드 실패: ${e.message}`);
+            }
+        }
+
         // country.json 로드
         let localCountryMapping: Record<string, string[]> = {};
         try {
@@ -224,6 +241,9 @@ export class LinkedInUrlManager implements IUrlManager {
         if (fs.existsSync(listsDir)) {
             const listFiles = IOUtils.getAllFiles(listsDir, '.html');
             let fileCount = 0;
+            const cheerio = require('cheerio');
+            const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
+
             for (const file of listFiles) {
                 fileCount++;
                 try {
@@ -358,9 +378,20 @@ export class LinkedInUrlManager implements IUrlManager {
         // 2-C. 🔍 html/ 폴더 하위의 수집완료 상세 페이지 HTML에서 추천/유사 공고 ID 추출 및 추천 카드 파싱
         if (fs.existsSync(htmlDir)) {
             const htmlFiles = IOUtils.getAllFiles(htmlDir, '.html');
+            const cheerio = require('cheerio');
             let fileCount = 0;
+            let skipCount = 0;
+
             for (const file of htmlFiles) {
                 fileCount++;
+                const currentJobId = path.basename(file, '.html');
+
+                // ⚡ 캐시 최적화: 이미 상세 메타데이터가 존재하고 국가 분석이 끝난 경우 파싱 생략
+                if (masterJobsMetaMap.has(currentJobId) && masterJobsMetaMap.get(currentJobId)?.geo) {
+                    skipCount++;
+                    continue;
+                }
+
                 try {
                     const content = fs.readFileSync(file, 'utf-8');
                     const $ = cheerio.load(content);
@@ -437,6 +468,10 @@ export class LinkedInUrlManager implements IUrlManager {
                     console.error(`⚠️ 파일 읽기 오류 [${file}]: ${err.message}`);
                 }
                 if (fileCount % 100 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+            }
+
+            if (skipCount > 0) {
+                console.log(`⚡ 분석 완료된 상세 HTML 파일 ${FormatUtils.formatThousand(skipCount)}개는 분석을 건너뛰었습니다 (캐시 적용).`);
             }
         }
 

@@ -62,6 +62,56 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
         }
         fs.renameSync(tempHtmlPath, finalHtmlPath);
 
+        // ⚡ [MongoDB 이중 쓰기 (Dual Write)] ⚡
+        try {
+            const { MongoDatabase } = require('../database/mongo');
+            const dbInstance = MongoDatabase.getInstance();
+            const rawHtml = fs.readFileSync(finalHtmlPath, 'utf-8');
+
+            // 1. Bronze Layer (Raw) 저장
+            const bronzeCompanies = await dbInstance.getCollection('bronze.companies');
+            await bronzeCompanies.updateOne(
+                { companyId: id },
+                { 
+                    $set: { 
+                        companyId: id,
+                        rawHtml: rawHtml,
+                        collectedAt: new Date()
+                    } 
+                },
+                { upsert: true }
+            );
+
+            // 2. Silver Layer (Cleansed) 저장
+            const silverCompanies = await dbInstance.getCollection('silver.companies');
+            await silverCompanies.updateOne(
+                { companyId: id },
+                {
+                    $set: {
+                        companyId: id,
+                        companyName: meta.companyName,
+                        tagline: meta.tagline || '',
+                        website: meta.website || '',
+                        industry: meta.industry || '정보 없음',
+                        companySize: meta.companySize || '정보 없음',
+                        employeeCount: meta.employeeCount || '정보 없음',
+                        hqCountry: countryDir,
+                        hqState: meta.hqGeographicArea || '',
+                        hqCity: meta.hqCity || '',
+                        founded: meta.founded || '정보 없음',
+                        specialties: meta.specialties || '',
+                        description: meta.hqDescription || '',
+                        rawContent: meta.rawContent,
+                        updatedAt: new Date()
+                    }
+                },
+                { upsert: true }
+            );
+            console.log(`📡 [MongoDB Dual Write] Successfully saved Company ID ${id} to bronze.companies and silver.companies.`);
+        } catch (dbErr: any) {
+            console.warn(`⚠️ [MongoDB Dual Write Warning] Failed to write Company ${id} to DB (falling back to disk only): ${dbErr.message}`);
+        }
+
         return {
             mdPath: finalMdPath,
             htmlPath: finalHtmlPath,

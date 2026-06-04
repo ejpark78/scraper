@@ -57,6 +57,53 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
         }
         fs.renameSync(tempHtmlPath, finalHtmlPath);
 
+        // ⚡ [MongoDB 이중 쓰기 (Dual Write)] ⚡
+        try {
+            const { MongoDatabase } = require('../database/mongo');
+            const dbInstance = MongoDatabase.getInstance();
+            const rawHtml = fs.readFileSync(finalHtmlPath, 'utf-8');
+
+            // 1. Bronze Layer (Raw) 저장
+            const bronzeJobs = await dbInstance.getCollection('bronze.jobs');
+            await bronzeJobs.updateOne(
+                { jobId: id },
+                { 
+                    $set: { 
+                        jobId: id,
+                        rawHtml: rawHtml,
+                        collectedAt: new Date()
+                    } 
+                },
+                { upsert: true }
+            );
+
+            // 2. Silver Layer (Cleansed) 저장
+            const silverJobs = await dbInstance.getCollection('silver.jobs');
+            const stdLoc = UrlUtils.standardizeLocation(meta.rawLocation);
+            await silverJobs.updateOne(
+                { jobId: id },
+                {
+                    $set: {
+                        jobId: id,
+                        title: meta.jobTitle,
+                        companyName: meta.company,
+                        // jobUrl에 등록할 수 있는 회사 ID 추출 시도
+                        companyId: meta.company ? NamingUtils.generateSafeFileName(meta.company, '') : null, 
+                        description: meta.rawContent,
+                        location: meta.rawLocation,
+                        geo: stdLoc || 'Unknown',
+                        workStyle: '정보 없음', // 상세 페이지 내에서 파싱하는 추가적인 정보가 생기면 매핑 가능
+                        url: `https://www.linkedin.com/jobs/view/${id}`,
+                        updatedAt: new Date()
+                    }
+                },
+                { upsert: true }
+            );
+            console.log(`📡 [MongoDB Dual Write] Successfully saved Job ID ${id} to bronze.jobs and silver.jobs.`);
+        } catch (dbErr: any) {
+            console.warn(`⚠️ [MongoDB Dual Write Warning] Failed to write Job ${id} to DB (falling back to disk only): ${dbErr.message}`);
+        }
+
         // 3) 신규 수집본이므로 recent 복사본 저장
         fs.mkdirSync(this.recentHtmlDir, { recursive: true });
         fs.mkdirSync(this.recentMdDir, { recursive: true });
