@@ -67,6 +67,8 @@ export class MongoDatabase {
             // 🥉 Bronze Layer Indices
             await this.db.collection('bronze.jobs').createIndex({ jobId: 1 }, { unique: true });
             await this.db.collection('bronze.companies').createIndex({ companyId: 1 }, { unique: true });
+            await this.db.collection('bronze.lists').createIndex({ listId: 1 }, { unique: true });
+            await this.db.collection('bronze.lists').createIndex({ collectedAt: 1 });
 
             // 🥈 Silver Layer Indices
             await this.db.collection('silver.jobs').createIndex({ jobId: 1 }, { unique: true });

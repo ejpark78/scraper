@@ -1,6 +1,6 @@
 # ⚙️ LinkedIn Job Scraper Makefile
 
-.PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm init-cron export-cron
+.PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm init-cron export-cron check-worker
 
 # URLS 변수 기본값 설정
 URLS ?= data/jobs/lists/urls.json
@@ -46,6 +46,7 @@ help:
 	@echo "  make html2md        - [Docker] HTML 캐시와 MD 간 동기화 및 메타데이터 일괄 복원"
 	@echo "  make migrate        - [Docker] 수집 데이터 표준 국가명 폴더로 일괄 마이그레이션"
 	@echo "  make test           - [Docker] URL 생성기 단위 테스트 실행"
+	@echo "  make check-worker   - [Host] Redis의 다운로드 큐 상태와 워커 컨테이너 상태를 확인합니다."
 	@echo "  make clean          - [Host] 임시 파일 및 빈 폴더 정리"
 	@echo "  make export-cron    - [Host] 현재 Cronicle 이벤트를 docker/cronicle/default.json으로 내보냅니다."
 	@echo "  make init-cron      - [Host] 백업된 Cronicle 이벤트를 새로 기동된 컨테이너에 가져옵니다."
@@ -121,7 +122,7 @@ test:
 	npx ts-node tests/url_manager.test.ts
 
 push-urls:
-	REDIS_URL=redis://redis:6379 npx ts-node src/push_urls.ts $(URLS)
+	REDIS_URL=redis://redis:6379 npx ts-node src/push_urls.ts
 
 
 else
@@ -151,7 +152,7 @@ test:
 	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make test
 
 push-urls:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true -e REDIS_URL=redis://redis:6379 clipper make push-urls URLS=$(URLS)
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true -e REDIS_URL=redis://redis:6379 clipper make push-urls
 
 
 endif
@@ -175,3 +176,12 @@ purge:
 	@read -p "정말 진행하시겠습니까? [y/N]: " confirm && [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ] || (echo "❌ 중단되었습니다."; exit 1)
 	rm -rf data/jobs
 	@echo "✨ data/jobs 디렉토리가 완전히 초기화되었습니다."
+
+check-worker:
+	@echo "🔍 Checking Redis queue status..."
+	@docker exec linkedin-redis-1 redis-cli LLEN jobs_queue 2>/dev/null | awk '{print "📥 jobs_queue (download queue) length: " $$1}' || echo "❌ jobs_queue: Unable to connect to Redis"
+	@docker exec linkedin-redis-1 redis-cli SCARD completed_jobs 2>/dev/null | awk '{print "✅ completed_jobs (completed list) count: " $$1}' || echo "❌ completed_jobs: Unable to connect to Redis"
+	@echo ""
+	@echo "📋 Active worker containers:"
+	@docker ps --filter "name=linkedin-clipper-worker" --format "table {{.Names}}\t{{.Status}}"
+

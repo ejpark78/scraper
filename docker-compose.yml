@@ -37,6 +37,8 @@ services:
       context: docker/kasm
       dockerfile: Dockerfile
     image: linkedin/kasm:latest
+    profiles:
+      - tools    
     environment:
       - VNC_PW=password2026
       - VNCOPTIONS=-disableBasicAuth
@@ -128,6 +130,8 @@ services:
       - ME_CONFIG_MONGODB_PORT=27017
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
     restart: unless-stopped
+    profiles:
+      - tools       
     depends_on:
       mongodb:
         condition: service_healthy

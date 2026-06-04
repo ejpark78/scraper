@@ -268,17 +268,24 @@ export class LinkedInUrlManager implements IUrlManager {
             console.warn(`⚠️ country.json 로드 실패: ${e.message}`);
         }
 
-        // 2-A. 🔍 lists/ 폴더 하위의 검색 결과 목록 HTML에서 직접 수집된 공고 ID 및 상세 메타 추출
-        if (fs.existsSync(listsDir)) {
-            const listFiles = IOUtils.getAllFiles(listsDir, '.html');
-            let fileCount = 0;
+        // 2-A. 🔍 MongoDB bronze.lists 컬렉션에서 검색 결과 목록 HTML을 가져와 직접 수집된 공고 ID 및 상세 메타 추출
+        try {
+            const { MongoDatabase } = require('../database/mongo');
+            const mongo = MongoDatabase.getInstance();
+            const bronzeListsColl = await mongo.getCollection('bronze.lists');
+            const lists = await bronzeListsColl.find({}).toArray();
+            if (lists.length === 0) {
+                throw new Error('No lists found in DB.');
+            }
+            
+            let listCount = 0;
             const cheerio = require('cheerio');
             const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
 
-            for (const file of listFiles) {
-                fileCount++;
+            for (const doc of lists) {
+                listCount++;
                 try {
-                    const content = fs.readFileSync(file, 'utf-8');
+                    const content = doc.rawHtml || '';
                     const $ = cheerio.load(content);
 
                     $('div.job-card-container').each((_: any, el: any) => {
@@ -359,9 +366,108 @@ export class LinkedInUrlManager implements IUrlManager {
                         }
                     }
                 } catch (err: any) {
-                    console.error(`⚠️ 파일 읽기 오류 [${file}]: ${err.message}`);
+                    console.error(`⚠️ DB 리스트 파싱 오류 [ID: ${doc.listId}]: ${err.message}`);
                 }
-                if (fileCount % 100 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+                if (listCount % 100 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+            }
+            console.log(`🔌 [MongoDB] bronze.lists에서 총 ${FormatUtils.formatThousand(listCount)}개의 검색결과 문서를 분석 완료했습니다.`);
+        } catch (dbErr: any) {
+            console.warn(`⚠️ [MongoDB] bronze.lists 분석 실패: ${dbErr.message}. 로컬 lists 폴더로 폴백합니다.`);
+
+            if (fs.existsSync(listsDir)) {
+                const listFiles = IOUtils.getAllFiles(listsDir, '.html');
+                let fileCount = 0;
+                const cheerio = require('cheerio');
+                const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
+
+                for (const file of listFiles) {
+                    fileCount++;
+                    try {
+                        const content = fs.readFileSync(file, 'utf-8');
+                        const $ = cheerio.load(content);
+
+                        $('div.job-card-container').each((_: any, el: any) => {
+                            let jobId = $(el).attr('data-job-id');
+                            const titleLink = $(el).find('a.job-card-list__title--link, a.job-card-container__link').first();
+                            const href = titleLink.attr('href') || '';
+                            
+                            if (!jobId || !/^\d+$/.test(jobId)) {
+                                const m = href.match(/currentJobId=(\d+)/) || href.match(/\/view\/(\d+)/);
+                                if (m) {
+                                    jobId = m[1];
+                                }
+                            }
+
+                            if (!jobId || !/^\d+$/.test(jobId)) {
+                                return;
+                            }
+
+                            const title = titleLink.text().replace(/\s+/g, ' ').trim();
+                            const company = $(el).find('.artdeco-entity-lockup__subtitle, .job-card-container__company-name').text().replace(/\s+/g, ' ').trim();
+                            
+                            let location = '';
+                            let workStyle = '';
+                            
+                            $(el).find('.job-card-container__metadata-wrapper li, span').each((__: any, item: any) => {
+                                const txt = $(item).text().replace(/\s+/g, ' ').trim();
+                                if (txt && !txt.includes('logo') && txt.length > 2 && txt.length < 100) {
+                                    if (/\b(Hybrid|Remote|On-site|하이브리드|재택근무|상주)\b/i.test(txt)) {
+                                        workStyle = txt;
+                                    } else if (txt.includes(',') && !location) {
+                                        location = txt;
+                                    }
+                                }
+                            });
+
+                            if (!location) {
+                                const metadataText = $(el).find('.job-card-container__metadata-wrapper').text().replace(/\s+/g, ' ').trim();
+                                if (metadataText) location = metadataText;
+                            }
+
+                            const footerText = $(el).find('.job-card-list__footer-wrapper').text().replace(/\s+/g, ' ').trim();
+
+                            // 3개국 타겟 국가 필터링 적용 (South Korea, United Arab Emirates, Japan)
+                            const stdLoc = UrlUtils.standardizeLocation(location);
+                            const isTargetCountry = stdLoc === 'South Korea' || stdLoc === 'Korea' || stdLoc === 'United Arab Emirates' || stdLoc === 'Japan';
+
+                            if (isTargetCountry) {
+                                if (!directJobsMetaMap.has(jobId)) {
+                                    directJobsMetaMap.set(jobId, {
+                                        jobId,
+                                        title,
+                                        company,
+                                        location,
+                                        workStyle,
+                                        footerText,
+                                        url: `https://www.linkedin.com/jobs/view/${jobId}`,
+                                        source: 'DIRECT'
+                                    });
+                                }
+
+                                if (!cacheSet.has(jobId)) {
+                                    directJobIds.add(jobId);
+                                }
+                            }
+                        });
+
+                        // 회사 URL도 검색 결과에서 추출
+                        let compMatch;
+                        companyHrefRegex.lastIndex = 0;
+                        while ((compMatch = companyHrefRegex.exec(content)) !== null) {
+                            let url = compMatch[1].trim().split('?')[0].replace(/\/$/, '');
+                            if (url.startsWith('/company') || url.startsWith('/compay')) {
+                                url = 'https://www.linkedin.com' + url;
+                            }
+                            if (url.startsWith('http') && (url.includes('/company/') || url.includes('/compay/'))) {
+                                const companyId = UrlUtils.extractCompanyId(url);
+                                if (companyId) extractedCompanyIds.add(companyId);
+                            }
+                        }
+                    } catch (err: any) {
+                        console.error(`⚠️ 파일 읽기 오류 [${file}]: ${err.message}`);
+                    }
+                    if (fileCount % 100 === 0) await new Promise<void>(resolve => setImmediate(resolve));
+                }
             }
         }
 
@@ -415,117 +521,129 @@ export class LinkedInUrlManager implements IUrlManager {
             const bronzeColl = await mongo.getCollection('bronze.jobs');
             const cheerio = require('cheerio');
 
-            // 1) 전체 Job ID 목록만 초고속 조회 (rawHtml 제외로 메모리 점유 최소화)
-            const allJobIds = await bronzeColl.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
-            const neededJobIds: string[] = [];
+            // 1. 수집 완료 리스트 중 urls.json에 없는(누락된) 모든 ID 식별
+            const neededJobIds = Array.from(cacheSet).filter(id => !masterJobsMetaMap.has(id));
+            console.log(`🔌 [MongoDB] urls.json 누락 건수: ${FormatUtils.formatThousand(neededJobIds.length)} 개`);
 
-            allJobIds.forEach((doc: any) => {
-                const currentJobId = doc.jobId;
-                if (currentJobId && /^\d+$/.test(currentJobId)) {
-                    if (masterJobsMetaMap.has(currentJobId) && masterJobsMetaMap.get(currentJobId)?.geo) {
-                        skipCount++;
-                    } else {
-                        neededJobIds.push(currentJobId);
-                    }
-                }
-            });
-
-            console.log(`🔌 [MongoDB] 분석 대상 문서 수: ${FormatUtils.formatThousand(neededJobIds.length)} 개 (이미 분석된 ${FormatUtils.formatThousand(skipCount)}개 스킵)`);
-
-            // 2) 신규/미분석 건만 1,000개 단위 Chunk로 나누어 조회하여 OOM(Exit 137) 원천 방지
+            // 2. 누락된 모든 ID의 메타데이터를 silver.jobs(rawHtml 없음, 경량)에서 일괄 조회하여 masterJobsMetaMap에 적재
             if (neededJobIds.length > 0) {
-                const chunkSize = 1000;
+                console.log(`🔌 [MongoDB] ${FormatUtils.formatThousand(neededJobIds.length)}개 공고 메타데이터를 silver.jobs에서 읽는 중...`);
+                const silverColl = await mongo.getCollection('silver.jobs');
+                const chunkSize = 2000;
                 for (let i = 0; i < neededJobIds.length; i += chunkSize) {
                     const chunk = neededJobIds.slice(i, i + chunkSize);
-                    const docs = await bronzeColl.find({ jobId: { $in: chunk } }).toArray();
+                    const docs = await silverColl.find({ jobId: { $in: chunk } }, {
+                        projection: { jobId: 1, title: 1, companyName: 1, location: 1, geo: 1, _id: 0 }
+                    }).toArray();
 
-                    for (const doc of docs) {
-                        dbParsedCount++;
-                        const currentJobId = doc.jobId;
-                        const content = doc.rawHtml || '';
+                    docs.forEach((doc: any) => {
+                        masterJobsMetaMap.set(doc.jobId, {
+                            jobId: doc.jobId,
+                            title: doc.title || '정보 없음',
+                            company: doc.companyName || '정보 없음',
+                            location: doc.location || '정보 없음',
+                            workStyle: '정보 없음',
+                            url: `https://www.linkedin.com/jobs/view/${doc.jobId}`,
+                            source: 'related',
+                            geo: doc.geo || 'Others'
+                        });
+                        skipCount++;
+                    });
+                }
+            }
 
-                        try {
-                            const $ = cheerio.load(content);
+            // 3. 최근 24시간 내에 수집된 신규 공고만 bronze.jobs에서 rawHtml을 조회해 추천 공고 추출 (DB/네트워크 부하 극단적 절감)
+            const recentLimitDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentDocs = await bronzeColl.find({
+                collectedAt: { $gte: recentLimitDate }
+            }, {
+                projection: { jobId: 1, rawHtml: 1, _id: 0 }
+            }).toArray();
 
-                            $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
-                                const href = $(el).attr('href') || '';
-                                const jobId = UrlUtils.extractJobId(href);
-                                
-                                if (!jobId || !/^\d+$/.test(jobId)) return;
+            console.log(`🔌 [MongoDB] 최근 24시간 내 수집된 ${recentDocs.length}개 공고에서 추천 리스트 추출 중...`);
 
-                                const isDirect = directJobsMetaMap.has(jobId);
+            for (const doc of recentDocs) {
+                dbParsedCount++;
+                const currentJobId = doc.jobId;
+                const content = doc.rawHtml || '';
 
-                                // 아직 다운로드되지 않았고 검색 결과에도 없는 경우 추천 대기열에 추가
-                                if (!cacheSet.has(jobId) && !directJobsMetaMap.has(jobId)) {
-                                    recommendedJobIds.add(jobId);
+                try {
+                    const $ = cheerio.load(content);
+
+                    $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
+                        const href = $(el).attr('href') || '';
+                        const jobId = UrlUtils.extractJobId(href);
+                        
+                        if (!jobId || !/^\d+$/.test(jobId)) return;
+
+                        const isDirect = directJobsMetaMap.has(jobId);
+
+                        // 아직 다운로드되지 않았고 검색 결과에도 없는 경우 추천 대기열에 추가
+                        if (!cacheSet.has(jobId) && !directJobsMetaMap.has(jobId)) {
+                            recommendedJobIds.add(jobId);
+                        }
+
+                        // master JSON 메타 빌드 (다운로드 완료 기록이 없는 경우에만 추출하여 저장)
+                        if (!masterJobsMetaMap.has(jobId)) {
+                            const title = $(el).text().replace(/\s+/g, ' ').trim();
+                            if (!title || title.length < 2) return;
+
+                            let company = '';
+                            let location = '';
+
+                            const parent = $(el).closest('li, div, section');
+                            if (parent.length > 0) {
+                                company = parent.find('[class*="company"], [class*="subtitle"]').first().text().replace(/\s+/g, ' ').trim();
+                                const locText = parent.find('[class*="location"], [class*="metadata"]').first().text().replace(/\s+/g, ' ').trim();
+                                if (locText) {
+                                    location = locText.split(/\d+\s+days?\s+ago|\d+\s+weeks?\s+ago/i)[0].trim();
                                 }
+                            }
 
-                                // master JSON 메타 빌드 (다운로드 완료 기록이 없는 경우에만 추출하여 저장)
-                                if (!masterJobsMetaMap.has(jobId)) {
-                                    const title = $(el).text().replace(/\s+/g, ' ').trim();
-                                    if (!title || title.length < 2) return;
-
-                                    let company = '';
-                                    let location = '';
-
-                                    const parent = $(el).closest('li, div, section');
-                                    if (parent.length > 0) {
-                                        company = parent.find('[class*="company"], [class*="subtitle"]').first().text().replace(/\s+/g, ' ').trim();
-                                        const locText = parent.find('[class*="location"], [class*="metadata"]').first().text().replace(/\s+/g, ' ').trim();
-                                        if (locText) {
-                                            location = locText.split(/\d+\s+days?\s+ago|\d+\s+weeks?\s+ago/i)[0].trim();
-                                        }
+                            // country.json 기준 맵핑
+                            const stdLoc = UrlUtils.standardizeLocation(location);
+                            let matchedCountry = 'Others';
+                            for (const country of Object.keys(localCountryMapping)) {
+                                if (stdLoc.toLowerCase() === country.toLowerCase()) {
+                                    matchedCountry = country;
+                                    break;
+                                }
+                            }
+                            if (matchedCountry === 'Others') {
+                                for (const [country, aliases] of Object.entries(localCountryMapping)) {
+                                    if (country === 'South Korea' && /[가-힣]/.test(location)) {
+                                        matchedCountry = country;
+                                        break;
                                     }
-
-                                    // country.json 기준 맵핑
-                                    const stdLoc = UrlUtils.standardizeLocation(location);
-                                    let matchedCountry = 'Others';
-                                    for (const country of Object.keys(localCountryMapping)) {
-                                        if (stdLoc.toLowerCase() === country.toLowerCase()) {
+                                    const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+                                    if (escapedAliases.length > 0) {
+                                        const pattern = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
+                                        if (pattern.test(location)) {
                                             matchedCountry = country;
                                             break;
                                         }
                                     }
-                                    if (matchedCountry === 'Others') {
-                                        for (const [country, aliases] of Object.entries(localCountryMapping)) {
-                                            if (country === 'South Korea' && /[가-힣]/.test(location)) {
-                                                matchedCountry = country;
-                                                break;
-                                            }
-                                            const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-                                            if (escapedAliases.length > 0) {
-                                                const pattern = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
-                                                if (pattern.test(location)) {
-                                                    matchedCountry = country;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    masterJobsMetaMap.set(jobId, {
-                                        jobId,
-                                        title,
-                                        company: company || '정보 없음',
-                                        location: location || '정보 없음',
-                                        workStyle: '정보 없음',
-                                        url: `https://www.linkedin.com/jobs/view/${jobId}`,
-                                        source: isDirect ? 'DIRECT' : 'related',
-                                        geo: matchedCountry
-                                    });
                                 }
+                            }
+
+                            masterJobsMetaMap.set(jobId, {
+                                jobId,
+                                title,
+                                company: company || '정보 없음',
+                                location: location || '정보 없음',
+                                workStyle: '정보 없음',
+                                url: `https://www.linkedin.com/jobs/view/${jobId}`,
+                                source: isDirect ? 'DIRECT' : 'related',
+                                geo: matchedCountry
                             });
-                        } catch (err: any) {
-                            console.error(`⚠️ DB rawHtml 파싱 오류 [Job ID: ${currentJobId}]: ${err.message}`);
                         }
-                    }
-                    
-                    // 메모리 해제 및 동기화 루프 대기 시간 확보
-                    await new Promise<void>(resolve => setImmediate(resolve));
+                    });
+                } catch (err: any) {
+                    console.error(`⚠️ DB rawHtml 파싱 오류 [Job ID: ${currentJobId}]: ${err.message}`);
                 }
             }
 
-            console.log(`🔌 [MongoDB] bronze.jobs에서 총 ${FormatUtils.formatThousand(dbParsedCount)}개의 신규 문서를 분석 완료했습니다.`);
+            console.log(`🔌 [MongoDB] bronze.jobs에서 총 ${FormatUtils.formatThousand(dbParsedCount)}개의 문서를 분석 완료했습니다.`);
             if (skipCount > 0) {
                 console.log(`⚡ 분석 완료된 상세 HTML 문서 ${FormatUtils.formatThousand(skipCount)}개는 분석을 건너뛰었습니다 (캐시 적용).`);
             }
@@ -706,24 +824,59 @@ export class LinkedInUrlManager implements IUrlManager {
             fs.mkdirSync(parentDir, { recursive: true });
         }
 
-        // 3-A. 🛡️ 마스터 공고 상세 메타데이터 대상 urls.json 및 history 스냅샷 에 저장 (구분 없음)
-        const jsonUrlsPath = path.join(parentDir, 'urls.json');
-        const masterList = Array.from(masterJobsMetaMap.values());
-        const jsonContent = JSON.stringify(masterList, null, 2);
-        fs.writeFileSync(jsonUrlsPath, jsonContent, 'utf-8');
-        console.log(`✅ 전체 채용공고(추천 포함) 상세 정보를 ${jsonUrlsPath}에 저장했습니다. 총 ${FormatUtils.formatThousand(masterList.length)} 개.`);
-
-        // 3안: 날짜/시간별 스냅샷 백업 저장
-        const historyDir = path.join(parentDir, 'urls');
-        if (!fs.existsSync(historyDir)) {
-            fs.mkdirSync(historyDir, { recursive: true });
-        }
+        // 3-A. 🛡️ MongoDB에 마스터 공고 상세 메타데이터 및 스냅샷 히스토리 적재 (기존 urls.json 및 파일 스냅샷 대체)
         const d = new Date();
         const pad = (n: number) => String(n).padStart(2, '0');
         const timestamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-        const snapshotPath = path.join(historyDir, `${timestamp}.json`);
-        fs.writeFileSync(snapshotPath, jsonContent, 'utf-8');
-        console.log(`💾 urls.json 스냅샷 백업 저장 완료 ➡️ ${snapshotPath}`);
+
+        try {
+            const { MongoDatabase } = require('../database/mongo');
+            const mongo = MongoDatabase.getInstance();
+            const jobUrlsColl = await mongo.getCollection('bronze.job_urls');
+            
+            console.log(`📥 [MongoDB] bronze.job_urls에 ${FormatUtils.formatThousand(masterList.length)}개 공고 메타데이터 및 스냅샷(${timestamp}) 저장 중...`);
+            
+            const jobOps = masterList.map((job: any) => {
+                const isCompleted = cacheSet.has(job.jobId);
+                return {
+                    updateOne: {
+                        filter: { jobId: job.jobId },
+                        update: {
+                            $set: {
+                                jobId: job.jobId,
+                                url: job.url,
+                                title: job.title,
+                                company: job.company,
+                                location: job.location,
+                                geo: job.geo,
+                                source: job.source,
+                                status: isCompleted ? 'completed' : 'new',
+                                updatedAt: new Date()
+                            },
+                            $setOnInsert: {
+                                pushedToRedis: isCompleted ? true : false
+                            },
+                            $addToSet: {
+                                snapshots: timestamp
+                            }
+                        },
+                        upsert: true
+                    }
+                };
+            });
+
+            if (jobOps.length > 0) {
+                // 1000개 단위 청크로 분할하여 벌크 쓰기 진행 (메모리 및 네트워크 세션 안정성용)
+                const chunkSize = 1000;
+                for (let i = 0; i < jobOps.length; i += chunkSize) {
+                    const chunk = jobOps.slice(i, i + chunkSize);
+                    await jobUrlsColl.bulkWrite(chunk);
+                }
+            }
+            console.log(`✅ [MongoDB] bronze.job_urls 업데이트 완료.`);
+        } catch (dbErr: any) {
+            console.error(`❌ [MongoDB] bronze.job_urls 저장 실패: ${dbErr.message}`);
+        }
 
         // 3-B. 📊 실시간 수집 현황 통계 대시보드 출력
         let totalCount = masterList.length;
@@ -747,7 +900,7 @@ export class LinkedInUrlManager implements IUrlManager {
         const targetPending = totalPendingIds.size;
 
         console.log('\n==================================================');
-        console.log('📊 [수집 현황 통계 대시보드]');
+        console.log('📊 [수집 현황 통계 대시보]');
         console.log('==================================================');
         console.log(`- 전체 수집된 마스터 공고 수량: ${FormatUtils.formatThousand(totalCount)} 개`);
         console.log(`- 타겟 3개국 (${targetLocations.join(', ')}) 총 공고 수량: ${FormatUtils.formatThousand(targetTotal)} 개`);
@@ -757,85 +910,47 @@ export class LinkedInUrlManager implements IUrlManager {
         console.log(`  └─ 추천/유사 공고: ${FormatUtils.formatThousand(filteredRecommendedJobIds.size)} 개`);
         console.log('==================================================\n');
 
-        // 4. 🏢 회사 관련 URL을 정규화 및 중복 제거하여 compay/lists/urls.txt 에 저장
-        const compayUrlsPath = path.join(__dirname, '..', '..', 'data', 'compay', 'lists', 'urls.txt');
-        fs.mkdirSync(path.dirname(compayUrlsPath), { recursive: true });
-        const companyWriter = fs.createWriteStream(compayUrlsPath, 'utf-8');
-        let companyUrlsCount = 0;
-
-        extractedCompanyIds.forEach(companyId => {
-            companyWriter.write(`https://www.linkedin.com/company/${companyId}\n`);
-            companyUrlsCount++;
-        });
-
-        companyWriter.end();
-
-        await new Promise<void>((resolve, reject) => {
-            companyWriter.on('finish', () => resolve());
-            companyWriter.on('error', (err) => reject(err));
-        });
-
-        console.log(`✅ 총 ${FormatUtils.formatThousand(companyUrlsCount)} 개의 회사 URL을 정규화 및 중복 제거하여 ${compayUrlsPath}에 저장했습니다.`);
-
-        // 5. 🐳 Redis 연동: 기존 대기열을 비우고 신규 생성된 URL 대기열 주입 (필터링된 순수 검색 결과만 전송)
-        const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+        // 4. 🏢 회사 관련 URL을 MongoDB bronze.company_urls 에 저장 (기존 urls.txt 대체)
         try {
-            console.log(`📡 [Redis Queue] Connecting to Redis at ${redisUrl} to sync queues...`);
-            const Redis = require('ioredis');
-            const redis = new Redis(redisUrl, { maxRetriesPerRequest: 1 });
+            const { MongoDatabase } = require('../database/mongo');
+            const mongo = MongoDatabase.getInstance();
+            const companyUrlsColl = await mongo.getCollection('bronze.company_urls');
             
-            // 연결 제한 시간 설정
-            await new Promise<void>((resolve, reject) => {
-                const timer = setTimeout(() => {
-                    redis.disconnect();
-                    reject(new Error('Connection timeout'));
-                }, 2000);
-                redis.once('connect', () => {
-                    clearTimeout(timer);
-                    resolve();
-                });
+            console.log(`📥 [MongoDB] bronze.company_urls에 ${FormatUtils.formatThousand(extractedCompanyIds.size)}개 회사 정보 저장 중...`);
+            
+            const companyOps = Array.from(extractedCompanyIds).map((companyId: any) => {
+                return {
+                    updateOne: {
+                        filter: { companyId: companyId },
+                        update: {
+                            $set: {
+                                companyId: companyId,
+                                url: `https://www.linkedin.com/company/${companyId}`,
+                                status: 'new',
+                                updatedAt: new Date()
+                            },
+                            $setOnInsert: {
+                                pushedToRedis: false
+                            },
+                            $addToSet: {
+                                snapshots: timestamp
+                            }
+                        },
+                        upsert: true
+                    }
+                };
             });
 
-            console.log('🧹 [Redis Queue] Clearing existing jobs_queue and company_queue...');
-            await redis.del('jobs_queue', 'company_queue');
-
-            if (cacheSet.size > 0) {
-                console.log(`📥 [Redis Cache] Synchronizing ${cacheSet.size} downloaded job IDs to Redis set 'completed_jobs'...`);
-                const chunkArray = Array.from(cacheSet);
+            if (companyOps.length > 0) {
                 const chunkSize = 1000;
-                for (let i = 0; i < chunkArray.length; i += chunkSize) {
-                    const chunk = chunkArray.slice(i, i + chunkSize);
-                    await redis.sadd('completed_jobs', ...chunk);
+                for (let i = 0; i < companyOps.length; i += chunkSize) {
+                    const chunk = companyOps.slice(i, i + chunkSize);
+                    await companyUrlsColl.bulkWrite(chunk);
                 }
             }
-
-            if (totalPendingIds.size > 0) {
-                const jobUrls = Array.from(totalPendingIds).map(id => `https://www.linkedin.com/jobs/view/${id}`);
-                console.log(`📥 [Redis Queue] Pushing ${totalPendingIds.size} job URLs to 'jobs_queue'...`);
-                
-                // Chunk pushing to prevent Redis request limit errors
-                const chunkSize = 1000;
-                for (let i = 0; i < jobUrls.length; i += chunkSize) {
-                    const chunk = jobUrls.slice(i, i + chunkSize);
-                    await redis.rpush('jobs_queue', ...chunk);
-                }
-            }
-
-            if (companyUrlsCount > 0) {
-                const companyUrls = Array.from(extractedCompanyIds).map(id => `https://www.linkedin.com/company/${id}`);
-                console.log(`📥 [Redis Queue] Pushing ${companyUrlsCount} company URLs to 'company_queue'...`);
-                
-                const chunkSize = 1000;
-                for (let i = 0; i < companyUrls.length; i += chunkSize) {
-                    const chunk = companyUrls.slice(i, i + chunkSize);
-                    await redis.rpush('company_queue', ...chunk);
-                }
-            }
-
-            console.log('✅ [Redis Queue] Successfully synchronized all queues in Redis.');
-            await redis.quit();
-        } catch (redisErr: any) {
-            console.warn(`⚠️ [Redis Queue Warning] Redis 연결에 실패하여 대기열 동기화를 건너뜁니다: ${redisErr.message}`);
+            console.log(`✅ [MongoDB] bronze.company_urls 업데이트 완료.`);
+        } catch (dbErr: any) {
+            console.error(`❌ [MongoDB] bronze.company_urls 저장 실패: ${dbErr.message}`);
         }
 
         // MongoDB 연결 종료
