@@ -42,8 +42,11 @@ export class DateUtils {
         let year = baseDate.getFullYear();
         let month = String(baseDate.getMonth() + 1).padStart(2, '0');
         let day = String(baseDate.getDate()).padStart(2, '0');
+        let hour = String(baseDate.getHours()).padStart(2, '0');
+        let minute = String(baseDate.getMinutes()).padStart(2, '0');
+        let second = String(baseDate.getSeconds()).padStart(2, '0');
         
-        return `${year}-${month}-${day}`;
+        return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
     }
 
     /**

@@ -393,6 +393,36 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
             }
         }
 
+        // country.json 기준 표준 국가명 및 geo 분류 설정
+        let country = 'Others';
+        let geo = 'Others';
+        const stdLoc = UrlUtils.standardizeLocation(location);
+        
+        try {
+            const countryMappingPath = path.join(__dirname, '..', '..', 'config', 'country.json');
+            if (fs.existsSync(countryMappingPath)) {
+                const mapping = JSON.parse(fs.readFileSync(countryMappingPath, 'utf-8'));
+                for (const standardCountryName of Object.keys(mapping)) {
+                    if (stdLoc.toLowerCase() === standardCountryName.toLowerCase()) {
+                        country = standardCountryName;
+                        geo = standardCountryName;
+                        break;
+                    }
+                }
+                if (country === 'Others') {
+                    if (stdLoc === 'Korea') {
+                        country = 'South Korea';
+                        geo = 'South Korea';
+                    }
+                }
+            }
+        } catch (e) {}
+
+        if (country === 'Others') {
+            country = location !== '정보 없음' ? location : 'Others';
+            geo = 'Others';
+        }
+
         const markdownOutput = `---
 job_id: "${jobId}"
 company_id: "${companyId}"
@@ -401,6 +431,8 @@ title_id: "${titleId}"
 job_title: "${jobTitle || '정보 없음'}"
 company_name: "${company || '정보 없음'}"
 location: "${location || '정보 없음'}"
+country: "${country}"
+geo: "${geo}"
 posted_date: "${postedDate}"
 ---
 
@@ -410,6 +442,8 @@ posted_date: "${postedDate}"
 * **공고 제목 (Job Title):** ${jobTitle || '정보 없음'}
 * **회사명 (Company):** ${company || '정보 없음'}
 * **근무 위치 (Location):** ${location || '정보 없음'}
+* **국가 (Country):** ${country}
+* **지리 구분 (Geo):** ${geo}
 * **근무 형태 (Workplace Type):** ${workplaceType}
 * **고용 형태 (Job Type):** ${jobType || '정보 없음'}
 * **지원 방식 (Apply Type):** ${applyType}
