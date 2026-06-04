@@ -31,8 +31,8 @@ services:
 
   kasm:
     build:
-      context: .
-      dockerfile: docker/kasm/Dockerfile
+      context: docker/kasm
+      dockerfile: Dockerfile
     image: linkedin-kasm:latest
     environment:
       - VNC_PW=password2026
@@ -62,7 +62,7 @@ services:
       dockerfile: docker/clipper/Dockerfile
     image: linkedin-clipper:latest
     profiles:
-      - tools
+      - runtime
     environment:
       - AUTH=${AUTH:-}
       - PARALLEL=${PARALLEL:-}
@@ -73,12 +73,12 @@ services:
     volumes:
       - ${HOST_PROJECT_PATH:-.}/config:/app/config
       - ${HOST_PROJECT_PATH:-.}/data:/app/data
-      - ${HOST_PROJECT_PATH:-.}/src:/app/src
-      - ${HOST_PROJECT_PATH:-.}/Makefile:/app/Makefile
 
   redis:
     image: redis:alpine
     restart: unless-stopped
+    volumes:
+      - ./data/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -116,7 +116,6 @@ services:
     volumes:
       - ./config:/app/config
       - ./data:/app/data
-      - ./src:/app/src
     depends_on:
       redis:
         condition: service_healthy
@@ -129,7 +128,10 @@ services:
       replicas: 5
 
   cronicle:
-    image: bluet/cronicle-docker:0.9.99
+    build:
+      context: docker/cronicle
+      dockerfile: Dockerfile
+    image: linkedin-cronicle:latest
     hostname: localhost
     restart: unless-stopped
     volumes:

@@ -39,7 +39,7 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
     && git clone https://github.com/Aloxaf/fzf-tab /home/kasm-user/.oh-my-zsh/custom/plugins/fzf-tab
 
 # 호스트 개발자 편의 설정 파일 복사 (.zshrc)
-COPY --chown=kasm-user:kasm-user docker/kasm/dotfiles/.zshrc /home/kasm-user/.zshrc
+COPY --chown=kasm-user:kasm-user dotfiles/.zshrc /home/kasm-user/.zshrc
 
 # 작업 디렉토리 설정 (Kasm noble의 기본 사용자명은 kasm-user 입니다)
 WORKDIR /home/kasm-user/linkedin
