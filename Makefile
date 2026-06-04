@@ -2,12 +2,6 @@
 
 .PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm init-cron export-cron check-worker
 
-# URLS 변수 기본값 설정
-URLS ?= data/jobs/lists/urls.json
-ifeq ($(URLS),)
-  URLS := data/jobs/lists/urls.json
-endif
-
 # LISTS 변수 기본값 설정
 LISTS ?= config/config.json
 ifeq ($(LISTS),)
@@ -26,10 +20,16 @@ ifeq ($(AUTH),)
   AUTH := true
 endif
 
-# SLEEP_TIME 기본값
-SLEEP_TIME ?= 3
-ifeq ($(SLEEP_TIME),)
-  SLEEP_TIME := 3
+# SLACK_TIME 기본값
+SLACK_TIME ?= 3
+ifeq ($(SLACK_TIME),)
+  SLACK_TIME := 3
+endif
+
+# CHUNK_SIZE 기본값
+CHUNK_SIZE ?= 100
+ifeq ($(CHUNK_SIZE),)
+  CHUNK_SIZE := 100
 endif
 
 # 컨테이너 실행 판별 플래그 (호스트 vs 컨테이너)
@@ -97,7 +97,7 @@ job-list:
 		echo "❌ 에러: 수집 대상 설정 파일이 존재하지 않습니다: $(LISTS)"; \
 		exit 1; \
 	fi
-	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) SLEEP_TIME=$(SLEEP_TIME) npx ts-node src/crawler.ts list $(LISTS)
+	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) SLACK_TIME=$(SLACK_TIME) npx ts-node src/crawler.ts list $(LISTS)
 
 list: job-list
 
@@ -108,13 +108,13 @@ test:
 	npx ts-node tests/url_manager.test.ts
 
 backfill:
-	npx ts-node src/jobs/backfill.ts
+	SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE) npx ts-node src/jobs/backfill.ts
 
 else
 
 # 호스트 환경에서 컨테이너 구동으로 위임하는 인터페이스 프록시
 list:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL) SLEEP_TIME=$(SLEEP_TIME)
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL) SLACK_TIME=$(SLACK_TIME)
 
 job-list: list
 
@@ -125,7 +125,7 @@ test:
 	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make test
 
 backfill:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make backfill
+	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make backfill SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE)
 
 endif
 

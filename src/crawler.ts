@@ -422,7 +422,7 @@ export class LinkedInCrawler implements ICrawler {
                 if (authFailed) break;
 
                 if (this.useLogin && parallelLimit === 1 && !isFirst) {
-                    const sleepSec = parseInt(process.env.SLEEP_TIME || '3', 10);
+                    const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
                     if (sleepSec > 0) {
                         console.log(`💤 [대기] 다음 요청까지 ${sleepSec}초 대기 중...`);
                         await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
@@ -596,7 +596,7 @@ export class LinkedInCrawler implements ICrawler {
 
             // 6. DB 저장 및 Redis 큐 적재
             let pushedCount = 0;
-            for (const job of foundJobs) {
+            for (const job of allDiscovered) {
                 const isCompleted = completedCache.has(job.jobId);
                 const currentDoc = await jobUrlsColl.findOne({ jobId: job.jobId });
                 const alreadyPushed = currentDoc?.pushedToRedis === true;
@@ -616,19 +616,25 @@ export class LinkedInCrawler implements ICrawler {
                             updatedAt: new Date()
                         },
                         $setOnInsert: {
-                            pushedToRedis: isCompleted ? true : false
+                            pushedToRedis: (isCompleted || !job.matchesTarget) ? true : false
                         }
                     },
                     { upsert: true }
                 );
 
-                if (!isCompleted && !alreadyPushed) {
+                if (job.matchesTarget && !isCompleted && !alreadyPushed) {
                     await redis.rpush('jobs_queue', job.url);
                     await jobUrlsColl.updateOne(
                         { jobId: job.jobId },
                         { $set: { pushedToRedis: true } }
                     );
                     pushedCount++;
+                } else if (!job.matchesTarget) {
+                    // 타겟 매칭이 아닌 경우 주입 대기를 위해 pushedToRedis: false로 확실히 보정
+                    await jobUrlsColl.updateOne(
+                        { jobId: job.jobId },
+                        { $set: { pushedToRedis: false } }
+                    );
                 }
             }
             if (foundJobs.length > 0) {

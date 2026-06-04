@@ -141,14 +141,6 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
             for (const country of Object.keys(countryMapping)) {
                 if (std.toLowerCase() === country.toLowerCase()) return country;
             }
-            for (const [country, aliases] of Object.entries(countryMapping)) {
-                if (country === 'South Korea' && /[가-힣]/.test(loc)) return country;
-                const escapedAliases = aliases.map(alias => alias.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-                if (escapedAliases.length > 0) {
-                    const pattern = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
-                    if (pattern.test(loc)) return country;
-                }
-            }
             return 'Others';
         };
 
@@ -172,9 +164,9 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
             let company = '정보 없음';
             let location = '정보 없음';
 
-            const parent = $(el).closest('li, div, section');
+            const parent = $(el).closest('li');
             if (parent.length > 0) {
-                const companyText = parent.find('[class*="company"], [class*="subtitle"]').first().text().replace(/\s+/g, ' ').trim();
+                const companyText = parent.find('[class*="company"], [class*="subtitle"], [class*="secondary"]').first().text().replace(/\s+/g, ' ').trim();
                 if (companyText) company = companyText;
                 const locText = parent.find('[class*="location"], [class*="metadata"]').first().text().replace(/\s+/g, ' ').trim();
                 if (locText) {
@@ -183,16 +175,17 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
             }
 
             const geo = parseGeo(location);
-            if (targetLocations.includes(geo)) {
-                foundJobs.push({
-                    jobId,
-                    title,
-                    company,
-                    location,
-                    geo,
-                    url: `https://www.linkedin.com/jobs/view/${jobId}`
-                });
-            }
+            const matchesTarget = targetLocations.includes(geo);
+
+            foundJobs.push({
+                jobId,
+                title,
+                company,
+                location,
+                geo,
+                matchesTarget,
+                url: `https://www.linkedin.com/jobs/view/${jobId}`
+            });
         });
 
         // 5. DB 저장 및 Redis 큐 적재
@@ -217,19 +210,25 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
                         updatedAt: new Date()
                     },
                     $setOnInsert: {
-                        pushedToRedis: isCompleted ? true : false
+                        pushedToRedis: (isCompleted || !job.matchesTarget) ? true : false
                     }
                 },
                 { upsert: true }
             );
 
-            if (!isCompleted && !alreadyPushed) {
+            if (job.matchesTarget && !isCompleted && !alreadyPushed) {
                 await redis.rpush('jobs_queue', job.url);
                 await jobUrlsColl.updateOne(
                     { jobId: job.jobId },
                     { $set: { pushedToRedis: true } }
                 );
                 pushedCount++;
+            } else if (!job.matchesTarget) {
+                // 타겟 매칭이 아닌 경우 주입 대기를 위해 pushedToRedis: false로 확실히 보정
+                await jobUrlsColl.updateOne(
+                    { jobId: job.jobId },
+                    { $set: { pushedToRedis: false } }
+                );
             }
         }
         if (pushedCount > 0) {

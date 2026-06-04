@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 async function main() {
-    console.log('🏁 [Backfill] Starting comprehensive backfill from bronze.jobs and bronze.lists...');
+    console.log('🏁 [Backfill] Starting comprehensive HTML backfill from bronze.jobs and bronze.lists...');
     const mongo = MongoDatabase.getInstance();
     const db = await mongo.connect();
     const bronzeJobs = await mongo.getCollection('bronze.jobs');
@@ -47,45 +47,66 @@ async function main() {
         return 'Others';
     };
 
-    // 3. 완료된 캐시 로드
+    // 3. 완료 및 기존 수집 캐시 로드
     const completedCache = new Set<string>();
     const completedDocs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
     completedDocs.forEach((d: any) => {
         if (d.jobId) completedCache.add(d.jobId);
     });
-    console.log(`🔌 Loaded ${completedCache.size} completed jobs as cache.`);
 
-    // 4. 이미 큐에 주입된/대기중인 URLs 목록 로드
     const pushedUrls = new Set<string>();
-    const pushedDocs = await jobUrlsColl.find({}, { projection: { jobId: 1, pushedToRedis: 1, _id: 0 } }).toArray();
+    const pushedDocs = await jobUrlsColl.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
     pushedDocs.forEach((d: any) => {
-        if (d.jobId && d.pushedToRedis) pushedUrls.add(d.jobId);
+        if (d.jobId) pushedUrls.add(d.jobId);
     });
-    console.log(`🔌 Loaded ${pushedUrls.size} already pushed job IDs from database.`);
+
+    console.log(`🔌 Loaded ${completedCache.size} completed jobs and ${pushedUrls.size} discovered job URLs from DB.`);
 
     const cheerio = require('cheerio');
     const jobOps: any[] = [];
     const redisPushBuffer: string[] = [];
+    const sleepSec = parseInt(process.env.SLACK_TIME || '1', 10);
+    const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '100', 10);
 
     // ==========================================
-    // 5-A. Scan bronze.lists (Search results list HTML)
+    // 4-A. Scan bronze.lists (Search lists) via Cursor
     // ==========================================
-    console.log('\n🔍 [Phase 1/2] Processing search lists from bronze.lists...');
-    const listCursor = bronzeLists.find({}, { projection: { listId: 1, rawHtml: 1 } });
-    let listsProcessed = 0;
-    let listJobsFound = 0;
+    console.log('\n🔍 [Phase 1/2] Scanning bronze.lists HTML for target jobs...');
+    const totalLists = await bronzeLists.countDocuments();
+    const listCursor = bronzeLists.find({}, { projection: { listId: 1, rawHtml: 1 } }).batchSize(CHUNK_SIZE);
+    let listIdx = 0;
+    const startTime = Date.now();
 
     const companyHrefRegex = /href="([^"]*\/comp(?:any|ay)\/[^"]*)"/g;
 
     while (await listCursor.hasNext()) {
         const doc = await listCursor.next();
         if (!doc) continue;
-
-        listsProcessed++;
+        
+        listIdx++;
         const htmlContent = doc.rawHtml || '';
         const $ = cheerio.load(htmlContent);
 
-        // Extract job links
+        // 경과 시간 및 예상 완료 시간(ETR) 계산
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const formatSeconds = (secs: number) => {
+            const h = Math.floor(secs / 3600);
+            const m = Math.floor((secs % 3600) / 60);
+            const s = secs % 60;
+            return `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+        };
+        const runtimeStr = formatSeconds(elapsedSeconds);
+        
+        let etrStr = '계산 중...';
+        if (listIdx > 1) {
+            const avgSpeed = elapsedSeconds / (listIdx - 1);
+            const remainingSeconds = Math.floor(avgSpeed * (totalLists - listIdx + 1));
+            etrStr = formatSeconds(remainingSeconds);
+        }
+
+        console.log(`📡 [Lists ${listIdx}/${totalLists}][${runtimeStr}/${etrStr}] Scanning List ID: ${doc.listId}...`);
+
         $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
             const href = $(el).attr('href') || '';
             const jobId = UrlUtils.extractJobId(href);
@@ -110,31 +131,34 @@ async function main() {
             }
 
             const geo = parseGeo(location);
-            if (targetLocations.includes(geo)) {
-                listJobsFound++;
-                pushedUrls.add(jobId);
+            const isTarget = targetLocations.includes(geo);
+            
+            console.log(`  [Discovered] ID: ${jobId} | Title: ${title} | Company: ${company} | Location: ${location} | Geo: ${geo} | Matches Target: ${isTarget}`);
 
-                const jobUrl = `https://www.linkedin.com/jobs/view/${jobId}`;
-                jobOps.push({
-                    updateOne: {
-                        filter: { jobId },
-                        update: {
-                            $set: {
-                                jobId,
-                                url: jobUrl,
-                                title,
-                                company,
-                                location,
-                                geo,
-                                source: 'DIRECT',
-                                status: 'new',
-                                pushedToRedis: true,
-                                updatedAt: new Date()
-                            }
-                        },
-                        upsert: true
-                    }
-                });
+            pushedUrls.add(jobId);
+            const jobUrl = `https://www.linkedin.com/jobs/view/${jobId}`;
+            jobOps.push({
+                updateOne: {
+                    filter: { jobId },
+                    update: {
+                        $set: {
+                            jobId,
+                            url: jobUrl,
+                            title,
+                            company,
+                            location,
+                            geo,
+                            source: 'DIRECT',
+                            status: 'new',
+                            pushedToRedis: isTarget,
+                            updatedAt: new Date()
+                        }
+                    },
+                    upsert: true
+                }
+            });
+
+            if (isTarget) {
                 redisPushBuffer.push(jobUrl);
             }
         });
@@ -167,27 +191,49 @@ async function main() {
             }
         }
 
-        if (listsProcessed % 100 === 0) {
-            console.log(`⏳ Lists Progress: Checked ${listsProcessed} list html files... (Found: ${listJobsFound})`);
+        // CHUNK_SIZE 단위로 DB 부하 방지를 위해 슬립 대기
+        if (listIdx % CHUNK_SIZE === 0 && sleepSec > 0 && listIdx < totalLists) {
+            console.log(`💤 [대기] DB 부하 방지를 위해 ${sleepSec}초 대기 중... (CHUNK: ${CHUNK_SIZE}개 완료)`);
+            await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
         }
     }
-    console.log(`✅ [Phase 1/2] Finished: Checked ${listsProcessed} list html files. Found ${listJobsFound} target jobs.`);
 
     // ==========================================
-    // 5-B. Scan bronze.jobs (Detail HTML)
+    // 4-B. Scan bronze.jobs (Detail pages) via Cursor
     // ==========================================
-    console.log('\n🔍 [Phase 2/2] Processing recommended jobs from bronze.jobs...');
-    const jobCursor = bronzeJobs.find({}, { projection: { jobId: 1, rawHtml: 1 } });
-    let jobsProcessed = 0;
-    let recJobsFound = 0;
+    console.log('\n🔍 [Phase 2/2] Scanning bronze.jobs HTML for recommended jobs...');
+    const totalJobs = await bronzeJobs.countDocuments();
+    const jobCursor = bronzeJobs.find({}, { projection: { jobId: 1, rawHtml: 1 } }).batchSize(CHUNK_SIZE);
+    let jobIdx = 0;
+    const jobStartTime = Date.now();
 
     while (await jobCursor.hasNext()) {
         const doc = await jobCursor.next();
         if (!doc) continue;
 
-        jobsProcessed++;
+        jobIdx++;
         const htmlContent = doc.rawHtml || '';
         const $ = cheerio.load(htmlContent);
+
+        // 경과 시간 및 예상 완료 시간(ETR) 계산
+        const elapsedSeconds = Math.floor((Date.now() - jobStartTime) / 1000);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const formatSeconds = (secs: number) => {
+            const h = Math.floor(secs / 3600);
+            const m = Math.floor((secs % 3600) / 60);
+            const s = secs % 60;
+            return `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+        };
+        const runtimeStr = formatSeconds(elapsedSeconds);
+        
+        let etrStr = '계산 중...';
+        if (jobIdx > 1) {
+            const avgSpeed = elapsedSeconds / (jobIdx - 1);
+            const remainingSeconds = Math.floor(avgSpeed * (totalJobs - jobIdx + 1));
+            etrStr = formatSeconds(remainingSeconds);
+        }
+
+        console.log(`📡 [Jobs ${jobIdx}/${totalJobs}][${runtimeStr}/${etrStr}] Scanning Job ID: ${doc.jobId}...`);
 
         $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
             const href = $(el).attr('href') || '';
@@ -213,47 +259,49 @@ async function main() {
             }
 
             const geo = parseGeo(location);
-            if (targetLocations.includes(geo)) {
-                recJobsFound++;
-                pushedUrls.add(jobId);
+            const isTarget = targetLocations.includes(geo);
 
-                const jobUrl = `https://www.linkedin.com/jobs/view/${jobId}`;
-                jobOps.push({
-                    updateOne: {
-                        filter: { jobId },
-                        update: {
-                            $set: {
-                                jobId,
-                                url: jobUrl,
-                                title,
-                                company,
-                                location,
-                                geo,
-                                source: 'related',
-                                status: 'new',
-                                pushedToRedis: true,
-                                updatedAt: new Date()
-                            }
-                        },
-                        upsert: true
-                    }
-                });
+            console.log(`  [Discovered Rec] ID: ${jobId} | Title: ${title} | Company: ${company} | Location: ${location} | Geo: ${geo} | Matches Target: ${isTarget}`);
+
+            pushedUrls.add(jobId);
+            const jobUrl = `https://www.linkedin.com/jobs/view/${jobId}`;
+            jobOps.push({
+                updateOne: {
+                    filter: { jobId },
+                    update: {
+                        $set: {
+                            jobId,
+                            url: jobUrl,
+                            title,
+                            company,
+                            location,
+                            geo,
+                            source: 'related',
+                            status: 'new',
+                            pushedToRedis: isTarget,
+                            updatedAt: new Date()
+                        }
+                    },
+                    upsert: true
+                }
+            });
+
+            if (isTarget) {
                 redisPushBuffer.push(jobUrl);
             }
         });
 
-        if (jobsProcessed % 500 === 0) {
-            console.log(`⏳ Jobs Progress: Checked ${jobsProcessed} detail html files... (Found: ${recJobsFound})`);
+        // CHUNK_SIZE 단위로 DB 부하 방지를 위해 슬립 대기
+        if (jobIdx % CHUNK_SIZE === 0 && sleepSec > 0 && jobIdx < totalJobs) {
+            console.log(`💤 [대기] DB 부하 방지를 위해 ${sleepSec}초 대기 중... (CHUNK: ${CHUNK_SIZE}개 완료)`);
+            await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
         }
     }
-    console.log(`✅ [Phase 2/2] Finished: Checked ${jobsProcessed} detail html files. Found ${recJobsFound} target recommended jobs.`);
 
-    // ==========================================
-    // 6. DB 저장 및 Redis 큐 적재
-    // ==========================================
-    const totalFound = listJobsFound + recJobsFound;
-    console.log(`\n📊 Comprehensive Backfill Summary:`);
-    console.log(`- Total new target jobs found: ${totalFound}`);
+    // DB 저장 및 Redis 적재
+    const totalFound = redisPushBuffer.length;
+    console.log(`\n📊 Backfill Scan Summary:`);
+    console.log(`- Total new target jobs discovered from HTML: ${totalFound}`);
 
     if (jobOps.length > 0) {
         console.log(`📥 Saving ${jobOps.length} entries to bronze.job_urls in MongoDB...`);
@@ -273,6 +321,8 @@ async function main() {
             await redis.rpush('jobs_queue', ...chunk);
         }
         console.log('✅ Redis jobs_queue updated.');
+    } else {
+        console.log('💡 No new target jobs found to backfill.');
     }
 
     await redis.quit();
@@ -281,5 +331,5 @@ async function main() {
 }
 
 main().catch(err => {
-    console.error('💥 [Comprehensive Backfill] Fatal Error:', err);
+    console.error('💥 [Backfill] Fatal Error:', err);
 });
