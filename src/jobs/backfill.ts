@@ -23,7 +23,9 @@ async function main() {
         if (fs.existsSync(configPath)) {
             const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
             if (config.search_targets) {
-                targetLocations = config.search_targets.map((t: any) => t.location);
+                targetLocations = config.search_targets
+                    .filter((t: any) => t.enabled !== false)
+                    .map((t: any) => t.location);
             }
         }
     } catch (e: any) {}

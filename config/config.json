@@ -15,7 +15,9 @@
   "parameter_registry": {
     "f_TPR": {
       "past 24 hours": "r86400",
-      "past 1 week": "r604800"
+      "past 1 week": "r604800",
+      "past 1 month": "r2592000",
+      "any time": ""
     },
     "sortBy": {
       "relevant": "R",
@@ -24,14 +26,14 @@
   },
   "global_settings": {
     "distance": 100,
-    "f_TPR": "past 24 hours",
+    "f_TPR": ["past 24 hours", "past 1 week"],
     "sortBy": "recent",
     "spellCorrectionEnabled": true
   },
   "search_targets": [
     {
       "location": "South Korea",
-      "max_page": 3,
+      "max_page": 5,
       "keywords": [
         "Forward Deployment Engineer",
         "LLM",
@@ -45,7 +47,7 @@
     },
     {
       "location": "United Arab Emirates",
-      "max_page": 3,
+      "max_page": 5,
       "keywords": [
         "Forward Deployment Engineer",
         "LLM",
@@ -59,7 +61,8 @@
     },
     {
       "location": "Japan",
-      "max_page": 3,
+      "max_page": 5,
+      "enabled": false,
       "keywords": [
         "Forward Deployment Engineer",
         "LLM",

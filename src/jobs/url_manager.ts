@@ -8,9 +8,9 @@ import { UrlUtils, IOUtils, FormatUtils } from '../utils';
 
 export interface GlobalSettings {
     max_page?: number;
-    f_TPR?: string;
-    sortBy?: string;
-    distance?: string;
+    f_TPR?: string | string[];
+    sortBy?: string | string[];
+    distance?: string | number | (string | number)[];
     spellCorrectionEnabled?: boolean;
     start?: number;
 }
@@ -21,6 +21,7 @@ export interface SearchTarget {
     geoId?: string;
     max_page?: number;
     start?: number;
+    enabled?: boolean;
 }
 
 export interface Config {
@@ -54,58 +55,88 @@ export class LinkedInUrlManager implements IUrlManager {
         const geoRegistry = config.geo_registry || {};
         const parameterRegistry = config.parameter_registry || {};
 
-        let resolved_f_TPR = globalSettings.f_TPR;
-        if (resolved_f_TPR && parameterRegistry.f_TPR && parameterRegistry.f_TPR[resolved_f_TPR] !== undefined) {
-            resolved_f_TPR = parameterRegistry.f_TPR[resolved_f_TPR];
-        }
+        // f_TPR 값을 배열로 표준화 및 레디스트리 파라미터 변환
+        const raw_f_TPRs = globalSettings.f_TPR 
+            ? (Array.isArray(globalSettings.f_TPR) ? globalSettings.f_TPR : [globalSettings.f_TPR])
+            : [undefined];
+            
+        const f_TPRs = raw_f_TPRs.map(val => {
+            if (val && parameterRegistry.f_TPR && parameterRegistry.f_TPR[val] !== undefined) {
+                return parameterRegistry.f_TPR[val];
+            }
+            return val;
+        });
 
-        let resolved_sortBy = globalSettings.sortBy;
-        if (resolved_sortBy && parameterRegistry.sortBy && parameterRegistry.sortBy[resolved_sortBy] !== undefined) {
-            resolved_sortBy = parameterRegistry.sortBy[resolved_sortBy];
-        }
+        // sortBy 값을 배열로 표준화 및 레디스트리 파라미터 변환
+        const raw_sortBys = globalSettings.sortBy
+            ? (Array.isArray(globalSettings.sortBy) ? globalSettings.sortBy : [globalSettings.sortBy])
+            : [undefined];
+
+        const sortBys = raw_sortBys.map(val => {
+            if (val && parameterRegistry.sortBy && parameterRegistry.sortBy[val] !== undefined) {
+                return parameterRegistry.sortBy[val];
+            }
+            return val;
+        });
+
+        // distance 값을 배열로 표준화
+        const distances = globalSettings.distance
+            ? (Array.isArray(globalSettings.distance) ? globalSettings.distance : [globalSettings.distance])
+            : [undefined];
 
         // 1. Compile search targets
         if (search_targets && Array.isArray(search_targets)) {
-            search_targets.forEach(target => {
+            search_targets.filter(target => target.enabled !== false).forEach(target => {
                 if (!target.keywords || !Array.isArray(target.keywords)) return;
                 
                 target.keywords.forEach(keyword => {
                     const maxPage = (target.max_page !== undefined) ? target.max_page : globalSettings.max_page;
                     const pageCount = (maxPage && Number.isInteger(maxPage) && maxPage > 0) ? maxPage : 1;
 
-                    for (let i = 0; i < pageCount; i++) {
-                        const params = new URLSearchParams();
-                        params.append('keywords', keyword);
-                        
-                        const resolvedGeoId = target.location ? geoRegistry[target.location] : null;
-                        
-                        if (resolvedGeoId) {
-                            params.append('geoId', resolvedGeoId);
-                        } else if (target.geoId) {
-                            params.append('geoId', target.geoId);
-                        } else if (target.location) {
-                            params.append('location', target.location);
-                        }
+                    // f_TPR, sortBy, distance의 모든 데카르트 곱 조합 순회
+                    f_TPRs.forEach(resolved_f_TPR => {
+                        sortBys.forEach(resolved_sortBy => {
+                            distances.forEach(resolved_distance => {
+                                for (let i = 0; i < pageCount; i++) {
+                                    const params = new URLSearchParams();
+                                    params.append('keywords', keyword);
+                                    
+                                    const resolvedGeoId = target.location ? geoRegistry[target.location] : null;
+                                    
+                                    if (resolvedGeoId) {
+                                        params.append('geoId', resolvedGeoId);
+                                    } else if (target.geoId) {
+                                        params.append('geoId', target.geoId);
+                                    } else if (target.location) {
+                                        params.append('location', target.location);
+                                    }
 
-                        if (globalSettings.distance) params.append('distance', globalSettings.distance);
-                        if (resolved_f_TPR) params.append('f_TPR', resolved_f_TPR);
-                        if (resolved_sortBy) params.append('sortBy', resolved_sortBy);
-                        if (globalSettings.spellCorrectionEnabled !== undefined) {
-                            params.append('spellCorrectionEnabled', String(globalSettings.spellCorrectionEnabled));
-                        }
-                        
-                        const startVal = i * 25;
-                        if (startVal > 0) {
-                            params.append('start', String(startVal));
-                        } else {
-                            const explicitStart = (target.start !== undefined) ? target.start : globalSettings.start;
-                            if (explicitStart !== undefined && explicitStart > 0) {
-                                params.append('start', String(explicitStart));
-                            }
-                        }
+                                    if (resolved_distance !== undefined && resolved_distance !== null) {
+                                        params.append('distance', String(resolved_distance));
+                                    }
+                                    if (resolved_f_TPR && resolved_f_TPR !== 'any time' && resolved_f_TPR !== '') {
+                                        params.append('f_TPR', resolved_f_TPR);
+                                    }
+                                    if (resolved_sortBy) params.append('sortBy', resolved_sortBy);
+                                    if (globalSettings.spellCorrectionEnabled !== undefined) {
+                                        params.append('spellCorrectionEnabled', String(globalSettings.spellCorrectionEnabled));
+                                    }
+                                    
+                                    const startVal = i * 25;
+                                    if (startVal > 0) {
+                                        params.append('start', String(startVal));
+                                    } else {
+                                        const explicitStart = (target.start !== undefined) ? target.start : globalSettings.start;
+                                        if (explicitStart !== undefined && explicitStart > 0) {
+                                            params.append('start', String(explicitStart));
+                                        }
+                                    }
 
-                        urls.push(`https://www.linkedin.com/jobs/search/?${params.toString()}`);
-                    }
+                                    urls.push(`https://www.linkedin.com/jobs/search/?${params.toString()}`);
+                                }
+                            });
+                        });
+                    });
                 });
             });
         }
@@ -803,7 +834,9 @@ export class LinkedInUrlManager implements IUrlManager {
             if (fs.existsSync(configPath)) {
                 const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
                 if (config.search_targets) {
-                    targetLocations = config.search_targets.map((t: any) => t.location);
+                    targetLocations = config.search_targets
+                        .filter((t: any) => t.enabled !== false)
+                        .map((t: any) => t.location);
                 }
             }
         } catch (e: any) {

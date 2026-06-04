@@ -332,7 +332,27 @@ export class LinkedInCrawler implements ICrawler {
             const pad = (n: number) => String(n).padStart(2, '0');
             const batchFolderName = `${runDate.getFullYear()}${pad(runDate.getMonth() + 1)}${pad(runDate.getDate())}_${pad(runDate.getHours())}${pad(runDate.getMinutes())}${pad(runDate.getSeconds())}`;
 
+            // 키워드+지역 조합별 조기 종료(Early Exit) 상태 관리용 Set
+            // 예: "https://www.linkedin.com/jobs/search/?keywords=LLM&geoId=105149562" 기반으로 start 파라미터를 제외한 부분을 Key로 사용
+            const finishedQueries = new Set<string>();
+
+            const getBaseQueryKey = (urlStr: string): string => {
+                try {
+                    const u = new URL(urlStr);
+                    u.searchParams.delete('start');
+                    return u.toString();
+                } catch (e) {
+                    return urlStr;
+                }
+            };
+
             const worker = async (url: string) => {
+                const baseKey = getBaseQueryKey(url);
+                if (finishedQueries.has(baseKey)) {
+                    console.log(`⏭️  [조기 종료] 이전 페이지에 결과가 없어 수집을 건너뜁니다: ${decodeURIComponent(url)}`);
+                    return;
+                }
+
                 currentIndex++;
                 const myIndex = currentIndex;
                 
@@ -379,6 +399,28 @@ export class LinkedInCrawler implements ICrawler {
                         throw new Error('AUTH_FAIL');
                     }
 
+                    // 🔍 검색 결과가 없거나 조기 종료 조건에 부합하는지 정밀 확인
+                    const contentForCheck = await page.content();
+                    const cheerioForCheck = require('cheerio');
+                    const $check = cheerioForCheck.load(contentForCheck);
+                    
+                    // 1) "No matching jobs found" 등 검색결과 없음 메시지 감지
+                    const noJobsText = $check('main, body').text().toLowerCase();
+                    const hasNoMatchingMsg = noJobsText.includes('no matching jobs found') || 
+                                           noJobsText.includes('검색 결과와 일치하는 채용') ||
+                                           noJobsText.includes('no jobs found');
+                                           
+                    // 2) 리스트 카드 엘리먼트 개수 확인
+                    const jobCardsCount = $check('div[data-job-id], li [data-job-id], a[href*="/jobs/view/"]').length;
+
+                    if (hasNoMatchingMsg || jobCardsCount === 0) {
+                        console.log(`💡 [조기 종료 마킹] 해당 검색 조건의 채용 공고가 없거나 끝에 도달했습니다. (검색어 카드 개수: ${jobCardsCount}개)`);
+                        finishedQueries.add(baseKey);
+                        
+                        // 결과가 아예 없는 페이지는 굳이 DB에 저장하거나 추천 공고 추출을 할 필요가 없으므로 조기 리턴
+                        return;
+                    }
+
                     await this.autoScroll(page);
 
                     const htmlContent = await page.content();
@@ -420,6 +462,12 @@ export class LinkedInCrawler implements ICrawler {
             let isFirst = true;
             for (const url of urls) {
                 if (authFailed) break;
+
+                const baseKey = getBaseQueryKey(url);
+                if (finishedQueries.has(baseKey)) {
+                    // 이미 검색 완료/결과 없음 마킹된 쿼리 패밀리는 워커 생성 자체를 건너뜀
+                    continue;
+                }
 
                 if (this.useLogin && parallelLimit === 1 && !isFirst) {
                     const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
@@ -482,7 +530,9 @@ export class LinkedInCrawler implements ICrawler {
                 if (fs.existsSync(configPath)) {
                     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
                     if (config.search_targets) {
-                        targetLocations = config.search_targets.map((t: any) => t.location);
+                        targetLocations = config.search_targets
+                            .filter((t: any) => t.enabled !== false)
+                            .map((t: any) => t.location);
                     }
                 }
             } catch (e: any) {}

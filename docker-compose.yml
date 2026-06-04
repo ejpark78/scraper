@@ -143,7 +143,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mongoexpress.rule=Host(`mongo.localhost`)"
+      - "traefik.http.routers.mongoexpress.rule=Host(`me.localhost`)"
       - "traefik.http.routers.mongoexpress.entrypoints=web"
       - "traefik.http.services.mongoexpress.loadbalancer.server.port=8081"
 
