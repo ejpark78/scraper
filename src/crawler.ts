@@ -14,7 +14,7 @@ export interface ICrawler {
 }
 
 export class LinkedInCrawler implements ICrawler {
-    private readonly sessionPath: string = path.join(__dirname, '..', 'data', 'sessions', 'linkedin.json');
+    private readonly sessionPath: string = path.join(__dirname, '..', 'data', 'sessions', `${process.env.SITE || 'linkedin'}.json`);
     private readonly useLogin: boolean;
 
     constructor(options: { login?: boolean } = {}) {
@@ -735,11 +735,7 @@ export class LinkedInCrawler implements ICrawler {
                 await this.scrapeJob(url, outputPath);
                 process.exit(0);
             } else if (command === 'list') {
-                const configFile = process.argv[3];
-                if (!configFile) {
-                    console.error('❌ 사용법: npx ts-node crawler.ts list <설정_파일_경로>');
-                    process.exit(1);
-                }
+                const configFile = process.argv[3] || 'config/config.json';
                 await this.scrapeList(configFile);
                 process.exit(0);
             } else if (command === 'company') {

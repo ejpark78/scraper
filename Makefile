@@ -8,7 +8,7 @@ export COMPOSE
 RUN_USER := --user $(shell id -u):$(shell id -g)
 export RUN_USER
 
-s.PHONY: *
+.PHONY: test lint
 
 # --- 1. explicit local & data-level targets ---
 test:
@@ -21,7 +21,7 @@ lint:
 -include scripts/*.mk
 
 # --- 3. delegate site-specific commands to prevent target name conflicts ---
-linkedin-%:
+li-%:
 	@$(MAKE) -f scripts/sites/linkedin.mk $*
 
 gpters-%:

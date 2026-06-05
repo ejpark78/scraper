@@ -4,12 +4,14 @@
 
 .PHONY: login open logout
 
+SITE ?= linkedin
+
 login:
-	npx ts-node src/crawler.ts login
+	SITE=$(SITE) npx ts-node src/crawler.ts login
 
 open:
-	npx ts-node src/browser/open.ts
+	SITE=$(SITE) npx ts-node src/browser/open.ts
 
 logout:
-	rm -f data/sessions/linkedin.json
-	@echo "🔒 로그인 세션이 성공적으로 삭제되었습니다."
+	rm -f data/sessions/$(SITE).json
+	@echo "🔒 로그인 세션($(SITE).json)이 성공적으로 삭제되었습니다."
