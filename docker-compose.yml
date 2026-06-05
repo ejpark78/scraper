@@ -25,7 +25,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik-dashboard.rule=Host(`route.localhost`)"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`route.localhost`) || Host(`route.127.0.0.1.nip.io`)"
       - "traefik.http.routers.traefik-dashboard.entrypoints=web"
       - "traefik.http.routers.traefik-dashboard.service=api@internal"
       - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-redirect"
@@ -33,6 +33,10 @@ services:
       - "traefik.http.middlewares.dashboard-redirect.redirectregex.replacement=http://route.localhost/dashboard/"
 
   kasm:
+    # 📝 Default Login Info:
+    # - URL: https://kasm.localhost
+    # - User: admin@kasm.local
+    # - Pass: password2026 (custom password configured below VNC_PW)
     build:
       context: docker/kasm
       dockerfile: Dockerfile
@@ -59,7 +63,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.kasm.rule=Host(`kasm.localhost`)"
+      - "traefik.http.routers.kasm.rule=Host(`kasm.localhost`) || Host(`kasm.127.0.0.1.nip.io`)"
       - "traefik.http.routers.kasm.entrypoints=web"
       - "traefik.http.services.kasm.loadbalancer.server.port=6901"
       - "traefik.http.services.kasm.loadbalancer.server.scheme=https"
@@ -100,6 +104,10 @@ services:
       retries: 3
 
   mongo-express:
+    # 📝 Default Login Info:
+    # - URL: http://me.localhost
+    # - User: admin
+    # - Pass: pass
     image: mongo-express:latest
     environment:
       - TZ=Asia/Seoul
@@ -120,7 +128,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mongoexpress.rule=Host(`me.localhost`)"
+      - "traefik.http.routers.mongoexpress.rule=Host(`me.localhost`) || Host(`me.127.0.0.1.nip.io`)"
       - "traefik.http.routers.mongoexpress.entrypoints=web"
       - "traefik.http.services.mongoexpress.loadbalancer.server.port=8081"
 
@@ -142,7 +150,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.redisinsight.rule=Host(`redis.localhost`)"
+      - "traefik.http.routers.redisinsight.rule=Host(`redis.localhost`) || Host(`redis.127.0.0.1.nip.io`)"
       - "traefik.http.routers.redisinsight.entrypoints=web"
       - "traefik.http.services.redisinsight.loadbalancer.server.port=5540"
 
@@ -200,6 +208,10 @@ services:
       replicas: 5
 
   cronicle:
+    # 📝 Default Login Info:
+    # - URL: http://cron.localhost
+    # - User: admin
+    # - Pass: admin
     build:
       context: docker/cronicle
       dockerfile: Dockerfile
@@ -222,7 +234,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.cronicle.rule=Host(`cron.localhost`)"
+      - "traefik.http.routers.cronicle.rule=Host(`cron.localhost`) || Host(`cron.127.0.0.1.nip.io`)"
       - "traefik.http.routers.cronicle.entrypoints=web"
       - "traefik.http.services.cronicle.loadbalancer.server.port=3012"
 
@@ -253,6 +265,58 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.jupyter.rule=Host(`jupyter.localhost`)"
+      - "traefik.http.routers.jupyter.rule=Host(`jupyter.localhost`) || Host(`jupyter.127.0.0.1.nip.io`)"
       - "traefik.http.routers.jupyter.entrypoints=web"
       - "traefik.http.services.jupyter.loadbalancer.server.port=8888"
+
+  yacht:
+    # 📝 Default Login Info:
+    # - URL: http://yacht.localhost
+    # - User: admin@yacht.local
+    # - Pass: pass
+    image: selfhostedpro/yacht:latest
+    profiles:
+      - tools
+    environment:
+      - base_url=/api/
+    volumes:
+      - ./data/.services/yacht:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "uvicorn"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.yacht.rule=Host(`yacht.localhost`) || Host(`yacht.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.yacht.entrypoints=web"
+      - "traefik.http.services.yacht.loadbalancer.server.port=8000"
+
+  dozzle:
+    # 📝 Dozzle: Real-time container log viewer
+    # - URL: http://dozzle.localhost
+    # - No login required by default.
+    image: amir20/dozzle:latest
+    profiles:
+      - tools
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.localhost`) || Host(`dozzle.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.dozzle.entrypoints=web"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+
+
+
