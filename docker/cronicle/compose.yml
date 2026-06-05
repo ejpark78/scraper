@@ -15,7 +15,7 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./data/.services/cronicle:/opt/cronicle/data
+      - ${HOST_PROJECT_PATH:-.}/data/.services/cronicle:/opt/cronicle/data
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped

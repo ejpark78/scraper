@@ -4,7 +4,7 @@ services:
     environment:
       - TZ=Asia/Seoul
     volumes:
-      - ./data/.services/redis:/data
+      - ${HOST_PROJECT_PATH:-.}/data/.services/redis:/data
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped

@@ -1,7 +1,7 @@
 # ⚙️ LinkedIn Job Scraper Makefile
 
 # 공통 프로젝트 지정을 위한 단일 Docker Compose 명령어 (루트 compose.yml include 사용)
-COMPOSE := docker compose -p linkedin -f compose.yml
+COMPOSE := HOST_PROJECT_PATH=$$(pwd) docker compose -p linkedin -f compose.yml
 
 .PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm init-cron export-cron check-worker up down
 
@@ -61,9 +61,9 @@ help:
 	@echo "  make dump-bronze    - [Host] 수집 원본 브론즈 레이어(bronze.*) 데이터만 백업합니다."
 	@echo "========================================================================="
 
-# 전체 모듈 일괄 기동 (--profile tools 옵션으로 도구도 함께 로드)
+# 전체 모듈 일괄 기동
 up:
-	$(COMPOSE) --profile tools up -d
+	$(COMPOSE) up -d
 	@echo "🚀 모든 서비스와 어드민 도구가 성공적으로 실행되었습니다."
 
 # 전체 모듈 일괄 종료

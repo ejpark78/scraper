@@ -1,6 +1,8 @@
 services:
   traefik:
     image: traefik:v3.7.1
+    profiles:
+      - tools    
     command:
       - "--ping=true"
       - "--api.insecure=true"

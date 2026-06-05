@@ -5,7 +5,7 @@ services:
       - TZ=Asia/Seoul
       - MONGO_INITDB_DATABASE=linkedin
     volumes:
-      - ./data/.services/mongodb:/data/db
+      - ${HOST_PROJECT_PATH:-.}/data/.services/mongodb:/data/db
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped

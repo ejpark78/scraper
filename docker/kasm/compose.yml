@@ -9,8 +9,6 @@ services:
       dockerfile: Dockerfile
     image: linkedin/kasm:latest
     profiles:
-      - tools    
-    profiles:
       - tools
     environment:
       - VNC_PW=password2026
@@ -20,7 +18,7 @@ services:
       - TZ=Asia/Seoul
     shm_size: "1gb"
     volumes:
-      - .:/home/kasm-user/linkedin
+      - ${HOST_PROJECT_PATH:-.}/:/home/kasm-user/linkedin
       - /var/run/docker.sock:/var/run/docker.sock
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
