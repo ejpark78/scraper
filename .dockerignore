@@ -1,7 +1,7 @@
 .git
-node_modules
-data
 *.html
 *.log
-*.zip
 *.tar.gz
+*.zip
+data
+node_modules

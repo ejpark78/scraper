@@ -1,3 +1,18 @@
+# ==============================================================================
+# 🗄️ MongoDB Service Block (Core Database)
+# ==============================================================================
+# 1. mongodb
+#    - 용도: 크롤러가 수집한 원본 채용 정보(Bronze) 및 정제 데이터(Silver) 영구 적재 데이터베이스
+#    - 볼륨: 프로젝트 루트의 `data/.services/mongodb` 경로에 데이터 보존
+#    - 헬스체크: mongosh ping 테스트를 통해 정상 구동 확인
+#
+# 2. mongo-express (profile: tools)
+#    - 용도: 웹 GUI 기반 MongoDB 관리 대시보드
+#    - 접속 URL: https://me.localhost 또는 https://me.127.0.0.1.nip.io
+#    - 기본 계정: ID: admin / PW: pass
+#    - 라우팅: Traefik 프록시를 통해 TLS 라우팅 서비스 (포트 8081)
+# ==============================================================================
+
 services:
   mongodb:
     image: mongo:7.0
@@ -20,10 +35,6 @@ services:
       retries: 3
 
   mongo-express:
-    # 📝 Default Login Info:
-    # - URL: http://me.localhost || http://me.127.0.0.1.nip.io
-    # - User: admin
-    # - Pass: pass
     image: mongo-express:latest
     environment:
       - TZ=Asia/Seoul

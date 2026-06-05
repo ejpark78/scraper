@@ -1,9 +1,16 @@
+# ==============================================================================
+# 💻 Kasm Workspaces Remote GUI Developer Shell (profile: tools)
+# ==============================================================================
+# 1. kasm
+#    - 용도: 브라우저 격리 기반 독립 데스크톱(VNC/웹 쉘) 환경에서 수집기를 원격 디버깅/실행할 수 있도록 제공하는 컨테이너 환경
+#    - 접속 URL: https://kasm.localhost 또는 https://kasm.127.0.0.1.nip.io
+#    - 기본 계정: ID: admin@kasm.local / PW: password2026
+#    - 볼륨: 현재 프로젝트 루트 디렉토리 전체를 내부 `/home/kasm-user/linkedin`으로 매핑하여 직접 개발/빌드/수행 가능
+#    - 라우팅: Traefik 역방향 프록시를 통해 HTTPS/WSS 스트리밍 라우팅 서비스 (포트 6901)
+# ==============================================================================
+
 services:
   kasm:
-    # 📝 Default Login Info:
-    # - URL: https://kasm.localhost || https://kasm.127.0.0.1.nip.io
-    # - User: admin@kasm.local
-    # - Pass: password2026
     build:
       context: ./docker/kasm
       dockerfile: Dockerfile

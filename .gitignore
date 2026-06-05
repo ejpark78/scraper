@@ -1,6 +1,6 @@
-data/
-node_modules/
-config/session.json
 .antigravity/
+.env
+data/
 data/sessions/
+node_modules/
 notebooks/.*

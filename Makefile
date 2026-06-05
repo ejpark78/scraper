@@ -1,39 +1,46 @@
-# ⚙️ LinkedIn Job Scraper Makefile
+# ==============================================================================
+# ⚙️ LinkedIn Scraper Makefile (Command Interface Router)
+# ==============================================================================
+# 
+# [ 전체 데이터 수집 파이프라인 흐름 (Scraping Data Flow) ]
+# 
+#  1. 공고 목록 수집 (make list)
+#     [LinkedIn Web] ──➜ Playwright (clipper) ──➜ MongoDB (bronze.lists)
+# 
+#  2. 공고 분석 & 회사 목록 추출 (make urls)
+#     [MongoDB (bronze.lists)] ──➜ UrlManager (clipper)
+#                                        │
+#                                        ├─➜ (신규 공고 적재) ─➜ [MongoDB (bronze.job_urls) / Redis (jobs_queue)]
+#                                        └─➜ (신규 회사 적재) ─➜ [MongoDB (bronze.company_urls)]
+# 
+#  3. 상세 정보 다운로드 및 변환
+#     A. 채용 정보 수집 (make jobs / worker)
+#        [Redis (jobs_queue)] ──➜ Work Loop (clipper-worker)
+#                                      │
+#                                      ├─➜ [MongoDB (bronze.jobs / silver.jobs)]
+#                                      └─➜ [Markdown (.md)]
+# 
+#     B. 회사 정보 수집 (make company)
+#        [MongoDB (bronze.company_urls)] ──➜ CompanyPipeline (clipper)
+#                                               │
+#                                               ├─➜ [MongoDB (bronze.companies / silver.companies)]
+#                                               └─➜ [Markdown (.md)]
+# 
+# ==============================================================================
 
 # 공통 프로젝트 지정을 위한 단일 Docker Compose 명령어 (루트 compose.yml include 사용)
-COMPOSE := HOST_PROJECT_PATH=$$(pwd) docker compose -p linkedin -f compose.yml
+COMPOSE := HOST_PROJECT_PATH=$$(pwd) docker compose 
 
-.PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm init-cron export-cron check-worker up down
 
-# LISTS 변수 기본값 설정
-LISTS ?= config/config.json
-ifeq ($(LISTS),)
-  LISTS := config/config.json
-endif
+.PHONY: *
 
-# 동시 실행 브라우저 갯수 기본값
-PARALLEL ?= 1
-ifeq ($(PARALLEL),)
-  PARALLEL := 1
-endif
-
-# AUTH 기본값
-AUTH ?= true
-ifeq ($(AUTH),)
-  AUTH := true
-endif
-
-# SLACK_TIME 기본값
+# 📝 환경변수 기본값 설정 (중복 조건문 제거 및 단일 조건부 할당으로 최적화)
+LISTS      ?= config/config.json
+PARALLEL   ?= 1
+AUTH       ?= true
 SLACK_TIME ?= 3
-ifeq ($(SLACK_TIME),)
-  SLACK_TIME := 3
-endif
+CHUNK_SIZE ?= 500
 
-# CHUNK_SIZE 기본값
-CHUNK_SIZE ?= 100
-ifeq ($(CHUNK_SIZE),)
-  CHUNK_SIZE := 100
-endif
 
 # 컨테이너 실행 판별 플래그 (호스트 vs 컨테이너)
 IN_CONTAINER ?= false
@@ -46,19 +53,19 @@ help:
 	@echo "사용 가능한 명령어 목록 (자동 Docker 가동):"
 	@echo "  make up             - 인프라 및 모든 개발 도구(Traefik, Yacht, Jupyter 등)를 기동합니다."
 	@echo "  make down           - 작동 중인 모든 모듈과 인프라를 일괄 종료합니다."
-	@echo "  make login          - [Host] 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
+	@echo "  make login          - [Host/Kasm] 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
 	@echo "  make kasm           - [Host] Kasm 컨테이너 내부 쉘(shell)에 진입합니다."
-	@echo "  make open           - [Host] 로그인 세션 기반 헤드풀 브라우저 기동"
+	@echo "  make open           - [Host/Kasm] 로그인 세션 기반 헤드풀 브라우저 기동"
 	@echo "  make list           - [Docker] config.json 조건 기반으로 목록 HTML을 무인 수집합니다."
 	@echo "  make company        - [Docker] urls.txt 기반 회사 정보를 수집하여 마크다운으로 저장합니다."
 	@echo "  make test           - [Docker] URL 생성기 단위 테스트 실행"
 	@echo "  make backfill       - [Docker] DB에 이미 저장된 상세 HTML의 추천공고 중 미수집 건 역추적하여 적재"
-	@echo "  make check-worker   - [Host] Redis의 다운로드 큐 상태와 워커 컨테이너 상태를 확인합니다."
-	@echo "  make clean          - [Host] 임시 파일 및 빈 폴더 정리"
-	@echo "  make export-cron    - [Host] 현재 Cronicle 이벤트를 docker/cronicle/default.json으로 내보냅니다."
-	@echo "  make init-cron      - [Host] 백업된 Cronicle 이벤트를 새로 기동된 컨테이너에 가져옵니다."
-	@echo "  make dump-silver    - [Host] 정제된 실버 레이어(silver.*) 데이터만 백업합니다."
-	@echo "  make dump-bronze    - [Host] 수집 원본 브론즈 레이어(bronze.*) 데이터만 백업합니다."
+	@echo "  make check-worker   - [Host/Kasm] Redis의 다운로드 큐 상태와 워커 컨테이너 상태를 확인합니다."
+	@echo "  make clean          - [Host/Kasm] 임시 파일 및 빈 폴더 정리"
+	@echo "  make export-cron    - [Host/Kasm] 현재 Cronicle 이벤트를 docker/cronicle/default.json으로 내보냅니다."
+	@echo "  make init-cron      - [Host/Kasm] 백업된 Cronicle 이벤트를 새로 기동된 컨테이너에 가져옵니다."
+	@echo "  make dump-silver    - [Host/Kasm] 정제된 실버 레이어(silver.*) 데이터만 백업합니다."
+	@echo "  make dump-bronze    - [Host/Kasm] 수집 원본 브론즈 레이어(bronze.*) 데이터만 백업합니다."
 	@echo "========================================================================="
 
 # 전체 모듈 일괄 기동
@@ -132,7 +139,7 @@ job-list:
 list: job-list
 
 company:
-	LOGIN=$(AUTH) npx ts-node src/company/company_pipeline.ts "data/compay/lists/urls.txt"
+	LOGIN=$(AUTH) npx ts-node src/company/company_pipeline.ts
 
 test:
 	npx ts-node tests/url_manager.test.ts
@@ -144,18 +151,18 @@ else
 
 # 호스트 환경에서 컨테이너 구동으로 위임하는 인터페이스 프록시
 list:
-	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL) SLACK_TIME=$(SLACK_TIME)
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL) SLACK_TIME=$(SLACK_TIME)
 
 job-list: list
 
 company:
-	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
 
 test:
-	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make test
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true clipper make test
 
 backfill:
-	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make backfill SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE)
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true clipper make backfill SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE)
 
 endif
 

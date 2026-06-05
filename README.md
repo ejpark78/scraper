@@ -202,14 +202,27 @@
 
 ## 🚀 시작하기 (Quick Start)
 
-### 1. 의존성 설치
-**Node.js (18버전 이상)** 및 **make** 유틸리티가 설치된 환경에서 패키지를 설치합니다.
+### 1. 환경 변수 파일 생성 (.env)
+멀티 컴포즈 구동 시 경로 오작동을 방지하기 위해 프로젝트 루트 폴더에 반드시 호스트의 절대 경로를 기입해야 합니다.
 ```bash
-npm install
-npx playwright install chromium
+# 템플릿 복사
+cp .env.example .env
+
+# 본인의 절대 경로로 수정 (.env 파일 열어서 수정)
+# 예: HOST_PROJECT_PATH=/home/user/workspace/linkedin
 ```
 
-### 2. [선택] 1회성 로그인 세션 획득 (`make login`)
+### 2. 의존성 설치 & 컨테이너 구동
+```bash
+# Node 의존성 설치
+npm install
+npx playwright install chromium
+
+# 🐳 모든 인프라 및 개발 툴 기동
+make up
+```
+
+### 3. [선택] 1회성 로그인 세션 획득 (`make login`)
 비로그인(게스트) 모드 수집 중 로그인 챌린지에 막히거나, `LOGIN=true` 옵션으로 안전한 세션 수집을 원할 경우 1회성으로 로그인을 진행하여 세션을 안전하게 덤프합니다.
 ```bash
 make login
@@ -218,14 +231,13 @@ make login
 
 ---
 
-## 💼 채용공고 수집 가동 흐름 (Job posts Flow)
+## 💼 채용공고 및 회사 프로필 수집 가동 흐름
 
 ### 1단계. 채용공고 검색 결과 목록 수집 (`make list`)
 `config/config.json`의 조건에 따라 채용 정보 리스트 HTML 파일들을 다운로드합니다. (디폴트는 비로그인 가동입니다.)
 * 수집 시점마다 `data/jobs/lists/html/[YYYYMMDD_HHMMSS]/` 형식의 하위 폴더가 자동으로 생성되어 수집 배치(Batch)별로 HTML 파일들이 덤프됩니다.
-
 ```bash
-# 기본 비로그인 수집
+# 기본 비로그인 수집 (호스트 위임)
 make list
 
 # 3개 스레드 병렬 실행 및 로그인 세션 동원
@@ -244,18 +256,11 @@ make urls
 # 기본 비로그인 수집
 make jobs
 
-# 5개 스레드 병렬 실행 및 로그인 세션 동원 (세션 풀릴 시 자동 안내 및 수집 안전 중단 지원)
+# 5개 스레드 병렬 실행 및 로그인 세션 동원
 make jobs PARALLEL=5 AUTH=true
 ```
 
----
-
-## 🏢 회사 프로필 수집 가동 흐름 (Company Profile Flow)
-
-### 1단계. 회사 리스트 준비
-* 이전 `make urls` 수행 결과로 자동 생성된 **`data/compay/lists/urls.txt`**를 그대로 사용하거나, 수집하고 싶은 회사 주소를 한 줄에 하나씩 작성합니다.
-
-### 2단계. 파이프라인 가동 (`make company`)
+### 4단계. 회사 정보 수집 파이프라인 가동 (`make company`)
 ```bash
 # 기본 비로그인 수집
 make company
@@ -269,62 +274,61 @@ make company AUTH=true
 
 ## 🧹 기타 관리 명령어 (Administrative Commands)
 
+* **Redis 워커 및 상태 모니터링 (`make check-worker`)**:
+  ```bash
+  make check-worker
+  ```
+  현재 Redis 내 대기 중인 `jobs_queue`의 길이와 가동 중인 `clipper-worker` 컨테이너 목록의 활성 여부를 한눈에 체크합니다.
 * **캐시 기반 유실 복원 및 회사 메타 갱신 (`make html2md`)**:
   ```bash
   make html2md
   ```
-  * 로컬 채용공고 HTML 백업본과 MD 파일 구조를 스캔하여 유실된 MD 문서를 오프라인에서 무인 동기화(Double-Sync) 복원하고, 회사 HTML 캐시로부터 전체 마크다운 문서를 일괄 다시 써서 갱신합니다.
+  로컬 채용공고 HTML 백업본과 MD 파일 구조를 스캔하여 유실된 MD 문서를 오프라인에서 무인 동기화(Double-Sync) 복원하고, 회사 HTML 캐시로부터 전체 마크다운 문서를 일괄 재생성하여 갱신합니다.
 * **단위 테스트 기동 (`make test`)**:
   ```bash
   make test
   ```
-  * URL 메니저의 다중 페이지 매핑, 가공 규칙, Fallback 처리가 정상 작동하는지 정밀 테스트합니다.
+  URL 메니저의 다중 페이지 매핑, 가공 규칙, Fallback 처리가 정상 작동하는지 정밀 테스트합니다.
 * **임시/빌드 청소 (`make clean`)**:
   ```bash
   make clean
   ```
-  * `data/jobs/lists/html/` 하위의 모든 날짜별 폴더 및 임시 파일들을 청소합니다.
+  `data/jobs/lists/html/` 하위의 모든 날짜별 폴더 및 임시 파일들을 청소합니다.
 * **데이터 영구 초기화 (`make purge`)**:
   ```bash
   make purge
   ```
-  * `data/jobs/` 내부의 전체 데이터를 강제 초기화합니다. (수집된 회사 정보는 삭제되지 않고 안전하게 보존됩니다.)
+  `data/jobs/` 내부의 전체 데이터를 강제 초기화합니다. (수집된 회사 정보는 삭제되지 않고 안전하게 보존됩니다.)
 * **Cronicle 스케줄러 설정 백업 및 동기화 (`make export-cron`, `make init-cron`)**:
   * **설정 내보내기 (Export)**:
     ```bash
     make export-cron
     ```
-    현재 컨테이너에 등록된 모든 Cronicle 이벤트 스케줄, 사용자 및 플러그인 설정을 `docker/cronicle/default.json`으로 내보냅니다. (이전 환경의 IP 주소는 빈 문자열 `""`로 자동 치환되어 새로운 환경에서도 매끄럽게 호환되도록 구성됩니다.)
+    현재 컨테이너에 등록된 모든 Cronicle 이벤트 스케줄을 `docker/cronicle/default.json`으로 내보냅니다.
   * **설정 불러오기 (Import/Restore)**:
     ```bash
     make init-cron
     ```
     새로운 컴퓨터로 환경을 이전했거나 컨테이너를 처음 구동했을 때, 백업된 `docker/cronicle/default.json` 데이터를 새롭게 기동된 Cronicle 서버 인스턴스에 일괄 임포트한 뒤 서비스를 재시작합니다.
 
-
 ---
 
-## 🐳 Kasm VDI 개발 환경 가이드 (Kasm Development Guide)
+## 🐳 Docker Multi-Compose & Admin Tools
 
-본 프로젝트는 Kasm VDI 컨테이너를 이용한 독립적이고 완성도 높은 원격 웹 브라우저 개발 및 디버깅 환경을 기본 지원합니다.
+본 프로젝트는 어드민/개발 도구의 효율적인 유지보수와 충돌 방지를 위해 **모듈형 도커 멀티 컴포즈 아키텍처**로 구성되어 있으며, 모든 서비스는 **Traefik 역방향 프록시**를 통해 로컬에서 자가서명 SSL(HTTPS)을 지원합니다.
 
-### 1. 주요 특징 및 구성
-* **동일한 셀 환경 (Zsh + Oh My Zsh)**: 호스트의 Zsh 설정(`.zshrc`, `.gitconfig`) 및 주요 플러그인(`zsh-autosuggestions`, `zsh-syntax-highlighting`, `fzf-tab`), 시스템 의존성(`fzf`, `eza`)이 Docker 이미지 빌드 시 자동으로 반영됩니다.
-* **호스트 경로 호환성 보장**: `.zshrc` 내부에 호스트 홈 디렉토리 경로(`/home/ejpark`)가 하드코딩되어 있어도, 컨테이너 내부에 `/home/ejpark` -> `/home/kasm-user` 심볼릭 링크가 자동 생성되어 모든 설정과 에일리어스(alias)가 정상 동작합니다.
-* **무인 GUI 웹 접속**: `http://kasm.localhost`에 브라우저로 접속하여 GUI 가상 데스크톱 터미널을 확인하고 Playwright 수집 과정을 직접 시각적으로 관찰 및 제어할 수 있습니다.
+### 1. 서비스 정보 및 접속 주소
+`make up`으로 구동 시, 아래 각 어드민 서비스가 지정된 HTTPS 주소로 포워딩됩니다.
 
-### 2. 가동 및 접속 방법
-1. **컨테이너 빌드 & 실행**:
-   ```bash
-   make build
-   docker compose up -d
-   ```
-2. **Kasm 내부 Zsh 쉘로 터미널 진입**:
-   ```bash
-   make kasm
-   ```
-   * 이 명령을 실행하면 즉시 Kasm 컨테이너 내부에서 로그인되어 호스트와 동일한 쉘 환경(Zsh)에서 개발 및 Playwright CLI 제어가 가능합니다.
-3. **가상 GUI 데스크톱 접속**:
-   * 브라우저에서 `http://kasm.localhost`로 접속합니다.
-   * 기본 비밀번호: `password2026` (변경 가능: `docker-compose.yml` 내 `VNC_PW` 참고)
+| 서비스 이름 | 용도 / 설명 | 접속 주소 (HTTPS) | 로그인 정보 (Default) |
+| :--- | :--- | :--- | :--- |
+| **Traefik** | Reverse Proxy & TLS 중앙 통제 라우터 | [route.localhost/dashboard/](https://route.127.0.0.1.nip.io/dashboard/) | 인증 없음 |
+| **Mongo Express** | MongoDB 웹 관리 GUI 패널 | [me.localhost](https://me.127.0.0.1.nip.io) | `admin` / `pass` |
+| **RedisInsight** | Redis 인메모리 관리/대시보드 패널 | [redis.localhost](https://redis.127.0.0.1.nip.io) | 인증 없음 |
+| **Yacht** | 경량 도커 컨테이너 대시보드 | [yacht.localhost](https://yacht.127.0.0.1.nip.io) | `admin@yacht.local` / `pass` |
+| **Dozzle** | 실시간 컨테이너 로그 탐색기 | [dozzle.localhost](https://dozzle.127.0.0.1.nip.io) | 인증 없음 |
+| **Jupyter** | 데이터 통계 분석 & NER 스택 추출 | [jupyter.localhost](https://jupyter.127.0.0.1.nip.io) | 인증 없음 |
+| **Cronicle** | 비동기 크롤러 예약 작업 스케줄러 | [cron.localhost](https://cron.127.0.0.1.nip.io) | `admin` / `admin` |
+| **Kasm Workspaces**| 브라우저 기반 격리형 원격 VNC 데스크톱 | [kasm.localhost](https://kasm.127.0.0.1.nip.io) | `admin@kasm.local` / `password2026` |
+
 

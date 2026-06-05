@@ -1,9 +1,16 @@
+# ==============================================================================
+# ⏰ Cronicle Task Scheduler (profile: tools)
+# ==============================================================================
+# 1. cronicle
+#    - 용도: 크롤링 및 백필(Backfill) 정기 실행 일정을 모니터링하고 제어하는 시각화 분산 스케줄러 패널
+#    - 접속 URL: https://cron.localhost 또는 https://cron.127.0.0.1.nip.io
+#    - 기본 계정: ID: admin / PW: admin
+#    - 볼륨: 프로젝트 루트의 `data/.services/cronicle`에 스케줄 설정 및 로그 저장
+#    - 백업 및 복원: `make export-cron` / `make init-cron` 명령어를 통해 이벤트 백업 관리
+# ==============================================================================
+
 services:
   cronicle:
-    # 📝 Default Login Info:
-    # - URL: http://cron.localhost || http://cron.127.0.0.1.nip.io
-    # - User: admin
-    # - Pass: admin
     build:
       context: ./docker/cronicle
       dockerfile: Dockerfile

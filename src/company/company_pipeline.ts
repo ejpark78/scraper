@@ -85,7 +85,14 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
                 },
                 { upsert: true }
             );
-            console.log(`📡 [MongoDB Write] Successfully saved Company ID ${id} to bronze.companies and silver.companies.`);
+            // 3) 완료 마킹을 위해 DB status 업데이트
+            const companyUrlsColl = await dbInstance.getCollection('bronze.company_urls');
+            await companyUrlsColl.updateOne(
+                { companyId: id },
+                { $set: { status: 'completed', updatedAt: new Date() } }
+            );
+
+            console.log(`📡 [MongoDB Write] Successfully saved Company ID ${id} and marked as completed.`);
         } catch (dbErr: any) {
             console.error(`❌ [MongoDB Write Error] Failed to write Company ${id} to DB: ${dbErr.message}`);
             throw dbErr;
@@ -104,11 +111,7 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
 
 // 스크립트 단독 기동 처리
 if (require.main === module) {
-    const urlsFile = process.argv[2];
-    if (!urlsFile) {
-        console.error('❌ 사용법: npx ts-node company_pipeline.ts <회사_URL_목록_파일_경로>');
-        process.exit(1);
-    }
+    const urlsFile = process.argv[2]; // 선택 사항
 
     const pipeline = new CompanyScrapingPipeline();
     pipeline.run(urlsFile).catch(err => {
@@ -116,3 +119,4 @@ if (require.main === module) {
         process.exit(1);
     });
 }
+

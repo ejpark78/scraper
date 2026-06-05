@@ -52,13 +52,20 @@ export abstract class BasePipeline<TMeta> {
     /**
      * 🚀 파이프라인 구동 메인 템플릿 메서드
      */
-    public async run(urlsFile: string): Promise<void> {
-        if (!fs.existsSync(urlsFile)) {
-            console.error(`❌ ${this.getDomainName()} URL 목록 파일을 찾을 수 없습니다: ${urlsFile}`);
-            process.exit(1);
-        }
+    public async run(urlsFile?: string): Promise<void> {
+        let origCount = 0;
+        const filteredUrls: string[] = [];
+        const processedIds = new Set<string>(); // 파일 내부 중복 차단
 
-        console.log(`🚀 [시작] ${urlsFile} 기반 ${this.getDomainName()} 정보 수집 및 백업 자동화 파이프라인 가동`);
+        if (urlsFile) {
+            if (!fs.existsSync(urlsFile)) {
+                console.error(`❌ ${this.getDomainName()} URL 목록 파일을 찾을 수 없습니다: ${urlsFile}`);
+                process.exit(1);
+            }
+            console.log(`🚀 [시작] ${urlsFile} 기반 ${this.getDomainName()} 정보 수집 및 백업 자동화 파이프라인 가동`);
+        } else {
+            console.log(`🚀 [시작] MongoDB 기반 ${this.getDomainName()} 정보 수집 및 백업 자동화 파이프라인 가동`);
+        }
 
         // 로그인 상태 확인
         const useLoginEnv = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
@@ -157,60 +164,82 @@ export abstract class BasePipeline<TMeta> {
         }
 
         // 2. urlsFile 에서 고유 대상 URL 로드 및 필터링
-        const filteredUrls: string[] = [];
-        const processedIds = new Set<string>(); // 파일 내부 중복 차단
-        let origCount = 0;
-
-        if (urlsFile.endsWith('.json')) {
-            try {
-                const jobsList = JSON.parse(fs.readFileSync(urlsFile, 'utf-8'));
-                origCount = jobsList.length;
-
-                // config.json에서 target locations 로드
-                let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
+        if (urlsFile) {
+            if (urlsFile.endsWith('.json')) {
                 try {
-                    const configPath = path.join(__dirname, '..', '..', 'config', 'config.json');
-                    if (fs.existsSync(configPath)) {
-                        const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-                        if (config.search_targets) {
-                            targetLocations = config.search_targets
-                            .filter((t: any) => t.enabled !== false)
-                            .map((t: any) => t.location);
-                        }
-                    }
-                } catch (e) {}
+                    const jobsList = JSON.parse(fs.readFileSync(urlsFile, 'utf-8'));
+                    origCount = jobsList.length;
 
-                jobsList.forEach((job: any) => {
-                    // 오직 DIRECT 소스이고 타겟 국가에 매칭되는 건들 중 아직 캐시에 없는 건만 대기열에 추가
-                    if (job.source === 'DIRECT' && targetLocations.includes(job.geo)) {
-                        const id = job.jobId;
-                        if (!id) return;
-                        if (!cacheSet.has(id) && !processedIds.has(id)) {
-                            filteredUrls.push(job.url || `https://www.linkedin.com/jobs/view/${id}`);
+                    // config.json에서 target locations 로드
+                    let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
+                    try {
+                        const configPath = path.join(__dirname, '..', '..', 'config', 'config.json');
+                        if (fs.existsSync(configPath)) {
+                            const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                            if (config.search_targets) {
+                                targetLocations = config.search_targets
+                                .filter((t: any) => t.enabled !== false)
+                                .map((t: any) => t.location);
+                            }
+                        }
+                    } catch (e) {}
+
+                    jobsList.forEach((job: any) => {
+                        // 오직 DIRECT 소스이고 타겟 국가에 매칭되는 건들 중 아직 캐시에 없는 건만 대기열에 추가
+                        if (job.source === 'DIRECT' && targetLocations.includes(job.geo)) {
+                            const id = job.jobId;
+                            if (!id) return;
+                            if (!cacheSet.has(id) && !processedIds.has(id)) {
+                                filteredUrls.push(job.url || `https://www.linkedin.com/jobs/view/${id}`);
+                                processedIds.add(id);
+                            }
+                        }
+                    });
+                } catch (jsonErr: any) {
+                    console.error(`❌ JSON 파일 파싱 실패: ${jsonErr.message}`);
+                    process.exit(1);
+                }
+            } else {
+                const rawLines = fs.readFileSync(urlsFile, 'utf-8').split(/\r?\n/);
+                origCount = rawLines.filter(l => l.trim() && !l.trim().startsWith('#')).length;
+
+                rawLines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (!trimmed || trimmed.startsWith('#')) return;
+
+                    const id = this.extractId(trimmed);
+                    if (!id) return;
+
+                    if (!cacheSet.has(id) && !processedIds.has(id)) {
+                        filteredUrls.push(trimmed);
+                        processedIds.add(id);
+                    }
+                });
+            }
+        } else {
+            // DB 기반 회사 정보 URL 동적 로드
+            try {
+                const { MongoDatabase } = require('../database/mongo');
+                const dbInstance = MongoDatabase.getInstance();
+                const companyUrlsColl = await dbInstance.getCollection('bronze.company_urls');
+                
+                // 아직 완료되지 않았거나 신규 수집 상태의 모든 URL을 로드
+                const newCompanyUrls = await companyUrlsColl.find({ status: { $ne: 'completed' } }).toArray();
+                origCount = newCompanyUrls.length;
+
+                newCompanyUrls.forEach((doc: any) => {
+                    if (doc.url) {
+                        const id = this.extractId(doc.url);
+                        if (id && !cacheSet.has(id) && !processedIds.has(id)) {
+                            filteredUrls.push(doc.url);
                             processedIds.add(id);
                         }
                     }
                 });
-            } catch (jsonErr: any) {
-                console.error(`❌ JSON 파일 파싱 실패: ${jsonErr.message}`);
+            } catch (err: any) {
+                console.error(`❌ MongoDB에서 회사 수집 대상 URL 로드 실패: ${err.message}`);
                 process.exit(1);
             }
-        } else {
-            const rawLines = fs.readFileSync(urlsFile, 'utf-8').split(/\r?\n/);
-            origCount = rawLines.filter(l => l.trim() && !l.trim().startsWith('#')).length;
-
-            rawLines.forEach(line => {
-                const trimmed = line.trim();
-                if (!trimmed || trimmed.startsWith('#')) return;
-
-                const id = this.extractId(trimmed);
-                if (!id) return;
-
-                if (!cacheSet.has(id) && !processedIds.has(id)) {
-                    filteredUrls.push(trimmed);
-                    processedIds.add(id);
-                }
-            });
         }
 
         const filteredCount = filteredUrls.length;

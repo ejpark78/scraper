@@ -1,9 +1,16 @@
+# ==============================================================================
+# 🛠️ Yacht Container Management Dashboard (profile: tools)
+# ==============================================================================
+# 1. yacht
+#    - 용도: 직관적인 웹 GUI 환경을 통해 도커 컨테이너를 관리하고 자원을 모니터링하는 패널
+#    - 접속 URL: https://yacht.localhost 또는 https://yacht.127.0.0.1.nip.io
+#    - 기본 계정: admin@yacht.local / pass
+#    - 특이사항: 내부 Uvicorn API와 통신하기 위해 `base_url=https://yacht.127.0.0.1.nip.io/api/` 환경 변수가 필수 주입되어야 합니다.
+#    - 볼륨: 프로젝트 루트의 `data/.services/yacht` 디렉토리에 설정 정보 영구 매핑
+# ==============================================================================
+
 services:
   yacht:
-    # 📝 Default Login Info:
-    # - URL: http://yacht.localhost || http://yacht.127.0.0.1.nip.io
-    # - User: admin@yacht.local
-    # - Pass: pass
     image: selfhostedpro/yacht:latest
     container_name: yacht
     profiles:
