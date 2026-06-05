@@ -15,6 +15,9 @@ services:
     container_name: yacht
     profiles:
       - tools
+    depends_on:
+      traefik:
+        condition: service_healthy
     environment:
       - base_url=https://yacht.127.0.0.1.nip.io/api/
     volumes:

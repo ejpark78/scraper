@@ -12,10 +12,13 @@
 services:
   cronicle:
     build:
-      context: ./docker/cronicle
+      context: .
       dockerfile: Dockerfile
     image: linkedin/cronicle:latest
     hostname: localhost
+    depends_on:
+      traefik:
+        condition: service_healthy
     profiles:
       - tools
     environment:

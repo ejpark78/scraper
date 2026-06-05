@@ -31,9 +31,11 @@ services:
   redisinsight:
     image: redis/redisinsight:3.4.2
     profiles:
-      - tools    
+      - tools
     depends_on:
       redis:
+        condition: service_healthy
+      traefik:
         condition: service_healthy
     environment:
       - TZ=Asia/Seoul

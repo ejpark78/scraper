@@ -14,7 +14,7 @@
 services:
   clipper:
     build:
-      context: .
+      context: ../../
       dockerfile: docker/clipper/Dockerfile
     image: linkedin/clipper:latest
     profiles:
@@ -37,7 +37,7 @@ services:
 
   clipper-worker:
     build:
-      context: .
+      context: ../../
       dockerfile: docker/clipper/Dockerfile
     image: linkedin/clipper:latest
     command: ["npx", "ts-node", "src/redis_worker.ts"]

@@ -4,7 +4,7 @@
 # 1. dozzle
 #    - 용도: 구동 중인 모든 도커 컨테이너들의 stdout/stderr 로그를 웹 브라우저에서 스트리밍 형태로 실시간 모니터링하는 도구
 #    - 접속 URL: https://dozzle.localhost 또는 https://dozzle.127.0.0.1.nip.io (인증 생략)
-#    - 헬스체크: Dozzle 실행 바이너리 자체의 내장 헬스체크 명령어 사용 `["CMD", "/dozzle", "healthcheck"]` 
+#    - 헬스체크: Dozzle 실행 바이너리 자체의 내장 헬스체크 명령어 사용 `["CMD", "/dozzle", "healthcheck"]`
 #                (Scratch 경량 빌드로 curl/wget이 없기 때문)
 #    - 권한: `/var/run/docker.sock` 마운트 필요
 # ==============================================================================
@@ -15,6 +15,9 @@ services:
     container_name: dozzle
     profiles:
       - tools
+    depends_on:
+      traefik:
+        condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped

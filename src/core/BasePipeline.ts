@@ -272,6 +272,13 @@ export abstract class BasePipeline<TMeta> {
             currentIndex++;
             const myIndex = currentIndex;
 
+            // 💤 [대기] 다음 요청까지 슬랙타임 대기
+            const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
+            if (myIndex > 1 && sleepSec > 0) {
+                console.log(`💤 [대기] 다음 ${this.getDomainName()} 요청까지 ${sleepSec}초 대기 중...`);
+                await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
+            }
+
             // 진행률 및 ETR 계산
             const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
             const runtimeStr = DateUtils.formatSeconds(elapsedSeconds);
@@ -288,7 +295,9 @@ export abstract class BasePipeline<TMeta> {
             const currentIndexFmt = FormatUtils.formatThousand(myIndex);
             const filteredCountFmt = FormatUtils.formatThousand(filteredCount);
 
+            console.log(`\n──────────────────────────────────────────────────`);
             console.log(`🏢 [${currentIndexFmt}/${filteredCountFmt}][${runtimeStr}/${etrStr}] ${loginStatus} ID: ${id} | 시작`);
+            console.log(`──────────────────────────────────────────────────`);
 
             const tempHtmlPath = path.join(os.tmpdir(), `temp_${id}.html`);
 

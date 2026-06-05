@@ -29,7 +29,7 @@
 # ==============================================================================
 
 # 공통 프로젝트 지정을 위한 단일 Docker Compose 명령어 (루트 compose.yml include 사용)
-COMPOSE := HOST_PROJECT_PATH=$$(pwd) docker compose 
+COMPOSE := HOST_PROJECT_PATH=$$(pwd) docker compose
 
 
 .PHONY: *
@@ -51,22 +51,47 @@ help:
 	@echo "🌐 LinkedIn Job Scraper CLI (Dockerized - Include Modular)"
 	@echo "========================================================================="
 	@echo "사용 가능한 명령어 목록 (자동 Docker 가동):"
+	@echo "  make build          - [Host] Docker 컨테이너 이미지를 빌드합니다."
 	@echo "  make up             - 인프라 및 모든 개발 도구(Traefik, Yacht, Jupyter 등)를 기동합니다."
 	@echo "  make down           - 작동 중인 모든 모듈과 인프라를 일괄 종료합니다."
 	@echo "  make login          - [Host/Kasm] 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
 	@echo "  make kasm           - [Host] Kasm 컨테이너 내부 쉘(shell)에 진입합니다."
 	@echo "  make open           - [Host/Kasm] 로그인 세션 기반 헤드풀 브라우저 기동"
 	@echo "  make list           - [Docker] config.json 조건 기반으로 목록 HTML을 무인 수집합니다."
-	@echo "  make company        - [Docker] urls.txt 기반 회사 정보를 수집하여 마크다운으로 저장합니다."
+	@echo "                        * 옵션: LISTS (설정경로), PARALLEL (병렬수), AUTH (인증여부), SLACK_TIME (지연초)"
+	@echo "                        * 예시 (기본 설정 실행): make list"
+	@echo "                        * 예시 (옵션 종합 지정): make list LISTS=config/custom.json PARALLEL=1 AUTH=true SLACK_TIME=5"
+	@echo "  make company        - [Docker] MongoDB(bronze.company_urls) 기반 회사 정보를 수집하여 마크다운으로 저장합니다."
+	@echo "                        * 옵션: AUTH (인증여부), PARALLEL (병렬수), SLACK_TIME (지연초)"
+	@echo "                        * 예시 (기본 회사 수집): make company"
+	@echo "                        * 예시 (옵션 종합 지정): make company AUTH=true PARALLEL=1 SLACK_TIME=5"
 	@echo "  make test           - [Docker] URL 생성기 단위 테스트 실행"
 	@echo "  make backfill       - [Docker] DB에 이미 저장된 상세 HTML의 추천공고 중 미수집 건 역추적하여 적재"
+	@echo "                        * 옵션: SLACK_TIME (지연초), CHUNK_SIZE (배치크기)"
+	@echo "                        * 예시 (기본 역추적 실행): make backfill"
+	@echo "                        * 예시 (옵션 종합 지정): make backfill SLACK_TIME=5 CHUNK_SIZE=200"
 	@echo "  make check-worker   - [Host/Kasm] Redis의 다운로드 큐 상태와 워커 컨테이너 상태를 확인합니다."
+	@echo "  make fix-queue      - [Host/Kasm] 미수집된 유실/잔여 타겟의 DB 상태를 복구하여 Redis 대기 상태로 전환합니다."
+	@echo "                        * 옵션: GEOS (복구 국가 목록)"
+	@echo "                        * 예시 (기본 국가 복구): make fix-queue"
+	@echo "                        * 예시 (특정 국가 지정): make fix-queue GEOS=\"'South Korea'\""
+	@echo "                        * 예시 (여러 국가 지정): make fix-queue GEOS=\"'South Korea','Japan'\""
+	@echo "  make lint-yaml      - [Docker] 프로젝트 내 모든 compose.yml 및 yml 파일의 문법 린트를 검사합니다."
 	@echo "  make clean          - [Host/Kasm] 임시 파일 및 빈 폴더 정리"
-	@echo "  make export-cron    - [Host/Kasm] 현재 Cronicle 이벤트를 docker/cronicle/default.json으로 내보냅니다."
-	@echo "  make init-cron      - [Host/Kasm] 백업된 Cronicle 이벤트를 새로 기동된 컨테이너에 가져옵니다."
 	@echo "  make dump-silver    - [Host/Kasm] 정제된 실버 레이어(silver.*) 데이터만 백업합니다."
 	@echo "  make dump-bronze    - [Host/Kasm] 수집 원본 브론즈 레이어(bronze.*) 데이터만 백업합니다."
 	@echo "========================================================================="
+	@echo "⚙️ 설정 가능한 환경 변수 및 기본값 (변수=값 형태로 오버라이드 가능):"
+	@echo "  LISTS      - 수집 대상 설정 JSON 파일 경로 (기본값: config/config.json)"
+	@echo "  PARALLEL   - 동시 구동할 브라우저 러너 수량   (기본값: 1)"
+	@echo "  AUTH       - 브라우저 로그인 세션 사용 여부    (기본값: true)"
+	@echo "  SLACK_TIME - 페이지 요청 간의 대기 지연 초    (기본값: 3)"
+	@echo "  CHUNK_SIZE - 일괄 처리 배치 조각 단위 수량     (기본값: 500)"
+	@echo "========================================================================="
+
+# Docker 이미지 빌드
+build:
+	$(COMPOSE) --profile tools --profile runtime build
 
 # 전체 모듈 일괄 기동
 up:
@@ -110,20 +135,7 @@ logout:
 	rm -f config/session.json
 	@echo "🔒 로그인 세션이 성공적으로 삭제되었습니다."
 
-export-cron:
-	@mkdir -p docker/cronicle
-	$(COMPOSE) exec -T cronicle /opt/cronicle/bin/control.sh export /app/docker/cronicle/default.json
-	@echo "💾 Cronicle 이벤트가 docker/cronicle/default.json으로 성공적으로 백업되었습니다."
 
-init-cron:
-	@if [ ! -f "docker/cronicle/default.json" ]; then \
-		echo "❌ 에러: docker/cronicle/default.json 파일이 존재하지 않습니다. 먼저 'make export-cron'을 실행해 주세요."; \
-		exit 1; \
-	fi
-	$(COMPOSE) stop cronicle
-	$(COMPOSE) run --rm cronicle /opt/cronicle/bin/storage-cli.js import /app/docker/cronicle/default.json
-	$(COMPOSE) start cronicle
-	@echo "✅ Cronicle 이벤트 복원 및 재시작이 완료되었습니다."
 
 
 # 호스트 가동 시 컨테이너로 위임(Proxy), 컨테이너 내부일 경우 실제 작업 수행
@@ -139,13 +151,19 @@ job-list:
 list: job-list
 
 company:
-	LOGIN=$(AUTH) npx ts-node src/company/company_pipeline.ts
+	LOGIN=$(AUTH) PARALLEL=$(PARALLEL) SLACK_TIME=$(SLACK_TIME) npx ts-node src/company/company_pipeline.ts
 
 test:
 	npx ts-node tests/url_manager.test.ts
 
 backfill:
 	SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE) npx ts-node src/jobs/backfill.ts
+
+fix-queue:
+	GEOS="$(GEOS)" npx ts-node src/jobs/fix_queue.ts
+
+lint-yaml:
+	npx yaml-lint compose.yml "docker/**/*.yml"
 
 else
 
@@ -156,13 +174,19 @@ list:
 job-list: list
 
 company:
-	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true -e AUTH=$(AUTH) -e PARALLEL=$(PARALLEL) -e SLACK_TIME=$(SLACK_TIME) clipper make company AUTH=$(AUTH) PARALLEL=$(PARALLEL) SLACK_TIME=$(SLACK_TIME)
 
 test:
 	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true clipper make test
 
 backfill:
-	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true clipper make backfill SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE)
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true -e SLACK_TIME=$(SLACK_TIME) -e CHUNK_SIZE=$(CHUNK_SIZE) clipper make backfill SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE)
+
+fix-queue:
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true -e GEOS="$(GEOS)" clipper make fix-queue GEOS="$(GEOS)"
+
+lint-yaml:
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e HOST_PROJECT_PATH=$$(pwd) -e IN_CONTAINER=true clipper make lint-yaml
 
 endif
 
@@ -193,4 +217,5 @@ check-worker:
 	@echo ""
 	@echo "📋 Active worker containers:"
 	@docker ps --filter "name=linkedin-clipper-worker" --format "table {{.Names}}\t{{.Status}}"
+
 

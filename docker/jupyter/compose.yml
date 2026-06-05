@@ -11,11 +11,14 @@
 services:
   jupyter:
     build:
-      context: ./docker/jupyter
+      context: .
       dockerfile: Dockerfile
     image: linkedin/jupyter:latest
     profiles:
       - tools
+    depends_on:
+      traefik:
+        condition: service_healthy
     user: root
     environment:
       - TZ=Asia/Seoul

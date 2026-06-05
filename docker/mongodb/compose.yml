@@ -43,11 +43,13 @@ services:
       - ME_CONFIG_MONGODB_PORT=27017
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
     profiles:
-      - tools      
-    restart: unless-stopped
+      - tools
     depends_on:
+      traefik:
+        condition: service_healthy
       mongodb:
         condition: service_healthy
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://admin:pass@127.0.0.1:8081/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 10s
