@@ -1,5 +1,5 @@
-import { MongoDatabase } from '../database/mongo';
-import { UrlUtils } from '../utils';
+import { MongoDatabase } from '../../database/mongo';
+import { UrlUtils } from '../../utils';
 import Redis from 'ioredis';
 import * as fs from 'fs';
 import * as path from 'path';

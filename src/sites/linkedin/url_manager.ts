@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as readline from 'readline';
 import * as path from 'path';
 import { URLSearchParams } from 'url';
-import { UrlUtils, IOUtils, FormatUtils } from '../utils';
+import { UrlUtils, IOUtils, FormatUtils } from '../../utils';
 
 // ⚙️ LinkedIn URL 생성, 검색 조건 빌드 및 중복 필터링 통합 OOP 매니저 (TypeScript)
 

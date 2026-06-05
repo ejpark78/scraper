@@ -1,7 +1,7 @@
 import { chromium, Browser, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
-import { LinkedInUrlManager, Config } from './jobs/url_manager';
+import { LinkedInUrlManager, Config } from './sites/linkedin/url_manager';
 import { HtmlMinifier, DateUtils, UrlUtils } from './utils';
 
 // ⚙️ LinkedIn Playwright 스크래퍼 및 인증 통합 OOP 엔진 (TypeScript)

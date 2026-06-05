@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { MongoDatabase } from '../database/mongo';
+import { MongoDatabase } from '../../database/mongo';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const QUEUE_KEY = 'pytorch_kr_queue';

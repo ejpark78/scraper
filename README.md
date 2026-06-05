@@ -4,7 +4,7 @@
 
 이 프로젝트는 링크드인(LinkedIn)의 채용 공고(Jobs) 및 회사 상세 정보(Company About) 페이지를 자동 수집하고 가공하여, 사람이 읽기 쉬운 표준 마크다운(Markdown) 문서로 정제하고 MongoDB에 완벽히 적재해 주는 강력한 자동화 도구입니다.
 
-최근 클린 아키텍처 리팩토링 및 몽고디비/레디스 기반 실시간 비동기 아키텍처 개편을 거쳐 **100% TypeScript 객체 지향 프로그래밍(OOP)** 기반 구조로 전면 개편되었습니다. **템플릿 메서드 패턴(Template Method Pattern)**을 이용해 메인 루프를 추상화하였고, **제네릭 규격 인터페이스(IConverter<T>)** 적용, 그리고 **채용공고 도메인(`src/jobs`)**과 **회사 정보 도메인(`src/company`)**을 물리적으로 완전히 격리하여 탄탄한 유지보수성을 제공합니다.
+최근 클린 아키텍처 리팩토링 및 몽고디비/레디스 기반 실시간 비동기 아키텍처 개편을 거쳐 **100% TypeScript 객체 지향 프로그래밍(OOP)** 기반 구조로 전면 개편되었습니다. **템플릿 메서드 패턴(Template Method Pattern)**을 이용해 메인 루프를 추상화하였고, **제네릭 규격 인터페이스(IConverter<T>)** 적용, 그리고 **링크드인 도메인(`src/sites/linkedin`)**으로 통합하여 탄탄한 유지보수성을 제공합니다.
 
 ---
 
@@ -14,8 +14,8 @@
 * **🏢 코어 레이어 구축 (`src/core/`)**:
   * [BasePipeline.ts](file:///home/ejpark/workspace/linkedin/src/core/BasePipeline.ts): 시간 경과 로그, 수집 속도 기반 ETR(남은 시간) 계산, MongoDB/Redis 캐시 로드, 예외 처리 및 중단 핸들러를 캡슐화한 상위 추상 클래스입니다.
   * [IConverter.ts](file:///home/ejpark/workspace/linkedin/src/core/IConverter.ts): 메타데이터 객체를 생성하는 가공 파서와 Prettier 포맷터를 제네릭 구조로 인터페이스화하였습니다.
-* **💼 도메인 격리 (`src/jobs/`, `src/company/`)**:
-  * 채용 공고와 회사 상세 정보가 각자의 도메인 폴더 하위로 완전히 격리되어 결합도가 줄어들고 가독성이 대폭 향상되었습니다.
+* **💼 링크드인 도메인 통합 (`src/sites/linkedin/`)**:
+  * 채용 공고와 회사 상세 정보가 `src/sites/linkedin/` 폴더 하위로 통합되어 구조가 더 심플해지고 관리가 용이해졌습니다.
 
 ### 2. MongoDB & Redis 기반 분산 아키텍처 (New)
 * **Bronze / Silver 2단계 데이터 파이프라인**:
@@ -50,17 +50,16 @@
 ```text
    [LinkedIn Web] ──(session.json 로그인 세션)──➜ Playwright (src/crawler.ts)
                                                       │
-                                                      ├────────────────────────────────┐
-                                                      ▼ [채용공고 도메인]              ▼ [회사정보 도메인]
-                                               lists/urls.txt                  data/compay/lists/urls.txt
-                                                      │                                │
-                                                      ▼                                ▼
-                                              JobsPipeline (src/jobs/)        CompanyPipeline (src/company/)
-                                                      │                                │
-                                                      ▼                                ▼
-                                             [MongoDB]                         [MongoDB]
-                                             - bronze.jobs                     - bronze.companies
-                                             - silver.jobs                     - silver.companies
+                                                      ▼ [링크드인 도메인]
+                                               lists/urls.txt / data/compay/lists/urls.txt
+                                                      │
+                                                      ▼
+                                            src/sites/linkedin/ (JobsPipeline & CompanyPipeline)
+                                                      │
+                                                      ▼
+                                             [MongoDB]
+                                             - bronze.jobs / bronze.companies
+                                             - silver.jobs / silver.companies
 ```
 
 ### 2. 명령어 호출 흐름 (Command Flow)
@@ -82,106 +81,31 @@
 ## 📂 프로젝트 디렉토리 구조 (Directory Tree)
 
 ```text
-├── data/                     # 📁 수집 및 정제 데이터 저장 물리 디렉토리
-│   ├── .services/            # ⚙️ 서비스 퍼시스턴스 데이터 (cronicle, redis 등)
-│   │   ├── cronicle/         # Cronicle 서비스 데이터
-│   │   └── redis/            # Redis 퍼시스턴스 데이터
-│   ├── sessions/             # 🔑 안전하게 격리된 Playwright 로그인 세션 저장소 (session.json)
-│   ├── jobs/                 # 💼 채용공고 수집 공간
-│   │   └── lists/
-│   │       ├── urls.txt      # 신규 수집 대상 채용공고 URL 목록
-│   │       └── cache.list    # 로컬에 수집 완료된 채용공고 고유 ID 캐시 인덱스
-│   └── compay/               # 🏢 회사 프로필 수집 공간 (기존 jobs 하위에서 격리 이관)
-│       └── lists/
-│           └── urls.txt      # 신규 수집 대상 회사 URL 목록 (기존 jobs/lists/compay.txt에서 이관)
 ├── config/                   # 📁 타겟 설정 디렉토리
 │   ├── config.json           # 수집 키워드/지역 제어 통합 JSON 설정 파일
 │   └── country.json          # 표준 국가명 매핑 설정 파일
-├── src/                      # 🌟 TypeScript 객체 지향 클린 소스 코드
+├── data/                     # 📁 수집 및 정제 데이터 저장 물리 디렉토리
+│   ├── .services/            # ⚙️ 서비스 퍼시스턴스 데이터 (cronicle, redis 등)
+│   ├── sessions/             # 🔑 안전하게 격리된 Playwright 로그인 세션 저장소 (session.json)
+│   ├── jobs/                 # 💼 채용공고 수집 공간
+│   └── compay/               # 🏢 회사 프로필 수집 공간
+├── src/                      # 🌟 TypeScript 객체 지향 소스 코드
 │   ├── core/                 # 🏢 도메인 독립형 핵심 프레임워크 클래스
 │   │   ├── IConverter.ts     # 제네릭 변환 인터페이스 규격
 │   │   └── BasePipeline.ts   # 메인 제어 흐름 및 ETR, 세션 예외처리 캡슐화 추상 클래스
 │   ├── utils/                # ⚙️ 단일 책임 분리 경량 유틸리티 모듈
-│   │   ├── date.ts           # 상대 시간 파싱 및 ETR 포맷팅
-│   │   ├── format.ts         # 숫자 및 천 단위 구분자 포맷팅
-│   │   ├── html_minifier.ts  # Cheerio/Prettier 기반 HTML 용량 다이어트 유틸
-│   │   ├── io.ts             # 재귀적 디렉토리 파일 I/O
-│   │   ├── naming.ts         # 특수문자 정제 및 파일명 안전 빌더
-│   │   ├── url.ts            # URL ID 디코드 및 표준 위치 매핑 바인더
-│   │   └── index.ts          # 유틸리티 통합 배럴 내보내기 파일
-│   ├── jobs/                 # 💼 채용공고 도메인 수집/가공 바인딩 공간
-│   │   ├── jobs_pipeline.ts  # BasePipeline 상속 채용공고 파이프라인
-│   │   ├── jobs_converter.ts # IConverter 구현 채용공고 HTML ➡️ MD 변환기
-│   │   └── url_manager.ts    # 검색 URL 빌더, 메모리 최적화 링크/ID 추출 매니저
-│   ├── company/              # 🏢 회사정보 도메인 수집/가공 바인딩 공간
-│   │   ├── company_pipeline.ts # BasePipeline 상속 회사 정보 파이프라인
-│   │   └── company_converter.ts # IConverter 구현 회사 HTML(JSON+DOM) ➡️ MD 변환기
-│   ├── redis_worker.ts       # 🤖 분산 수집을 위한 백그라운드 레디스 워커 프로세스
-│   └── crawler.ts            # 🌐 Playwright 로그인/수집 및 CrawlerFactory
-├── tests/                    # 📁 단위 테스트 폴더
-├── tsconfig.json             # ⚙️ TypeScript 설정 파일
-├── Makefile                  # ⚙️ 빌드 및 파이프라인 실행 제어용 메이크파일
-└── README.md                 # 프로젝트 통합 설명서
-```  │                                │
-                                                      ▼                                ▼
-                                             [공고 상세 HTML/MD]             [회사 상세 HTML/MD]
-                                           📂 html/[Location]/[Date]       📂 html/[FullCountryName]/
-                                           📂 markdown/[Location]/[Date]   📂 markdown/[FullCountryName]/
-```
-
-### 2. 명령어 호출 흐름 (Command Flow)
-```text
-  Makefile Interface
-  ├── make login ──────────────➜ npx ts-node src/crawler.ts login (1회성 로그인 세션 덤프)
-  │
-  ├── make list ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용 검색 결과 목록 HTML 덤프 & 자동 상세 URL 추출)
-  │
-  ├── make company ────────────➜ AUTH=$(AUTH) ts-node (회사정보 수집/변환 파이프라인 가동)
-  │
-  ├── make html2md ────────────➜ jobs_converter.ts & reconvert_all.ts (유실 복원 및 마크다운 일괄 재생성)
-  │
-  └── make test ───────────────➜ npx ts-node tests/url_manager.test.ts (단위 테스트 기동)
-```
-
----
-
-## 📂 프로젝트 디렉토리 구조 (Directory Tree)
-
-```text
-├── data/                     # 📁 수집 및 정제 데이터 저장 물리 디렉토리
-│   ├── .services/            # ⚙️ 서비스 퍼시스턴스 데이터 (cronicle, redis 등)
-│   │   ├── cronicle/         # Cronicle 서비스 데이터
-│   │   └── redis/            # Redis 퍼시스턴스 데이터
-│   ├── sessions/             # 🔑 안전하게 격리된 Playwright 로그인 세션 저장소 (session.json)
-│   ├── jobs/                 # 💼 채용공고 수집 공간
-│   │   └── lists/
-│   │       ├── urls.txt      # 신규 수집 대상 채용공고 URL 목록
-│   │       └── cache.list    # 로컬에 수집 완료된 채용공고 고유 ID 캐시 인덱스
-│   └── compay/               # 🏢 회사 프로필 수집 공간 (기존 jobs 하위에서 격리 이관)
-│       └── lists/
-│           └── urls.txt      # 신규 수집 대상 회사 URL 목록 (기존 jobs/lists/compay.txt에서 이관)
-├── config/                   # 📁 타겟 설정 디렉토리
-│   ├── config.json           # 수집 키워드/지역 제어 통합 JSON 설정 파일
-│   └── country.json          # 표준 국가명 매핑 설정 파일
-├── src/                      # 🌟 TypeScript 객체 지향 클린 소스 코드
-│   ├── core/                 # 🏢 도메인 독립형 핵심 프레임워크 클래스
-│   │   ├── IConverter.ts     # 제네릭 변환 인터페이스 규격
-│   │   └── BasePipeline.ts   # 메인 제어 흐름 및 ETR, 세션 예외처리 캡슐화 추상 클래스
-│   ├── utils/                # ⚙️ 단일 책임 분리 경량 유틸리티 모듈
-│   │   ├── date.ts           # 상대 시간 파싱 및 ETR 포맷팅
-│   │   ├── format.ts         # 숫자 및 천 단위 구분자 포맷팅
-│   │   ├── html_minifier.ts  # Cheerio/Prettier 기반 HTML 용량 다이어트 유틸
-│   │   ├── io.ts             # 재귀적 디렉토리 파일 I/O
-│   │   ├── naming.ts         # 특수문자 정제 및 파일명 안전 빌더
-│   │   ├── url.ts            # URL ID 디코드 및 표준 위치 매핑 바인더
-│   │   └── index.ts          # 유틸리티 통합 배럴 내보내기 파일
-│   ├── jobs/                 # 💼 채용공고 도메인 수집/가공 바인딩 공간
-│   │   ├── jobs_pipeline.ts  # BasePipeline 상속 채용공고 파이프라인
-│   │   ├── jobs_converter.ts # IConverter 구현 채용공고 HTML ➡️ MD 변환기
-│   │   └── url_manager.ts    # 검색 URL 빌더, 메모리 최적화 링크/ID 추출 매니저
-│   ├── company/              # 🏢 회사정보 도메인 수집/가공 바인딩 공간
-│   │   ├── company_pipeline.ts # BasePipeline 상속 회사 정보 파이프라인
-│   │   └── company_converter.ts # IConverter 구현 회사 HTML(JSON+DOM) ➡️ MD 변환기
+│   ├── sites/                # 🌐 사이트별 스크래핑/파이프라인 모듈
+│   │   ├── geeknews/         # GeekNews 수집 모듈
+│   │   ├── gpters/           # GPTERS 수집 모듈
+│   │   ├── pytorch_kr/       # PyTorch KR 수집 모듈
+│   │   └── linkedin/         # 💼 링크드인(채용공고 & 회사정보) 통합 수집 모듈
+│   │       ├── jobs_pipeline.ts
+│   │       ├── jobs_converter.ts
+│   │       ├── company_pipeline.ts
+│   │       ├── company_converter.ts
+│   │       ├── url_manager.ts
+│   │       ├── backfill.ts
+│   │       └── fix_queue.ts
 │   ├── redis_worker.ts       # 🤖 분산 수집을 위한 백그라운드 레디스 워커 프로세스
 │   └── crawler.ts            # 🌐 Playwright 로그인/수집 및 CrawlerFactory
 ├── tests/                    # 📁 단위 테스트 폴더

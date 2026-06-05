@@ -1,5 +1,5 @@
 import * as prettier from 'prettier';
-import { IConverter } from '../core/IConverter';
+import { IConverter } from '../../core/IConverter';
 
 export interface GptersMeta {
     id: string;

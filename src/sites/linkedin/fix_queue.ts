@@ -1,4 +1,4 @@
-import { MongoDatabase } from '../database/mongo';
+import { MongoDatabase } from '../../database/mongo';
 import * as fs from 'fs';
 import * as path from 'path';
 import Redis from 'ioredis';

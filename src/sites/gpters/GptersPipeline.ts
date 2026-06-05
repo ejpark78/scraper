@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { BasePipeline } from '../core/BasePipeline';
+import { BasePipeline } from '../../core/BasePipeline';
 import { GptersMeta, GptersConverter } from './GptersConverter';
 
 export class GptersPipeline extends BasePipeline<GptersMeta> {

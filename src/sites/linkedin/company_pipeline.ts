@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 
-import { BasePipeline } from '../core/BasePipeline';
+import { BasePipeline } from '../../core/BasePipeline';
 import { CompanyMeta, CompanyMarkdownConverter } from './company_converter';
-import { LinkedInCrawler } from '../crawler';
-import { UrlUtils, NamingUtils } from '../utils';
+import { LinkedInCrawler } from '../../crawler';
+import { UrlUtils, NamingUtils } from '../../utils';
 
 export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
     private readonly crawler: LinkedInCrawler;

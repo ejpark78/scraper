@@ -46,10 +46,10 @@ if (process.env.JSON_LOG === 'true') {
 }
 
 import Redis from 'ioredis';
-import { JobsScrapingPipeline } from './jobs/jobs_pipeline';
-import { GeekNewsPipeline } from './geeknews/GeekNewsPipeline';
-import { PyTorchKRPipeline } from './pytorch_kr/PyTorchKRPipeline';
-import { GptersPipeline } from './gpters/GptersPipeline';
+import { JobsScrapingPipeline } from './sites/linkedin/jobs_pipeline';
+import { GeekNewsPipeline } from './sites/geeknews/GeekNewsPipeline';
+import { PyTorchKRPipeline } from './sites/pytorch_kr/PyTorchKRPipeline';
+import { GptersPipeline } from './sites/gpters/GptersPipeline';
 import { UrlUtils, Logger } from './utils';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';

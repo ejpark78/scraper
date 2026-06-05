@@ -16,13 +16,13 @@ list:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler.ts list $(LISTS)
 
 company:
-	$(COMPOSE) run --rm $(RUN_USER) -e AUTH=$(AUTH) -e PARALLEL=$(PARALLEL) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/company/company_pipeline.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e AUTH=$(AUTH) -e PARALLEL=$(PARALLEL) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/sites/linkedin/company_pipeline.ts
 
 backfill:
-	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e CHUNK_SIZE=$(CHUNK_SIZE) clipper npx ts-node src/jobs/backfill.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e CHUNK_SIZE=$(CHUNK_SIZE) clipper npx ts-node src/sites/linkedin/backfill.ts
 
 fix-queue:
-	$(COMPOSE) run --rm $(RUN_USER) -e GEOS="$(GEOS)" clipper npx ts-node src/jobs/fix_queue.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e GEOS="$(GEOS)" clipper npx ts-node src/sites/linkedin/fix_queue.ts
 
 restart-worker:
 	@$(COMPOSE) up -d --build clipper-worker

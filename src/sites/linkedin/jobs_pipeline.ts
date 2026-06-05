@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { BasePipeline } from '../core/BasePipeline';
+import { BasePipeline } from '../../core/BasePipeline';
 import { JobMeta, LinkedInMarkdownConverter } from './jobs_converter';
-import { LinkedInCrawler } from '../crawler';
-import { UrlUtils, NamingUtils } from '../utils';
+import { LinkedInCrawler } from '../../crawler';
+import { UrlUtils, NamingUtils } from '../../utils';
 
 export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
     private readonly crawler: LinkedInCrawler;
