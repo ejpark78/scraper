@@ -47,11 +47,32 @@ if (process.env.JSON_LOG === 'true') {
 
 import Redis from 'ioredis';
 import { JobsScrapingPipeline } from './jobs/jobs_pipeline';
+import { GeekNewsPipeline } from './geeknews/GeekNewsPipeline';
+import { PyTorchKRPipeline } from './pytorch_kr/PyTorchKRPipeline';
+import { GptersPipeline } from './gpters/GptersPipeline';
 import { UrlUtils, Logger } from './utils';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
-const QUEUE_KEY = 'jobs_queue';
-const CACHE_SET_KEY = 'completed_jobs';
+const QUEUES = ['jobs_queue', 'geeknews_queue', 'pytorch_kr_queue', 'gpters_queue'];
+
+function getCacheKeyForQueue(queue: string): string {
+  return queue === 'jobs_queue' ? 'completed_jobs' : 'completed_news';
+}
+
+function extractIdFromUrl(queue: string, url: string): string {
+  if (queue === 'jobs_queue') {
+    return UrlUtils.extractJobId(url) || '';
+  } else if (queue === 'geeknews_queue') {
+    if (url.includes('id=')) return url.split('id=').pop()!.split('&')[0];
+  } else if (queue === 'pytorch_kr_queue') {
+    const match = url.match(/\/(\d+)(?:\?|$)/);
+    if (match) return match[1];
+  } else if (queue === 'gpters_queue') {
+    const parts = url.split('-');
+    return parts[parts.length - 1] || '';
+  }
+  return '';
+}
 
 async function main() {
   Logger.info(`Connecting to Redis at ${REDIS_URL}...`);
@@ -60,49 +81,62 @@ async function main() {
   redis.on('connect', () => Logger.info('Connected to Redis.'));
   redis.on('error', (err) => Logger.error('Redis connection error', err));
 
-  // Initialize pipeline
-  const pipeline = new JobsScrapingPipeline();
+  // Initialize pipelines
+  const pipelines: Record<string, any> = {
+    'jobs_queue': new JobsScrapingPipeline(),
+    'geeknews_queue': new GeekNewsPipeline(),
+    'pytorch_kr_queue': new PyTorchKRPipeline(),
+    'gpters_queue': new GptersPipeline()
+  };
 
-  Logger.info(`Worker started, listening to queue: ${QUEUE_KEY}`);
+  Logger.info(`Worker started, listening to queues: ${QUEUES.join(', ')}`);
 
   while (true) {
     try {
-      // 1. Fetch task from queue with a blocking POP (wait up to 5 seconds)
-      const res = await redis.blpop(QUEUE_KEY, 5);
+      // 1. Fetch task from any queue with a blocking POP (wait up to 5 seconds)
+      const res = await redis.blpop(...QUEUES, 5);
       if (!res) {
         continue;
       }
 
+      const poppedQueue = res[0];
       const url = res[1].trim();
       if (!url) continue;
 
-      const jobId = UrlUtils.extractJobId(url);
-      if (!jobId) {
-        Logger.warn(`Failed to parse jobId from URL`, { url });
+      const cacheSetKey = getCacheKeyForQueue(poppedQueue);
+      const id = extractIdFromUrl(poppedQueue, url);
+      if (!id) {
+        Logger.warn(`Failed to parse ID from URL in queue ${poppedQueue}`, { url });
         continue;
       }
 
       // 2. Check if already completed
-      const isCompleted = await redis.sismember(CACHE_SET_KEY, jobId);
+      const isCompleted = await redis.sismember(cacheSetKey, id);
       if (isCompleted) {
-        Logger.info(`Job already exists in completed list. Skipping.`, { jobId });
+        Logger.info(`Item already exists in completed list for ${poppedQueue}. Skipping.`, { id });
         continue;
       }
 
-      Logger.info(`Processing Job ID: ${jobId}`, { jobId, url });
+      Logger.info(`[Queue: ${poppedQueue}] Processing ID: ${id}`, { id, url });
 
-      // 3. Process task
+      // 3. Process task via correct pipeline
+      const pipeline = pipelines[poppedQueue];
+      if (!pipeline) {
+        Logger.error(`No pipeline registered for queue ${poppedQueue}`);
+        continue;
+      }
+
       const resultId = await pipeline.processSingleUrl(url, redis);
 
       if (resultId) {
         // 4. Mark as completed in Redis cache
-        await redis.sadd(CACHE_SET_KEY, resultId);
-        Logger.info(`Completed Job ID: ${jobId}`, { jobId });
+        await redis.sadd(cacheSetKey, resultId);
+        Logger.info(`Completed ID: ${id} on queue ${poppedQueue}`, { id });
       }
     } catch (err: any) {
       Logger.error(`Error processing task`, err);
 
-      // Handle critical auth wall / login session expired errors (shutdown so we don't spam rate limits)
+      // Handle critical auth wall / login session expired errors for LinkedIn (shutdown so we don't spam rate limits)
       if (err.message && (err.message.includes('세션 만료') || err.message.includes('Auth Wall') || err.message.includes('로그인 요청'))) {
         Logger.error(`Critical login failure. Shutting down worker.`, err);
         await redis.quit();
@@ -116,3 +150,4 @@ main().catch((err) => {
   Logger.error('Fatal worker crash', err);
   process.exit(1);
 });
+

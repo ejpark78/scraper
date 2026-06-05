@@ -14,7 +14,7 @@ export interface ICrawler {
 }
 
 export class LinkedInCrawler implements ICrawler {
-    private readonly sessionPath: string = path.join(__dirname, '..', 'data', 'sessions', 'session.json');
+    private readonly sessionPath: string = path.join(__dirname, '..', 'data', 'sessions', 'linkedin.json');
     private readonly useLogin: boolean;
 
     constructor(options: { login?: boolean } = {}) {
@@ -199,7 +199,7 @@ export class LinkedInCrawler implements ICrawler {
     public async scrapeCompanyAbout(url: string, outputPath: string): Promise<void> {
         const isLoggedIn = this.useLogin && fs.existsSync(this.sessionPath);
         if (!isLoggedIn) {
-            console.warn('⚠️ [경고] 로그인 세션 파일(session.json)이 없거나 login 옵션이 활성화되지 않아 비로그인으로 동작합니다. 회사 정보 스크래핑은 실패할 확률이 매우 높습니다.');
+            console.warn('⚠️ [경고] 로그인 세션 파일(linkedin.json)이 없거나 login 옵션이 활성화되지 않아 비로그인으로 동작합니다. 회사 정보 스크래핑은 실패할 확률이 매우 높습니다.');
         }
 
         // URL 정규화: 끝에 /about/ 이 없으면 자동으로 추가
@@ -280,7 +280,7 @@ export class LinkedInCrawler implements ICrawler {
     public async scrapeList(configFilePath: string): Promise<void> {
         const isLoggedIn = this.useLogin && fs.existsSync(this.sessionPath);
         if (!isLoggedIn) {
-            console.log('⚠️  [안내] 로그인 세션 파일(session.json)이 발견되지 않았거나 login 옵션이 활성화되지 않아 비로그인(Public) 모드로 동작합니다.');
+            console.log('⚠️  [안내] 로그인 세션 파일(linkedin.json)이 발견되지 않았거나 login 옵션이 활성화되지 않아 비로그인(Public) 모드로 동작합니다.');
             console.log('💡 direct_urls는 수집 대상에서 자동으로 제외되며, 일반 검색 결과 수집만 진행합니다.');
         }
 

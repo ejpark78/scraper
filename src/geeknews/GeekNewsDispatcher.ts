@@ -1,0 +1,118 @@
+import * as cheerio from 'cheerio';
+import Redis from 'ioredis';
+import { MongoDatabase } from '../database/mongo';
+
+const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
+const QUEUE_KEY = 'geeknews_queue';
+const CACHE_SET_KEY = 'completed_news';
+
+export class GeekNewsDispatcher {
+    private redis!: Redis;
+
+    public async init(): Promise<void> {
+        this.redis = new Redis(REDIS_URL);
+        console.log(`📡 [GeekNews Dispatcher] Connected to Redis for queueing.`);
+    }
+
+    public async close(): Promise<void> {
+        if (this.redis) {
+            await this.redis.quit();
+        }
+    }
+
+    public async dispatch(page: number = 1): Promise<number> {
+        const url = page === 1 ? 'https://news.hada.io/' : `https://news.hada.io/?page=${page}`;
+        console.log(`🌐 [GeekNews Dispatcher] Fetching index page: ${url}`);
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch GeekNews index. Status: ${response.status}`);
+        }
+
+        const html = await response.text();
+        const $ = cheerio.load(html);
+        const topicRows = $('.topic_row');
+        console.log(`🔍 [GeekNews Dispatcher] Found ${topicRows.length} topics on index page.`);
+
+        // Synchronize Completed cache with MongoDB first if Redis cache is empty
+        const completedCount = await this.redis.scard(CACHE_SET_KEY);
+        if (completedCount === 0) {
+            try {
+                console.log(`🔍 [GeekNews Dispatcher] Redis cache is empty. Seeding from MongoDB bronze.geeknews...`);
+                const dbInstance = MongoDatabase.getInstance();
+                const bronzeGeeknews = await dbInstance.getCollection('bronze.geeknews');
+                const existing = await bronzeGeeknews.find({}, { projection: { id: 1, _id: 0 } }).toArray();
+                if (existing.length > 0) {
+                    const pipeline = this.redis.pipeline();
+                    existing.forEach((doc: any) => {
+                        if (doc.id) pipeline.sadd(CACHE_SET_KEY, doc.id);
+                    });
+                    await pipeline.exec();
+                    console.log(`📡 [GeekNews Dispatcher] Seeded ${existing.length} completed IDs into Redis cache.`);
+                }
+            } catch (err: any) {
+                console.warn(`⚠️ MongoDB seed skipped or failed: ${err.message}`);
+            }
+        }
+
+        let queuedCount = 0;
+
+        for (let i = 0; i < topicRows.length; i++) {
+            const row = $(topicRows[i]);
+            const titleEl = row.find('.topictitle a');
+            if (titleEl.length === 0) continue;
+
+            const title = titleEl.text().trim();
+            let relativeUrl = titleEl.attr('href') || '';
+            if (!relativeUrl) continue;
+
+            // GeekNews details are located at relative URLs e.g. topic?id=32402
+            let detailUrl = relativeUrl.startsWith('http') 
+                ? relativeUrl 
+                : `https://news.hada.io/${relativeUrl.replace(/^\//, '')}`;
+
+            // Extract ID
+            let id = '';
+            if (detailUrl.includes('id=')) {
+                id = detailUrl.split('id=').pop()!.split('&')[0];
+            }
+
+            if (!id) continue;
+
+            // Check if already completed
+            const isCompleted = await this.redis.sismember(CACHE_SET_KEY, id);
+            if (isCompleted) {
+                console.log(`⏭️ [GeekNews Dispatcher] Skipping already completed item: [ID: ${id}] ${title}`);
+                continue;
+            }
+
+            // Push to Redis Queue
+            await this.redis.rpush(QUEUE_KEY, detailUrl);
+            console.log(`🚀 [GeekNews Dispatcher] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
+            queuedCount++;
+        }
+
+        console.log(`🎉 [GeekNews Dispatcher] Successfully queued ${queuedCount} items.`);
+        return queuedCount;
+    }
+}
+
+if (require.main === module) {
+    (async () => {
+        const dispatcher = new GeekNewsDispatcher();
+        try {
+            await dispatcher.init();
+            const page = process.argv[2] ? parseInt(process.argv[2]) : 1;
+            await dispatcher.dispatch(page);
+        } catch (e: any) {
+            console.error(`❌ Dispatcher failed: ${e.message}`);
+        } finally {
+            await dispatcher.close();
+        }
+    })();
+}

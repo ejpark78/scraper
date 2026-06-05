@@ -61,4 +61,4 @@ services:
       timeout: 5s
       retries: 3
     deploy:
-      replicas: 5
+      replicas: 3

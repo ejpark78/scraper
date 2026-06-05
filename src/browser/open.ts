@@ -10,7 +10,7 @@ function getTimestamp(): string {
 }
 
 async function runBrowser() {
-    const sessionPath = path.join(__dirname, '..', '..', 'data', 'sessions', 'session.json');
+    const sessionPath = path.join(__dirname, '..', '..', 'data', 'sessions', 'linkedin.json');
     const htmlDir = path.join(__dirname, '..', '..', 'data', 'browser', 'html');
     const jsonDir = path.join(__dirname, '..', '..', 'data', 'browser', 'json');
 
@@ -34,9 +34,9 @@ async function runBrowser() {
     // 🔑 세션 주입 판단
     if (fs.existsSync(sessionPath)) {
         contextOptions.storageState = sessionPath;
-        console.log(`🔑 [세션 주입] 기존 세션 파일(session.json)을 주입하여 기동합니다.`);
+        console.log(`🔑 [세션 주입] 기존 세션 파일(linkedin.json)을 주입하여 기동합니다.`);
     } else {
-        console.log(`⚠️  [로그인 안됨] 세션 파일(session.json)이 없습니다. 브라우저 내에서 직접 로그인을 진행해 주세요.`);
+        console.log(`⚠️  [로그인 안됨] 세션 파일(linkedin.json)이 없습니다. 브라우저 내에서 직접 로그인을 진행해 주세요.`);
     }
 
     const context = await browser.newContext(contextOptions);
@@ -50,7 +50,6 @@ async function runBrowser() {
 
     const page = await context.newPage();
 
-    let lastSavedUrl = '';
     let lastSavedContentLength = 0;
     let saveTimeout: NodeJS.Timeout | null = null;
 
@@ -91,7 +90,6 @@ async function runBrowser() {
             fs.writeFileSync(savePath, htmlContent, 'utf-8');
             console.log(`💾 [HTML 저장] (${trigger}) ➡️ data/browser/html/${filename} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
 
-            lastSavedUrl = url;
             lastSavedContentLength = htmlContent.length;
         } catch (err: any) {
             console.error(`⚠️ [HTML 저장 실패]: ${err.message}`);

@@ -9,7 +9,7 @@ export enum LogLevel {
 
 export class Logger {
   private static hostname = os.hostname();
-  private static isJson = process.env.JSON_LOG === 'true' || process.env.IN_CONTAINER === 'true';
+  private static isJson = process.env.JSON_LOG === 'true';
 
   public static info(message: string, meta?: Record<string, any>) {
     this.log(LogLevel.INFO, message, meta);

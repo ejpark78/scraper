@@ -324,7 +324,6 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
             });
         }
 
-        let aboutCompanyText = '정보 없음';
         let jdText = '정보 없음';
 
         if (descriptionContainer.length > 0) {
@@ -351,7 +350,6 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
                     const jdMatch = remainingText.match(jdStartRegex);
                     if (jdMatch && typeof jdMatch.index === 'number') {
                         const jdSplitIndex = splitIndex + jdMatch.index;
-                        aboutCompanyText = formattedText.substring(splitIndex, jdSplitIndex).trim();
                         jdText = formattedText.substring(jdSplitIndex).trim();
                         splitDone = true;
                     }
@@ -365,7 +363,6 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
                     const splitIndex = jdMatch.index;
                     const prospectiveCompanyText = formattedText.substring(0, splitIndex).trim();
                     if (prospectiveCompanyText.length >= 20) {
-                        aboutCompanyText = prospectiveCompanyText;
                         jdText = formattedText.substring(splitIndex).trim();
                         splitDone = true;
                     }
@@ -383,13 +380,11 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
                         .trim();
                     
                     if (cleanMeta && cleanMeta.length >= 15 && !cleanMeta.startsWith('Apply for') && !cleanMeta.startsWith('지원')) {
-                        aboutCompanyText = cleanMeta;
                         splitDone = true;
                     }
                 }
-                if (!splitDone) {
-                    aboutCompanyText = '정보 없음';
-                }
+                    // No split metadata to save
+                    splitDone = true;
             }
         }
 

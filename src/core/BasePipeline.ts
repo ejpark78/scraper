@@ -69,7 +69,7 @@ export abstract class BasePipeline<TMeta> {
 
         // 로그인 상태 확인
         const useLoginEnv = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
-        const sessionPath = path.join(__dirname, '..', '..', 'data', 'sessions', 'session.json');
+        const sessionPath = path.join(__dirname, '..', '..', 'data', 'sessions', 'linkedin.json');
         const loginStatus = useLoginEnv 
             ? (fs.existsSync(sessionPath) ? '[AUTHED]' : '[UNAUTHED]')
             : '[UNAUTHED]';
