@@ -1,0 +1,33 @@
+# ==============================================================================
+# 🗄️ PostgreSQL Service Block (Silver Database)
+# ==============================================================================
+# 1. postgresql
+#    - 용도: 정제된 채용 및 기업 정보(Silver Layer) 적재 RDBMS
+#    - 포트: Private Docker Network 내부로 격리 (호스트 포트 매핑 없음)
+#    - 볼륨: 프로젝트 루트의 `data/.services/postgresql` 경로에 데이터 보존
+#    - 헬스체크: pg_isready를 이용한 서버 수신 대기 상태 확인
+# ==============================================================================
+
+services:
+  postgresql:
+    image: postgres:16-alpine
+    environment:
+      - TZ=Asia/Seoul
+      - POSTGRES_DB=clipper_silver
+      - POSTGRES_USER=clipper
+      - POSTGRES_PASSWORD=clipper_pass
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/.services/postgresql:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clipper -d clipper_silver"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

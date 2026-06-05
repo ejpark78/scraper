@@ -5,10 +5,15 @@
 #    - 용도: 링크드인 채용 공고 일회성 수집 파이프라인 및 CLI 구동을 위한 메인 환경
 #    - 볼륨: 수집 세션을 보존하기 위해 `${HOST_PROJECT_PATH:-.}/data/sessions` 바인딩
 #
-# 2. clipper-worker
-#    - 용도: Redis 큐(`jobs_queue`)에 누적된 상세 다운로드 요청을 분산 소비하여 다운로드하는 비동기 분산 워커
-#    - 스케일링: 기본 5개의 레플리카 복제본(`replicas: 5`) 구조로 비동기 동시 다운로드 파이프라인 형성
-#    - 헬스체크: `pgrep -f RedisWorker.ts` 커맨드를 통해 백그라운드 구동 스크립트 프로세스 정상 동작 확인
+# 2. clipper-scraper
+#    - 용도: Redis 수집 대기열(`scrape_queue`)에 누적된 상세 요청을 분산 소비하여 HTML을 다운로드하고 MongoDB에 적재하는 워커
+#    - 스케일링: 노트북 리소스 최적화 및 Playwright 메모리 점유율을 고려하여 복제본(`replicas: 2`) 할당
+#    - 헬스체크: `pgrep -f ScraperWorker.ts` 커맨드를 통해 백그라운드 구동 스크립트 프로세스 정상 동작 확인
+#
+# 3. clipper-transformer
+#    - 용도: 수집 완료 이벤트(`transform_queue`)에 감지된 Raw HTML을 Markdown으로 가공하고 Silver Layer에 적재하는 정제 워커
+#    - 스케일링: 가벼운 파싱 및 데이터 변환 위주 연산이므로 복제본(`replicas: 1`) 할당
+#    - 헬스체크: `pgrep -f TransformerWorker.ts` 커맨드를 통해 백그라운드 구동 스크립트 프로세스 정상 동작 확인
 # ==============================================================================
 
 services:
@@ -36,12 +41,12 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
-  clipper-worker:
+  clipper-scraper:
     build:
       context: ../../
       dockerfile: docker/clipper/Dockerfile
     image: linkedin/clipper:latest
-    command: ["npx", "ts-node", "src/RedisWorker.ts"]
+    command: ["npx", "ts-node", "src/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
@@ -54,13 +59,38 @@ services:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "RedisWorker.ts"]
+      test: ["CMD", "pgrep", "-f", "ScraperWorker.ts"]
       interval: 30s
       timeout: 5s
       retries: 3
     deploy:
-      replicas: 3
+      replicas: 2
+
+  clipper-transformer:
+    build:
+      context: ../../
+      dockerfile: docker/clipper/Dockerfile
+    image: linkedin/clipper:latest
+    command: ["npx", "ts-node", "src/TransformerWorker.ts"]
+    environment:
+      - TZ=Asia/Seoul
+      - AUTH=${AUTH:-}
+      - JSON_LOG=true
+      - SLACK_TIME=0
+      - PARALLEL=1
+      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=mongodb://mongodb:27017
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "TransformerWorker.ts"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      replicas: 1
