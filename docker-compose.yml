@@ -64,29 +64,6 @@ services:
       - "traefik.http.services.kasm.loadbalancer.server.port=6901"
       - "traefik.http.services.kasm.loadbalancer.server.scheme=https"
 
-  clipper:
-    build:
-      context: .
-      dockerfile: docker/clipper/Dockerfile
-    image: linkedin/clipper:latest
-    profiles:
-      - runtime
-    environment:
-      - MONGO_URL=mongodb://mongodb:27017
-      - AUTH=${AUTH:-}
-      - PARALLEL=${PARALLEL:-}
-      - SLACK_TIME=${SLACK_TIME:-}
-      - CHUNK_SIZE=${CHUNK_SIZE:-}
-      - LISTS=${LISTS:-}
-      - URLS=${URLS:-}
-      - HTML=${HTML:-}
-      - MD=${MD:-}
-      - TZ=Asia/Seoul
-    volumes:
-      - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-
   redis:
     image: redis:alpine
     environment:
@@ -169,6 +146,29 @@ services:
       - "traefik.http.routers.redisinsight.entrypoints=web"
       - "traefik.http.services.redisinsight.loadbalancer.server.port=5540"
 
+  clipper:
+    build:
+      context: .
+      dockerfile: docker/clipper/Dockerfile
+    image: linkedin/clipper:latest
+    profiles:
+      - runtime
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - AUTH=${AUTH:-}
+      - PARALLEL=${PARALLEL:-}
+      - SLACK_TIME=${SLACK_TIME:-}
+      - CHUNK_SIZE=${CHUNK_SIZE:-}
+      - LISTS=${LISTS:-}
+      - URLS=${URLS:-}
+      - HTML=${HTML:-}
+      - MD=${MD:-}
+      - TZ=Asia/Seoul
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
   clipper-worker:
     build:
       context: .
@@ -233,14 +233,24 @@ services:
     image: linkedin/jupyter:latest
     profiles:
       - tools
+    user: root
     environment:
       - TZ=Asia/Seoul
+      - NB_UID=1000
+      - NB_GID=1000
+      - CHOWN_HOME=yes
+      - CHOWN_HOME_OPTS=-R
     volumes:
-      - ./notebooks:/home/jovyan/work
+      - ./notebooks:/home/jovyan
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     command: ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''"]
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.jupyter.rule=Host(`jupyter.localhost`)"

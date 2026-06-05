@@ -53,11 +53,31 @@ help:
 	@echo "  make clean          - [Host] 임시 파일 및 빈 폴더 정리"
 	@echo "  make export-cron    - [Host] 현재 Cronicle 이벤트를 docker/cronicle/default.json으로 내보냅니다."
 	@echo "  make init-cron      - [Host] 백업된 Cronicle 이벤트를 새로 기동된 컨테이너에 가져옵니다."
+	@echo "  make dump-silver    - [Host] 정제된 실버 레이어(silver.*) 데이터만 백업합니다."
+	@echo "  make dump-bronze    - [Host] 수집 원본 브론즈 레이어(bronze.*) 데이터만 백업합니다."
 	@echo "========================================================================="
 
 # Docker 이미지 빌드
 build:
 	docker compose build
+
+# MongoDB 백업 - Silver Layer (silver.jobs, silver.companies)
+dump-silver:
+	@mkdir -p data
+	docker compose exec -T mongodb mongodump --db linkedin --collection silver.jobs --gzip --archive=/tmp/silver_jobs.gz
+	docker cp $$(docker compose ps -q mongodb):/tmp/silver_jobs.gz data/silver_jobs.gz
+	docker compose exec -T mongodb mongodump --db linkedin --collection silver.companies --gzip --archive=/tmp/silver_companies.gz
+	docker cp $$(docker compose ps -q mongodb):/tmp/silver_companies.gz data/silver_companies.gz
+	@echo "💾 Silver 레이어 백업 완료: data/silver_jobs.gz, data/silver_companies.gz"
+
+# MongoDB 백업 - Bronze Layer (Raw 데이터 - 용량 큼)
+dump-bronze:
+	@mkdir -p data
+	docker compose exec -T mongodb mongodump --db linkedin --collection bronze.jobs --gzip --archive=/tmp/bronze_jobs.gz
+	docker cp $$(docker compose ps -q mongodb):/tmp/bronze_jobs.gz data/bronze_jobs.gz
+	docker compose exec -T mongodb mongodump --db linkedin --collection bronze.companies --gzip --archive=/tmp/bronze_companies.gz
+	docker cp $$(docker compose ps -q mongodb):/tmp/bronze_companies.gz data/bronze_companies.gz
+	@echo "💾 Bronze 레이어 백업 완료: data/bronze_jobs.gz, data/bronze_companies.gz"
 
 # 호스트(Host) 구동 필수 타겟
 login:
