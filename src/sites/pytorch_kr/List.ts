@@ -5,12 +5,12 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const QUEUE_KEY = 'pytorch_kr_queue';
 const CACHE_SET_KEY = 'completed_news';
 
-export class PyTorchKRDispatcher {
+export class PyTorchKRList {
     private redis!: Redis;
 
     public async init(): Promise<void> {
         this.redis = new Redis(REDIS_URL);
-        console.log(`📡 [PyTorch KR Dispatcher] Connected to Redis for queueing.`);
+        console.log(`📡 [PyTorch KR List] Connected to Redis for queueing.`);
     }
 
     public async close(): Promise<void> {
@@ -19,9 +19,9 @@ export class PyTorchKRDispatcher {
         }
     }
 
-    public async dispatch(page: number = 1): Promise<number> {
+    public async run(page: number = 1): Promise<number> {
         const url = `https://discuss.pytorch.kr/latest.json?no_definitions=true&page=${page}`;
-        console.log(`🌐 [PyTorch KR Dispatcher] Fetching index JSON: ${url}`);
+        console.log(`🌐 [PyTorch KR List] Fetching index JSON: ${url}`);
 
         const response = await fetch(url, {
             headers: {
@@ -36,14 +36,16 @@ export class PyTorchKRDispatcher {
 
         const data = await response.json();
         const topics = data.topic_list?.topics || [];
-        console.log(`🔍 [PyTorch KR Dispatcher] Found ${topics.length} topics on index page.`);
+        console.log(`🔍 [PyTorch KR List] Found ${topics.length} topics on index page.`);
+
+        const dbInstance = MongoDatabase.getInstance();
+        const pytorchUrlsColl = await dbInstance.getCollection('bronze.pytorch_kr_urls');
 
         // Synchronize Completed cache with MongoDB first if Redis cache is empty
         const completedCount = await this.redis.scard(CACHE_SET_KEY);
         if (completedCount === 0) {
             try {
-                console.log(`🔍 [PyTorch KR Dispatcher] Redis cache is empty. Seeding from MongoDB bronze.pytorch_kr...`);
-                const dbInstance = MongoDatabase.getInstance();
+                console.log(`🔍 [PyTorch KR List] Redis cache is empty. Seeding from MongoDB bronze.pytorch_kr...`);
                 const bronzePytorch = await dbInstance.getCollection('bronze.pytorch_kr');
                 const existing = await bronzePytorch.find({}, { projection: { id: 1, _id: 0 } }).toArray();
                 if (existing.length > 0) {
@@ -52,7 +54,7 @@ export class PyTorchKRDispatcher {
                         if (doc.id) pipeline.sadd(CACHE_SET_KEY, doc.id);
                     });
                     await pipeline.exec();
-                    console.log(`📡 [PyTorch KR Dispatcher] Seeded ${existing.length} completed IDs into Redis cache.`);
+                    console.log(`📡 [PyTorch KR List] Seeded ${existing.length} completed IDs into Redis cache.`);
                 }
             } catch (err: any) {
                 console.warn(`⚠️ MongoDB seed skipped or failed: ${err.message}`);
@@ -72,33 +74,62 @@ export class PyTorchKRDispatcher {
 
             // Check if already completed
             const isCompleted = await this.redis.sismember(CACHE_SET_KEY, id);
+
+            // Upsert URL metadata to MongoDB
+            await pytorchUrlsColl.updateOne(
+                { id },
+                {
+                    $set: {
+                        id,
+                        url: detailUrl,
+                        title,
+                        status: isCompleted ? 'completed' : 'new',
+                        updatedAt: new Date()
+                    },
+                    $setOnInsert: {
+                        pushedToRedis: isCompleted ? true : false
+                    }
+                },
+                { upsert: true }
+            );
+
             if (isCompleted) {
-                console.log(`⏭️ [PyTorch KR Dispatcher] Skipping already completed item: [ID: ${id}] ${title}`);
+                console.log(`⏭️ [PyTorch KR List] Skipping already completed item: [ID: ${id}] ${title}`);
                 continue;
             }
 
-            // Push to Redis Queue
-            await this.redis.rpush(QUEUE_KEY, detailUrl);
-            console.log(`🚀 [PyTorch KR Dispatcher] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
-            queuedCount++;
+            // Check if already pushed to Redis
+            const doc = await pytorchUrlsColl.findOne({ id });
+            const alreadyPushed = doc?.pushedToRedis || false;
+
+            if (!alreadyPushed) {
+                // Push to Redis Queue
+                await this.redis.rpush(QUEUE_KEY, detailUrl);
+                await pytorchUrlsColl.updateOne(
+                    { id },
+                    { $set: { pushedToRedis: true } }
+                );
+                console.log(`🚀 [PyTorch KR List] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
+                queuedCount++;
+            }
         }
 
-        console.log(`🎉 [PyTorch KR Dispatcher] Successfully queued ${queuedCount} items.`);
+        console.log(`🎉 [PyTorch KR List] Successfully queued ${queuedCount} items.`);
         return queuedCount;
     }
 }
 
 if (require.main === module) {
     (async () => {
-        const dispatcher = new PyTorchKRDispatcher();
+        const list = new PyTorchKRList();
         try {
-            await dispatcher.init();
+            await list.init();
             const page = process.argv[2] ? parseInt(process.argv[2]) : 1;
-            await dispatcher.dispatch(page);
+            await list.run(page);
         } catch (e: any) {
-            console.error(`❌ Dispatcher failed: ${e.message}`);
+            console.error(`❌ List failed: ${e.message}`);
         } finally {
-            await dispatcher.close();
+            await list.close();
         }
     })();
 }

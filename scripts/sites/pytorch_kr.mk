@@ -2,12 +2,20 @@
 # 🔥 PyTorch KR Scraper Commands Module
 # ==============================================================================
 
-.PHONY: dispatch pipeline
+.PHONY: list contents backfill fix-queue
 
 PAGE ?= 1
 
-dispatch:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/pytorch_kr/PyTorchKRDispatcher.ts $(PAGE)
+list:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/List.ts $(PAGE)
 
-pipeline:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/pytorch_kr/PyTorchKRPipeline.ts $(PAGE)
+contents:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/Contents.ts $(PAGE)
+
+backfill:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/Backfill.ts
+
+fix-queue:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/FixQueue.ts
+
+

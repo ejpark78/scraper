@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as readline from 'readline';
 import * as path from 'path';
 import { URLSearchParams } from 'url';
-import { UrlUtils, IOUtils, FormatUtils } from '../../utils';
+import { UrlUtils, IOUtils, FormatUtils } from '../../../utils';
 
 // ⚙️ LinkedIn URL 생성, 검색 조건 빌드 및 중복 필터링 통합 OOP 매니저 (TypeScript)
 
@@ -235,7 +235,7 @@ export class LinkedInUrlManager implements IUrlManager {
             console.warn(`⚠️ [MongoDB] 완료된 Job ID 로드 실패: ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
             if (fs.existsSync(htmlDir)) {
                 const localHtmlFiles = IOUtils.getAllFiles(htmlDir, '.html');
-                localHtmlFiles.forEach(file => {
+                localHtmlFiles.forEach((file: string) => {
                     const id = path.basename(file, '.html');
                     if (id && /^\d+$/.test(id)) {
                         cacheSet.add(id);
@@ -512,7 +512,7 @@ export class LinkedInUrlManager implements IUrlManager {
         const mdDir = path.join(path.dirname(htmlDir), 'markdown');
         if (fs.existsSync(mdDir)) {
             const mdFiles = IOUtils.getAllFiles(mdDir, '.md');
-            mdFiles.forEach(file => {
+            mdFiles.forEach((file: string) => {
                 try {
                     const content = fs.readFileSync(file, 'utf-8');
                     const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);

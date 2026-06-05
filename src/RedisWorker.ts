@@ -46,10 +46,10 @@ if (process.env.JSON_LOG === 'true') {
 }
 
 import Redis from 'ioredis';
-import { JobsScrapingPipeline } from './sites/linkedin/jobs_pipeline';
-import { GeekNewsPipeline } from './sites/geeknews/GeekNewsPipeline';
-import { PyTorchKRPipeline } from './sites/pytorch_kr/PyTorchKRPipeline';
-import { GptersPipeline } from './sites/gpters/GptersPipeline';
+import { JobsScrapingPipeline } from './sites/linkedin/jobs/Pipeline';
+import { GeekNewsContents } from './sites/geeknews/Contents';
+import { PyTorchKRContents } from './sites/pytorch_kr/Contents';
+import { GptersContents } from './sites/gpters/Contents';
 import { UrlUtils, Logger } from './utils';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
@@ -84,9 +84,9 @@ async function main() {
   // Initialize pipelines
   const pipelines: Record<string, any> = {
     'jobs_queue': new JobsScrapingPipeline(),
-    'geeknews_queue': new GeekNewsPipeline(),
-    'pytorch_kr_queue': new PyTorchKRPipeline(),
-    'gpters_queue': new GptersPipeline()
+    'geeknews_queue': new GeekNewsContents(),
+    'pytorch_kr_queue': new PyTorchKRContents(),
+    'gpters_queue': new GptersContents()
   };
 
   Logger.info(`Worker started, listening to queues: ${QUEUES.join(', ')}`);

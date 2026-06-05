@@ -1,9 +1,10 @@
-import { MongoDatabase } from '../../database/mongo';
+import { MongoDatabase } from '../../../database/mongo';
 import * as fs from 'fs';
 import * as path from 'path';
 import Redis from 'ioredis';
 
-async function main() {
+export class JobsFixQueue {
+    public async run(): Promise<void> {
     console.log('🔄 [Fix Queue] Starting precision recovery of uncollected targets...');
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
@@ -26,7 +27,7 @@ async function main() {
             console.log('📌 Overridden targets via GEOS env:', targetLocations);
         } else {
             try {
-                const configPath = path.join(__dirname, '..', '..', 'config', 'config.json');
+                const configPath = path.join(__dirname, '..', '..', '..', 'config', 'config.json');
                 if (fs.existsSync(configPath)) {
                     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
                     if (config.search_targets) {
@@ -96,7 +97,11 @@ async function main() {
         process.exit(0);
     }
 }
+}
 
-main().catch(console.error);
+if (require.main === module) {
+    const fixQueue = new JobsFixQueue();
+    fixQueue.run().catch(console.error);
+}
 
 

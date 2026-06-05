@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { BasePipeline } from '../../core/BasePipeline';
-import { JobMeta, LinkedInMarkdownConverter } from './jobs_converter';
-import { LinkedInCrawler } from '../../crawler';
-import { UrlUtils, NamingUtils } from '../../utils';
+import { BasePipeline } from '../../../core/BasePipeline';
+import { JobMeta, LinkedInMarkdownConverter } from './Converter';
+import { LinkedInCrawler } from '../../../Crawler';
+import { UrlUtils, NamingUtils } from '../../../utils';
 
 export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
     private readonly crawler: LinkedInCrawler;
@@ -39,7 +39,7 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
 
         // ⚡ [MongoDB 적재] ⚡
         try {
-            const { MongoDatabase } = require('../database/mongo');
+            const { MongoDatabase } = require('../../../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw) 저장
@@ -120,7 +120,7 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
         // 1. target locations 로드
         let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
         try {
-            const configPath = path.join(__dirname, '..', '..', 'config', 'config.json');
+            const configPath = path.join(__dirname, '..', '..', '..', 'config', 'config.json');
             if (fs.existsSync(configPath)) {
                 const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
                 if (config.search_targets) {
@@ -134,7 +134,7 @@ export class JobsScrapingPipeline extends BasePipeline<JobMeta> {
         // 2. country mapping 로드
         let countryMapping: Record<string, string[]> = {};
         try {
-            const countryJsonPath = path.join(__dirname, '..', '..', 'config', 'country.json');
+            const countryJsonPath = path.join(__dirname, '..', '..', '..', 'config', 'country.json');
             if (fs.existsSync(countryJsonPath)) {
                 countryMapping = JSON.parse(fs.readFileSync(countryJsonPath, 'utf-8'));
             }

@@ -6,12 +6,12 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const QUEUE_KEY = 'geeknews_queue';
 const CACHE_SET_KEY = 'completed_news';
 
-export class GeekNewsDispatcher {
+export class GeekNewsList {
     private redis!: Redis;
 
     public async init(): Promise<void> {
         this.redis = new Redis(REDIS_URL);
-        console.log(`📡 [GeekNews Dispatcher] Connected to Redis for queueing.`);
+        console.log(`📡 [GeekNews List] Connected to Redis for queueing.`);
     }
 
     public async close(): Promise<void> {
@@ -20,9 +20,9 @@ export class GeekNewsDispatcher {
         }
     }
 
-    public async dispatch(page: number = 1): Promise<number> {
+    public async run(page: number = 1): Promise<number> {
         const url = page === 1 ? 'https://news.hada.io/' : `https://news.hada.io/?page=${page}`;
-        console.log(`🌐 [GeekNews Dispatcher] Fetching index page: ${url}`);
+        console.log(`🌐 [GeekNews List] Fetching index page: ${url}`);
 
         const response = await fetch(url, {
             headers: {
@@ -37,14 +37,16 @@ export class GeekNewsDispatcher {
         const html = await response.text();
         const $ = cheerio.load(html);
         const topicRows = $('.topic_row');
-        console.log(`🔍 [GeekNews Dispatcher] Found ${topicRows.length} topics on index page.`);
+        console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on index page.`);
+
+        const dbInstance = MongoDatabase.getInstance();
+        const geeknewsUrlsColl = await dbInstance.getCollection('bronze.geeknews_urls');
 
         // Synchronize Completed cache with MongoDB first if Redis cache is empty
         const completedCount = await this.redis.scard(CACHE_SET_KEY);
         if (completedCount === 0) {
             try {
-                console.log(`🔍 [GeekNews Dispatcher] Redis cache is empty. Seeding from MongoDB bronze.geeknews...`);
-                const dbInstance = MongoDatabase.getInstance();
+                console.log(`🔍 [GeekNews List] Redis cache is empty. Seeding from MongoDB bronze.geeknews...`);
                 const bronzeGeeknews = await dbInstance.getCollection('bronze.geeknews');
                 const existing = await bronzeGeeknews.find({}, { projection: { id: 1, _id: 0 } }).toArray();
                 if (existing.length > 0) {
@@ -53,7 +55,7 @@ export class GeekNewsDispatcher {
                         if (doc.id) pipeline.sadd(CACHE_SET_KEY, doc.id);
                     });
                     await pipeline.exec();
-                    console.log(`📡 [GeekNews Dispatcher] Seeded ${existing.length} completed IDs into Redis cache.`);
+                    console.log(`📡 [GeekNews List] Seeded ${existing.length} completed IDs into Redis cache.`);
                 }
             } catch (err: any) {
                 console.warn(`⚠️ MongoDB seed skipped or failed: ${err.message}`);
@@ -86,33 +88,62 @@ export class GeekNewsDispatcher {
 
             // Check if already completed
             const isCompleted = await this.redis.sismember(CACHE_SET_KEY, id);
+
+            // Upsert URL metadata to MongoDB
+            await geeknewsUrlsColl.updateOne(
+                { id },
+                {
+                    $set: {
+                        id,
+                        url: detailUrl,
+                        title,
+                        status: isCompleted ? 'completed' : 'new',
+                        updatedAt: new Date()
+                    },
+                    $setOnInsert: {
+                        pushedToRedis: isCompleted ? true : false
+                    }
+                },
+                { upsert: true }
+            );
+
             if (isCompleted) {
-                console.log(`⏭️ [GeekNews Dispatcher] Skipping already completed item: [ID: ${id}] ${title}`);
+                console.log(`⏭️ [GeekNews List] Skipping already completed item: [ID: ${id}] ${title}`);
                 continue;
             }
 
-            // Push to Redis Queue
-            await this.redis.rpush(QUEUE_KEY, detailUrl);
-            console.log(`🚀 [GeekNews Dispatcher] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
-            queuedCount++;
+            // Check if already pushed to Redis
+            const doc = await geeknewsUrlsColl.findOne({ id });
+            const alreadyPushed = doc?.pushedToRedis || false;
+
+            if (!alreadyPushed) {
+                // Push to Redis Queue
+                await this.redis.rpush(QUEUE_KEY, detailUrl);
+                await geeknewsUrlsColl.updateOne(
+                    { id },
+                    { $set: { pushedToRedis: true } }
+                );
+                console.log(`🚀 [GeekNews List] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
+                queuedCount++;
+            }
         }
 
-        console.log(`🎉 [GeekNews Dispatcher] Successfully queued ${queuedCount} items.`);
+        console.log(`🎉 [GeekNews List] Successfully queued ${queuedCount} items.`);
         return queuedCount;
     }
 }
 
 if (require.main === module) {
     (async () => {
-        const dispatcher = new GeekNewsDispatcher();
+        const list = new GeekNewsList();
         try {
-            await dispatcher.init();
+            await list.init();
             const page = process.argv[2] ? parseInt(process.argv[2]) : 1;
-            await dispatcher.dispatch(page);
+            await list.run(page);
         } catch (e: any) {
-            console.error(`❌ Dispatcher failed: ${e.message}`);
+            console.error(`❌ List failed: ${e.message}`);
         } finally {
-            await dispatcher.close();
+            await list.close();
         }
     })();
 }

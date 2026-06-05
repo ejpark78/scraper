@@ -5,12 +5,12 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const QUEUE_KEY = 'gpters_queue';
 const CACHE_SET_KEY = 'completed_news';
 
-export class GptersDispatcher {
+export class GptersList {
     private redis!: Redis;
 
     public async init(): Promise<void> {
         this.redis = new Redis(REDIS_URL);
-        console.log(`📡 [GPTERS Dispatcher] Connected to Redis for queueing.`);
+        console.log(`📡 [GPTERS List] Connected to Redis for queueing.`);
     }
 
     public async close(): Promise<void> {
@@ -19,8 +19,8 @@ export class GptersDispatcher {
         }
     }
 
-    public async dispatch(limit: number = 20): Promise<number> {
-        console.log(`🌐 [GPTERS Dispatcher] Fetching news feed via GraphQL...`);
+    public async run(limit: number = 20): Promise<number> {
+        console.log(`🌐 [GPTERS List] Fetching news feed via GraphQL...`);
 
         const query = `
         query getNewsFeed($spaceSlug: String!, $limit: Int!, $after: String) { 
@@ -69,14 +69,16 @@ export class GptersDispatcher {
 
         const resJson = await response.json();
         const posts = resJson.data?.posts?.nodes || [];
-        console.log(`🔍 [GPTERS Dispatcher] Found ${posts.length} posts on index.`);
+        console.log(`🔍 [GPTERS List] Found ${posts.length} posts on index.`);
+
+        const dbInstance = MongoDatabase.getInstance();
+        const gptersUrlsColl = await dbInstance.getCollection('bronze.gpters_urls');
 
         // Synchronize Completed cache with MongoDB first if Redis cache is empty
         const completedCount = await this.redis.scard(CACHE_SET_KEY);
         if (completedCount === 0) {
             try {
-                console.log(`🔍 [GPTERS Dispatcher] Redis cache is empty. Seeding from MongoDB bronze.gpters...`);
-                const dbInstance = MongoDatabase.getInstance();
+                console.log(`🔍 [GPTERS List] Redis cache is empty. Seeding from MongoDB bronze.gpters...`);
                 const bronzeGpters = await dbInstance.getCollection('bronze.gpters');
                 const existing = await bronzeGpters.find({}, { projection: { id: 1, _id: 0 } }).toArray();
                 if (existing.length > 0) {
@@ -85,7 +87,7 @@ export class GptersDispatcher {
                         if (doc.id) pipeline.sadd(CACHE_SET_KEY, doc.id);
                     });
                     await pipeline.exec();
-                    console.log(`📡 [GPTERS Dispatcher] Seeded ${existing.length} completed IDs into Redis cache.`);
+                    console.log(`📡 [GPTERS List] Seeded ${existing.length} completed IDs into Redis cache.`);
                 }
             } catch (err: any) {
                 console.warn(`⚠️ MongoDB seed skipped or failed: ${err.message}`);
@@ -106,33 +108,62 @@ export class GptersDispatcher {
 
             // Check if already completed
             const isCompleted = await this.redis.sismember(CACHE_SET_KEY, id);
+
+            // Upsert URL metadata to MongoDB
+            await gptersUrlsColl.updateOne(
+                { id },
+                {
+                    $set: {
+                        id,
+                        url: detailUrl,
+                        title,
+                        status: isCompleted ? 'completed' : 'new',
+                        updatedAt: new Date()
+                    },
+                    $setOnInsert: {
+                        pushedToRedis: isCompleted ? true : false
+                    }
+                },
+                { upsert: true }
+            );
+
             if (isCompleted) {
-                console.log(`⏭️ [GPTERS Dispatcher] Skipping already completed item: [ID: ${id}] ${title}`);
+                console.log(`⏭️ [GPTERS List] Skipping already completed item: [ID: ${id}] ${title}`);
                 continue;
             }
 
-            // Push to Redis Queue
-            await this.redis.rpush(QUEUE_KEY, detailUrl);
-            console.log(`🚀 [GPTERS Dispatcher] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
-            queuedCount++;
+            // Check if already pushed to Redis
+            const doc = await gptersUrlsColl.findOne({ id });
+            const alreadyPushed = doc?.pushedToRedis || false;
+
+            if (!alreadyPushed) {
+                // Push to Redis Queue
+                await this.redis.rpush(QUEUE_KEY, detailUrl);
+                await gptersUrlsColl.updateOne(
+                    { id },
+                    { $set: { pushedToRedis: true } }
+                );
+                console.log(`🚀 [GPTERS List] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
+                queuedCount++;
+            }
         }
 
-        console.log(`🎉 [GPTERS Dispatcher] Successfully queued ${queuedCount} items.`);
+        console.log(`🎉 [GPTERS List] Successfully queued ${queuedCount} items.`);
         return queuedCount;
     }
 }
 
 if (require.main === module) {
     (async () => {
-        const dispatcher = new GptersDispatcher();
+        const list = new GptersList();
         try {
-            await dispatcher.init();
+            await list.init();
             const limit = process.argv[2] ? parseInt(process.argv[2]) : 20;
-            await dispatcher.dispatch(limit);
+            await list.run(limit);
         } catch (e: any) {
-            console.error(`❌ Dispatcher failed: ${e.message}`);
+            console.error(`❌ List failed: ${e.message}`);
         } finally {
-            await dispatcher.close();
+            await list.close();
         }
     })();
 }

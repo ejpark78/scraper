@@ -1,10 +1,11 @@
-import { MongoDatabase } from '../../database/mongo';
-import { UrlUtils } from '../../utils';
+import { MongoDatabase } from '../../../database/mongo';
+import { UrlUtils } from '../../../utils';
 import Redis from 'ioredis';
 import * as fs from 'fs';
 import * as path from 'path';
 
-async function main() {
+export class JobsBackfill {
+    public async run(): Promise<void> {
     console.log('🏁 [Backfill] Starting comprehensive HTML backfill from bronze.jobs and bronze.lists...');
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
@@ -19,7 +20,7 @@ async function main() {
     // 1. target locations 로드
     let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
     try {
-        const configPath = path.join(__dirname, '..', '..', 'config', 'config.json');
+        const configPath = path.join(__dirname, '..', '..', '..', 'config', 'config.json');
         if (fs.existsSync(configPath)) {
             const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
             if (config.search_targets) {
@@ -34,7 +35,7 @@ async function main() {
     // 2. country mapping 로드
     let countryMapping: Record<string, string[]> = {};
     try {
-        const countryJsonPath = path.join(__dirname, '..', '..', 'config', 'country.json');
+        const countryJsonPath = path.join(__dirname, '..', '..', '..', 'config', 'country.json');
         if (fs.existsSync(countryJsonPath)) {
             countryMapping = JSON.parse(fs.readFileSync(countryJsonPath, 'utf-8'));
         }
@@ -331,7 +332,12 @@ async function main() {
     await mongo.close();
     console.log('🎉 [Comprehensive Backfill] Complete!');
 }
+}
 
-main().catch(err => {
-    console.error('💥 [Backfill] Fatal Error:', err);
-});
+if (require.main === module) {
+    const backfill = new JobsBackfill();
+    backfill.run().catch(err => {
+        console.error('💥 [Backfill] Fatal Error:', err);
+    });
+}
+

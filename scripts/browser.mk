@@ -7,7 +7,7 @@
 SITE ?= linkedin
 
 login:
-	SITE=$(SITE) npx ts-node src/crawler.ts login
+	SITE=$(SITE) npx ts-node src/Crawler.ts login
 
 open:
 	SITE=$(SITE) npx ts-node src/browser/open.ts

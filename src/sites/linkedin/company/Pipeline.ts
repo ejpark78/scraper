@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 
-import { BasePipeline } from '../../core/BasePipeline';
-import { CompanyMeta, CompanyMarkdownConverter } from './company_converter';
-import { LinkedInCrawler } from '../../crawler';
-import { UrlUtils, NamingUtils } from '../../utils';
+import { BasePipeline } from '../../../core/BasePipeline';
+import { CompanyMeta, CompanyMarkdownConverter } from './Converter';
+import { LinkedInCrawler } from '../../../Crawler';
+import { UrlUtils, NamingUtils } from '../../../utils';
 
 export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
     private readonly crawler: LinkedInCrawler;
@@ -43,7 +43,7 @@ export class CompanyScrapingPipeline extends BasePipeline<CompanyMeta> {
 
         // ⚡ [MongoDB 적재] ⚡
         try {
-            const { MongoDatabase } = require('../database/mongo');
+            const { MongoDatabase } = require('../../../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw) 저장

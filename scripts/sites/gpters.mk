@@ -2,12 +2,20 @@
 # 💡 GPTERS Scraper Commands Module
 # ==============================================================================
 
-.PHONY: dispatch pipeline
+.PHONY: list contents backfill fix-queue
 
 LIMIT ?= 20
 
-dispatch:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/gpters/GptersDispatcher.ts $(LIMIT)
+list:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/List.ts $(LIMIT)
 
-pipeline:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/gpters/GptersPipeline.ts $(LIMIT)
+contents:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/Contents.ts $(LIMIT)
+
+backfill:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/Backfill.ts
+
+fix-queue:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/FixQueue.ts
+
+

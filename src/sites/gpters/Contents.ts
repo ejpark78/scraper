@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
-import { GptersMeta, GptersConverter } from './GptersConverter';
+import { GptersMeta, GptersConverter } from './Converter';
 
-export class GptersPipeline extends BasePipeline<GptersMeta> {
+export class GptersContents extends BasePipeline<GptersMeta> {
     private readonly converter: GptersConverter;
 
     constructor() {
@@ -120,7 +120,15 @@ export class GptersPipeline extends BasePipeline<GptersMeta> {
                 },
                 { upsert: true }
             );
-            console.log(`📡 [MongoDB Write] Successfully saved GPTERS ID ${id} to bronze.gpters and silver.gpters.`);
+
+            // 3. Update status in bronze.gpters_urls
+            const gptersUrlsColl = await dbInstance.getCollection('bronze.gpters_urls');
+            await gptersUrlsColl.updateOne(
+                { id },
+                { $set: { status: 'completed', updatedAt: new Date() } }
+            );
+
+            console.log(`📡 [MongoDB Write] Successfully saved GPTERS ID ${id} and marked url as completed.`);
 
             // 3. Local File System Backup
             const baseDir = path.join(__dirname, '..', '..', 'data', 'gpters');
@@ -155,10 +163,9 @@ export class GptersPipeline extends BasePipeline<GptersMeta> {
 
 if (require.main === module) {
     const urlsFile = process.argv[2];
-    const pipeline = new GptersPipeline();
-    pipeline.run(urlsFile).catch(err => {
-        console.error('Fatal GPTERS pipeline crash:', err);
+    const contents = new GptersContents();
+    contents.run(urlsFile).catch(err => {
+        console.error('Fatal GPTERS contents crash:', err);
         process.exit(1);
     });
 }
-
