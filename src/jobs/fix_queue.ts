@@ -1,11 +1,15 @@
 import { MongoDatabase } from '../database/mongo';
 import * as fs from 'fs';
 import * as path from 'path';
+import Redis from 'ioredis';
 
 async function main() {
     console.log('🔄 [Fix Queue] Starting precision recovery of uncollected targets...');
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
+
+    const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+    const redis = new Redis(redisUrl);
 
     try {
         const bronzeJobs = await mongo.getCollection('bronze.jobs');
@@ -41,24 +45,58 @@ async function main() {
         const completedIds = await bronzeJobs.distinct('jobId');
         console.log(`📥 Loaded ${completedIds.length} already completed Job IDs.`);
 
-        // 3. 미수집 잔여 타겟 선별 후 상태 재설정
-        const result = await jobUrlsColl.updateMany(
-            { 
-                jobId: { $nin: completedIds }, 
-                geo: { $in: targetLocations } 
-            },
-            { 
-                $set: { pushedToRedis: false, status: 'new' } 
-            }
-        );
+        // 3. 현재 Redis jobs_queue 에 존재하는 URL 목록 추출
+        const queueLength = await redis.llen('jobs_queue');
+        const existingQueueUrls = queueLength > 0 ? await redis.lrange('jobs_queue', 0, -1) : [];
+        const existingQueueSet = new Set(existingQueueUrls);
+        console.log(`📥 Loaded ${existingQueueSet.size} URLs currently in Redis jobs_queue.`);
 
-        console.log(`✨ Recovery complete! Modified Count: ${result.modifiedCount}`);
+        // 4. 미수집 잔여 타겟 선별 (pushedToRedis 값에 상관없이, 완료되지 않은 대상 전체를 발굴)
+        const uncollectedJobs = await jobUrlsColl.find({
+            jobId: { $nin: completedIds },
+            geo: { $in: targetLocations }
+        }, {
+            projection: { jobId: 1, url: 1 }
+        }).toArray();
+
+        console.log(`🔍 Found ${uncollectedJobs.length} uncollected target jobs in database.`);
+
+        // 5. 이미 Redis 큐에 대기 중인 URL 필터링
+        const filteredJobs = uncollectedJobs.filter(j => j.url && !existingQueueSet.has(j.url));
+        console.log(`💡 Filtered out ${uncollectedJobs.length - filteredJobs.length} jobs already waiting in Redis queue.`);
+
+        if (filteredJobs.length > 0) {
+            const urlsToPush = filteredJobs.map(j => j.url).filter(Boolean);
+            const jobIdsToUpdate = filteredJobs.map(j => j.jobId);
+
+            // 6. Redis jobs_queue 에 적재
+            console.log(`📥 Pushing ${urlsToPush.length} URLs to Redis jobs_queue...`);
+            const chunkSize = 1000;
+            for (let i = 0; i < urlsToPush.length; i += chunkSize) {
+                const chunk = urlsToPush.slice(i, i + chunkSize);
+                await redis.rpush('jobs_queue', ...chunk);
+            }
+
+            // 7. MongoDB 상태를 pushedToRedis: true, status: 'new' 로 갱신
+            const result = await jobUrlsColl.updateMany(
+                { jobId: { $in: jobIdsToUpdate } },
+                { $set: { pushedToRedis: true, status: 'new', updatedAt: new Date() } }
+            );
+
+            console.log(`✨ Recovery complete! Redis Queue Pushed: ${urlsToPush.length}, MongoDB Modified Count: ${result.modifiedCount}`);
+        } else {
+            console.log('💡 No new uncollected target jobs to recover (all target jobs are either completed or already in the queue).');
+        }
+
     } catch (err: any) {
         console.error('❌ Error during queue recovery:', err);
     } finally {
+        await redis.quit();
         await mongo.close();
         process.exit(0);
     }
 }
 
 main().catch(console.error);
+
+
