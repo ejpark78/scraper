@@ -366,10 +366,18 @@ export abstract class BasePipeline<TMeta> {
         }
         await Promise.all(executing);
 
+        // 🔌 MongoDB 및 Redis 연결 종료 처리
+        try {
+            const { MongoDatabase } = require('../database/mongo');
+            const dbInstance = MongoDatabase.getInstance();
+            await dbInstance.close();
+        } catch (e) {}
+
         if (redis) {
             await redis.quit();
         }
 
         console.log(`\n🎉 [종료] ${this.getDomainName()} 정보 일괄 수집 완료! (MongoDB 데이터베이스에 저장됨)`);
+        process.exit(0);
     }
 }

@@ -7,14 +7,14 @@
 #  1. 공고 목록 수집 (make list)
 #     [LinkedIn Web] ──➜ Playwright (clipper) ──➜ MongoDB (bronze.lists)
 # 
-#  2. 공고 분석 & 회사 목록 추출 (make urls)
-#     [MongoDB (bronze.lists)] ──➜ UrlManager (clipper)
+#  2. 공고 분석 & 회사 목록 추출 (목록 수집 시 자동 연동)
+#     [MongoDB (bronze.lists)] ──➜ Auto-Extract (Clipper)
 #                                        │
 #                                        ├─➜ (신규 공고 적재) ─➜ [MongoDB (bronze.job_urls) / Redis (jobs_queue)]
 #                                        └─➜ (신규 회사 적재) ─➜ [MongoDB (bronze.company_urls)]
 # 
 #  3. 상세 정보 다운로드 및 변환
-#     A. 채용 정보 수집 (make jobs / worker)
+#     A. 채용 정보 수집 (make worker)
 #        [Redis (jobs_queue)] ──➜ Work Loop (clipper-worker)
 #                                      │
 #                                      ├─➜ [MongoDB (bronze.jobs / silver.jobs)]
@@ -29,7 +29,7 @@
 # ==============================================================================
 
 # 공통 프로젝트 지정을 위한 단일 Docker Compose 명령어 (루트 compose.yml include 사용)
-COMPOSE := HOST_PROJECT_PATH=$$(pwd) docker compose
+COMPOSE := HOST_PROJECT_PATH=$$(pwd) docker compose -p linkedin
 
 
 .PHONY: *
@@ -71,6 +71,7 @@ help:
 	@echo "                        * 예시 (기본 역추적 실행): make backfill"
 	@echo "                        * 예시 (옵션 종합 지정): make backfill SLACK_TIME=5 CHUNK_SIZE=200"
 	@echo "  make check-worker   - [Host/Kasm] Redis의 다운로드 큐 상태와 워커 컨테이너 상태를 확인합니다."
+	@echo "  make restart-worker - [Host] clipper-worker 컨테이너를 다시 빌드하고 재기동합니다."
 	@echo "  make fix-queue      - [Host/Kasm] 미수집된 유실/잔여 타겟의 DB 상태를 복구하여 Redis 대기 상태로 전환합니다."
 	@echo "                        * 옵션: GEOS (복구 국가 목록)"
 	@echo "                        * 예시 (기본 국가 복구): make fix-queue"
@@ -102,6 +103,8 @@ up:
 down:
 	$(COMPOSE) --profile tools down || true
 	@echo "🛑 모든 서비스가 종료되었습니다."
+
+dump: dump-bronze dump-silver
 
 # MongoDB 백업 - Silver Layer (silver.jobs, silver.companies)
 dump-silver:
@@ -218,4 +221,7 @@ check-worker:
 	@echo "📋 Active worker containers:"
 	@docker ps --filter "name=linkedin-clipper-worker" --format "table {{.Names}}\t{{.Status}}"
 
-
+restart-worker:
+	@echo "🔄 [Docker] clipper-worker 컨테이너를 다시 빌드하고 재기동합니다..."
+	@$(COMPOSE) up -d --build clipper-worker
+	@echo "✅ clipper-worker 컨테이너 재기동 완료."

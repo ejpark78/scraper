@@ -39,8 +39,8 @@
 * 인메모리 Set에는 쿼리가 복잡한 긴 전체 URL 주소 대신 **고유 ID 값만 최소한으로 보관**하여 메모리 풋프린트를 기존 대비 80% 이상 절감하였고, `Makefile` 기동 시 V8 힙 리밋을 최대 4GB로 명시적 확장하여 가동 안전성을 2중 보증합니다.
 
 ### 5. 다중 스크래핑(Playwright) 병렬 처리 (Parallel Control)
-* `make list` 및 `make jobs` 실행 시 `PARALLEL=N` 파라미터를 인자로 넘겨주면, 복수의 Playwright 인스턴스를 동시에 가동시켜 스크래핑 속도를 향상시킬 수 있습니다. (기본값: `PARALLEL=1`)
-* `make jobs` 파이프라인의 경우 동일 타겟에 대한 병렬 중복 수집을 원천 차단하기 위해 **인메모리 선점 락(Mutex)** 로직을 내장하고 있습니다.
+* `make list`, `make company` 및 `make worker` 실행 시 `PARALLEL=N` 파라미터를 인자로 넘겨주면, 복수의 Playwright 인스턴스를 동시에 가동시켜 스크래핑 속도를 향상시킬 수 있습니다. (기본값: `PARALLEL=1`)
+* 수집 파이프라인의 경우 동일 타겟에 대한 병렬 중복 수집을 원천 차단하기 위해 **인메모리 선점 락(Mutex)** 로직을 내장하고 있습니다.
 
 ---
 
@@ -68,11 +68,7 @@
   Makefile Interface
   ├── make login ──────────────➜ npx ts-node src/crawler.ts login (1회성 로그인 세션 덤프)
   │
-  ├── make list ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용 검색 결과 목록 HTML 덤프)
-  │
-  ├── make urls ───────────────➜ node --max-old-space-size=4096 (신규 채용공고 URL & 회사 URL 추출)
-  │
-  ├── make jobs ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용공고 수집/마크다운 변환 파이프라인 가동)
+  ├── make list ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용 검색 결과 목록 HTML 덤프 & 자동 상세 URL 추출)
   │
   ├── make worker ─────────────➜ redis_worker.ts (Redis jobs_queue 기반 무한 분산 수집 워커 구동)
   │
@@ -138,11 +134,7 @@
   Makefile Interface
   ├── make login ──────────────➜ npx ts-node src/crawler.ts login (1회성 로그인 세션 덤프)
   │
-  ├── make list ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용 검색 결과 목록 HTML 덤프)
-  │
-  ├── make urls ───────────────➜ node --max-old-space-size=4096 (신규 채용공고 URL & 회사 URL 추출)
-  │
-  ├── make jobs ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용공고 수집/마크다운 변환 파이프라인 가동)
+  ├── make list ───────────────➜ AUTH=$(AUTH) PARALLEL=$(PARALLEL) (채용 검색 결과 목록 HTML 덤프 & 자동 상세 URL 추출)
   │
   ├── make company ────────────➜ AUTH=$(AUTH) ts-node (회사정보 수집/변환 파이프라인 가동)
   │
@@ -244,21 +236,12 @@ make list
 make list PARALLEL=3 AUTH=true
 ```
 
-### 2단계. 상세 URL 추출 및 필터링 (`make urls`)
-목록 HTML 파일들을 분석하여 이미 수집된 ID를 O(1) 성능으로 정밀 대조 배제하고, 신규 타겟을 `data/jobs/lists/urls.txt`에 저장하며 수집된 회사 URL들은 `data/compay/lists/urls.txt`에 별도로 적재합니다. (대용량 메모리 OOM 방지 및 4GB Heap 옵션이 적용되어 있습니다.)
-```bash
-make urls
-```
+### 2단계. 상세 URL 추출 및 필터링 (자동 수행)
+`make list` 실행 결과 목록 HTML 파일이 다운로드 완료되면 크롤러가 내부 엔진에서 수집된 채용공고 및 회사 ID를 자동으로 정밀 분석합니다. 이미 수집된 ID는 O(1) 성능으로 정밀 대조 배제되며, 신규 타겟만 추출하여 데이터베이스(`bronze.job_urls` 및 `bronze.company_urls`)에 정밀 저장됩니다. (사용자가 수동으로 추출 명령어를 실행할 필요가 없습니다.)
 
-### 3단계. 일괄 채용공고 다운로드 및 변환 (`make jobs`)
-추출된 신규 공고 URL에 순차적으로 접근하여 상세 정보 스크랩 및 프리티어 마크다운 변환을 일괄 수행합니다. (수집 성공 시 `data/jobs/recent` 하위에 신규 복사본을 유지합니다.)
-```bash
-# 기본 비로그인 수집
-make jobs
-
-# 5개 스레드 병렬 실행 및 로그인 세션 동원
-make jobs PARALLEL=5 AUTH=true
-```
+### 3단계. 채용공고 수집 워커 백그라운드 자동 동작
+추출된 신규 공고 URL들은 Redis 큐(`jobs_queue`)에 자동으로 대기열로 인입되며, 인프라 기동(`make up`) 시 함께 가동된 백그라운드 분산 수집 워커(`clipper-worker`) 컨테이너들이 실시간으로 큐의 일감을 소모해 상세 다운로드 및 MongoDB 적재를 진행합니다.
+* 워커의 동작 상태 및 대기열 크기는 `make check-worker` 명령어로 실시간 모니터링할 수 있습니다.
 
 ### 4단계. 회사 정보 수집 파이프라인 가동 (`make company`)
 ```bash
