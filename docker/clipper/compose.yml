@@ -1,0 +1,50 @@
+services:
+  clipper:
+    build:
+      context: .
+      dockerfile: docker/clipper/Dockerfile
+    image: linkedin/clipper:latest
+    profiles:
+      - runtime
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - AUTH=${AUTH:-}
+      - PARALLEL=${PARALLEL:-}
+      - SLACK_TIME=${SLACK_TIME:-}
+      - CHUNK_SIZE=${CHUNK_SIZE:-}
+      - LISTS=${LISTS:-}
+      - URLS=${URLS:-}
+      - HTML=${HTML:-}
+      - MD=${MD:-}
+      - TZ=Asia/Seoul
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  clipper-worker:
+    build:
+      context: .
+      dockerfile: docker/clipper/Dockerfile
+    image: linkedin/clipper:latest
+    command: ["npx", "ts-node", "src/redis_worker.ts"]
+    environment:
+      - TZ=Asia/Seoul
+      - AUTH=${AUTH:-}
+      - JSON_LOG=true
+      - SLACK_TIME=0
+      - PARALLEL=1
+      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=mongodb://mongodb:27017
+    volumes:
+      - ./data/sessions:/app/data/sessions
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "redis_worker.ts"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      replicas: 5

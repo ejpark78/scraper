@@ -1,6 +1,9 @@
 # ⚙️ LinkedIn Job Scraper Makefile
 
-.PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm init-cron export-cron check-worker
+# 공통 프로젝트 지정을 위한 단일 Docker Compose 명령어 (루트 compose.yml include 사용)
+COMPOSE := docker compose -p linkedin -f compose.yml
+
+.PHONY: help posts urls html2md clean purge login list job-list test migrate open logout build kasm init-cron export-cron check-worker up down
 
 # LISTS 변수 기본값 설정
 LISTS ?= config/config.json
@@ -38,10 +41,11 @@ IN_CONTAINER ?= false
 # 기본 도움말
 help:
 	@echo "========================================================================="
-	@echo "🌐 LinkedIn Job Scraper CLI (Dockerized)"
+	@echo "🌐 LinkedIn Job Scraper CLI (Dockerized - Include Modular)"
 	@echo "========================================================================="
 	@echo "사용 가능한 명령어 목록 (자동 Docker 가동):"
-	@echo "  make build          - Docker 컨테이너 이미지를 빌드합니다."
+	@echo "  make up             - 인프라 및 모든 개발 도구(Traefik, Yacht, Jupyter 등)를 기동합니다."
+	@echo "  make down           - 작동 중인 모든 모듈과 인프라를 일괄 종료합니다."
 	@echo "  make login          - [Host] 1회성 브라우저를 띄워 로그인 세션(session.json)을 로컬에 덤프합니다."
 	@echo "  make kasm           - [Host] Kasm 컨테이너 내부 쉘(shell)에 진입합니다."
 	@echo "  make open           - [Host] 로그인 세션 기반 헤드풀 브라우저 기동"
@@ -57,26 +61,32 @@ help:
 	@echo "  make dump-bronze    - [Host] 수집 원본 브론즈 레이어(bronze.*) 데이터만 백업합니다."
 	@echo "========================================================================="
 
-# Docker 이미지 빌드
-build:
-	docker compose build
+# 전체 모듈 일괄 기동 (--profile tools 옵션으로 도구도 함께 로드)
+up:
+	$(COMPOSE) --profile tools up -d
+	@echo "🚀 모든 서비스와 어드민 도구가 성공적으로 실행되었습니다."
+
+# 전체 모듈 일괄 종료
+down:
+	$(COMPOSE) --profile tools down || true
+	@echo "🛑 모든 서비스가 종료되었습니다."
 
 # MongoDB 백업 - Silver Layer (silver.jobs, silver.companies)
 dump-silver:
 	@mkdir -p data
-	docker compose exec -T mongodb mongodump --db linkedin --collection silver.jobs --gzip --archive=/tmp/silver_jobs.gz
-	docker cp $$(docker compose ps -q mongodb):/tmp/silver_jobs.gz data/silver_jobs.gz
-	docker compose exec -T mongodb mongodump --db linkedin --collection silver.companies --gzip --archive=/tmp/silver_companies.gz
-	docker cp $$(docker compose ps -q mongodb):/tmp/silver_companies.gz data/silver_companies.gz
+	$(COMPOSE) exec -T mongodb mongodump --db linkedin --collection silver.jobs --gzip --archive=/tmp/silver_jobs.gz
+	docker cp $$(docker compose -p linkedin -f compose.yml ps -q mongodb):/tmp/silver_jobs.gz data/silver_jobs.gz
+	$(COMPOSE) exec -T mongodb mongodump --db linkedin --collection silver.companies --gzip --archive=/tmp/silver_companies.gz
+	docker cp $$(docker compose -p linkedin -f compose.yml ps -q mongodb):/tmp/silver_companies.gz data/silver_companies.gz
 	@echo "💾 Silver 레이어 백업 완료: data/silver_jobs.gz, data/silver_companies.gz"
 
 # MongoDB 백업 - Bronze Layer (Raw 데이터 - 용량 큼)
 dump-bronze:
 	@mkdir -p data
-	docker compose exec -T mongodb mongodump --db linkedin --collection bronze.jobs --gzip --archive=/tmp/bronze_jobs.gz
-	docker cp $$(docker compose ps -q mongodb):/tmp/bronze_jobs.gz data/bronze_jobs.gz
-	docker compose exec -T mongodb mongodump --db linkedin --collection bronze.companies --gzip --archive=/tmp/bronze_companies.gz
-	docker cp $$(docker compose ps -q mongodb):/tmp/bronze_companies.gz data/bronze_companies.gz
+	$(COMPOSE) exec -T mongodb mongodump --db linkedin --collection bronze.jobs --gzip --archive=/tmp/bronze_jobs.gz
+	docker cp $$(docker compose -p linkedin -f compose.yml ps -q mongodb):/tmp/bronze_jobs.gz data/bronze_jobs.gz
+	$(COMPOSE) exec -T mongodb mongodump --db linkedin --collection bronze.companies --gzip --archive=/tmp/bronze_companies.gz
+	docker cp $$(docker compose -p linkedin -f compose.yml ps -q mongodb):/tmp/bronze_companies.gz data/bronze_companies.gz
 	@echo "💾 Bronze 레이어 백업 완료: data/bronze_jobs.gz, data/bronze_companies.gz"
 
 # 호스트(Host) 구동 필수 타겟
@@ -87,7 +97,7 @@ open:
 	npx ts-node src/browser/open.ts
 
 kasm:
-	docker compose exec -it kasm /bin/zsh
+	$(COMPOSE) exec -it kasm /bin/zsh
 
 logout:
 	rm -f config/session.json
@@ -95,7 +105,7 @@ logout:
 
 export-cron:
 	@mkdir -p docker/cronicle
-	docker compose exec -T cronicle /opt/cronicle/bin/control.sh export /app/docker/cronicle/default.json
+	$(COMPOSE) exec -T cronicle /opt/cronicle/bin/control.sh export /app/docker/cronicle/default.json
 	@echo "💾 Cronicle 이벤트가 docker/cronicle/default.json으로 성공적으로 백업되었습니다."
 
 init-cron:
@@ -103,9 +113,9 @@ init-cron:
 		echo "❌ 에러: docker/cronicle/default.json 파일이 존재하지 않습니다. 먼저 'make export-cron'을 실행해 주세요."; \
 		exit 1; \
 	fi
-	docker compose stop cronicle
-	docker compose run --rm cronicle /opt/cronicle/bin/storage-cli.js import /app/docker/cronicle/default.json
-	docker compose start cronicle
+	$(COMPOSE) stop cronicle
+	$(COMPOSE) run --rm cronicle /opt/cronicle/bin/storage-cli.js import /app/docker/cronicle/default.json
+	$(COMPOSE) start cronicle
 	@echo "✅ Cronicle 이벤트 복원 및 재시작이 완료되었습니다."
 
 
@@ -134,18 +144,18 @@ else
 
 # 호스트 환경에서 컨테이너 구동으로 위임하는 인터페이스 프록시
 list:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL) SLACK_TIME=$(SLACK_TIME)
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make list LISTS=$(LISTS) AUTH=$(AUTH) PARALLEL=$(PARALLEL) SLACK_TIME=$(SLACK_TIME)
 
 job-list: list
 
 company:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make company AUTH=$(AUTH)
 
 test:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make test
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make test
 
 backfill:
-	docker compose run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make backfill SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE)
+	$(COMPOSE) run --rm --user $$(id -u):$$(id -g) -e IN_CONTAINER=true clipper make backfill SLACK_TIME=$(SLACK_TIME) CHUNK_SIZE=$(CHUNK_SIZE)
 
 endif
 

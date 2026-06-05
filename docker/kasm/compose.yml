@@ -1,0 +1,39 @@
+services:
+  kasm:
+    # 📝 Default Login Info:
+    # - URL: https://kasm.localhost || https://kasm.127.0.0.1.nip.io
+    # - User: admin@kasm.local
+    # - Pass: password2026
+    build:
+      context: ./docker/kasm
+      dockerfile: Dockerfile
+    image: linkedin/kasm:latest
+    profiles:
+      - tools    
+    profiles:
+      - tools
+    environment:
+      - VNC_PW=password2026
+      - VNCOPTIONS=-disableBasicAuth
+      - USER_ID=1000
+      - GROUP_ID=1000
+      - TZ=Asia/Seoul
+    shm_size: "1gb"
+    volumes:
+      - .:/home/kasm-user/linkedin
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-k", "https://localhost:6901/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kasm.rule=Host(`kasm.localhost`) || Host(`kasm.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.kasm.entrypoints=websecure"
+      - "traefik.http.routers.kasm.tls=true"
+      - "traefik.http.services.kasm.loadbalancer.server.port=6901"
+      - "traefik.http.services.kasm.loadbalancer.server.scheme=https"

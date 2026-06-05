@@ -1,0 +1,50 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    environment:
+      - TZ=Asia/Seoul
+      - MONGO_INITDB_DATABASE=linkedin
+    volumes:
+      - ./data/.services/mongodb:/data/db
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - mongo
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  mongo-express:
+    # 📝 Default Login Info:
+    # - URL: http://me.localhost || http://me.127.0.0.1.nip.io
+    # - User: admin
+    # - Pass: pass
+    image: mongo-express:latest
+    environment:
+      - TZ=Asia/Seoul
+      - MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    profiles:
+      - tools      
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://admin:pass@127.0.0.1:8081/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mongoexpress.rule=Host(`me.localhost`) || Host(`me.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.mongoexpress.entrypoints=websecure"
+      - "traefik.http.routers.mongoexpress.tls=true"
+      - "traefik.http.services.mongoexpress.loadbalancer.server.port=8081"

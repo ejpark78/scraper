@@ -1,0 +1,32 @@
+services:
+  cronicle:
+    # 📝 Default Login Info:
+    # - URL: http://cron.localhost || http://cron.127.0.0.1.nip.io
+    # - User: admin
+    # - Pass: admin
+    build:
+      context: ./docker/cronicle
+      dockerfile: Dockerfile
+    image: linkedin/cronicle:latest
+    hostname: localhost
+    profiles:
+      - tools
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/.services/cronicle:/opt/cronicle/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3012/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cronicle.rule=Host(`cron.localhost`) || Host(`cron.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.cronicle.entrypoints=websecure"
+      - "traefik.http.routers.cronicle.tls=true"
+      - "traefik.http.services.cronicle.loadbalancer.server.port=3012"

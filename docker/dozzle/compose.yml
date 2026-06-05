@@ -1,0 +1,23 @@
+services:
+  dozzle:
+    # 📝 Dozzle: Real-time container log viewer
+    # - URL: http://dozzle.localhost || http://dozzle.127.0.0.1.nip.io
+    # - No login required by default.
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    profiles:
+      - tools
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.localhost`) || Host(`dozzle.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
