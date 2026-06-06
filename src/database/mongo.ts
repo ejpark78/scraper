@@ -77,7 +77,7 @@ export class MongoDatabase {
             // 📁 Unified Active Collections Indices
             if (this.client) {
                 const bronzeDb = this.client.db('bronze');
-                await bronzeDb.collection('linkedin.html').createIndex({ jobId: 1 }, { unique: true });
+                await bronzeDb.collection('linkedin.jobs').createIndex({ jobId: 1 }, { unique: true });
                 await bronzeDb.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
                 await bronzeDb.collection('linkedin.lists').createIndex({ listId: 1 });
                 await bronzeDb.collection('linkedin.lists').createIndex({ collectedAt: 1 });

@@ -71,8 +71,8 @@ async function main() {
       Logger.info(`[Transformer] POP task [${site}] ID: ${id} (Bronze Ref: ${bronze_id})`);
 
       try {
-        // Fetch raw HTML from MongoDB Bronze Layer (Collection: site.html)
-        const collectionName = `${site}.html`;
+        // Fetch raw HTML from MongoDB Bronze Layer (Collection: site.html or site.jobs)
+        const collectionName = site === 'linkedin' ? 'linkedin.jobs' : `${site}.html`;
         const bronzeColl = await mongo.getCollection(collectionName);
         
         const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { postId: id } : { topicId: id };
