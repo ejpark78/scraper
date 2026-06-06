@@ -10,7 +10,7 @@ export class PyTorchKRBackfill {
         await mongo.connect();
 
         try {
-            const bronzePytorch = await mongo.getCollection('bronze.pytorch_kr');
+            const bronzePytorch = await mongo.getCollection('pytorch_kr.html');
             const silverPytorch = await mongo.getCollection('silver.pytorch_kr');
 
             const converter = new PyTorchKRConverter();

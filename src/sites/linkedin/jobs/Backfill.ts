@@ -9,10 +9,10 @@ export class JobsBackfill {
     console.log('🏁 [Backfill] Starting comprehensive HTML backfill from bronze.jobs and bronze.lists...');
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
-    const bronzeJobs = await mongo.getCollection('bronze.jobs');
-    const bronzeLists = await mongo.getCollection('bronze.lists');
-    const jobUrlsColl = await mongo.getCollection('bronze.job_urls');
-    const companyUrlsColl = await mongo.getCollection('bronze.company_urls');
+    const bronzeJobs = await mongo.getCollection('linkedin.html');
+    const bronzeLists = await mongo.getCollection('linkedin.lists');
+    const jobUrlsColl = await mongo.getCollection('linkedin.job_urls');
+    const companyUrlsColl = await mongo.getCollection('linkedin.company_urls');
 
     const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
     const redis = new Redis(redisUrl);
@@ -52,15 +52,15 @@ export class JobsBackfill {
 
     // 3. 완료 및 기존 수집 캐시 로드
     const completedCache = new Set<string>();
-    const completedDocs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
-    completedDocs.forEach((d: any) => {
-        if (d.jobId) completedCache.add(d.jobId);
+    const jobIds = await bronzeJobs.distinct('jobId');
+    jobIds.forEach((jobId: any) => {
+        if (jobId) completedCache.add(jobId);
     });
 
     const pushedUrls = new Set<string>();
-    const pushedDocs = await jobUrlsColl.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
-    pushedDocs.forEach((d: any) => {
-        if (d.jobId) pushedUrls.add(d.jobId);
+    const pushedJobIds = await jobUrlsColl.distinct('jobId');
+    pushedJobIds.forEach((jobId: any) => {
+        if (jobId) pushedUrls.add(jobId);
     });
 
     console.log(`🔌 Loaded ${completedCache.size} completed jobs and ${pushedUrls.size} discovered job URLs from DB.`);
@@ -317,13 +317,19 @@ export class JobsBackfill {
     }
 
     if (redisPushBuffer.length > 0) {
-        console.log(`📥 Pushing ${redisPushBuffer.length} URLs to Redis jobs_queue...`);
+        console.log(`📥 Pushing ${redisPushBuffer.length} URLs to Redis scrape_queue...`);
+        const payloads = redisPushBuffer.map(url => JSON.stringify({
+            site: 'linkedin',
+            url,
+            attempt: 1
+        }));
+        
         const chunkSize = 1000;
-        for (let i = 0; i < redisPushBuffer.length; i += chunkSize) {
-            const chunk = redisPushBuffer.slice(i, i + chunkSize);
-            await redis.rpush('jobs_queue', ...chunk);
+        for (let i = 0; i < payloads.length; i += chunkSize) {
+            const chunk = payloads.slice(i, i + chunkSize);
+            await redis.rpush('scrape_queue', ...chunk);
         }
-        console.log('✅ Redis jobs_queue updated.');
+        console.log('✅ Redis scrape_queue updated.');
     } else {
         console.log('💡 No new target jobs found to backfill.');
     }

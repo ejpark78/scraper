@@ -52,7 +52,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw HTML) 저장
-            const bronzePytorch = await dbInstance.getCollection('bronze.pytorch_kr');
+            const bronzePytorch = await dbInstance.getCollection('pytorch_kr.html');
             await bronzePytorch.updateOne(
                 { id: id },
                 {
@@ -85,7 +85,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             );
 
             // 3. Update status in bronze.pytorch_kr_urls
-            const pytorchUrlsColl = await dbInstance.getCollection('bronze.pytorch_kr_urls');
+            const pytorchUrlsColl = await dbInstance.getCollection('pytorch_kr.urls');
             await pytorchUrlsColl.updateOne(
                 { id },
                 { $set: { status: 'completed', updatedAt: new Date() } }

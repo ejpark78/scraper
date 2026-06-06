@@ -40,14 +40,14 @@ export class GeekNewsList {
         console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on index page.`);
 
         const dbInstance = MongoDatabase.getInstance();
-        const geeknewsUrlsColl = await dbInstance.getCollection('bronze.geeknews_urls');
+        const geeknewsUrlsColl = await dbInstance.getCollection('geeknews.urls');
 
         // Synchronize Completed cache with MongoDB first if Redis cache is empty
         const completedCount = await this.redis.scard(CACHE_SET_KEY);
         if (completedCount === 0) {
             try {
                 console.log(`🔍 [GeekNews List] Redis cache is empty. Seeding from MongoDB bronze.geeknews...`);
-                const bronzeGeeknews = await dbInstance.getCollection('bronze.geeknews');
+                const bronzeGeeknews = await dbInstance.getCollection('geeknews.html');
                 const existing = await bronzeGeeknews.find({}, { projection: { id: 1, _id: 0 } }).toArray();
                 if (existing.length > 0) {
                     const pipeline = this.redis.pipeline();

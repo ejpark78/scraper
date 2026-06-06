@@ -39,14 +39,14 @@ export class PyTorchKRList {
         console.log(`🔍 [PyTorch KR List] Found ${topics.length} topics on index page.`);
 
         const dbInstance = MongoDatabase.getInstance();
-        const pytorchUrlsColl = await dbInstance.getCollection('bronze.pytorch_kr_urls');
+        const pytorchUrlsColl = await dbInstance.getCollection('pytorch_kr.urls');
 
         // Synchronize Completed cache with MongoDB first if Redis cache is empty
         const completedCount = await this.redis.scard(CACHE_SET_KEY);
         if (completedCount === 0) {
             try {
                 console.log(`🔍 [PyTorch KR List] Redis cache is empty. Seeding from MongoDB bronze.pytorch_kr...`);
-                const bronzePytorch = await dbInstance.getCollection('bronze.pytorch_kr');
+                const bronzePytorch = await dbInstance.getCollection('pytorch_kr.html');
                 const existing = await bronzePytorch.find({}, { projection: { id: 1, _id: 0 } }).toArray();
                 if (existing.length > 0) {
                     const pipeline = this.redis.pipeline();

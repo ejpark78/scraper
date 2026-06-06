@@ -10,7 +10,7 @@ export class GptersBackfill {
         await mongo.connect();
 
         try {
-            const bronzeGpters = await mongo.getCollection('bronze.gpters');
+            const bronzeGpters = await mongo.getCollection('gpters.html');
             const silverGpters = await mongo.getCollection('silver.gpters');
 
             const converter = new GptersConverter();

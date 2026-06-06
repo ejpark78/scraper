@@ -11,8 +11,8 @@ export class PyTorchKRFixQueue {
         const redis = new Redis(redisUrl);
 
         try {
-            const bronzePytorch = await mongo.getCollection('bronze.pytorch_kr');
-            const pytorchUrlsColl = await mongo.getCollection('bronze.pytorch_kr_urls');
+            const bronzePytorch = await mongo.getCollection('pytorch_kr.html');
+            const pytorchUrlsColl = await mongo.getCollection('pytorch_kr.urls');
 
             // 1. 이미 수집 완료된 ID 목록 추출
             const completedIds = await bronzePytorch.distinct('id');

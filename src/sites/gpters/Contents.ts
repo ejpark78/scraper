@@ -86,7 +86,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw JSON) 저장
-            const bronzeGpters = await dbInstance.getCollection('bronze.gpters');
+            const bronzeGpters = await dbInstance.getCollection('gpters.html');
             await bronzeGpters.updateOne(
                 { id: id },
                 {
@@ -122,7 +122,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             );
 
             // 3. Update status in bronze.gpters_urls
-            const gptersUrlsColl = await dbInstance.getCollection('bronze.gpters_urls');
+            const gptersUrlsColl = await dbInstance.getCollection('gpters.urls');
             await gptersUrlsColl.updateOne(
                 { id },
                 { $set: { status: 'completed', updatedAt: new Date() } }

@@ -64,18 +64,17 @@ export class MongoDatabase {
         if (!this.db) return;
 
         try {
-            // 🥉 Bronze Layer Indices
-            await this.db.collection('bronze.jobs').createIndex({ jobId: 1 }, { unique: true });
-            await this.db.collection('bronze.companies').createIndex({ companyId: 1 }, { unique: true });
-            await this.db.collection('bronze.lists').createIndex({ listId: 1 }, { unique: true });
-            await this.db.collection('bronze.lists').createIndex({ collectedAt: 1 });
+            // 📁 Unified Active Collections Indices
+            await this.db.collection('linkedin.html').createIndex({ jobId: 1 }, { unique: true });
+            await this.db.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
+            await this.db.collection('linkedin.lists').createIndex({ listId: 1 }, { unique: true });
+            await this.db.collection('linkedin.lists').createIndex({ collectedAt: 1 });
+            await this.db.collection('linkedin.job_urls').createIndex({ jobId: 1 }, { unique: true });
+            await this.db.collection('linkedin.company_urls').createIndex({ companyId: 1 }, { unique: true });
 
-            // 🥈 Silver Layer Indices
-            await this.db.collection('silver.jobs').createIndex({ jobId: 1 }, { unique: true });
-            await this.db.collection('silver.jobs').createIndex({ geo: 1 });
-            await this.db.collection('silver.jobs').createIndex({ companyId: 1 });
-
-            await this.db.collection('silver.companies').createIndex({ companyId: 1 }, { unique: true });
+            await this.db.collection('geeknews.html').createIndex({ id: 1 }, { unique: true });
+            await this.db.collection('gpters.html').createIndex({ id: 1 }, { unique: true });
+            await this.db.collection('pytorch_kr.html').createIndex({ id: 1 }, { unique: true });
 
             console.log('📌 [MongoDB] All collection indexes successfully initialized.');
         } catch (e: any) {

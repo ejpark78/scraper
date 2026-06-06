@@ -72,14 +72,14 @@ export class GptersList {
         console.log(`🔍 [GPTERS List] Found ${posts.length} posts on index.`);
 
         const dbInstance = MongoDatabase.getInstance();
-        const gptersUrlsColl = await dbInstance.getCollection('bronze.gpters_urls');
+        const gptersUrlsColl = await dbInstance.getCollection('gpters.urls');
 
         // Synchronize Completed cache with MongoDB first if Redis cache is empty
         const completedCount = await this.redis.scard(CACHE_SET_KEY);
         if (completedCount === 0) {
             try {
                 console.log(`🔍 [GPTERS List] Redis cache is empty. Seeding from MongoDB bronze.gpters...`);
-                const bronzeGpters = await dbInstance.getCollection('bronze.gpters');
+                const bronzeGpters = await dbInstance.getCollection('gpters.html');
                 const existing = await bronzeGpters.find({}, { projection: { id: 1, _id: 0 } }).toArray();
                 if (existing.length > 0) {
                     const pipeline = this.redis.pipeline();

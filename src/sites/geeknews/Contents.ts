@@ -54,7 +54,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw HTML) 저장
-            const bronzeGeeknews = await dbInstance.getCollection('bronze.geeknews');
+            const bronzeGeeknews = await dbInstance.getCollection('geeknews.html');
             await bronzeGeeknews.updateOne(
                 { id: id },
                 {
@@ -88,7 +88,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             );
 
             // 3. Update status in bronze.geeknews_urls
-            const geeknewsUrlsColl = await dbInstance.getCollection('bronze.geeknews_urls');
+            const geeknewsUrlsColl = await dbInstance.getCollection('geeknews.urls');
             await geeknewsUrlsColl.updateOne(
                 { id },
                 { $set: { status: 'completed', updatedAt: new Date() } }

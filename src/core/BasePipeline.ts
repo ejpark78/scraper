@@ -127,19 +127,19 @@ export abstract class BasePipeline<TMeta> {
                 const dbInstance = MongoDatabase.getInstance();
                 
                 if (this.getDomainName() === '채용공고') {
-                    const bronzeJobs = await dbInstance.getCollection('bronze.jobs');
-                    const jobs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
-                    jobs.forEach((job: any) => {
-                        if (job.jobId && /^\d+$/.test(job.jobId)) {
-                            cacheSet.add(job.jobId);
+                    const bronzeJobs = await dbInstance.getCollection('linkedin.html');
+                    const jobIds = await bronzeJobs.distinct('jobId');
+                    jobIds.forEach((jobId: any) => {
+                        if (jobId && /^\d+$/.test(jobId)) {
+                            cacheSet.add(jobId);
                         }
                     });
                 } else {
-                    const bronzeCompanies = await dbInstance.getCollection('bronze.companies');
-                    const companies = await bronzeCompanies.find({}, { projection: { companyId: 1, _id: 0 } }).toArray();
-                    companies.forEach((company: any) => {
-                        if (company.companyId) {
-                            cacheSet.add(company.companyId);
+                    const bronzeCompanies = await dbInstance.getCollection('linkedin.companies');
+                    const companyIds = await bronzeCompanies.distinct('companyId');
+                    companyIds.forEach((companyId: any) => {
+                        if (companyId) {
+                            cacheSet.add(companyId);
                         }
                     });
                 }
@@ -221,7 +221,7 @@ export abstract class BasePipeline<TMeta> {
             try {
                 const { MongoDatabase } = require('../database/mongo');
                 const dbInstance = MongoDatabase.getInstance();
-                const companyUrlsColl = await dbInstance.getCollection('bronze.company_urls');
+                const companyUrlsColl = await dbInstance.getCollection('linkedin.company_urls');
                 
                 // 아직 완료되지 않았거나 신규 수집 상태의 모든 URL을 로드
                 const newCompanyUrls = await companyUrlsColl.find({ status: { $ne: 'completed' } }).toArray();
