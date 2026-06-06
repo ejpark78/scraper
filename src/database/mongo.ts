@@ -44,8 +44,18 @@ export class MongoDatabase {
     }
 
     public async getCollection<T extends Document = any>(name: string): Promise<Collection<T>> {
-        const db = await this.connect();
-        return db.collection<T>(name);
+        const defaultDb = await this.connect();
+        
+        // 만약 'dbName/collectionName' 형식으로 호출된 경우 해당 DB를 직접 타겟팅하도록 유연성 확보
+        if (name.includes('/')) {
+            const [dbName, collectionName] = name.split('/');
+            if (this.client) {
+                const targetDb = this.client.db(dbName);
+                return targetDb.collection<T>(collectionName);
+            }
+        }
+        
+        return defaultDb.collection<T>(name);
     }
 
     public async close(): Promise<void> {
@@ -65,16 +75,19 @@ export class MongoDatabase {
 
         try {
             // 📁 Unified Active Collections Indices
-            await this.db.collection('linkedin.html').createIndex({ jobId: 1 }, { unique: true });
-            await this.db.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
-            await this.db.collection('linkedin.lists').createIndex({ listId: 1 }, { unique: true });
-            await this.db.collection('linkedin.lists').createIndex({ collectedAt: 1 });
-            await this.db.collection('linkedin.job_urls').createIndex({ jobId: 1 }, { unique: true });
-            await this.db.collection('linkedin.company_urls').createIndex({ companyId: 1 }, { unique: true });
-
-            await this.db.collection('geeknews.html').createIndex({ id: 1 }, { unique: true });
-            await this.db.collection('gpters.html').createIndex({ id: 1 }, { unique: true });
-            await this.db.collection('pytorch_kr.html').createIndex({ id: 1 }, { unique: true });
+            if (this.client) {
+                const bronzeDb = this.client.db('bronze');
+                await bronzeDb.collection('linkedin.html').createIndex({ jobId: 1 }, { unique: true });
+                await bronzeDb.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
+                await bronzeDb.collection('linkedin.lists').createIndex({ listId: 1 });
+                await bronzeDb.collection('linkedin.lists').createIndex({ collectedAt: 1 });
+                await bronzeDb.collection('linkedin.job_urls').createIndex({ jobId: 1 });
+                await bronzeDb.collection('linkedin.company_urls').createIndex({ companyId: 1 });
+                
+                await bronzeDb.collection('geeknews.html').createIndex({ id: 1 });
+                await bronzeDb.collection('gpters.html').createIndex({ id: 1 }, { unique: true });
+                await bronzeDb.collection('pytorch_kr.html').createIndex({ id: 1 });
+            }
 
             console.log('📌 [MongoDB] All collection indexes successfully initialized.');
         } catch (e: any) {

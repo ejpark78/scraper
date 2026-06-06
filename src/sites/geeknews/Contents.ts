@@ -54,7 +54,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw HTML) 저장
-            const bronzeGeeknews = await dbInstance.getCollection('geeknews.html');
+            const bronzeGeeknews = await dbInstance.getCollection('bronze/geeknews.html');
             await bronzeGeeknews.updateOne(
                 { id: id },
                 {
@@ -69,7 +69,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             );
 
             // 2. Silver Layer (Cleansed Metadata & Markdown) 저장
-            const silverGeeknews = await dbInstance.getCollection('silver.geeknews');
+            const silverGeeknews = await dbInstance.getCollection('silver/geeknews');
             await silverGeeknews.updateOne(
                 { id: id },
                 {

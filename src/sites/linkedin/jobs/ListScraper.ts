@@ -208,7 +208,7 @@ export class LinkedInListScraper {
 
                     try {
                         const dbInstance = MongoDatabase.getInstance();
-                        const bronzeLists = await dbInstance.getCollection('linkedin.lists');
+                        const bronzeLists = await dbInstance.getCollection('bronze/linkedin.lists');
                         await bronzeLists.updateOne(
                             { listId: timestamp },
                             {
@@ -222,7 +222,7 @@ export class LinkedInListScraper {
                             },
                             { upsert: true }
                         );
-                        console.log(`📡 [MongoDB Write] Successfully saved List ID ${timestamp} to linkedin.lists. (${(minifiedHtml.length / 1024).toFixed(1)} KB)`);
+                        console.log(`📡 [MongoDB Write] Successfully saved List ID ${timestamp} to bronze/linkedin.lists. (${(minifiedHtml.length / 1024).toFixed(1)} KB)`);
 
                         await this.extractAndPushJobs(minifiedHtml, url);
                     } catch (dbErr: any) {
@@ -291,9 +291,9 @@ export class LinkedInListScraper {
             const cheerio = require('cheerio');
             const $ = cheerio.load(htmlContent);
             const dbInstance = MongoDatabase.getInstance();
-            const jobUrlsColl = await dbInstance.getCollection('linkedin.job_urls');
-            const companyUrlsColl = await dbInstance.getCollection('linkedin.company_urls');
-            const bronzeJobs = await dbInstance.getCollection('linkedin.html');
+            const jobUrlsColl = await dbInstance.getCollection('bronze/linkedin.job_urls');
+            const companyUrlsColl = await dbInstance.getCollection('bronze/linkedin.company_urls');
+            const bronzeJobs = await dbInstance.getCollection('bronze/linkedin.html');
 
             const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
             const redis = new Redis(redisUrl);
@@ -410,7 +410,7 @@ export class LinkedInListScraper {
             }
 
             let pushedCount = 0;
-            const newJobsColl = await dbInstance.getCollection('linkedin.html');
+            const newJobsColl = await dbInstance.getCollection('bronze/linkedin.html');
             for (const job of allDiscovered) {
                 const isCompleted = (await bronzeJobs.findOne({ jobId: job.jobId }, { projection: { _id: 1 } })) !== null ||
                                     (await newJobsColl.findOne({ jobId: job.jobId }, { projection: { _id: 1 } })) !== null;

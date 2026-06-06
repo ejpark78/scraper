@@ -52,7 +52,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw HTML) 저장
-            const bronzePytorch = await dbInstance.getCollection('pytorch_kr.html');
+            const bronzePytorch = await dbInstance.getCollection('bronze/pytorch_kr.html');
             await bronzePytorch.updateOne(
                 { id: id },
                 {
@@ -67,7 +67,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             );
 
             // 2. Silver Layer (Cleansed Metadata & Markdown) 저장
-            const silverPytorch = await dbInstance.getCollection('silver.pytorch_kr');
+            const silverPytorch = await dbInstance.getCollection('silver/pytorch_kr');
             await silverPytorch.updateOne(
                 { id: id },
                 {

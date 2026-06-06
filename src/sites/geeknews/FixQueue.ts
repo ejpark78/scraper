@@ -11,7 +11,7 @@ export class GeekNewsFixQueue {
         const redis = new Redis(redisUrl);
 
         try {
-            const bronzeGeeknews = await mongo.getCollection('geeknews.html');
+            const bronzeGeeknews = await mongo.getCollection('bronze/geeknews.html');
             const geeknewsUrlsColl = await mongo.getCollection('geeknews.urls');
 
             // 1. 이미 수집 완료된 ID 목록 추출

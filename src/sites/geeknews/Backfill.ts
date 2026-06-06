@@ -10,8 +10,8 @@ export class GeekNewsBackfill {
         await mongo.connect();
 
         try {
-            const bronzeGeeknews = await mongo.getCollection('geeknews.html');
-            const silverGeeknews = await mongo.getCollection('silver.geeknews');
+            const bronzeGeeknews = await mongo.getCollection('bronze/geeknews.html');
+            const silverGeeknews = await mongo.getCollection('silver/geeknews');
 
             const converter = new GeekNewsConverter();
             const cursor = bronzeGeeknews.find({});

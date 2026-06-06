@@ -127,7 +127,7 @@ export abstract class BasePipeline<TMeta> {
                 const dbInstance = MongoDatabase.getInstance();
                 
                 if (this.getDomainName() === '채용공고') {
-                    const bronzeJobs = await dbInstance.getCollection('linkedin.html');
+                    const bronzeJobs = await dbInstance.getCollection('bronze/linkedin.html');
                     const jobIds = await bronzeJobs.distinct('jobId');
                     jobIds.forEach((jobId: any) => {
                         if (jobId && /^\d+$/.test(jobId)) {
@@ -135,7 +135,7 @@ export abstract class BasePipeline<TMeta> {
                         }
                     });
                 } else {
-                    const bronzeCompanies = await dbInstance.getCollection('linkedin.companies');
+                    const bronzeCompanies = await dbInstance.getCollection('bronze/linkedin.companies');
                     const companyIds = await bronzeCompanies.distinct('companyId');
                     companyIds.forEach((companyId: any) => {
                         if (companyId) {
@@ -221,7 +221,7 @@ export abstract class BasePipeline<TMeta> {
             try {
                 const { MongoDatabase } = require('../database/mongo');
                 const dbInstance = MongoDatabase.getInstance();
-                const companyUrlsColl = await dbInstance.getCollection('linkedin.company_urls');
+                const companyUrlsColl = await dbInstance.getCollection('bronze/linkedin.company_urls');
                 
                 // 아직 완료되지 않았거나 신규 수집 상태의 모든 URL을 로드
                 const newCompanyUrls = await companyUrlsColl.find({ status: { $ne: 'completed' } }).toArray();

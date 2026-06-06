@@ -10,21 +10,24 @@ export class PyTorchKRBackfill {
         await mongo.connect();
 
         try {
-            const bronzePytorch = await mongo.getCollection('pytorch_kr.html');
-            const silverPytorch = await mongo.getCollection('silver.pytorch_kr');
+            const bronzePytorch = await mongo.getCollection('bronze/pytorch_kr.html');
+            const silverPytorch = await mongo.getCollection('silver/pytorch_kr');
 
             const converter = new PyTorchKRConverter();
             const cursor = bronzePytorch.find({});
-            const docs = await cursor.toArray();
-            console.log(`📥 Loaded ${docs.length} raw topics from bronze.pytorch_kr.`);
+            const totalDocs = await bronzePytorch.countDocuments({});
+            console.log(`📥 Found ${totalDocs} raw topics in bronze.pytorch_kr.`);
 
             const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'pytorch_kr');
             fs.mkdirSync(path.join(baseDir, 'html'), { recursive: true });
             fs.mkdirSync(path.join(baseDir, 'markdown'), { recursive: true });
 
             let processed = 0;
-            for (const doc of docs) {
+            while (await cursor.hasNext()) {
+                const doc = await cursor.next();
+                if (!doc) continue;
                 const { id, rawHtml, url } = doc;
+
                 if (!id || !rawHtml) continue;
 
                 try {
@@ -56,7 +59,7 @@ export class PyTorchKRBackfill {
 
                     processed++;
                     if (processed % 10 === 0) {
-                        console.log(`🔄 Processed ${processed}/${docs.length} topics...`);
+                        console.log(`🔄 Processed ${processed}/${totalDocs} topics...`);
                     }
                 } catch (err: any) {
                     console.error(`❌ Error backfilling PyTorch KR ID ${id}: ${err.message}`);

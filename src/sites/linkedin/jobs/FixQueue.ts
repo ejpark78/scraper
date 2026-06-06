@@ -13,8 +13,8 @@ export class JobsFixQueue {
     const redis = new Redis(redisUrl);
 
     try {
-        const bronzeJobs = await mongo.getCollection('linkedin.html');
-        const jobUrlsColl = await mongo.getCollection('linkedin.job_urls');
+        const bronzeJobs = await mongo.getCollection('bronze/linkedin.html');
+        const jobUrlsColl = await mongo.getCollection('bronze/linkedin.job_urls');
 
         // 1. config/config.json 파일 또는 환경 변수 GEOS에서 타겟 국가 목록 로드
         let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];

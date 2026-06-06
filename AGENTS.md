@@ -42,7 +42,7 @@
      * `{{CATEGORY}}`: 대화의 기능적 카테고리 (예: `Doc/Rules`, `Refactor`, `DB/Migration`)
      * `{{SUMMARY}}`: 본 대화의 간결한 핵심 요약문
      * `{{TAGS}}`: 연계 태그 (예: `#relative-path`, `#wiki-layout`)
-     * `{{FILES}}`: 관련된 작업 파일 상대 경로 링크 목록
+     * `{{FILES}}`: 관련된 작업 파일 **상대 경로** 링크 목록
      * `{{DATETIME}}`: 현재 날짜/시각 (`YYYY-MM-DD HH:MM:SS`)
      * `{{REQUEST}}`: 사용자 요청 원문 내용
      * `{{ANSWER}}`: 에이전트가 사용자에게 전송한 실제 최종 응답 본문 전문 (축약이나 요약 없이 원본 전체 기록)

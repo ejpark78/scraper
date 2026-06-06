@@ -18,7 +18,12 @@ lint:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx yaml-lint compose.yml "docker/**/*.yml"
 
 # --- 2. include common and helper scripts directly (browser.mk, docker.mk, mongo.mk) ---
--include scripts/*.mk
+-include scripts/browser.mk
+-include scripts/docker.mk
+-include scripts/mongo.mk
+
+tools-%:
+	@$(MAKE) -f scripts/tools.mk $*
 
 # --- 3. delegate site-specific commands to prevent target name conflicts ---
 li-%:

@@ -98,7 +98,7 @@ async function main() {
             { $set: { status: 'completed', updatedAt: new Date() } }
           );
         } else if (site === 'linkedin') {
-          const jobUrlsColl = await mongo.getCollection('linkedin.job_urls');
+          const jobUrlsColl = await mongo.getCollection('bronze/linkedin.job_urls');
           await jobUrlsColl.updateOne(
             { jobId: id },
             { $set: { status: 'completed', updatedAt: new Date() } }
