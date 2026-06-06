@@ -3,9 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Redis from 'ioredis';
 
-export class JobsFixQueue {
+export class JobsRefreshUrls {
     public async run(): Promise<void> {
-    console.log('🔄 [Fix Queue] Starting precision recovery of uncollected targets...');
+    console.log('🔄 [Refresh Urls] Starting precision recovery of uncollected targets...');
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
 
@@ -117,8 +117,8 @@ export class JobsFixQueue {
 }
 
 if (require.main === module) {
-    const fixQueue = new JobsFixQueue();
-    fixQueue.run().catch(console.error);
+    const refreshUrls = new JobsRefreshUrls();
+    refreshUrls.run().catch(console.error);
 }
 
 

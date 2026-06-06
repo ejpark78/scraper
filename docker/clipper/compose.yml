@@ -38,6 +38,10 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/src:/app/src
+      - ${HOST_PROJECT_PATH:-.}/config:/app/config
+      - ${HOST_PROJECT_PATH:-.}/package.json:/app/package.json
+      - ${HOST_PROJECT_PATH:-.}/tsconfig.json:/app/tsconfig.json
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 

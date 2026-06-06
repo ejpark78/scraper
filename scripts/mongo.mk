@@ -42,3 +42,11 @@ dump-bronze:
 	$(COMPOSE) exec -T mongodb mongodump --db linkedin --collection bronze.companies --gzip --archive=/tmp/bronze_companies.gz
 	docker cp $$(docker compose -p linkedin -f compose.yml ps -q mongodb):/tmp/bronze_companies.gz data/bronze_companies.gz
 	@echo "💾 Bronze 레이어 백업 완료: data/bronze_jobs.gz, data/bronze_companies.gz"
+
+# 🔍 jobId로 채용 공고 마크다운 본문(description) 조회
+show-job:
+	@if [ -z "$(ID)" ]; then \
+		echo "❌ 에러: ID 변수를 지정해야 합니다. (예: make show-job ID=4421545005 DB=silver TBL=linkedin.jobs)"; \
+		exit 1; \
+	fi
+	@$(COMPOSE) exec -T mongodb mongosh $(or $(DB),silver) --quiet --eval "db['$(or $(TBL),linkedin.jobs)'].findOne({ jobId: '$(ID)' }).description"

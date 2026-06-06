@@ -293,7 +293,7 @@ export class LinkedInListScraper {
             const dbInstance = MongoDatabase.getInstance();
             const jobUrlsColl = await dbInstance.getCollection('bronze/linkedin.job_urls');
             const companyUrlsColl = await dbInstance.getCollection('bronze/linkedin.company_urls');
-            const bronzeJobs = await dbInstance.getCollection('bronze/linkedin.html');
+            const bronzeJobs = await dbInstance.getCollection('bronze/linkedin.jobs');
 
             const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
             const redis = new Redis(redisUrl);
@@ -410,7 +410,7 @@ export class LinkedInListScraper {
             }
 
             let pushedCount = 0;
-            const newJobsColl = await dbInstance.getCollection('bronze/linkedin.html');
+            const newJobsColl = await dbInstance.getCollection('bronze/linkedin.jobs');
             for (const job of allDiscovered) {
                 const isCompleted = (await bronzeJobs.findOne({ jobId: job.jobId }, { projection: { _id: 1 } })) !== null ||
                                     (await newJobsColl.findOne({ jobId: job.jobId }, { projection: { _id: 1 } })) !== null;

@@ -6,19 +6,6 @@ import { UrlUtils, Logger } from './utils';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// JSON Log structured console override if configured
-if (process.env.JSON_LOG === 'true') {
-  const originalLog = console.log;
-  const originalError = console.error;
-  const hostname = os.hostname();
-  const formatLog = (level: string, args: any[]) => {
-    const timestamp = new Date().toISOString();
-    return JSON.stringify({ timestamp, level, hostname, message: args.join(' ') });
-  };
-  console.log = (...args) => originalLog(formatLog('INFO', args));
-  console.error = (...args) => originalError(formatLog('ERROR', args));
-}
-
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const SCRAPE_QUEUE = 'scrape_queue';
 const TRANSFORM_QUEUE = 'transform_queue';
@@ -139,9 +126,12 @@ async function main() {
         const dbRefId = updateResult.upsertedId ? updateResult.upsertedId.toString() : id;
 
         // Push task to transform_queue
+        const targetCollection = site === 'linkedin' ? 'linkedin.jobs' : `${site}.html`;
         const transformTask = {
           site,
           id,
+          bronze_db: 'bronze',
+          bronze_collection: targetCollection,
           bronze_id: dbRefId,
           timestamp: new Date().toISOString()
         };

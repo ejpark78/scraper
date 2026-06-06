@@ -10,19 +10,6 @@ import { GeekNewsConverter } from './sites/geeknews/Converter';
 import { GptersConverter } from './sites/gpters/Converter';
 import { PyTorchKRConverter } from './sites/pytorch_kr/Converter';
 
-// JSON Log structured console override if configured
-if (process.env.JSON_LOG === 'true') {
-  const originalLog = console.log;
-  const originalError = console.error;
-  const hostname = os.hostname();
-  const formatLog = (level: string, args: any[]) => {
-    const timestamp = new Date().toISOString();
-    return JSON.stringify({ timestamp, level, hostname, message: args.join(' ') });
-  };
-  console.log = (...args) => originalLog(formatLog('INFO', args));
-  console.error = (...args) => originalError(formatLog('ERROR', args));
-}
-
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const TRANSFORM_QUEUE = 'transform_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
@@ -64,7 +51,7 @@ async function main() {
       const payloadRaw = res[1].trim();
       if (!payloadRaw) continue;
 
-      const task: { site: string; id: string; bronze_id: string; attempt?: number } = JSON.parse(payloadRaw);
+      const task: { site: string; id: string; bronze_db?: string; bronze_collection?: string; bronze_id: string; attempt?: number } = JSON.parse(payloadRaw);
       const { site, id, bronze_id } = task;
       const attempt = task.attempt || 1;
 
@@ -72,14 +59,22 @@ async function main() {
 
       try {
         // Fetch raw HTML from MongoDB Bronze Layer (Collection: site.html or site.jobs)
-        const collectionName = site === 'linkedin' ? 'linkedin.jobs' : `${site}.html`;
-        const bronzeColl = await mongo.getCollection(collectionName);
+        const dbName = task.bronze_db || 'bronze';
+        let collectionName = task.bronze_collection;
+        if (!collectionName) {
+          // Fallback if queue task format is old
+          collectionName = site === 'linkedin' ? 'linkedin.jobs' : `${site}.html`;
+        }
+        
+        // MongoDatabase.getCollection은 'dbName/collectionName' 구조가 들어오면 이를 지원하므로 아래와 같이 패스를 구성합니다.
+        const pathSpec = `${dbName}/${collectionName}`;
+        const bronzeColl = await mongo.getCollection(pathSpec);
         
         const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { postId: id } : { topicId: id };
         const rawDoc = await bronzeColl.findOne(filter);
 
         if (!rawDoc || !rawDoc.rawHtml) {
-          throw new Error(`Raw HTML document not found in ${collectionName} for ID ${id}`);
+          throw new Error(`Raw HTML document not found in ${pathSpec} for ID ${id}`);
         }
 
         // Run Transform
@@ -115,7 +110,12 @@ async function main() {
         const cacheSetKey = site === 'linkedin' ? 'completed_jobs' : 'completed_news';
         await redis.sadd(cacheSetKey, id);
 
-        Logger.info(`[Transformer] Successfully completed pipeline for [${site}] ID: ${id}`);
+        Logger.info(`[Transformer] Successfully completed pipeline for [${site}] ID: ${id}`, {
+          title: meta.jobTitle || meta.title || 'Untitled',
+          company: meta.company || meta.companyName || 'N/A',
+          location: meta.rawLocation || meta.location || 'N/A',
+          url: rawDoc.url || ''
+        });
 
       } catch (transErr: any) {
         Logger.error(`[Transformer] Transformation failed for [${site}] ID: ${id} on attempt ${attempt}`, transErr);

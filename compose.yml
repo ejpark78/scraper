@@ -39,7 +39,6 @@ include:
   - docker/jupyter/compose.yml
   - docker/cronicle/compose.yml
   - docker/kasm/compose.yml
-  - docker/postgresql/compose.yml
   - docker/clipper/compose.yml
 
 
