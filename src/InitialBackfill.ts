@@ -17,7 +17,7 @@ async function runMigration() {
   await mongo.connect();
 
   const migrations = [
-    { site: 'linkedin', coll: 'linkedin.jobs', filterKey: 'jobId', converter: new LinkedInMarkdownConverter() },
+    { site: 'linkedin', coll: 'linkedin.html', filterKey: 'jobId', converter: new LinkedInMarkdownConverter() },
     { site: 'linkedin_company', coll: 'linkedin.companies', filterKey: 'companyId', converter: new CompanyMarkdownConverter() }
   ];
 

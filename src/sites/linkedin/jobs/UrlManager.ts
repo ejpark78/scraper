@@ -223,14 +223,14 @@ export class LinkedInUrlManager implements IUrlManager {
         try {
             const { MongoDatabase } = require('../database/mongo');
             const mongo = MongoDatabase.getInstance();
-            const bronzeJobs = await mongo.getCollection('bronze.jobs');
+            const bronzeJobs = await mongo.getCollection('linkedin.html');
             const jobs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
             jobs.forEach((job: any) => {
                 if (job.jobId && /^\d+$/.test(job.jobId)) {
                     cacheSet.add(job.jobId);
                 }
             });
-            console.log(`🔌 [MongoDB] bronze.jobs에서 완료된 Job ID ${FormatUtils.formatThousand(cacheSet.size)} 개 로드 완료.`);
+            console.log(`🔌 [MongoDB] linkedin.html에서 완료된 Job ID ${FormatUtils.formatThousand(cacheSet.size)} 개 로드 완료.`);
         } catch (dbErr: any) {
             console.warn(`⚠️ [MongoDB] 완료된 Job ID 로드 실패: ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
             if (fs.existsSync(htmlDir)) {
@@ -255,11 +255,11 @@ export class LinkedInUrlManager implements IUrlManager {
         const extractedCompanyIds = new Set<string>();
         const masterJobsMetaMap = new Map<string, any>();
 
-        // 0. 💾 기존 수집 대상 URL 목록이 존재한다면 MongoDB bronze.job_urls에서 불러와 masterJobsMetaMap에 캐시로 로드
+        // 0. 💾 기존 수집 대상 URL 목록이 존재한다면 MongoDB linkedin.job_urls에서 불러와 masterJobsMetaMap에 캐시로 로드
         try {
             const { MongoDatabase } = require('../database/mongo');
             const mongo = MongoDatabase.getInstance();
-            const jobUrlsColl = await mongo.getCollection('bronze.job_urls');
+            const jobUrlsColl = await mongo.getCollection('linkedin.job_urls');
             const existingUrls = await jobUrlsColl.find({}).toArray();
             existingUrls.forEach((item: any) => {
                 if (item && item.jobId) {
@@ -275,9 +275,9 @@ export class LinkedInUrlManager implements IUrlManager {
                     });
                 }
             });
-            console.log(`🔌 [MongoDB] bronze.job_urls에서 ${FormatUtils.formatThousand(masterJobsMetaMap.size)}개의 메타데이터를 캐시로 로드했습니다.`);
+            console.log(`🔌 [MongoDB] linkedin.job_urls에서 ${FormatUtils.formatThousand(masterJobsMetaMap.size)}개의 메타데이터를 캐시로 로드했습니다.`);
         } catch (dbErr: any) {
-            console.warn(`⚠️ bronze.job_urls 캐시 로드 실패: ${dbErr.message}`);
+            console.warn(`⚠️ linkedin.job_urls 캐시 로드 실패: ${dbErr.message}`);
         }
 
         // country.json 로드
@@ -305,11 +305,11 @@ export class LinkedInUrlManager implements IUrlManager {
             console.warn(`⚠️ country.json 로드 실패: ${e.message}`);
         }
 
-        // 2-A. 🔍 MongoDB bronze.lists 컬렉션에서 검색 결과 목록 HTML을 가져와 직접 수집된 공고 ID 및 상세 메타 추출
+        // 2-A. 🔍 MongoDB linkedin.lists 컬렉션에서 검색 결과 목록 HTML을 가져와 직접 수집된 공고 ID 및 상세 메타 추출
         try {
             const { MongoDatabase } = require('../database/mongo');
             const mongo = MongoDatabase.getInstance();
-            const bronzeListsColl = await mongo.getCollection('bronze.lists');
+            const bronzeListsColl = await mongo.getCollection('linkedin.lists');
             const lists = await bronzeListsColl.find({}).toArray();
             if (lists.length === 0) {
                 throw new Error('No lists found in DB.');
@@ -407,9 +407,9 @@ export class LinkedInUrlManager implements IUrlManager {
                 }
                 if (listCount % 100 === 0) await new Promise<void>(resolve => setImmediate(resolve));
             }
-            console.log(`🔌 [MongoDB] bronze.lists에서 총 ${FormatUtils.formatThousand(listCount)}개의 검색결과 문서를 분석 완료했습니다.`);
+            console.log(`🔌 [MongoDB] linkedin.lists에서 총 ${FormatUtils.formatThousand(listCount)}개의 검색결과 문서를 분석 완료했습니다.`);
         } catch (dbErr: any) {
-            console.warn(`⚠️ [MongoDB] bronze.lists 분석 실패: ${dbErr.message}. 로컬 lists 폴더로 폴백합니다.`);
+            console.warn(`⚠️ [MongoDB] linkedin.lists 분석 실패: ${dbErr.message}. 로컬 lists 폴더로 폴백합니다.`);
 
             if (fs.existsSync(listsDir)) {
                 const listFiles = IOUtils.getAllFiles(listsDir, '.html');
@@ -549,13 +549,13 @@ export class LinkedInUrlManager implements IUrlManager {
             });
         }
 
-        // 2-C. 🔍 MongoDB bronze.jobs 컬렉션에서 수집완료 상세 페이지 HTML을 가져와 추천/유사 공고 ID 추출 및 추천 카드 파싱
+        // 2-C. 🔍 MongoDB linkedin.html 컬렉션에서 수집완료 상세 페이지 HTML을 가져와 추천/유사 공고 ID 추출 및 추천 카드 파싱
         let dbParsedCount = 0;
         let skipCount = 0;
         try {
             const { MongoDatabase } = require('../database/mongo');
             const mongo = MongoDatabase.getInstance();
-            const bronzeColl = await mongo.getCollection('bronze.jobs');
+            const bronzeColl = await mongo.getCollection('linkedin.html');
             const cheerio = require('cheerio');
 
             // 1. 수집 완료 리스트 중 urls.json에 없는(누락된) 모든 ID 식별
@@ -589,7 +589,7 @@ export class LinkedInUrlManager implements IUrlManager {
                 }
             }
 
-            // 3. 최근 24시간 내에 수집된 신규 공고만 bronze.jobs에서 rawHtml을 조회해 추천 공고 추출 (DB/네트워크 부하 극단적 절감)
+            // 3. 최근 24시간 내에 수집된 신규 공고만 linkedin.html에서 rawHtml을 조회해 추천 공고 추출 (DB/네트워크 부하 극단적 절감)
             const recentLimitDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
             const recentDocs = await bronzeColl.find({
                 collectedAt: { $gte: recentLimitDate }
@@ -682,12 +682,12 @@ export class LinkedInUrlManager implements IUrlManager {
                 }
             }
 
-            console.log(`🔌 [MongoDB] bronze.jobs에서 총 ${FormatUtils.formatThousand(dbParsedCount)}개의 문서를 분석 완료했습니다.`);
+            console.log(`🔌 [MongoDB] linkedin.html에서 총 ${FormatUtils.formatThousand(dbParsedCount)}개의 문서를 분석 완료했습니다.`);
             if (skipCount > 0) {
                 console.log(`⚡ 분석 완료된 상세 HTML 문서 ${FormatUtils.formatThousand(skipCount)}개는 분석을 건너뛰었습니다 (캐시 적용).`);
             }
         } catch (dbErr: any) {
-            console.warn(`⚠️ [MongoDB] bronze.jobs 분석 실패: ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
+            console.warn(`⚠️ [MongoDB] linkedin.html 분석 실패: ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
             
             if (fs.existsSync(htmlDir)) {
                 const htmlFiles = IOUtils.getAllFiles(htmlDir, '.html');
@@ -875,9 +875,9 @@ export class LinkedInUrlManager implements IUrlManager {
         try {
             const { MongoDatabase } = require('../database/mongo');
             const mongo = MongoDatabase.getInstance();
-            const jobUrlsColl = await mongo.getCollection('bronze.job_urls');
+            const jobUrlsColl = await mongo.getCollection('linkedin.job_urls');
             
-            console.log(`📥 [MongoDB] bronze.job_urls에 ${FormatUtils.formatThousand(masterList.length)}개 공고 메타데이터 및 스냅샷(${timestamp}) 저장 중...`);
+            console.log(`📥 [MongoDB] linkedin.job_urls에 ${FormatUtils.formatThousand(masterList.length)}개 공고 메타데이터 및 스냅샷(${timestamp}) 저장 중...`);
             
             const jobOps = masterList.map((job: any) => {
                 const isCompleted = cacheSet.has(job.jobId);
@@ -916,9 +916,9 @@ export class LinkedInUrlManager implements IUrlManager {
                     await jobUrlsColl.bulkWrite(chunk);
                 }
             }
-            console.log(`✅ [MongoDB] bronze.job_urls 업데이트 완료.`);
+            console.log(`✅ [MongoDB] linkedin.job_urls 업데이트 완료.`);
         } catch (dbErr: any) {
-            console.error(`❌ [MongoDB] bronze.job_urls 저장 실패: ${dbErr.message}`);
+            console.error(`❌ [MongoDB] linkedin.job_urls 저장 실패: ${dbErr.message}`);
         }
 
         // 3-B. 📊 실시간 수집 현황 통계 대시보드 출력
@@ -953,13 +953,13 @@ export class LinkedInUrlManager implements IUrlManager {
         console.log(`  └─ 추천/유사 공고: ${FormatUtils.formatThousand(filteredRecommendedJobIds.size)} 개`);
         console.log('==================================================\n');
 
-        // 4. 🏢 회사 관련 URL을 MongoDB bronze.company_urls 에 저장 (기존 urls.txt 대체)
+        // 4. 🏢 회사 관련 URL을 MongoDB linkedin.company_urls 에 저장 (기존 urls.txt 대체)
         try {
             const { MongoDatabase } = require('../database/mongo');
             const mongo = MongoDatabase.getInstance();
-            const companyUrlsColl = await mongo.getCollection('bronze.company_urls');
+            const companyUrlsColl = await mongo.getCollection('linkedin.company_urls');
             
-            console.log(`📥 [MongoDB] bronze.company_urls에 ${FormatUtils.formatThousand(extractedCompanyIds.size)}개 회사 정보 저장 중...`);
+            console.log(`📥 [MongoDB] linkedin.company_urls에 ${FormatUtils.formatThousand(extractedCompanyIds.size)}개 회사 정보 저장 중...`);
             
             const companyOps = Array.from(extractedCompanyIds).map((companyId: any) => {
                 return {
@@ -991,9 +991,9 @@ export class LinkedInUrlManager implements IUrlManager {
                     await companyUrlsColl.bulkWrite(chunk);
                 }
             }
-            console.log(`✅ [MongoDB] bronze.company_urls 업데이트 완료.`);
+            console.log(`✅ [MongoDB] linkedin.company_urls 업데이트 완료.`);
         } catch (dbErr: any) {
-            console.error(`❌ [MongoDB] bronze.company_urls 저장 실패: ${dbErr.message}`);
+            console.error(`❌ [MongoDB] linkedin.company_urls 저장 실패: ${dbErr.message}`);
         }
 
         // MongoDB 연결 종료

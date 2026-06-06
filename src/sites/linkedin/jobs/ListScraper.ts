@@ -293,7 +293,7 @@ export class LinkedInListScraper {
             const dbInstance = MongoDatabase.getInstance();
             const jobUrlsColl = await dbInstance.getCollection('linkedin.job_urls');
             const companyUrlsColl = await dbInstance.getCollection('linkedin.company_urls');
-            const bronzeJobs = await dbInstance.getCollection('linkedin.jobs');
+            const bronzeJobs = await dbInstance.getCollection('linkedin.html');
 
             const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
             const redis = new Redis(redisUrl);

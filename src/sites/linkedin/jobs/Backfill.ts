@@ -6,7 +6,7 @@ import * as path from 'path';
 
 export class JobsBackfill {
     public async run(): Promise<void> {
-    console.log('🏁 [Backfill] Starting comprehensive HTML backfill from bronze.jobs and bronze.lists...');
+    console.log('🏁 [Backfill] Starting comprehensive HTML backfill from linkedin.html and linkedin.lists...');
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
     const bronzeJobs = await mongo.getCollection('linkedin.html');
@@ -72,9 +72,9 @@ export class JobsBackfill {
     const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '100', 10);
 
     // ==========================================
-    // 4-A. Scan bronze.lists (Search lists) via Cursor
+    // 4-A. Scan linkedin.lists (Search lists) via Cursor
     // ==========================================
-    console.log('\n🔍 [Phase 1/2] Scanning bronze.lists HTML for target jobs...');
+    console.log('\n🔍 [Phase 1/2] Scanning linkedin.lists HTML for target jobs...');
     const totalLists = await bronzeLists.countDocuments();
     const listCursor = bronzeLists.find({}, { projection: { listId: 1, rawHtml: 1 } }).batchSize(CHUNK_SIZE);
     let listIdx = 0;
@@ -202,9 +202,9 @@ export class JobsBackfill {
     }
 
     // ==========================================
-    // 4-B. Scan bronze.jobs (Detail pages) via Cursor
+    // 4-B. Scan linkedin.html (Detail pages) via Cursor
     // ==========================================
-    console.log('\n🔍 [Phase 2/2] Scanning bronze.jobs HTML for recommended jobs...');
+    console.log('\n🔍 [Phase 2/2] Scanning linkedin.html HTML for jobs...');
     const totalJobs = await bronzeJobs.countDocuments();
     const jobCursor = bronzeJobs.find({}, { projection: { jobId: 1, rawHtml: 1 } }).batchSize(CHUNK_SIZE);
     let jobIdx = 0;
@@ -307,13 +307,13 @@ export class JobsBackfill {
     console.log(`- Total new target jobs discovered from HTML: ${totalFound}`);
 
     if (jobOps.length > 0) {
-        console.log(`📥 Saving ${jobOps.length} entries to bronze.job_urls in MongoDB...`);
+        console.log(`📥 Saving ${jobOps.length} entries to linkedin.job_urls in MongoDB...`);
         const chunkSize = 1000;
         for (let i = 0; i < jobOps.length; i += chunkSize) {
             const chunk = jobOps.slice(i, i + chunkSize);
             await jobUrlsColl.bulkWrite(chunk);
         }
-        console.log('✅ bronze.job_urls updated.');
+        console.log('✅ linkedin.job_urls updated.');
     }
 
     if (redisPushBuffer.length > 0) {
