@@ -4,9 +4,9 @@ import Redis from 'ioredis';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export class JobsBackfill {
+export class JobsExtractUrls {
     public async run(): Promise<void> {
-    console.log('🏁 [Backfill] Starting comprehensive HTML backfill from bronze/linkedin.html and bronze/linkedin.lists...');
+    console.log('🏁 [Extract Urls] Starting comprehensive HTML URL extraction from bronze/linkedin.html and bronze/linkedin.lists...');
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
     const bronzeJobs = await mongo.getCollection('bronze/linkedin.html');
@@ -336,14 +336,14 @@ export class JobsBackfill {
 
     await redis.quit();
     await mongo.close();
-    console.log('🎉 [Comprehensive Backfill] Complete!');
+    console.log('🎉 [Comprehensive URL Extraction] Complete!');
 }
 }
 
 if (require.main === module) {
-    const backfill = new JobsBackfill();
-    backfill.run().catch(err => {
-        console.error('💥 [Backfill] Fatal Error:', err);
+    const extractUrls = new JobsExtractUrls();
+    extractUrls.run().catch(err => {
+        console.error('💥 [ExtractUrls] Fatal Error:', err);
     });
 }
 
