@@ -29,11 +29,11 @@ tools-%:
 li-%:
 	@$(MAKE) -f scripts/sites/linkedin.mk $*
 
-gpters-%:
+gpt-%:
 	@$(MAKE) -f scripts/sites/gpters.mk $*
 
-geeknews-%:
+gn-%:
 	@$(MAKE) -f scripts/sites/geeknews.mk $*
 
-pytorch-%:
+pk-%:
 	@$(MAKE) -f scripts/sites/pytorch_kr.mk $*

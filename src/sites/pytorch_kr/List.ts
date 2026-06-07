@@ -39,7 +39,7 @@ export class PyTorchKRList {
         console.log(`🔍 [PyTorch KR List] Found ${topics.length} topics on index page.`);
 
         const dbInstance = MongoDatabase.getInstance();
-        const pytorchUrlsColl = await dbInstance.getCollection('pytorch_kr.urls');
+        const pytorchUrlsColl = await dbInstance.getCollection('bronze/pytorch_kr.urls');
 
         // Synchronize Completed cache with MongoDB first if Redis cache is empty
         const completedCount = await this.redis.scard(CACHE_SET_KEY);

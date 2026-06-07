@@ -2,7 +2,7 @@
 # 💡 GPTERS Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list contents backfill fix-queue
+.PHONY: list contents refresh fix-queue
 
 LIMIT ?= 20
 
@@ -12,8 +12,8 @@ list:
 contents:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/Contents.ts $(LIMIT)
 
-backfill:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/Backfill.ts
+refresh:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/Refresh.ts
 
 fix-queue:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/FixQueue.ts

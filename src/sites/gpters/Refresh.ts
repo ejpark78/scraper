@@ -3,15 +3,15 @@ import { GptersConverter } from './Converter';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export class GptersBackfill {
+export class GptersRefresh {
     public async run(): Promise<void> {
         console.log('🏁 [GPTERS Backfill] Starting comprehensive database-to-database backfill...');
         const mongo = MongoDatabase.getInstance();
         await mongo.connect();
 
         try {
-            const bronzeGpters = await mongo.getCollection('gpters.html');
-            const silverGpters = await mongo.getCollection('silver.gpters');
+            const bronzeGpters = await mongo.getCollection('bronze/gpters.html');
+            const silverGpters = await mongo.getCollection('silver/gpters.contents');
 
             const converter = new GptersConverter();
             const cursor = bronzeGpters.find({});
@@ -76,6 +76,6 @@ export class GptersBackfill {
 }
 
 if (require.main === module) {
-    const backfill = new GptersBackfill();
-    backfill.run().catch(console.error).then(() => process.exit(0));
+    const refresh = new GptersRefresh();
+    refresh.run().catch(console.error).then(() => process.exit(0));
 }

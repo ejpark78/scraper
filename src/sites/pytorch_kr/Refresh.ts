@@ -3,7 +3,7 @@ import { PyTorchKRConverter } from './Converter';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export class PyTorchKRBackfill {
+export class PyTorchKRRefresh {
     public async run(): Promise<void> {
         console.log('🏁 [PyTorch KR Backfill] Starting comprehensive database-to-database backfill...');
         const mongo = MongoDatabase.getInstance();
@@ -11,7 +11,7 @@ export class PyTorchKRBackfill {
 
         try {
             const bronzePytorch = await mongo.getCollection('bronze/pytorch_kr.html');
-            const silverPytorch = await mongo.getCollection('silver/pytorch_kr');
+            const silverPytorch = await mongo.getCollection('silver/pytorch_kr.contents');
 
             const converter = new PyTorchKRConverter();
             const cursor = bronzePytorch.find({});
@@ -75,6 +75,6 @@ export class PyTorchKRBackfill {
 }
 
 if (require.main === module) {
-    const backfill = new PyTorchKRBackfill();
-    backfill.run().catch(console.error).then(() => process.exit(0));
+    const refresh = new PyTorchKRRefresh();
+    refresh.run().catch(console.error).then(() => process.exit(0));
 }

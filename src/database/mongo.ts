@@ -43,19 +43,17 @@ export class MongoDatabase {
         }
     }
 
-    public async getCollection<T extends Document = any>(name: string): Promise<Collection<T>> {
-        const defaultDb = await this.connect();
+    public async getCollection<T extends Document = any>(
+        name: `${'bronze' | 'silver'}/${string}`
+    ): Promise<Collection<T>> {
+        await this.connect();
         
-        // 만약 'dbName/collectionName' 형식으로 호출된 경우 해당 DB를 직접 타겟팅하도록 유연성 확보
-        if (name.includes('/')) {
-            const [dbName, collectionName] = name.split('/');
-            if (this.client) {
-                const targetDb = this.client.db(dbName);
-                return targetDb.collection<T>(collectionName);
-            }
+        const [dbName, collectionName] = name.split('/');
+        if (!this.client) {
+            throw new Error('[MongoDB] Client is not connected');
         }
-        
-        return defaultDb.collection<T>(name);
+        const targetDb = this.client.db(dbName);
+        return targetDb.collection<T>(collectionName);
     }
 
     public async close(): Promise<void> {

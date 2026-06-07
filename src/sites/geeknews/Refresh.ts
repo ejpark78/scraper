@@ -3,7 +3,7 @@ import { GeekNewsConverter } from './Converter';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export class GeekNewsBackfill {
+export class GeekNewsRefresh {
     public async run(): Promise<void> {
         console.log('🏁 [GeekNews Backfill] Starting comprehensive database-to-database backfill...');
         const mongo = MongoDatabase.getInstance();
@@ -11,7 +11,7 @@ export class GeekNewsBackfill {
 
         try {
             const bronzeGeeknews = await mongo.getCollection('bronze/geeknews.html');
-            const silverGeeknews = await mongo.getCollection('silver/geeknews');
+            const silverGeeknews = await mongo.getCollection('silver/geeknews.contents');
 
             const converter = new GeekNewsConverter();
             const cursor = bronzeGeeknews.find({});
@@ -73,6 +73,6 @@ export class GeekNewsBackfill {
 }
 
 if (require.main === module) {
-    const backfill = new GeekNewsBackfill();
-    backfill.run().catch(console.error).then(() => process.exit(0));
+    const refresh = new GeekNewsRefresh();
+    refresh.run().catch(console.error).then(() => process.exit(0));
 }

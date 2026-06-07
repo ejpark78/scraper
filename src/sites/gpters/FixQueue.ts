@@ -11,8 +11,8 @@ export class GptersFixQueue {
         const redis = new Redis(redisUrl);
 
         try {
-            const bronzeGpters = await mongo.getCollection('gpters.html');
-            const gptersUrlsColl = await mongo.getCollection('gpters.urls');
+            const bronzeGpters = await mongo.getCollection('bronze/gpters.html');
+            const gptersUrlsColl = await mongo.getCollection('bronze/gpters.urls');
 
             // 1. 이미 수집 완료된 ID 목록 추출
             const completedIds = await bronzeGpters.distinct('id');

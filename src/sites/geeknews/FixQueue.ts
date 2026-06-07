@@ -12,7 +12,7 @@ export class GeekNewsFixQueue {
 
         try {
             const bronzeGeeknews = await mongo.getCollection('bronze/geeknews.html');
-            const geeknewsUrlsColl = await mongo.getCollection('geeknews.urls');
+            const geeknewsUrlsColl = await mongo.getCollection('bronze/geeknews.urls');
 
             // 1. 이미 수집 완료된 ID 목록 추출
             const completedIds = await bronzeGeeknews.distinct('id');

@@ -40,7 +40,7 @@ export class GeekNewsList {
         console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on index page.`);
 
         const dbInstance = MongoDatabase.getInstance();
-        const geeknewsUrlsColl = await dbInstance.getCollection('geeknews.urls');
+        const geeknewsUrlsColl = await dbInstance.getCollection('bronze/geeknews.urls');
 
         // Synchronize Completed cache with MongoDB first if Redis cache is empty
         const completedCount = await this.redis.scard(CACHE_SET_KEY);

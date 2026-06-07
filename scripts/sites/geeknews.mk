@@ -2,7 +2,7 @@
 # 📰 GeekNews Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list contents backfill fix-queue
+.PHONY: list contents refresh fix-queue
 
 PAGE ?= 1
 
@@ -12,8 +12,8 @@ list:
 contents:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/Contents.ts $(PAGE)
 
-backfill:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/Backfill.ts
+refresh:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/Refresh.ts
 
 fix-queue:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/FixQueue.ts

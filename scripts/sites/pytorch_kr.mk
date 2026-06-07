@@ -2,7 +2,7 @@
 # 🔥 PyTorch KR Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list contents backfill fix-queue
+.PHONY: list contents refresh fix-queue
 
 PAGE ?= 1
 
@@ -12,8 +12,8 @@ list:
 contents:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/Contents.ts $(PAGE)
 
-backfill:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/Backfill.ts
+refresh:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/Refresh.ts
 
 fix-queue:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/FixQueue.ts

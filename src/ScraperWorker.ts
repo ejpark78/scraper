@@ -105,8 +105,7 @@ async function main() {
         const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
         fs.unlinkSync(tempHtmlPath);
 
-        // Save Raw to MongoDB Bronze Layer (Collection: site.html or site.jobs)
-        const collectionName = site === 'linkedin' ? 'bronze/linkedin.jobs' : `bronze/${site}.html`;
+        const collectionName = (site === 'linkedin' ? 'bronze/linkedin.jobs' : `bronze/${site}.html`) as `${'bronze' | 'silver'}/${string}`;
         const bronzeColl = await mongo.getCollection(collectionName);
 
         const updateFilter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { postId: id } : { topicId: id };

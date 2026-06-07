@@ -67,7 +67,7 @@ async function main() {
         }
         
         // MongoDatabase.getCollection은 'dbName/collectionName' 구조가 들어오면 이를 지원하므로 아래와 같이 패스를 구성합니다.
-        const pathSpec = `${dbName}/${collectionName}`;
+        const pathSpec = `${dbName}/${collectionName}` as `${'bronze' | 'silver'}/${string}`;
         const bronzeColl = await mongo.getCollection(pathSpec);
         
         const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { postId: id } : { topicId: id };
@@ -86,7 +86,7 @@ async function main() {
 
         // Update status collections if applicable
         if (site === 'geeknews' || site === 'gpters' || site === 'pytorch_kr') {
-          const urlsCollName = `${site}.urls`;
+          const urlsCollName = `bronze/${site}.urls` as `${'bronze' | 'silver'}/${string}`;
           const urlsColl = await mongo.getCollection(urlsCollName);
           await urlsColl.updateOne(
             { id },

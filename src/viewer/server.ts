@@ -196,7 +196,7 @@ app.get('/api/documents', async (req: Request, res: Response) => {
     }
 
     // Default handling for other collections
-    const collection = await mongo.getCollection(collectionName);
+    const collection = await mongo.getCollection(collectionName as `${'bronze' | 'silver'}/${string}`);
     
     let query: any = {};
     if (search) {
@@ -325,7 +325,7 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
       });
     }
 
-    const collection = await mongo.getCollection(collectionName);
+    const collection = await mongo.getCollection(collectionName as `${'bronze' | 'silver'}/${string}`);
 
     let filter: any = {};
     if (ObjectId.isValid(id)) {
@@ -416,7 +416,7 @@ function registerMcpHandlers(server: Server) {
     const limit = Number(request.params.arguments?.limit || 5);
 
     try {
-      const collection = await mongo.getCollection(collectionName);
+      const collection = await mongo.getCollection(collectionName as `${'bronze' | 'silver'}/${string}`);
       const regex = new RegExp(search, 'i');
       const query = {
         $or: [

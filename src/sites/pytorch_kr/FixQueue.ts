@@ -12,7 +12,7 @@ export class PyTorchKRFixQueue {
 
         try {
             const bronzePytorch = await mongo.getCollection('bronze/pytorch_kr.html');
-            const pytorchUrlsColl = await mongo.getCollection('pytorch_kr.urls');
+            const pytorchUrlsColl = await mongo.getCollection('bronze/pytorch_kr.urls');
 
             // 1. 이미 수집 완료된 ID 목록 추출
             const completedIds = await bronzePytorch.distinct('id');
