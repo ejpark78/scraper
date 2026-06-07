@@ -36,6 +36,11 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - mcp.localhost
+          - viewer.localhost
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 10s

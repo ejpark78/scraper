@@ -262,125 +262,152 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
 });
 
 // 2. MCP (Model Context Protocol) Server Integration
-const mcpServer = new Server(
-  {
-    name: 'linkedin-clipper-mcp-server',
-    version: '1.0.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-// MCP: List tools
-mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'search_documents',
-        description: 'Search documents (LinkedIn jobs, geeknews, gpters, pytorch_kr) stored in MongoDB',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            collection: {
-              type: 'string',
-              description: 'The collection name to query (e.g. bronze/linkedin.jobs, bronze/geeknews.html, bronze/gpters.html, bronze/pytorch_kr.html)',
+function registerMcpHandlers(server: Server) {
+  // MCP: List tools
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+      tools: [
+        {
+          name: 'search_documents',
+          description: 'Search documents (LinkedIn jobs, geeknews, gpters, pytorch_kr) stored in MongoDB',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              collection: {
+                type: 'string',
+                description: 'The collection name to query (e.g. bronze/linkedin.jobs, bronze/geeknews.html, bronze/gpters.html, bronze/pytorch_kr.html)',
+              },
+              query: {
+                type: 'string',
+                description: 'Keyword search query',
+              },
+              limit: {
+                type: 'number',
+                description: 'Maximum number of results to return (default 5)',
+              },
             },
-            query: {
-              type: 'string',
-              description: 'Keyword search query',
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of results to return (default 5)',
-            },
+            required: ['collection', 'query'],
           },
-          required: ['collection', 'query'],
-        },
-      },
-    ],
-  };
-});
-
-// MCP: Call tool
-mcpServer.setRequestHandler(CallToolRequestSchema, async (request: any) => {
-  if (request.params.name !== 'search_documents') {
-    throw new Error(`Tool not found: ${request.params.name}`);
-  }
-
-  const collectionName = request.params.arguments?.collection as string;
-  const search = request.params.arguments?.query as string;
-  const limit = Number(request.params.arguments?.limit || 5);
-
-  try {
-    const collection = await mongo.getCollection(collectionName);
-    const regex = new RegExp(search, 'i');
-    const query = {
-      $or: [
-        { title: regex },
-        { jobTitle: regex },
-        { companyName: regex },
-        { url: regex },
-        { text: regex },
-        { content: regex },
-        { id: regex },
-        { jobId: regex },
-        { topicId: regex },
-        { postId: regex }
-      ]
-    };
-
-    const docs = await collection.find(query)
-      .sort({ _id: -1 })
-      .limit(limit)
-      .toArray();
-
-    // Map results to text output
-    const formattedResults = docs.map(doc => {
-      const title = doc.title || doc.jobTitle || 'Untitled';
-      const company = doc.companyName || 'Unknown Company';
-      const url = doc.url || 'No URL';
-      const body = doc.markdown || doc.text || doc.content || '(No body content)';
-      return `### Title: ${title}\nCompany: ${company}\nURL: ${url}\nID: ${doc.id || doc.jobId || doc._id}\n---\n${body.substring(0, 1000)}...\n\n`;
-    }).join('\n');
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: formattedResults || 'No documents matched the search query.',
         },
       ],
     };
-  } catch (error: any) {
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Error searching documents: ${error.message}`,
-        },
-      ],
-      isError: true,
-    };
-  }
-});
+  });
+
+  // MCP: Call tool
+  server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
+    if (request.params.name !== 'search_documents') {
+      throw new Error(`Tool not found: ${request.params.name}`);
+    }
+
+    const collectionName = request.params.arguments?.collection as string;
+    const search = request.params.arguments?.query as string;
+    const limit = Number(request.params.arguments?.limit || 5);
+
+    try {
+      const collection = await mongo.getCollection(collectionName);
+      const regex = new RegExp(search, 'i');
+      const query = {
+        $or: [
+          { title: regex },
+          { jobTitle: regex },
+          { companyName: regex },
+          { url: regex },
+          { text: regex },
+          { content: regex },
+          { id: regex },
+          { jobId: regex },
+          { topicId: regex },
+          { postId: regex }
+        ]
+      };
+
+      const docs = await collection.find(query)
+        .sort({ _id: -1 })
+        .limit(limit)
+        .toArray();
+
+      // Map results to text output
+      const formattedResults = docs.map(doc => {
+        const title = doc.title || doc.jobTitle || 'Untitled';
+        const company = doc.companyName || 'Unknown Company';
+        const url = doc.url || 'No URL';
+        const body = doc.markdown || doc.text || doc.content || '(No body content)';
+        return `### Title: ${title}\nCompany: ${company}\nURL: ${url}\nID: ${doc.id || doc.jobId || doc._id}\n---\n${body.substring(0, 1000)}...\n\n`;
+      }).join('\n');
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: formattedResults || 'No documents matched the search query.',
+          },
+        ],
+      };
+    } catch (error: any) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error searching documents: ${error.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  });
+}
 
 // MCP: SSE Transport endpoints
-let transport: SSEServerTransport | null = null;
+const activeSessions = new Map<string, { server: Server; transport: SSEServerTransport }>();
 
 app.get('/sse', async (req: Request, res: Response) => {
   console.log('🔌 [MCP] SSE Connection initiated');
-  transport = new SSEServerTransport('/messages', res);
-  await mcpServer.connect(transport);
+  
+  const transportInstance = new SSEServerTransport('/messages', res);
+  const sessionServer = new Server(
+    {
+      name: 'linkedin-clipper-mcp-server',
+      version: '1.0.0',
+    },
+    {
+      capabilities: {
+        tools: {},
+      },
+    }
+  );
+
+  registerMcpHandlers(sessionServer);
+
+  try {
+    await sessionServer.connect(transportInstance);
+    const sessionId = transportInstance.sessionId;
+    activeSessions.set(sessionId, { server: sessionServer, transport: transportInstance });
+    console.log(`✅ [MCP] SSE Session established: ${sessionId}. Total sessions: ${activeSessions.size}`);
+
+    res.on('close', async () => {
+      console.log(`🔌 [MCP] SSE Session closed: ${sessionId}`);
+      try {
+        await sessionServer.close();
+      } catch (e) {
+        // Ignore close error
+      }
+      activeSessions.delete(sessionId);
+    });
+  } catch (err: any) {
+    console.error(`⚠️ [MCP] SSE connect error: ${err.message}`);
+    if (!res.headersSent) {
+      res.status(500).end();
+    }
+  }
 });
 
 app.post('/messages', async (req: Request, res: Response) => {
-  if (transport) {
-    await transport.handlePostMessage(req, res);
+  const sessionId = req.query.sessionId as string;
+  const session = activeSessions.get(sessionId);
+  if (session) {
+    await session.transport.handlePostMessage(req, res, req.body);
   } else {
-    res.status(400).send('No active SSE connection');
+    res.status(400).send(`No active SSE connection for sessionId: ${sessionId}`);
   }
 });
 

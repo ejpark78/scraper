@@ -24,6 +24,7 @@ services:
       - PORT=3000
     volumes:
       - ${HOST_PROJECT_PATH:-.}/src:/app/src
+      - ${HOST_PROJECT_PATH:-.}/tests:/app/tests
       - ${HOST_PROJECT_PATH:-.}/package.json:/app/package.json
       - ${HOST_PROJECT_PATH:-.}/tsconfig.json:/app/tsconfig.json
       - /etc/localtime:/etc/localtime:ro
@@ -39,7 +40,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.viewer.rule=Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.viewer.rule=Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`) || Host(`mcp.localhost`)"
       - "traefik.http.routers.viewer.entrypoints=websecure"
       - "traefik.http.routers.viewer.tls=true"
       - "traefik.http.services.viewer.loadbalancer.server.port=3000"

@@ -8,12 +8,9 @@ export COMPOSE
 RUN_USER := --user $(shell id -u):$(shell id -g)
 export RUN_USER
 
-.PHONY: test lint
+.PHONY: *
 
 # --- 1. explicit local & data-level targets ---
-test:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node tests/url_manager.test.ts
-
 lint:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx yaml-lint compose.yml "docker/**/*.yml"
 
@@ -21,6 +18,9 @@ lint:
 -include scripts/browser.mk
 -include scripts/docker.mk
 -include scripts/mongo.mk
+
+test-%:
+	@$(MAKE) -f scripts/tests.mk $*
 
 tools-%:
 	@$(MAKE) -f scripts/tools.mk $*
