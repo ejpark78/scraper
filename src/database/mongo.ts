@@ -87,6 +87,14 @@ export class MongoDatabase {
                 await bronzeDb.collection('geeknews.html').createIndex({ id: 1 });
                 await bronzeDb.collection('gpters.html').createIndex({ id: 1 }, { unique: true });
                 await bronzeDb.collection('pytorch_kr.html').createIndex({ id: 1 });
+
+                // 📁 Silver Active Collections Indices
+                const silverDb = this.client.db('silver');
+                await silverDb.collection('linkedin.jobs').createIndex({ jobId: 1 }, { unique: true });
+                await silverDb.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
+                await silverDb.collection('geeknews.contents').createIndex({ id: 1 });
+                await silverDb.collection('gpters.contents').createIndex({ id: 1 }, { unique: true });
+                await silverDb.collection('pytorch_kr.contents').createIndex({ id: 1 });
             }
 
             console.log('📌 [MongoDB] All collection indexes successfully initialized.');

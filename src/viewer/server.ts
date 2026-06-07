@@ -62,14 +62,22 @@ app.get('/api/documents', async (req: Request, res: Response) => {
         const silverQuery: any = { location: countryRegex };
         
         if (search) {
-          const regex = new RegExp(search, 'i');
-          silverQuery.$or = [
-            { title: regex },
-            { companyName: regex },
-            { description: regex },
-            { markdown: regex },
-            { jobId: regex }
-          ];
+          if (/^\d+$/.test(search)) {
+            const numId = parseInt(search, 10);
+            silverQuery.$or = [
+              { jobId: search },
+              { jobId: numId }
+            ];
+          } else {
+            const regex = new RegExp(search, 'i');
+            silverQuery.$or = [
+              { title: regex },
+              { companyName: regex },
+              { description: regex },
+              { markdown: regex },
+              { jobId: regex }
+            ];
+          }
         }
 
         // Get true total count from Silver (very fast count)
@@ -87,16 +95,27 @@ app.get('/api/documents', async (req: Request, res: Response) => {
         query = { jobId: { $in: matchingJobIds } };
         hasPaginatedInSilver = true;
       } else if (search) {
+        let silverQuery: any = {};
         const regex = new RegExp(search, 'i');
-        const silverQuery = {
-          $or: [
-            { title: regex },
-            { companyName: regex },
-            { description: regex },
-            { markdown: regex },
-            { jobId: regex }
-          ]
-        };
+        if (/^\d+$/.test(search)) {
+          const numId = parseInt(search, 10);
+          silverQuery = {
+            $or: [
+              { jobId: search },
+              { jobId: numId }
+            ]
+          };
+        } else {
+          silverQuery = {
+            $or: [
+              { title: regex },
+              { companyName: regex },
+              { description: regex },
+              { markdown: regex },
+              { jobId: regex }
+            ]
+          };
+        }
 
         total = await silverColl.countDocuments(silverQuery);
 
@@ -109,12 +128,17 @@ app.get('/api/documents', async (req: Request, res: Response) => {
           .toArray();
         const matchingJobIds = matchingSilverDocs.map(d => d.jobId).filter(Boolean);
         
-        query = {
-          $or: [
-            { jobId: { $in: matchingJobIds } },
-            { jobId: regex }
-          ]
-        };
+        if (/^\d+$/.test(search)) {
+          const numId = parseInt(search, 10);
+          query = {
+            $or: [
+              { jobId: search },
+              { jobId: numId }
+            ]
+          };
+        } else {
+          query = { jobId: { $in: matchingJobIds } };
+        }
         hasPaginatedInSilver = true;
       } else {
         total = await bronzeColl.estimatedDocumentCount();
@@ -176,22 +200,38 @@ app.get('/api/documents', async (req: Request, res: Response) => {
     
     let query: any = {};
     if (search) {
-      const regex = new RegExp(search, 'i');
-      query = {
-        $or: [
-          { title: regex },
-          { jobTitle: regex },
-          { companyName: regex },
-          { url: regex },
-          { text: regex },
-          { content: regex },
-          { markdown: regex },
-          { id: regex },
-          { jobId: regex },
-          { topicId: regex },
-          { postId: regex }
-        ]
-      };
+      if (/^\d+$/.test(search)) {
+        const numVal = parseInt(search, 10);
+        query = {
+          $or: [
+            { id: search },
+            { id: numVal },
+            { jobId: search },
+            { jobId: numVal },
+            { topicId: search },
+            { topicId: numVal },
+            { postId: search },
+            { postId: numVal }
+          ]
+        };
+      } else {
+        const regex = new RegExp(search, 'i');
+        query = {
+          $or: [
+            { title: regex },
+            { jobTitle: regex },
+            { companyName: regex },
+            { url: regex },
+            { text: regex },
+            { content: regex },
+            { markdown: regex },
+            { id: regex },
+            { jobId: regex },
+            { topicId: regex },
+            { postId: regex }
+          ]
+        };
+      }
     }
 
     const total = search ? await collection.countDocuments(query) : await collection.estimatedDocumentCount();
@@ -239,22 +279,38 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
       const silverColl = await mongo.getCollection('silver/linkedin.jobs');
       
       let bronzeDoc: any = null;
-      let filter: any = {};
+      let silverDoc: any = null;
+
       if (ObjectId.isValid(id)) {
-        filter = { $or: [{ _id: new ObjectId(id) }, { jobId: id }] };
+        bronzeDoc = await bronzeColl.findOne({ _id: new ObjectId(id) });
       } else {
-        filter = { jobId: id };
+        const numId = parseInt(id, 10);
+        const filter = isNaN(numId) ? { jobId: id } : { $or: [{ jobId: id }, { jobId: numId }] };
+        bronzeDoc = await bronzeColl.findOne(filter);
       }
       
-      bronzeDoc = await bronzeColl.findOne(filter);
-      
-      let silverDoc: any = null;
       if (bronzeDoc && bronzeDoc.jobId) {
-        silverDoc = await silverColl.findOne({ jobId: bronzeDoc.jobId });
+        const searchJobId = bronzeDoc.jobId.toString();
+        const numJobId = parseInt(searchJobId, 10);
+        silverDoc = await silverColl.findOne({
+          $or: [
+            { jobId: searchJobId },
+            { jobId: numJobId }
+          ]
+        });
       } else {
-        silverDoc = await silverColl.findOne(filter);
+        const numId = parseInt(id, 10);
+        const silverFilter = isNaN(numId) ? { jobId: id } : { $or: [{ jobId: id }, { jobId: numId }] };
+        silverDoc = await silverColl.findOne(silverFilter);
         if (silverDoc && silverDoc.jobId) {
-          bronzeDoc = await bronzeColl.findOne({ jobId: silverDoc.jobId });
+          const searchJobId = silverDoc.jobId.toString();
+          const numJobId = parseInt(searchJobId, 10);
+          bronzeDoc = await bronzeColl.findOne({
+            $or: [
+              { jobId: searchJobId },
+              { jobId: numJobId }
+            ]
+          });
         }
       }
 

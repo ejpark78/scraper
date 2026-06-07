@@ -61,6 +61,8 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/src:/app/src
+      - ${HOST_PROJECT_PATH:-.}/config:/app/config
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
@@ -88,6 +90,8 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/src:/app/src
+      - ${HOST_PROJECT_PATH:-.}/config:/app/config
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
