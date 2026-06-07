@@ -6,10 +6,10 @@ import * as path from 'path';
 
 export class JobsExtractUrls {
     public async run(): Promise<void> {
-    console.log('🏁 [Extract Urls] Starting comprehensive HTML URL extraction from bronze/linkedin.html and bronze/linkedin.lists...');
+    console.log('🏁 [Extract Urls] Starting comprehensive HTML URL extraction from bronze/linkedin.jobs and bronze/linkedin.lists...');
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
-    const bronzeJobs = await mongo.getCollection('bronze/linkedin.html');
+    const bronzeJobs = await mongo.getCollection('bronze/linkedin.jobs');
     const bronzeLists = await mongo.getCollection('bronze/linkedin.lists');
     const jobUrlsColl = await mongo.getCollection('bronze/linkedin.job_urls');
     const companyUrlsColl = await mongo.getCollection('bronze/linkedin.company_urls');
@@ -202,9 +202,9 @@ export class JobsExtractUrls {
     }
 
     // ==========================================
-    // 4-B. Scan bronze/linkedin.html (Detail pages) via Cursor
+    // 4-B. Scan bronze/linkedin.jobs (Detail pages) via Cursor
     // ==========================================
-    console.log('\n🔍 [Phase 2/2] Scanning bronze/linkedin.html HTML for jobs...');
+    console.log('\n🔍 [Phase 2/2] Scanning bronze/linkedin.jobs HTML for jobs...');
     const totalJobs = await bronzeJobs.countDocuments();
     const jobCursor = bronzeJobs.find({}, { projection: { jobId: 1, rawHtml: 1 } }).batchSize(CHUNK_SIZE);
     let jobIdx = 0;
@@ -236,7 +236,7 @@ export class JobsExtractUrls {
             etrStr = formatSeconds(remainingSeconds);
         }
 
-        console.log(`📡 [Jobs ${jobIdx}/${totalJobs}][${runtimeStr}/${etrStr}] Scanning Job ID: ${doc.jobId}...`);
+        console.log(`... [Jobs ${jobIdx}/${totalJobs}][${runtimeStr}/${etrStr}] Scanning Job ID: ${doc.jobId}...`);
 
         $('a[href*="/jobs/view/"]').each((_: any, el: any) => {
             const href = $(el).attr('href') || '';
@@ -293,6 +293,34 @@ export class JobsExtractUrls {
                 redisPushBuffer.push(jobUrl);
             }
         });
+
+        // Extract company URLs from detail HTML
+        let compMatch;
+        companyHrefRegex.lastIndex = 0;
+        while ((compMatch = companyHrefRegex.exec(htmlContent)) !== null) {
+            let url = compMatch[1].trim().split('?')[0].replace(/\/$/, '');
+            if (url.startsWith('/company') || url.startsWith('/compay')) {
+                url = 'https://www.linkedin.com' + url;
+            }
+            if (url.startsWith('http') && (url.includes('/company/') || url.includes('/compay/'))) {
+                const companyId = UrlUtils.extractCompanyId(url);
+                if (companyId) {
+                    await companyUrlsColl.updateOne(
+                        { companyId },
+                        {
+                            $set: {
+                                companyId,
+                                url: `https://www.linkedin.com/company/${companyId}`,
+                                status: 'new',
+                                updatedAt: new Date()
+                            },
+                            $setOnInsert: { pushedToRedis: false }
+                        },
+                        { upsert: true }
+                    );
+                }
+            }
+        }
 
         // CHUNK_SIZE 단위로 DB 부하 방지를 위해 슬립 대기
         if (jobIdx % CHUNK_SIZE === 0 && sleepSec > 0 && jobIdx < totalJobs) {
