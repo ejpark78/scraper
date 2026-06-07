@@ -137,14 +137,15 @@ export class GptersList {
             const alreadyPushed = doc?.pushedToRedis || false;
 
             if (!alreadyPushed) {
+                const priority = process.env.PRIORITY || 'medium';
                 // Push to Redis Queue (Unified scrape_queue with priority format)
                 const payload = JSON.stringify({
                     site: 'gpters',
                     url: detailUrl,
                     attempt: 1,
-                    priority: 'medium'
+                    priority: priority
                 });
-                await this.redis.rpush('scrape_queue:gpters:medium', payload);
+                await this.redis.rpush(`scrape_queue:gpters:${priority}`, payload);
                 await gptersUrlsColl.updateOne(
                     { id },
                     { $set: { pushedToRedis: true } }

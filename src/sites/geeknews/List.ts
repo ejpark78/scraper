@@ -44,6 +44,30 @@ export class GeekNewsList {
         }
 
         const html = await response.text();
+
+        // 🧹 HTML Minify 및 MongoDB bronze/geeknews.lists 저장 추가
+        try {
+            const { GeekNewsHtmlMinifier } = require('./HtmlMinifier');
+            const minifiedHtml = await GeekNewsHtmlMinifier.minify(html);
+            const dbInstance = MongoDatabase.getInstance();
+            const geeknewsListsColl = await dbInstance.getCollection('bronze/geeknews.lists');
+            
+            const runDate = new Date();
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const listId = `${runDate.getFullYear()}${pad(runDate.getMonth() + 1)}${pad(runDate.getDate())}_${pad(runDate.getHours())}${pad(runDate.getMinutes())}${pad(runDate.getSeconds())}_${Math.random().toString(36).substring(2, 6)}`;
+
+            await geeknewsListsColl.insertOne({
+                listId,
+                page,
+                url,
+                rawHtml: minifiedHtml,
+                collectedAt: runDate
+            });
+            console.log(`💾 [MongoDB Write] Saved minified HTML of page ${page} list to bronze/geeknews.lists`);
+        } catch (minifyErr: any) {
+            console.error(`⚠️ Failed to minify or save list HTML to MongoDB: ${minifyErr.message}`);
+        }
+
         const $ = cheerio.load(html);
         const topicRows = $('.topic_row');
         console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on index page.`);
@@ -137,16 +161,17 @@ export class GeekNewsList {
             if (!alreadyPushed) {
                 // Read SCRAPER_SLACK environment variable
                 const scraperSlackVal = process.env.SCRAPER_SLACK ? parseInt(process.env.SCRAPER_SLACK, 10) : 0;
+                const priority = process.env.PRIORITY || 'medium';
                 
                 // Push to Redis Queue (Unified scrape_queue with priority format)
                 const payload = JSON.stringify({
                     site: 'geeknews',
                     url: detailUrl,
                     attempt: 1,
-                    priority: 'medium',
+                    priority: priority,
                     ...(scraperSlackVal > 0 ? { scraperSlack: scraperSlackVal } : {})
                 });
-                await this.redis.rpush('scrape_queue:geeknews:medium', payload);
+                await this.redis.rpush(`scrape_queue:geeknews:${priority}`, payload);
                 await geeknewsUrlsColl.updateOne(
                     { id },
                     { $set: { pushedToRedis: true } }

@@ -439,13 +439,14 @@ export class LinkedInListScraper {
                 );
 
                 if (job.matchesTarget && !isCompleted && !alreadyPushed) {
+                    const priority = process.env.PRIORITY || 'medium';
                     const scrapeTask = {
                         site: 'linkedin',
                         url: job.url,
                         attempt: 1,
-                        priority: 'medium'
+                        priority: priority
                     };
-                    await redis.rpush('scrape_queue:linkedin:medium', JSON.stringify(scrapeTask));
+                    await redis.rpush(`scrape_queue:linkedin:${priority}`, JSON.stringify(scrapeTask));
                     await jobUrlsColl.updateOne(
                         { jobId: job.jobId },
                         { $set: { pushedToRedis: true } }

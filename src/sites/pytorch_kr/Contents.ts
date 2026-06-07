@@ -67,7 +67,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             );
 
             // 2. Silver Layer (Cleansed Metadata & Markdown) 저장
-            const silverPytorch = await dbInstance.getCollection('silver/pytorch_kr');
+            const silverPytorch = await dbInstance.getCollection('silver/pytorch_kr.contents');
             await silverPytorch.updateOne(
                 { id: id },
                 {
@@ -85,7 +85,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             );
 
             // 3. Update status in bronze.pytorch_kr_urls
-            const pytorchUrlsColl = await dbInstance.getCollection('pytorch_kr.urls');
+            const pytorchUrlsColl = await dbInstance.getCollection('bronze/pytorch_kr.urls');
             await pytorchUrlsColl.updateOne(
                 { id },
                 { $set: { status: 'completed', updatedAt: new Date() } }

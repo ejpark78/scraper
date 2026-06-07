@@ -53,17 +53,18 @@ export class GptersRefreshUrls {
 
                 // 5. Redis scrape_queue 에 적재
                 console.log(`📥 Pushing ${newsToPush.length} URLs to Redis scrape_queue...`);
+                const priority = process.env.PRIORITY || 'medium';
                 const payloads = newsToPush.map(j => JSON.stringify({
                     site: 'gpters',
                     url: j.url,
                     attempt: 1,
-                    priority: 'medium'
+                    priority: priority
                 }));
 
                 const chunkSize = 1000;
                 for (let i = 0; i < payloads.length; i += chunkSize) {
                     const chunk = payloads.slice(i, i + chunkSize);
-                    await redis.rpush('scrape_queue:gpters:medium', ...chunk);
+                    await redis.rpush(`scrape_queue:gpters:${priority}`, ...chunk);
                 }
 
                 // 6. MongoDB 상태를 pushedToRedis: true, status: 'new' 로 갱신

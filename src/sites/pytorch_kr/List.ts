@@ -20,6 +20,12 @@ export class PyTorchKRList {
     }
 
     public async run(page: number = 1): Promise<number> {
+        const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
+        if (sleepSec > 0) {
+            console.log(`💤 [대기] PyTorch KR 목록 수집 전 ${sleepSec}초 대기 중...`);
+            await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
+        }
+
         const url = `https://discuss.pytorch.kr/latest.json?no_definitions=true&page=${page}`;
         console.log(`🌐 [PyTorch KR List] Fetching index JSON: ${url}`);
 
@@ -35,6 +41,9 @@ export class PyTorchKRList {
         }
 
         const data = await response.json();
+
+        // Raw list parsing begins
+
         const topics = data.topic_list?.topics || [];
         console.log(`🔍 [PyTorch KR List] Found ${topics.length} topics on index page.`);
 
@@ -70,6 +79,25 @@ export class PyTorchKRList {
 
             if (!id || !slug) continue;
 
+            // 💾 MongoDB bronze/pytorch_kr.lists (개별 토픽 목록 정보) 저장 추가
+            try {
+                const pytorchListsColl = await dbInstance.getCollection('bronze/pytorch_kr.lists');
+                const cleanTopic = { ...topic };
+                delete (cleanTopic as any)._id; // _id 충돌 방지
+                await pytorchListsColl.updateOne(
+                    { _id: `${slug}_${id}` },
+                    {
+                        $set: {
+                            ...cleanTopic,
+                            collectedAt: new Date()
+                        }
+                    },
+                    { upsert: true }
+                );
+            } catch (dbErr: any) {
+                console.error(`⚠️ Failed to save topic list snapshot to MongoDB: ${dbErr.message}`);
+            }
+
             const detailUrl = `https://discuss.pytorch.kr/t/${slug}/${id}`;
 
             // Check if already completed
@@ -103,14 +131,19 @@ export class PyTorchKRList {
             const alreadyPushed = doc?.pushedToRedis || false;
 
             if (!alreadyPushed) {
+                const priority = process.env.PRIORITY || 'medium';
+                // Read SCRAPER_SLACK environment variable
+                const scraperSlackVal = process.env.SCRAPER_SLACK ? parseInt(process.env.SCRAPER_SLACK, 10) : 0;
+
                 // Push to Redis Queue (Unified scrape_queue with priority format)
                 const payload = JSON.stringify({
                     site: 'pytorch_kr',
                     url: detailUrl,
                     attempt: 1,
-                    priority: 'medium'
+                    priority: priority,
+                    ...(scraperSlackVal > 0 ? { scraperSlack: scraperSlackVal } : {})
                 });
-                await this.redis.rpush('scrape_queue:pytorch_kr:medium', payload);
+                await this.redis.rpush(`scrape_queue:pytorch_kr:${priority}`, payload);
                 await pytorchUrlsColl.updateOne(
                     { id },
                     { $set: { pushedToRedis: true } }
@@ -130,8 +163,22 @@ if (require.main === module) {
         const list = new PyTorchKRList();
         try {
             await list.init();
-            const page = process.argv[2] ? parseInt(process.argv[2]) : 1;
-            await list.run(page);
+            const arg = process.argv[2] || '1';
+            
+            if (arg.includes('-')) {
+                const [startStr, endStr] = arg.split('-');
+                const start = parseInt(startStr, 10) || 1;
+                const end = parseInt(endStr, 10) || start;
+                console.log(`🚀 [PyTorch KR List] Running page range: ${start} to ${end}`);
+                
+                for (let p = start; p <= end; p++) {
+                    console.log(`\n📄 [PyTorch KR List] Processing page ${p}/${end}...`);
+                    await list.run(p);
+                }
+            } else {
+                const page = parseInt(arg, 10) || 1;
+                await list.run(page);
+            }
         } catch (e: any) {
             console.error(`❌ List failed: ${e.message}`);
         } finally {

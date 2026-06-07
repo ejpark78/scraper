@@ -85,6 +85,9 @@ export class MongoDatabase {
                 await bronzeDb.collection('geeknews.html').createIndex({ id: 1 });
                 await bronzeDb.collection('gpters.html').createIndex({ id: 1 }, { unique: true });
                 await bronzeDb.collection('pytorch_kr.html').createIndex({ id: 1 });
+                await bronzeDb.collection('pytorch_kr.lists').createIndex({ id: 1 });
+                await bronzeDb.collection('pytorch_kr.lists').createIndex({ collectedAt: 1 });
+                await bronzeDb.collection('pytorch_kr.urls').createIndex({ id: 1 });
 
                 // 📁 Silver Active Collections Indices
                 const silverDb = this.client.db('silver');

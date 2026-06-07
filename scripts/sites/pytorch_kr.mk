@@ -4,13 +4,14 @@
 
 .PHONY: list contents refresh refresh-urls
 
-PAGE ?= 1
+PAGE ?= 1-5
+SLACK_TIME ?= 3
+SCRAPER_SLACK ?= 0
+PRIORITY ?= medium
 
+list: PRIORITY ?= high
 list:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/List.ts $(PAGE)
-
-contents:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/Contents.ts $(PAGE)
+	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/pytorch_kr/List.ts $(PAGE)
 
 refresh:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/Refresh.ts
