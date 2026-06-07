@@ -9,7 +9,7 @@ SLACK_TIME ?= 3
 SCRAPER_SLACK ?= 0
 PRIORITY ?= medium
 
-list: PRIORITY ?= high
+list: PRIORITY := high
 list:
 	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/geeknews/List.ts 1-5
 

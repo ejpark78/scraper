@@ -7,7 +7,7 @@
 LIMIT ?= 20
 PRIORITY ?= medium
 
-list: PRIORITY ?= high
+list: PRIORITY := high
 list:
 	$(COMPOSE) run --rm $(RUN_USER) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/gpters/List.ts $(LIMIT)
 

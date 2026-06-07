@@ -32,11 +32,11 @@ help:
 	@echo "========================================================================="
 
 # 모든 실행 타겟들을 컨테이너 내부의 npx ts-node 명령으로 직접 맵핑하여 위임
-list: PRIORITY ?= high
+list: PRIORITY := high
 list:
 	$(COMPOSE) run --rm $(RUN_USER) -e AUTH=$(AUTH) -e SLACK_TIME=$(SLACK_TIME) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/linkedin/jobs/ListScraper.ts
 
-company: PRIORITY ?= high
+company: PRIORITY := high
 company:
 	$(COMPOSE) run --rm $(RUN_USER) -e AUTH=$(AUTH) -e SLACK_TIME=$(SLACK_TIME) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/linkedin/company/Pipeline.ts
 

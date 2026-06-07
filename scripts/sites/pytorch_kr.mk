@@ -8,10 +8,11 @@ PAGE ?= 1-5
 SLACK_TIME ?= 3
 SCRAPER_SLACK ?= 0
 PRIORITY ?= medium
+OVERWRITE ?= false
 
-list: PRIORITY ?= high
+list: PRIORITY := high
 list:
-	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/pytorch_kr/List.ts $(PAGE)
+	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/pytorch_kr/List.ts $(PAGE)
 
 refresh:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/Refresh.ts

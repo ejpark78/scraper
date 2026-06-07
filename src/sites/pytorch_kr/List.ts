@@ -70,6 +70,7 @@ export class PyTorchKRList {
             }
         }
 
+        const overwrite = process.env.OVERWRITE === 'true';
         let queuedCount = 0;
 
         for (const topic of topics) {
@@ -78,6 +79,11 @@ export class PyTorchKRList {
             const title = topic.title;
 
             if (!id || !slug) continue;
+
+            // OVERWRITE 기능 지원: 강제 덮어쓰기 시 Redis 캐시 및 MongoDB 내 플래그 초기화
+            if (overwrite) {
+                await this.redis.srem(CACHE_SET_KEY, id);
+            }
 
             // 💾 MongoDB bronze/pytorch_kr.lists (개별 토픽 목록 정보) 저장 추가
             try {
@@ -101,25 +107,29 @@ export class PyTorchKRList {
             const detailUrl = `https://discuss.pytorch.kr/t/${slug}/${id}`;
 
             // Check if already completed
-            const isCompleted = await this.redis.sismember(CACHE_SET_KEY, id);
+            const isCompleted = overwrite ? false : await this.redis.sismember(CACHE_SET_KEY, id);
 
             // Upsert URL metadata to MongoDB
-            await pytorchUrlsColl.updateOne(
-                { id },
-                {
-                    $set: {
-                        id,
-                        url: detailUrl,
-                        title,
-                        status: isCompleted ? 'completed' : 'new',
-                        updatedAt: new Date()
-                    },
-                    $setOnInsert: {
-                        pushedToRedis: isCompleted ? true : false
-                    }
-                },
-                { upsert: true }
-            );
+            const updateDoc: any = {
+                $set: {
+                    id,
+                    url: detailUrl,
+                    title,
+                    status: isCompleted ? 'completed' : 'new',
+                    updatedAt: new Date()
+                }
+            };
+
+            if (overwrite) {
+                // OVERWRITE 인 경우, 기존 pushedToRedis 플래그도 false로 강제 설정하여 큐 적재가 가능하도록 유도
+                updateDoc.$set.pushedToRedis = false;
+            } else {
+                updateDoc.$setOnInsert = {
+                    pushedToRedis: isCompleted ? true : false
+                };
+            }
+
+            await pytorchUrlsColl.updateOne({ id }, updateDoc, { upsert: true });
 
             if (isCompleted) {
                 console.log(`⏭️ [PyTorch KR List] Skipping already completed item: [ID: ${id}] ${title}`);
@@ -148,7 +158,7 @@ export class PyTorchKRList {
                     { id },
                     { $set: { pushedToRedis: true } }
                 );
-                console.log(`🚀 [PyTorch KR List] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
+                console.log(`🚀 [PyTorch KR List] Queued (Force Overwrite: ${overwrite}): [ID: ${id}] ${title} -> ${detailUrl}`);
                 queuedCount++;
             }
         }
