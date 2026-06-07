@@ -82,15 +82,24 @@ export class GeekNewsList {
             let relativeUrl = titleEl.attr('href') || '';
             if (!relativeUrl) continue;
 
-            // GeekNews details are located at relative URLs e.g. topic?id=32402
-            let detailUrl = relativeUrl.startsWith('http') 
-                ? relativeUrl 
-                : `https://news.hada.io/${relativeUrl.replace(/^\//, '')}`;
+            // Find GeekNews topic URL (e.g. topic?id=32402) from the comments or info section
+            let topicUrl = '';
+            const commentLinkEl = row.find('a[href^="topic?id="], a[href*="topic?id="]');
+            if (commentLinkEl.length > 0) {
+                topicUrl = commentLinkEl.first().attr('href') || '';
+            } else if (relativeUrl.includes('topic?id=')) {
+                topicUrl = relativeUrl;
+            }
 
-            // Extract ID
+            if (!topicUrl) continue;
+
+            let detailUrl = `https://news.hada.io/${topicUrl.replace(/^\//, '')}`;
+
+            // Extract ID from topicUrl
             let id = '';
-            if (detailUrl.includes('id=')) {
-                id = detailUrl.split('id=').pop()!.split('&')[0];
+            const match = topicUrl.match(/id=(\d+)/);
+            if (match) {
+                id = match[1];
             }
 
             if (!id) continue;
@@ -126,11 +135,15 @@ export class GeekNewsList {
             const alreadyPushed = doc?.pushedToRedis || false;
 
             if (!alreadyPushed) {
+                // Read SCRAPER_SLACK environment variable
+                const scraperSlackVal = process.env.SCRAPER_SLACK ? parseInt(process.env.SCRAPER_SLACK, 10) : 0;
+                
                 // Push to Redis Queue (Unified scrape_queue)
                 const payload = JSON.stringify({
                     site: 'geeknews',
                     url: detailUrl,
-                    attempt: 1
+                    attempt: 1,
+                    ...(scraperSlackVal > 0 ? { scraperSlack: scraperSlackVal } : {})
                 });
                 await this.redis.rpush('scrape_queue', payload);
                 await geeknewsUrlsColl.updateOne(

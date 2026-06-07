@@ -75,7 +75,7 @@ async function main() {
       const payloadRaw = res[1].trim();
       if (!payloadRaw) continue;
 
-      let payload: { site: string; url: string; attempt: number };
+      let payload: { site: string; url: string; attempt: number; scraperSlack?: number };
       try {
         payload = JSON.parse(payloadRaw);
       } catch (err) {
@@ -83,7 +83,7 @@ async function main() {
         payload = { site: 'linkedin', url: payloadRaw, attempt: 1 };
       }
 
-      const { site, url, attempt } = payload;
+      const { site, url, attempt, scraperSlack } = payload;
       const id = extractIdFromUrl(site, url);
 
       if (!id) {
@@ -96,6 +96,11 @@ async function main() {
       // Run Scraping
       const tempHtmlPath = path.join(os.tmpdir(), `temp_raw_${site}_${id}.html`);
       try {
+        if (scraperSlack && scraperSlack > 0) {
+          Logger.info(`[Scraper] Waiting for scraper slack time: ${scraperSlack}s before scraping [${site}] ID: ${id}`);
+          await new Promise(resolve => setTimeout(resolve, scraperSlack * 1000));
+        }
+
         await dispatcher.scrape(site, url, tempHtmlPath);
 
         if (!fs.existsSync(tempHtmlPath) || fs.statSync(tempHtmlPath).size === 0) {
@@ -104,6 +109,16 @@ async function main() {
 
         const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
         fs.unlinkSync(tempHtmlPath);
+
+        // Print first 500 characters of body text to verify content correctness
+        try {
+          const cheerio = require('cheerio');
+          const $ = cheerio.load(rawHtml);
+          const bodyText = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 500);
+          Logger.info(`[Scraper] HTML Content Preview [${site}] ID: ${id} (First 500 chars of body text): "${bodyText}"`);
+        } catch (logErr) {
+          // Ignore log errors
+        }
 
         const collectionName = (site === 'linkedin' ? 'bronze/linkedin.jobs' : `bronze/${site}.html`) as `${'bronze' | 'silver'}/${string}`;
         const bronzeColl = await mongo.getCollection(collectionName);
@@ -142,7 +157,7 @@ async function main() {
 
         if (attempt < 3) {
           // Re-queue task to scrape_queue
-          const retryTask = { site, url, attempt: attempt + 1 };
+          const retryTask = { site, url, attempt: attempt + 1, ...(scraperSlack !== undefined ? { scraperSlack } : {}) };
           await redis.rpush(SCRAPE_QUEUE, JSON.stringify(retryTask));
           Logger.info(`[Scraper] Re-queued task to retry. Attempt: ${attempt + 1}`);
         } else {

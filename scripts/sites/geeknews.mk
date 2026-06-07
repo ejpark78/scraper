@@ -6,9 +6,10 @@
 
 PAGE ?= 1
 SLACK_TIME ?= 3
+SCRAPER_SLACK ?= 0
 
 list:
-	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/sites/geeknews/List.ts $(PAGE)
+	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) clipper npx ts-node src/sites/geeknews/List.ts 1-5
 
 contents:
 	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/sites/geeknews/Contents.ts $(PAGE)
@@ -18,5 +19,10 @@ refresh:
 
 refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/RefreshUrls.ts
+
+DAY ?= 2026-06-05
+
+backfill:
+	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) clipper npx ts-node src/sites/geeknews/Backfill.ts $(DAY)
 
 
