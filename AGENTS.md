@@ -1,18 +1,25 @@
 # 🤖 Antigravity Agent Work Guide (AGENTS.md)
 
-## ⚠️ Critical Constraints (토큰 절약 및 실행 제한 규칙)
-1. **임의적인 bash 명령 호출 금지**:
-   - 상태 확인(ps, logs), 데이터베이스 쿼리(mongosh) 등의 관찰용 명령어를 사용자 동의 없이 다회 반복하여 호출하지 마십시오.
-   - 단일 정보 확인이 필요할 때는 여러 개의 도구 호출 대신, 하나의 통합된 스크립트 작성/실행 혹은 명령어로 압축하여 1회만 호출하십시오.
+## ⚠️ Critical Constraints (Token Saving & Execution Restrictions)
 
-2. **계획(Planning) 모드 엄수**:
-   - 사용자가 명확한 실행 지시를 내리기 전이나 단순히 "확인해줘"라고 질문했을 때는 코드를 변경하거나 컨테이너를 재시작하는 등의 부작용(Side-effect)이 있는 동작을 수행하지 마십시오.
-   - **특히 데이터 삭제(Drop, Delete), 덮어쓰기, 복구 리셋 등 정보 유실이나 파괴적 영향이 있는 어떠한 DB 명령어도 사용자의 사전 명시적 동의와 승인 없이는 결코 단독으로 수행해서는 안 됩니다.**
-   - 먼저 원인 분석 결과와 예상 변경점을 텍스트로 정리하여 사용자에게 확인을 받으십시오.
+1. **No Arbitrary Bash Commands**:
+   - Do not invoke observation commands (e.g., `ps`, `logs`, `mongosh` queries) repeatedly without explicit user consent.
+   - When checking single pieces of information, compress the check into a single unified script execution or command instead of calling multiple tools.
 
-3. **파일 검색 및 분석 범위 최소화**:
-   - 프로젝트 디렉토리 전체를 대상으로 하는 무차별적인 grep이나 list_dir을 삼가고, 연관이 확실한 특정 파일 단위로만 view_file을 실행하십시오.
+2. **Strict Planning Mode**:
+   - Do not perform actions with side-effects (e.g., changing code, restarting containers) before the user issues explicit execution instructions or when they simply ask to "check" something.
+   - **Specifically, never execute any database command that has destructive impacts or risks of data loss (e.g., Drop, Delete, overwrite, restore reset) without the user's prior explicit consent and approval.**
+   - First, summarize the cause analysis and expected changes in text to obtain user confirmation.
 
-4. **장애 및 이슈 상황 투명 공유 및 독단적 조치 금지**:
-   - 작업 도중 예상치 못한 오류, 스크립트 오작동, 데이터 소실(유실) 등의 장애 및 이슈 상황이 발생하는 경우, 상황을 숨기거나 자의적으로 수습하려 하지 말고 즉시 사용자에게 사실을 투명하게 공유하십시오.
-   - 사용자의 명시적인 승인 없이 독단적으로 백업 복원(Restore) 등의 수습 동작을 실행하지 마십시오. 반드시 해결 방안을 보고하고 확인을 얻은 뒤 절차를 밟아 진행하십시오.
+3. **Minimize File Search and Analysis Scope**:
+   - Refrain from indiscriminate `grep` or `list_dir` across the entire project directory. Perform `view_file` only on specific files with clear relevance.
+
+4. **Transparent Sharing of Issues & No Unauthorized Recovery**:
+   - If unexpected errors, script malfunctions, or data loss occur during work, immediately share the situation transparently with the user instead of hiding it or trying to fix it unilaterally.
+   - Never perform recovery actions (e.g., backup restore) unilaterally without explicit user approval. Report the solution, obtain confirmation, and then proceed with the steps.
+
+5. **Use Relative Paths for Links and Code Symbols**:
+   - When creating clickable markdown links for files and code symbols (classes, types, functions, structs), use **relative paths** instead of absolute paths starting with the `file://` scheme (e.g., `[ScraperWorker.ts](src/ScraperWorker.ts)`).
+
+6. **Automatic Symbolic Links for Artifacts**:
+   - When creating or modifying artifact files, automatically create or update a symbolic link to that artifact in the `.agents/brain/` folder at the project root directory, ensuring easy user access.

@@ -1,10 +1,11 @@
 import * as os from 'os';
 import Redis from 'ioredis';
+import * as cheerio from 'cheerio';
+import * as fs from 'fs';
+import * as path from 'path';
 import { MongoDatabase } from './database/mongo';
 import { LinkedInCrawler } from './Crawler';
 import { UrlUtils, Logger } from './utils';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const SCRAPE_QUEUE = 'scrape_queue';
@@ -12,28 +13,90 @@ const TRANSFORM_QUEUE = 'transform_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
 const DEAD_LETTER_QUEUE = 'dead_letter_queue';
 
-// Scrape engines mapping
+interface SiteScraperConfig {
+  collectionName: `bronze/${string}`;
+  targetCollection: string;
+  updateFilterKey: string;
+  defaultSlack: number;
+  extractId: (url: string) => string;
+}
+
+const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
+  linkedin: {
+    collectionName: 'bronze/linkedin.jobs',
+    targetCollection: 'linkedin.jobs',
+    updateFilterKey: 'jobId',
+    defaultSlack: 0,
+    extractId: (url) => UrlUtils.extractJobId(url) || '',
+  },
+  geeknews: {
+    collectionName: 'bronze/geeknews.html',
+    targetCollection: 'geeknews.html',
+    updateFilterKey: 'topicId',
+    defaultSlack: 3,
+    extractId: (url) => {
+      if (url.includes('id=')) {
+        return url.split('id=').pop()!.split('&')[0];
+      }
+      return '';
+    },
+  },
+  pytorch_kr: {
+    collectionName: 'bronze/pytorch_kr.html',
+    targetCollection: 'pytorch_kr.html',
+    updateFilterKey: 'topicId',
+    defaultSlack: 3,
+    extractId: (url) => {
+      const match = url.match(/\/(\d+)(?:\?|$)/);
+      return match ? match[1] : '';
+    },
+  },
+  gpters: {
+    collectionName: 'bronze/gpters.html',
+    targetCollection: 'gpters.html',
+    updateFilterKey: 'postId',
+    defaultSlack: 3,
+    extractId: (url) => {
+      const parts = url.split('-');
+      return parts[parts.length - 1] || '';
+    },
+  },
+};
+
+interface ScrapePayload {
+  site: string;
+  url: string;
+  attempt: number;
+  priority?: 'high' | 'medium' | 'low';
+  scraperSlack?: number;
+}
+
 class ScraperDispatcher {
-  private linkedinCrawler = new LinkedInCrawler({ login: process.env.LOGIN === 'true' || process.env.AUTH === 'true' });
+  private linkedinCrawler = new LinkedInCrawler({
+    login: process.env.LOGIN === 'true' || process.env.AUTH === 'true',
+  });
 
   public async scrape(site: string, url: string, tempPath: string): Promise<void> {
-    if (site === 'linkedin') {
-      await this.linkedinCrawler.scrapeJob(url, tempPath);
-    } else if (site === 'geeknews') {
-      await this.scrapeHttpFetch(url, tempPath);
-    } else if (site === 'gpters' || site === 'pytorch_kr') {
-      // For forums/simple static fetch
-      await this.scrapeHttpFetch(url, tempPath);
-    } else {
-      throw new Error(`Unsupported site scraper: ${site}`);
+    switch (site) {
+      case 'linkedin':
+        await this.linkedinCrawler.scrapeJob(url, tempPath);
+        break;
+      case 'geeknews':
+      case 'gpters':
+      case 'pytorch_kr':
+        await this.scrapeHttpFetch(url, tempPath);
+        break;
+      default:
+        throw new Error(`Unsupported site scraper: ${site}`);
     }
   }
 
   private async scrapeHttpFetch(url: string, tempPath: string): Promise<void> {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-      }
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      },
     });
     if (!response.ok) {
       throw new Error(`HTTP status ${response.status} when scraping ${url}`);
@@ -43,211 +106,244 @@ class ScraperDispatcher {
   }
 }
 
-function extractIdFromUrl(site: string, url: string): string {
-  if (site === 'linkedin') {
-    return UrlUtils.extractJobId(url) || '';
-  } else if (site === 'geeknews') {
-    if (url.includes('id=')) return url.split('id=').pop()!.split('&')[0];
-  } else if (site === 'pytorch_kr') {
-    const match = url.match(/\/(\d+)(?:\?|$)/);
-    if (match) return match[1];
-  } else if (site === 'gpters') {
-    const parts = url.split('-');
-    return parts[parts.length - 1] || '';
-  }
-  return '';
-}
-
-function shuffleArray<T>(array: T[]): T[] {
-  const arr = [...array];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-async function main() {
-  Logger.info(`Connecting to Redis at ${REDIS_URL}...`);
-  const redis = new Redis(REDIS_URL);
-  const mongo = MongoDatabase.getInstance();
-  await mongo.connect();
-
-  const dispatcher = new ScraperDispatcher();
-  Logger.info(`Scraper Worker started, listening to: ${SCRAPE_QUEUE}`);
-
-  const highQueues = [
+class QueueManager {
+  private highQueues = [
     'scrape_queue:linkedin:high',
     'scrape_queue:geeknews:high',
     'scrape_queue:gpters:high',
-    'scrape_queue:pytorch_kr:high'
+    'scrape_queue:pytorch_kr:high',
   ];
 
-  const mediumQueues = [
+  private mediumQueues = [
     'scrape_queue:linkedin:medium',
     'scrape_queue:geeknews:medium',
     'scrape_queue:gpters:medium',
-    'scrape_queue:pytorch_kr:medium'
+    'scrape_queue:pytorch_kr:medium',
   ];
 
-  const lowQueues = [
+  private lowQueues = [
     'scrape_queue:linkedin:low',
     'scrape_queue:geeknews:low',
     'scrape_queue:gpters:low',
-    'scrape_queue:pytorch_kr:low'
+    'scrape_queue:pytorch_kr:low',
   ];
 
-  const legacyQueues = ['scrape_queue'];
+  private legacyQueues = ['scrape_queue'];
 
-  while (true) {
+  public getActiveQueues(): string[] {
+    return [
+      ...this.shuffleArray(this.highQueues),
+      ...this.shuffleArray(this.mediumQueues),
+      ...this.shuffleArray(this.lowQueues),
+      ...this.legacyQueues,
+    ];
+  }
+
+  private shuffleArray<T>(array: T[]): T[] {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+}
+
+class ScraperWorker {
+  private redis: Redis;
+  private mongo: MongoDatabase;
+  private dispatcher: ScraperDispatcher;
+  private queueManager: QueueManager;
+
+  constructor() {
+    this.redis = new Redis(REDIS_URL);
+    this.mongo = MongoDatabase.getInstance();
+    this.dispatcher = new ScraperDispatcher();
+    this.queueManager = new QueueManager();
+  }
+
+  public async start(): Promise<void> {
+    Logger.info(`Connecting to Redis at ${REDIS_URL}...`);
+    await this.mongo.connect();
+    Logger.info(`Scraper Worker started, listening to: ${SCRAPE_QUEUE}`);
+
+    while (true) {
+      try {
+        const activeQueues = this.queueManager.getActiveQueues();
+        const res = await this.redis.blpop(...activeQueues, 5);
+        if (!res) continue;
+
+        const queueName = res[0];
+        const payloadRaw = res[1].trim();
+        if (!payloadRaw) continue;
+
+        await this.processMessage(queueName, payloadRaw);
+      } catch (loopErr: any) {
+        Logger.error(`[Scraper] Worker loop exception: ${loopErr.message}`, loopErr);
+      }
+    }
+  }
+
+  private async processMessage(queueName: string, payloadRaw: string): Promise<void> {
+    let payload: ScrapePayload;
     try {
-      // 매 루프마다 우선순위 그룹 내의 큐 순서를 무작위로 셔플하여 특정 큐의 독점(Starvation)을 방지
-      const activeQueues = [
-        ...shuffleArray(highQueues),
-        ...shuffleArray(mediumQueues),
-        ...shuffleArray(lowQueues),
-        ...legacyQueues
-      ];
+      payload = JSON.parse(payloadRaw);
+    } catch (err) {
+      // Fallback for raw string URL representing linkedin
+      payload = { site: 'linkedin', url: payloadRaw, attempt: 1 };
+    }
 
-      const res = await redis.blpop(...activeQueues, 5);
-      if (!res) continue;
+    const { site, url, scraperSlack } = payload;
+    const config = SITE_CONFIGS[site];
 
-      const queueName = res[0];
-      const payloadRaw = res[1].trim();
-      if (!payloadRaw) continue;
+    if (!config) {
+      Logger.error(`Unsupported site payload received: ${site}`, { url });
+      return;
+    }
 
-      let payload: { site: string; url: string; attempt: number; scraperSlack?: number };
-      try {
-        payload = JSON.parse(payloadRaw);
-      } catch (err) {
-        // Fallback for raw string URL representing linkedin
-        payload = { site: 'linkedin', url: payloadRaw, attempt: 1 };
+    const id = config.extractId(url);
+    if (!id) {
+      Logger.error(`Invalid URL pattern. Cannot extract ID for site: ${site}`, { url });
+      return;
+    }
+
+    Logger.info(`[Scraper] POP target [${site}] ID: ${id} from queue: ${queueName}`, { url, queue: queueName });
+
+    const tempHtmlPath = path.join(os.tmpdir(), `temp_raw_${site}_${id}.html`);
+    try {
+      await this.checkAndApplyRateLimit(site, scraperSlack);
+      await this.dispatcher.scrape(site, url, tempHtmlPath);
+
+      if (!fs.existsSync(tempHtmlPath) || fs.statSync(tempHtmlPath).size === 0) {
+        throw new Error('Downloaded raw HTML content is empty.');
       }
 
-      const { site, url, attempt, scraperSlack } = payload;
-      const id = extractIdFromUrl(site, url);
+      const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
+      fs.unlinkSync(tempHtmlPath);
 
-      if (!id) {
-        Logger.error(`Invalid URL pattern. Cannot extract ID for site: ${site}`, { url });
-        continue;
+      this.logHtmlPreview(site, id, rawHtml);
+      await this.saveRawHtmlAndQueueTransform(site, id, url, rawHtml);
+    } catch (scrapeErr: any) {
+      await this.handleScrapeFailure(payload, id, scrapeErr);
+    }
+  }
+
+  private async checkAndApplyRateLimit(site: string, scraperSlack?: number): Promise<void> {
+    const config = SITE_CONFIGS[site];
+    const defaultSlack = config ? config.defaultSlack : 3;
+    const slackSeconds = scraperSlack !== undefined ? scraperSlack : defaultSlack;
+    if (slackSeconds <= 0) return;
+
+    const now = Date.now();
+    const rateLimitKey = `last_scrape_time:${site}`;
+    const lastScrapeTimeRaw = await this.redis.get(rateLimitKey);
+    const lastScrapeTime = lastScrapeTimeRaw ? parseInt(lastScrapeTimeRaw, 10) : 0;
+
+    const minInterval = slackSeconds * 1000;
+    const timePassed = now - lastScrapeTime;
+
+    if (timePassed < minInterval) {
+      const delay = minInterval - timePassed;
+      Logger.info(`[Scraper] [${site}] Rate-limit active. Delaying for ${delay}ms`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
+    await this.redis.set(rateLimitKey, Date.now().toString());
+  }
+
+  private logHtmlPreview(site: string, id: string, rawHtml: string): void {
+    try {
+      const $ = cheerio.load(rawHtml);
+      const bodyText = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 500);
+      Logger.info(`[Scraper] HTML Content Preview [${site}] ID: ${id} (First 500 chars of body text): "${bodyText}"`);
+    } catch (logErr) {
+      // Ignore log errors
+    }
+  }
+
+  private async saveRawHtmlAndQueueTransform(
+    site: string,
+    id: string,
+    url: string,
+    rawHtml: string
+  ): Promise<void> {
+    const config = SITE_CONFIGS[site];
+    if (!config) {
+      throw new Error(`Configuration not found for site: ${site}`);
+    }
+
+    const collection = await this.mongo.getCollection(config.collectionName);
+    const updateFilter = { [config.updateFilterKey]: id };
+    const updatePayload = {
+      ...updateFilter,
+      url,
+      rawHtml,
+      scrapedAt: new Date(),
+    };
+
+    const updateResult = await collection.updateOne(
+      updateFilter,
+      { $set: updatePayload },
+      { upsert: true }
+    );
+
+    const dbRefId = updateResult.upsertedId ? updateResult.upsertedId.toString() : id;
+
+    const transformTask = {
+      site,
+      id,
+      bronze_db: 'bronze',
+      bronze_collection: config.targetCollection,
+      bronze_id: dbRefId,
+      timestamp: new Date().toISOString(),
+    };
+
+    await this.redis.rpush(TRANSFORM_QUEUE, JSON.stringify(transformTask));
+    Logger.info(`[Scraper] Successfully saved Raw HTML and published transform event for ID: ${id}`);
+  }
+
+  private async handleScrapeFailure(
+    payload: ScrapePayload,
+    id: string,
+    scrapeErr: any
+  ): Promise<void> {
+    const { site, url, attempt, scraperSlack } = payload;
+    Logger.error(`[Scraper] Scrape execution failed for [${site}] ID: ${id} on attempt ${attempt}`, scrapeErr);
+
+    if (attempt < 3) {
+      const priority = payload.priority || 'medium';
+      const retryTask: ScrapePayload = {
+        site,
+        url,
+        attempt: attempt + 1,
+        priority,
+        ...(scraperSlack !== undefined ? { scraperSlack } : {}),
+      };
+      const targetQueue = `scrape_queue:${site}:${priority}`;
+
+      if (priority === 'high') {
+        await this.redis.lpush(targetQueue, JSON.stringify(retryTask));
+      } else {
+        await this.redis.rpush(targetQueue, JSON.stringify(retryTask));
       }
+      Logger.info(`[Scraper] Re-queued task to ${targetQueue} retry. Attempt: ${attempt + 1}`);
+    } else {
+      const deadTask = { site, url, error: scrapeErr.message, failedAt: new Date().toISOString() };
+      await this.redis.rpush(DEAD_LETTER_QUEUE, JSON.stringify(deadTask));
+      await this.redis.srem(ACTIVE_PROCESSING_SET, url);
+      Logger.error(`[Scraper] Max retry attempts exceeded. Moved ID: ${id} to dead_letter_queue`);
+    }
 
-      Logger.info(`[Scraper] POP target [${site}] ID: ${id} from queue: ${queueName}`, { url, queue: queueName });
-
-      // Run Scraping
-      const tempHtmlPath = path.join(os.tmpdir(), `temp_raw_${site}_${id}.html`);
-      try {
-        // 🚦 Redis-based distributed rate limiting per site
-        const now = Date.now();
-        const rateLimitKey = `last_scrape_time:${site}`;
-        const lastScrapeTimeRaw = await redis.get(rateLimitKey);
-        const lastScrapeTime = lastScrapeTimeRaw ? parseInt(lastScrapeTimeRaw, 10) : 0;
-        
-        // Define min intervals: 3s default, 0 for LinkedIn (since it uses Puppeteer/Playwright and internal rate limit/delay)
-        const defaultSlack = site === 'linkedin' ? 0 : 3;
-        const slackSeconds = scraperSlack !== undefined ? scraperSlack : defaultSlack;
-        const minInterval = slackSeconds * 1000;
-
-        const timePassed = now - lastScrapeTime;
-        if (timePassed < minInterval) {
-          const delay = minInterval - timePassed;
-          Logger.info(`[Scraper] [${site}] Rate-limit active. Delaying for ${delay}ms before scraping ID: ${id}`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-
-        // Update last scrape time immediately before starting scrape to block concurrent workers
-        await redis.set(rateLimitKey, Date.now().toString());
-
-        await dispatcher.scrape(site, url, tempHtmlPath);
-
-        if (!fs.existsSync(tempHtmlPath) || fs.statSync(tempHtmlPath).size === 0) {
-          throw new Error('Downloaded raw HTML content is empty.');
-        }
-
-        const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
-        fs.unlinkSync(tempHtmlPath);
-
-        // Print first 500 characters of body text to verify content correctness
-        try {
-          const cheerio = require('cheerio');
-          const $ = cheerio.load(rawHtml);
-          const bodyText = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 500);
-          Logger.info(`[Scraper] HTML Content Preview [${site}] ID: ${id} (First 500 chars of body text): "${bodyText}"`);
-        } catch (logErr) {
-          // Ignore log errors
-        }
-
-        const collectionName = (site === 'linkedin' ? 'bronze/linkedin.jobs' : `bronze/${site}.html`) as `${'bronze' | 'silver'}/${string}`;
-        const bronzeColl = await mongo.getCollection(collectionName);
-
-        const updateFilter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { postId: id } : { topicId: id };
-        const updatePayload = {
-          ...updateFilter,
-          url,
-          rawHtml,
-          scrapedAt: new Date()
-        };
-
-        const updateResult = await bronzeColl.updateOne(
-          updateFilter,
-          { $set: updatePayload },
-          { upsert: true }
-        );
-
-        const dbRefId = updateResult.upsertedId ? updateResult.upsertedId.toString() : id;
-
-        // Push task to transform_queue
-        const targetCollection = site === 'linkedin' ? 'linkedin.jobs' : `${site}.html`;
-        const transformTask = {
-          site,
-          id,
-          bronze_db: 'bronze',
-          bronze_collection: targetCollection,
-          bronze_id: dbRefId,
-          timestamp: new Date().toISOString()
-        };
-        await redis.rpush(TRANSFORM_QUEUE, JSON.stringify(transformTask));
-        Logger.info(`[Scraper] Successfully saved Raw HTML and published transform event for ID: ${id}`);
-
-      } catch (scrapeErr: any) {
-        Logger.error(`[Scraper] Scrape execution failed for [${site}] ID: ${id} on attempt ${attempt}`, scrapeErr);
-
-        if (attempt < 3) {
-          // Re-queue task to the corresponding site/priority queue
-          const priority = (payload as any).priority || 'medium';
-          const retryTask = { site, url, attempt: attempt + 1, priority, ...(scraperSlack !== undefined ? { scraperSlack } : {}) };
-          const targetQueue = `scrape_queue:${site}:${priority}`;
-          
-          if (priority === 'high') {
-            await redis.lpush(targetQueue, JSON.stringify(retryTask));
-          } else {
-            await redis.rpush(targetQueue, JSON.stringify(retryTask));
-          }
-          Logger.info(`[Scraper] Re-queued task to ${targetQueue} retry. Attempt: ${attempt + 1}`);
-        } else {
-          // Push to Dead Letter Queue
-          const deadTask = { site, url, error: scrapeErr.message, failedAt: new Date().toISOString() };
-          await redis.rpush(DEAD_LETTER_QUEUE, JSON.stringify(deadTask));
-          // Remove from active processing set to unlock future scheduling
-          await redis.srem(ACTIVE_PROCESSING_SET, url);
-          Logger.error(`[Scraper] Max retry attempts exceeded. Moved ID: ${id} to dead_letter_queue`);
-        }
-
-        // Graceful handle Auth Walls
-        if (scrapeErr.message && (scrapeErr.message.includes('세션 만료') || scrapeErr.message.includes('Auth Wall'))) {
-          Logger.error(`LinkedIn Session expired. Graceful shut down of scraper.`, scrapeErr);
-          await redis.quit();
-          process.exit(1);
-        }
-      }
-
-    } catch (loopErr: any) {
-      Logger.error(`[Scraper] Worker loop exception: ${loopErr.message}`, loopErr);
+    if (scrapeErr.message && (scrapeErr.message.includes('세션 만료') || scrapeErr.message.includes('Auth Wall'))) {
+      Logger.error(`LinkedIn Session expired. Graceful shut down of scraper.`, scrapeErr);
+      await this.redis.quit();
+      process.exit(1);
     }
   }
 }
 
-main().catch((err) => {
+const worker = new ScraperWorker();
+worker.start().catch((err) => {
   Logger.error('Fatal crash on Scraper Worker', err);
   process.exit(1);
 });
