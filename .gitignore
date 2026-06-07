@@ -4,3 +4,4 @@ data/
 data/sessions/
 node_modules/
 notebooks/.*
+sysinfo_cache.json

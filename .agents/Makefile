@@ -13,4 +13,12 @@ dump-context:
 dump-brain:
 	@npx ts-node .agents/scripts/dump_brain.ts --all
 
+dump-sysinfo:
+	@npx ts-node .agents/scripts/dump_sysinfo.ts
+
+compress-rules:
+	@npx ts-node .agents/scripts/compress_rules.ts
+
+
+
 
