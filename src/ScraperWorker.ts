@@ -58,6 +58,15 @@ function extractIdFromUrl(site: string, url: string): string {
   return '';
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 async function main() {
   Logger.info(`Connecting to Redis at ${REDIS_URL}...`);
   const redis = new Redis(REDIS_URL);
@@ -67,29 +76,40 @@ async function main() {
   const dispatcher = new ScraperDispatcher();
   Logger.info(`Scraper Worker started, listening to: ${SCRAPE_QUEUE}`);
 
-  const siteQueues = [
-    // 1순위: High Priorities (교차 배치)
+  const highQueues = [
     'scrape_queue:linkedin:high',
     'scrape_queue:geeknews:high',
     'scrape_queue:gpters:high',
-    'scrape_queue:pytorch_kr:high',
-    // 2순위: Medium Priorities (교차 배치)
+    'scrape_queue:pytorch_kr:high'
+  ];
+
+  const mediumQueues = [
     'scrape_queue:linkedin:medium',
     'scrape_queue:geeknews:medium',
     'scrape_queue:gpters:medium',
-    'scrape_queue:pytorch_kr:medium',
-    // 3순위: Low Priorities (교차 배치)
+    'scrape_queue:pytorch_kr:medium'
+  ];
+
+  const lowQueues = [
     'scrape_queue:linkedin:low',
     'scrape_queue:geeknews:low',
     'scrape_queue:gpters:low',
-    'scrape_queue:pytorch_kr:low',
-    // 하위 호환용 레거시 단일 큐
-    'scrape_queue'
+    'scrape_queue:pytorch_kr:low'
   ];
+
+  const legacyQueues = ['scrape_queue'];
 
   while (true) {
     try {
-      const res = await redis.blpop(...siteQueues, 5);
+      // 매 루프마다 우선순위 그룹 내의 큐 순서를 무작위로 셔플하여 특정 큐의 독점(Starvation)을 방지
+      const activeQueues = [
+        ...shuffleArray(highQueues),
+        ...shuffleArray(mediumQueues),
+        ...shuffleArray(lowQueues),
+        ...legacyQueues
+      ];
+
+      const res = await redis.blpop(...activeQueues, 5);
       if (!res) continue;
 
       const payloadRaw = res[1].trim();
