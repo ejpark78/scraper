@@ -112,6 +112,7 @@ async function main() {
       const res = await redis.blpop(...activeQueues, 5);
       if (!res) continue;
 
+      const queueName = res[0];
       const payloadRaw = res[1].trim();
       if (!payloadRaw) continue;
 
@@ -131,7 +132,7 @@ async function main() {
         continue;
       }
 
-      Logger.info(`[Scraper] POP target [${site}] ID: ${id}`, { url });
+      Logger.info(`[Scraper] POP target [${site}] ID: ${id} from queue: ${queueName}`, { url, queue: queueName });
 
       // Run Scraping
       const tempHtmlPath = path.join(os.tmpdir(), `temp_raw_${site}_${id}.html`);
