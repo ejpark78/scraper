@@ -19,6 +19,12 @@ dump-sysinfo:
 compress-rules:
 	@npx ts-node .agents/scripts/compress_rules.ts
 
+lint-rules:
+	@npx ts-node .agents/scripts/lint_rules.ts
+
+dump-all: dump-sysinfo dump-transcripts dump-context dump-brain compress-rules lint-rules
+
+
 
 
 

@@ -7,6 +7,7 @@ class SysInfoDumper {
     try {
       const info = {
         timestamp: new Date().toISOString(),
+        git: this.getGitStatus(),
         docker: this.getDockerStatus(),
         mongo: this.getMongoConnectivity(),
         redis: this.getRedisConnectivity()
@@ -18,6 +19,16 @@ class SysInfoDumper {
     } catch (err: any) {
       console.error('❌ Error dumping sysinfo:', err.message);
       process.exit(1);
+    }
+  }
+
+  private getGitStatus(): string {
+    try {
+      const branch = execSync('git rev-parse --abbrev-ref HEAD', { stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
+      const status = execSync('git status -s', { stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
+      return `Branch: ${branch}${status ? ' | Changes: ' + status.replace(/\n/g, ', ') : ' | Clean'}`;
+    } catch (e) {
+      return 'Not a git repo or command failed';
     }
   }
 

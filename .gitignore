@@ -1,7 +1,8 @@
 .agents/transcripts/
+.agents/sysinfo_cache.json
+.agents/rules_compact.txt
 .env
 data/
 data/sessions/
 node_modules/
 notebooks/.*
-sysinfo_cache.json
