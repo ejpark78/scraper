@@ -27,11 +27,11 @@ const mongo = MongoDatabase.getInstance();
 app.get('/api/collections', async (req: Request, res: Response) => {
   try {
     const collections = [
-      { id: 'bronze/linkedin.jobs', name: 'LinkedIn Jobs' },
-      { id: 'bronze/linkedin.companies', name: 'LinkedIn Companies' },
-      { id: 'bronze/geeknews.html', name: 'GeekNews Raw HTML' },
-      { id: 'bronze/gpters.html', name: 'GPters Raw HTML' },
-      { id: 'bronze/pytorch_kr.html', name: 'PyTorch KR Raw HTML' }
+      { id: 'linkedin.jobs', name: 'LinkedIn Jobs' },
+      { id: 'silver/linkedin.companies', name: 'LinkedIn Companies' },
+      { id: 'silver/geeknews.contents', name: 'GeekNews Contents' },
+      { id: 'silver/gpters.contents', name: 'GPters Contents' },
+      { id: 'silver/pytorch_kr.contents', name: 'PyTorch KR Contents' }
     ];
     res.json(collections);
   } catch (error: any) {
@@ -41,12 +41,82 @@ app.get('/api/collections', async (req: Request, res: Response) => {
 
 app.get('/api/documents', async (req: Request, res: Response) => {
   try {
-    const collectionName = req.query.collection as string || 'bronze/linkedin.jobs';
+    const collectionName = req.query.collection as string || 'linkedin.jobs';
     const search = req.query.search as string || '';
     const page = parseInt(req.query.page as string || '1', 10);
     const limit = parseInt(req.query.limit as string || '30', 10);
     const skip = (page - 1) * limit;
 
+    // Special handling for merged 'linkedin.jobs' (lists documents based on bronze, stitched with silver)
+    if (collectionName === 'linkedin.jobs') {
+      const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
+      const silverColl = await mongo.getCollection('silver/linkedin.jobs');
+      
+      let query: any = {};
+      if (search) {
+        const regex = new RegExp(search, 'i');
+        // Retrieve matching jobIds from Silver
+        const matchingSilverDocs = await silverColl.find({
+          $or: [
+            { title: regex },
+            { companyName: regex },
+            { description: regex },
+            { jobId: regex }
+          ]
+        }).project({ jobId: 1 }).limit(2000).toArray();
+        
+        const matchingJobIds = matchingSilverDocs.map(d => d.jobId).filter(Boolean);
+        
+        // Match either silver jobIds OR bronze jobId directly
+        query = {
+          $or: [
+            { jobId: { $in: matchingJobIds } },
+            { jobId: regex }
+          ]
+        };
+      }
+
+      const total = search ? await bronzeColl.countDocuments(query) : await bronzeColl.estimatedDocumentCount();
+      const bronzeDocs = await bronzeColl.find(query)
+        .project({
+          _id: 1,
+          jobId: 1,
+          scrapedAt: 1,
+          url: 1
+        })
+        .sort({ _id: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+
+      // Stitch silver metadata
+      const jobIds = bronzeDocs.map(d => d.jobId).filter(Boolean);
+      const silverDocs = await silverColl.find({ jobId: { $in: jobIds } }).toArray();
+      const silverMap = new Map(silverDocs.map(d => [d.jobId, d]));
+
+      const combinedDocs = bronzeDocs.map(bDoc => {
+        const sDoc = silverMap.get(bDoc.jobId);
+        return {
+          _id: bDoc._id,
+          jobId: bDoc.jobId,
+          title: sDoc ? (sDoc.title || sDoc.jobTitle) : `LinkedIn - #${bDoc.jobId}`,
+          companyName: sDoc ? sDoc.companyName : 'Unknown Company',
+          collectedAt: bDoc.scrapedAt || (sDoc ? sDoc.updatedAt : null),
+          url: bDoc.url || (sDoc ? sDoc.url : null),
+          hasSilver: !!sDoc,
+          hasBronze: true
+        };
+      });
+
+      return res.json({
+        total,
+        page,
+        limit,
+        documents: combinedDocs
+      });
+    }
+
+    // Default handling for other collections
     const collection = await mongo.getCollection(collectionName);
     
     let query: any = {};
@@ -68,7 +138,7 @@ app.get('/api/documents', async (req: Request, res: Response) => {
       };
     }
 
-    const total = await collection.countDocuments(query);
+    const total = search ? await collection.countDocuments(query) : await collection.estimatedDocumentCount();
     const docs = await collection.find(query)
       .project({
         _id: 1,
@@ -80,6 +150,8 @@ app.get('/api/documents', async (req: Request, res: Response) => {
         collectedAt: 1,
         createdAt: 1,
         scrapedAt: 1,
+        updatedAt: 1,
+        publishedAt: 1,
         jobId: 1,
         id: 1,
         topicId: 1,
@@ -104,7 +176,43 @@ app.get('/api/documents', async (req: Request, res: Response) => {
 app.get('/api/documents/:id', async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const collectionName = req.query.collection as string || 'bronze/linkedin.jobs';
+    const collectionName = req.query.collection as string || 'linkedin.jobs';
+
+    if (collectionName === 'linkedin.jobs') {
+      const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
+      const silverColl = await mongo.getCollection('silver/linkedin.jobs');
+      
+      let bronzeDoc: any = null;
+      let filter: any = {};
+      if (ObjectId.isValid(id)) {
+        filter = { $or: [{ _id: new ObjectId(id) }, { jobId: id }] };
+      } else {
+        filter = { jobId: id };
+      }
+      
+      bronzeDoc = await bronzeColl.findOne(filter);
+      
+      let silverDoc: any = null;
+      if (bronzeDoc && bronzeDoc.jobId) {
+        silverDoc = await silverColl.findOne({ jobId: bronzeDoc.jobId });
+      } else {
+        silverDoc = await silverColl.findOne(filter);
+        if (silverDoc && silverDoc.jobId) {
+          bronzeDoc = await bronzeColl.findOne({ jobId: silverDoc.jobId });
+        }
+      }
+
+      if (!bronzeDoc && !silverDoc) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      return res.json({
+        isMerged: true,
+        bronze: bronzeDoc,
+        silver: silverDoc
+      });
+    }
+
     const collection = await mongo.getCollection(collectionName);
 
     let filter: any = {};
@@ -118,6 +226,35 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
     if (!doc) {
       return res.status(404).json({ error: 'Document not found' });
     }
+
+    // Dynamically stitch rawHtml from Bronze layer for Silver collections
+    if (!doc.rawHtml) {
+      try {
+        if (collectionName === 'silver/linkedin.jobs' && doc.jobId) {
+          const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
+          const bronzeDoc = await bronzeColl.findOne({ jobId: doc.jobId });
+          if (bronzeDoc && bronzeDoc.rawHtml) {
+            doc.rawHtml = bronzeDoc.rawHtml;
+            doc.scrapedAt = bronzeDoc.scrapedAt;
+          }
+        } else if (collectionName === 'silver/geeknews.contents' && doc.id) {
+          const bronzeColl = await mongo.getCollection('bronze/geeknews.html');
+          const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }, { topicId: doc.id }] });
+          if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+        } else if (collectionName === 'silver/gpters.contents' && doc.id) {
+          const bronzeColl = await mongo.getCollection('bronze/gpters.html');
+          const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }, { postId: doc.id }] });
+          if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+        } else if (collectionName === 'silver/pytorch_kr.contents' && doc.id) {
+          const bronzeColl = await mongo.getCollection('bronze/pytorch_kr.html');
+          const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }, { topicId: doc.id }] });
+          if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+        }
+      } catch (stitchErr) {
+        console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);
+      }
+    }
+
     res.json(doc);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

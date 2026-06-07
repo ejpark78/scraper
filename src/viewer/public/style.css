@@ -41,22 +41,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
 .app-container {
   display: grid;
   grid-template-columns: 260px 380px 1fr;
@@ -176,6 +160,7 @@ body {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-app);
+  height: 100vh;
 }
 
 .search-header {
@@ -225,6 +210,7 @@ body {
 .document-list {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -589,4 +575,32 @@ pre[class*="language-"] {
 }
 code[class*="language-"] {
   text-shadow: none !important;
+}
+
+/* Loading Spinner Animation */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 200px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(99, 102, 241, 0.1);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  filter: drop-shadow(0 0 4px var(--border-glow));
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

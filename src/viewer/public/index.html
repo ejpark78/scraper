@@ -75,10 +75,11 @@
         </header>
 
         <nav class="tabs-nav">
-          <button class="tab-btn active" data-tab="tab-rendered">Rendered View</button>
-          <button class="tab-btn" data-tab="tab-markdown">Markdown Source</button>
-          <button class="tab-btn" data-tab="tab-html">Original HTML</button>
-          <button class="tab-btn" data-tab="tab-json">Raw JSON</button>
+          <button class="tab-btn active" data-tab="tab-rendered">Silver (Rendered)</button>
+          <button class="tab-btn" data-tab="tab-markdown">Silver (Markdown)</button>
+          <button class="tab-btn" data-tab="tab-silver-json">Silver (JSON)</button>
+          <button class="tab-btn" data-tab="tab-html">Bronze (HTML)</button>
+          <button class="tab-btn" data-tab="tab-bronze-json">Bronze (JSON)</button>
         </nav>
 
         <div class="tab-panes">
@@ -88,11 +89,14 @@
           <div id="tab-markdown" class="tab-pane">
             <pre><code class="language-markdown" id="markdown-code"></code></pre>
           </div>
+          <div id="tab-silver-json" class="tab-pane">
+            <pre><code class="language-json" id="silver-json-code"></code></pre>
+          </div>
           <div id="tab-html" class="tab-pane">
             <iframe id="html-preview" class="html-preview" srcdoc="<p>No HTML raw available</p>"></iframe>
           </div>
-          <div id="tab-json" class="tab-pane">
-            <pre><code class="language-json" id="json-code"></code></pre>
+          <div id="tab-bronze-json" class="tab-pane">
+            <pre><code class="language-json" id="bronze-json-code"></code></pre>
           </div>
         </div>
       </div>

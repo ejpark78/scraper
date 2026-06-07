@@ -12,7 +12,6 @@
 services:
   yacht:
     image: selfhostedpro/yacht:latest
-    container_name: yacht
     profiles:
       - tools
     depends_on:

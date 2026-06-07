@@ -2,6 +2,7 @@ let currentCollection = '';
 let currentSearch = '';
 let currentPage = 1;
 const limit = 30;
+let activeDoc = null; // Store current active document for lazy loading
 
 // Debounce timer
 let searchTimeout = null;
@@ -39,6 +40,9 @@ function setupEventListeners() {
       const panes = document.querySelectorAll('.tab-pane');
       panes.forEach(pane => pane.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
+      
+      // Lazy load content for active tab
+      triggerLazyTabLoad(tabId);
     });
   });
 
@@ -104,7 +108,12 @@ async function loadCollections() {
 
 // 2. Fetch Documents List
 async function loadDocuments(collection, search, page) {
-  documentList.innerHTML = '<div class="empty-state">Loading documents...</div>';
+  documentList.innerHTML = `
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <div>Loading documents...</div>
+    </div>
+  `;
   
   try {
     const url = `/api/documents?collection=${encodeURIComponent(collection)}&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`;
@@ -124,14 +133,29 @@ async function loadDocuments(collection, search, page) {
       card.className = 'doc-card';
       
       // Determine displays
-      let mainTitle = doc.title || doc.jobTitle || doc.companyName;
-      if (!mainTitle) {
-        mainTitle = doc.site || getSiteNameFromCollection(collection);
-      }
-      const suffix = doc.jobId || doc.id || doc.topicId || doc.postId;
-      const titleText = suffix ? `${mainTitle} - #${suffix}` : mainTitle;
+      const mainTitle = doc.title || doc.jobTitle;
+      const company = doc.companyName;
+      const dateVal = doc.collectedAt || doc.createdAt || doc.scrapedAt || doc.updatedAt || doc.publishedAt;
       
-      const dateVal = doc.collectedAt || doc.createdAt || doc.scrapedAt;
+      let dateString = 'N/A';
+      if (dateVal) {
+        const dateObj = new Date(dateVal);
+        dateString = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+      }
+      
+      let titleParts = [];
+      if (mainTitle) titleParts.push(mainTitle);
+      if (company) titleParts.push(company);
+      
+      if (titleParts.length === 0) {
+        const fallbackName = doc.site || getSiteNameFromCollection(collection);
+        const suffix = doc.jobId || doc.id || doc.topicId || doc.postId;
+        titleParts.push(suffix ? `${fallbackName} - #${suffix}` : fallbackName);
+      }
+      
+      titleParts.push(dateString);
+      const titleText = titleParts.join(' - ');
+      
       const collectedDate = dateVal ? new Date(dateVal).toLocaleString('ko-KR') : 'N/A';
       
       card.innerHTML = `
@@ -167,61 +191,129 @@ async function loadDocumentDetail(id, collection) {
     detailEmpty.classList.add('hidden');
     detailContent.classList.remove('hidden');
     
-    // Header details
-    let detailMainTitle = doc.title || doc.jobTitle || doc.companyName;
-    if (!detailMainTitle) {
-      detailMainTitle = doc.site || getSiteNameFromCollection(collection);
+    // Normalize into silver and bronze objects
+    let silver = {};
+    let bronze = {};
+    if (doc.isMerged) {
+      silver = doc.silver || {};
+      bronze = doc.bronze || {};
+    } else {
+      // Fallback: If not merged, treat as both
+      silver = doc;
+      bronze = doc;
     }
-    const detailSuffix = doc.jobId || doc.id || doc.topicId || doc.postId;
-    docTitle.textContent = detailSuffix ? `${detailMainTitle} - #${detailSuffix}` : detailMainTitle;
-    docSourceBadge.textContent = doc.companyName || doc.site || getSiteNameFromCollection(collection);
     
-    const detailDateVal = doc.collectedAt || doc.createdAt || doc.scrapedAt;
+    // Header details
+    let detailMainTitle = silver.title || silver.jobTitle;
+    let detailParts = [];
+    if (detailMainTitle) detailParts.push(detailMainTitle);
+    if (silver.companyName) detailParts.push(silver.companyName);
+    
+    if (detailParts.length === 0) {
+      const fallbackName = silver.site || getSiteNameFromCollection(collection);
+      const detailSuffix = silver.jobId || silver.id || silver.topicId || silver.postId || bronze.jobId;
+      docTitle.textContent = detailSuffix ? `${fallbackName} - #${detailSuffix}` : fallbackName;
+    } else {
+      const detailSuffix = silver.jobId || silver.id || silver.topicId || silver.postId || bronze.jobId;
+      const titleStr = detailParts.join(' - ');
+      docTitle.textContent = detailSuffix ? `${titleStr} - #${detailSuffix}` : titleStr;
+    }
+    docSourceBadge.textContent = silver.companyName || silver.site || getSiteNameFromCollection(collection);
+    
+    const detailDateVal = silver.updatedAt || silver.collectedAt || silver.createdAt || bronze.scrapedAt;
     docDate.textContent = detailDateVal ? new Date(detailDateVal).toLocaleDateString('ko-KR') : 'N/A';
     
-    if (doc.url) {
-      docUrl.href = doc.url;
+    const docUrlVal = bronze.url || silver.url;
+    if (docUrlVal) {
+      docUrl.href = docUrlVal;
       docUrl.classList.remove('hidden');
     } else {
       docUrl.classList.add('hidden');
     }
     
-    // Tab 1: Rendered markdown
+    // Tab 1: Rendered markdown (Silver)
     const renderedPane = document.getElementById('tab-rendered');
-    const mdContent = doc.markdown || doc.description || doc.content || '';
+    const mdContent = silver.markdown || silver.description || silver.content || '';
     if (mdContent) {
       renderedPane.innerHTML = marked.parse(mdContent);
-    } else if (doc.rawHtml) {
-      renderedPane.innerHTML = `<blockquote>No markdown available. Showing raw HTML source instead. Use HTML tab for preview.</blockquote>`;
+    } else if (bronze.rawHtml) {
+      renderedPane.innerHTML = `<blockquote>No markdown parsed from Silver layer yet. Showing raw HTML source instead. Use Bronze (HTML) tab for preview.</blockquote>`;
     } else {
       renderedPane.innerHTML = `<p class="empty-text">No markdown or description content available.</p>`;
     }
     
-    // Tab 2: Markdown source code
-    const mdCode = document.getElementById('markdown-code');
-    mdCode.textContent = mdContent || 'No markdown content available.';
-    Prism.highlightElement(mdCode);
+    // Clear other tabs to trigger lazy load on click
+    document.getElementById('markdown-code').textContent = 'Loading...';
+    document.getElementById('silver-json-code').textContent = 'Loading...';
+    document.getElementById('html-preview').srcdoc = '';
+    document.getElementById('bronze-json-code').textContent = 'Loading...';
     
-    // Tab 3: Original HTML preview
-    const htmlIframe = document.getElementById('html-preview');
-    if (doc.rawHtml) {
-      // Set iframe srcdoc with full HTML safely
-      htmlIframe.srcdoc = doc.rawHtml;
-    } else {
-      htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:20px;text-align:center;">
-        <h3>No original HTML preview available for this document</h3>
-      </body>`;
-    }
+    // Save active document reference
+    activeDoc = { silver, bronze };
     
-    // Tab 4: Raw JSON Database Document
-    const jsonCode = document.getElementById('json-code');
-    jsonCode.textContent = JSON.stringify(doc, null, 2);
-    Prism.highlightElement(jsonCode);
-    
-    // Auto reset to first tab
-    document.querySelector('.tab-btn[data-tab="tab-rendered"]').click();
+    // Auto reset to first tab (Silver Rendered)
+    const defaultTabBtn = document.querySelector('.tab-btn[data-tab="tab-rendered"]');
+    defaultTabBtn.classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      if (b !== defaultTabBtn) b.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+      if (pane.id === 'tab-rendered') pane.classList.add('active');
+      else pane.classList.remove('active');
+    });
   } catch (error) {
     console.error('Error loading document detail:', error);
+  }
+}
+
+// Lazy load tab content on demand to avoid performance lag
+function triggerLazyTabLoad(tabId) {
+  if (!activeDoc) return;
+  
+  if (tabId === 'tab-markdown') {
+    const mdCode = document.getElementById('markdown-code');
+    const mdContent = activeDoc.silver.markdown || activeDoc.silver.description || activeDoc.silver.content || '';
+    mdCode.textContent = mdContent || 'No markdown content available.';
+    
+    if (mdContent.length < 100000) {
+      Prism.highlightElement(mdCode);
+    } else {
+      mdCode.textContent += '\n\n/* [Notice] Syntax highlighting skipped because the content is too large (> 100KB) */';
+    }
+  } 
+  else if (tabId === 'tab-silver-json') {
+    const jsonCode = document.getElementById('silver-json-code');
+    const jsonString = JSON.stringify(activeDoc.silver, null, 2);
+    jsonCode.textContent = jsonString;
+    
+    if (jsonString.length < 100000) {
+      Prism.highlightElement(jsonCode);
+    } else {
+      jsonCode.textContent += '\n\n// [Notice] Syntax highlighting skipped because the JSON is too large (> 100KB)';
+    }
+  }
+  else if (tabId === 'tab-html') {
+    const htmlIframe = document.getElementById('html-preview');
+    if (!htmlIframe.srcdoc || htmlIframe.srcdoc === 'about:blank' || htmlIframe.contentWindow.document.body.innerHTML === '') {
+      if (activeDoc.bronze.rawHtml) {
+        htmlIframe.srcdoc = activeDoc.bronze.rawHtml;
+      } else {
+        htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:20px;text-align:center;">
+          <h3>No original HTML preview available for this document</h3>
+        </body>`;
+      }
+    }
+  } 
+  else if (tabId === 'tab-bronze-json') {
+    const jsonCode = document.getElementById('bronze-json-code');
+    const jsonString = JSON.stringify(activeDoc.bronze, null, 2);
+    jsonCode.textContent = jsonString;
+    
+    if (jsonString.length < 100000) {
+      Prism.highlightElement(jsonCode);
+    } else {
+      jsonCode.textContent += '\n\n// [Notice] Syntax highlighting skipped because the JSON is too large (> 100KB)';
+    }
   }
 }
 
