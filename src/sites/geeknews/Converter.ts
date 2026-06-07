@@ -26,6 +26,17 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
         // 1. Extract title
         const title = $('title').text().replace(' | GeekNews', '').trim() || '정보 없음';
         
+        // Extract external original link from the title anchor (.topictitle a)
+        const topictitleA = $('.topictitle a');
+        let externalUrl = topictitleA.attr('href')?.trim() || '';
+        if (externalUrl) {
+            if (!externalUrl.startsWith('http')) {
+                externalUrl = `https://news.hada.io/${externalUrl.replace(/^\//, '')}`;
+            }
+        } else {
+            externalUrl = url; // Fallback to GeekNews topic details URL
+        }
+        
         // 2. Extract description/content
         const topicDescEl = $('.topicdesc');
         const content = topicDescEl.text().trim() || '';
@@ -92,7 +103,7 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
         
         // 4. Generate Markdown
         let markdown = `# 📰 ${title}\n\n`;
-        markdown += `* **기사 링크:** [바로가기](${url})\n\n`;
+        markdown += `* **기사 링크:** [바로가기](${externalUrl})\n\n`;
         markdown += `## 📝 요약 설명\n${content}\n\n`;
         
         if (comments.length > 0) {
@@ -105,7 +116,7 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
         return {
             id,
             title,
-            url,
+            url: externalUrl,
             content,
             comments,
             jsonLdRaw,

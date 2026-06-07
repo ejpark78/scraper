@@ -13,7 +13,7 @@ export class JobsRefreshUrls {
     const redis = new Redis(redisUrl);
 
     try {
-        const bronzeJobs = await mongo.getCollection('bronze/linkedin.html');
+        const bronzeJobs = await mongo.getCollection('bronze/linkedin.jobs');
         const jobUrlsColl = await mongo.getCollection('bronze/linkedin.job_urls');
 
         // 1. config/config.json 파일 또는 환경 변수 GEOS에서 타겟 국가 목록 로드

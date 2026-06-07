@@ -223,16 +223,16 @@ export class LinkedInUrlManager implements IUrlManager {
         try {
             const { MongoDatabase } = require('../database/mongo');
             const mongo = MongoDatabase.getInstance();
-            const bronzeJobs = await mongo.getCollection('bronze/linkedin.html');
+            const bronzeJobs = await mongo.getCollection('bronze/linkedin.jobs');
             const jobs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
             jobs.forEach((job: any) => {
                 if (job.jobId && /^\d+$/.test(job.jobId)) {
                     cacheSet.add(job.jobId);
                 }
             });
-            console.log(`🔌 [MongoDB] bronze/linkedin.html에서 완료된 Job ID ${FormatUtils.formatThousand(cacheSet.size)} 개 로드 완료.`);
+            console.log(`🔌 [MongoDB] bronze/linkedin.jobs에서 완료된 Job ID ${FormatUtils.formatThousand(cacheSet.size)} 개 로드 완료.`);
         } catch (dbErr: any) {
-            console.warn(`⚠️ [MongoDB] 완료된 Job ID 로드 실패 (bronze/linkedin.html): ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
+            console.warn(`⚠️ [MongoDB] 완료된 Job ID 로드 실패 (bronze/linkedin.jobs): ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
             if (fs.existsSync(htmlDir)) {
                 const localHtmlFiles = IOUtils.getAllFiles(htmlDir, '.html');
                 localHtmlFiles.forEach((file: string) => {
@@ -555,7 +555,7 @@ export class LinkedInUrlManager implements IUrlManager {
         try {
             const { MongoDatabase } = require('../database/mongo');
             const mongo = MongoDatabase.getInstance();
-            const bronzeColl = await mongo.getCollection('bronze/linkedin.html');
+            const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
             const cheerio = require('cheerio');
 
             // 1. 수집 완료 리스트 중 urls.json에 없는(누락된) 모든 ID 식별
@@ -682,12 +682,12 @@ export class LinkedInUrlManager implements IUrlManager {
                 }
             }
 
-            console.log(`🔌 [MongoDB] bronze/linkedin.html에서 총 ${FormatUtils.formatThousand(dbParsedCount)}개의 문서를 분석 완료했습니다.`);
+            console.log(`🔌 [MongoDB] bronze/linkedin.jobs에서 총 ${FormatUtils.formatThousand(dbParsedCount)}개의 문서를 분석 완료했습니다.`);
             if (skipCount > 0) {
                 console.log(`⚡ 분석 완료된 상세 HTML 문서 ${FormatUtils.formatThousand(skipCount)}개는 분석을 건너뛰었습니다 (캐시 적용).`);
             }
         } catch (dbErr: any) {
-            console.warn(`⚠️ [MongoDB] bronze/linkedin.html 분석 실패: ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
+            console.warn(`⚠️ [MongoDB] bronze/linkedin.jobs 분석 실패: ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
             
             if (fs.existsSync(htmlDir)) {
                 const htmlFiles = IOUtils.getAllFiles(htmlDir, '.html');

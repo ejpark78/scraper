@@ -21,9 +21,18 @@ export class GeekNewsList {
     }
 
     public async run(page: number = 1): Promise<number> {
-        const url = page === 1 ? 'https://news.hada.io/' : `https://news.hada.io/?page=${page}`;
-        console.log(`🌐 [GeekNews List] Fetching index page: ${url}`);
+        let url = 'https://news.hada.io/';
+        if (page > 1) {
+            url = page <= 5 ? `https://news.hada.io/?page=${page}` : `https://news.hada.io/past?page=${page}`;
+        }
+        
+        const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
+        if (sleepSec > 0) {
+            console.log(`💤 [대기] GeekNews 목록 수집 전 ${sleepSec}초 대기 중...`);
+            await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
+        }
 
+        console.log(`🌐 [GeekNews List] Fetching index page: ${url}`);
         const response = await fetch(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
@@ -117,8 +126,13 @@ export class GeekNewsList {
             const alreadyPushed = doc?.pushedToRedis || false;
 
             if (!alreadyPushed) {
-                // Push to Redis Queue
-                await this.redis.rpush(QUEUE_KEY, detailUrl);
+                // Push to Redis Queue (Unified scrape_queue)
+                const payload = JSON.stringify({
+                    site: 'geeknews',
+                    url: detailUrl,
+                    attempt: 1
+                });
+                await this.redis.rpush('scrape_queue', payload);
                 await geeknewsUrlsColl.updateOne(
                     { id },
                     { $set: { pushedToRedis: true } }
@@ -138,8 +152,22 @@ if (require.main === module) {
         const list = new GeekNewsList();
         try {
             await list.init();
-            const page = process.argv[2] ? parseInt(process.argv[2]) : 1;
-            await list.run(page);
+            const arg = process.argv[2] || '1';
+            
+            if (arg.includes('-')) {
+                const [startStr, endStr] = arg.split('-');
+                const start = parseInt(startStr, 10) || 1;
+                const end = parseInt(endStr, 10) || start;
+                console.log(`🚀 [GeekNews List] Running page range: ${start} to ${end}`);
+                
+                for (let p = start; p <= end; p++) {
+                    console.log(`\n📄 [GeekNews List] Processing page ${p}/${end}...`);
+                    await list.run(p);
+                }
+            } else {
+                const page = parseInt(arg, 10) || 1;
+                await list.run(page);
+            }
         } catch (e: any) {
             console.error(`❌ List failed: ${e.message}`);
         } finally {

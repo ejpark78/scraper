@@ -18,6 +18,7 @@ lint:
 -include scripts/browser.mk
 -include scripts/docker.mk
 -include scripts/mongo.mk
+-include scripts/pipeline.mk
 
 test-%:
 	@$(MAKE) -f scripts/tests.mk $*

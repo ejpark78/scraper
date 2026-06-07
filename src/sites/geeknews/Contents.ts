@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { GeekNewsMeta, GeekNewsConverter } from './Converter';
+import { GeekNewsHtmlMinifier } from './HtmlMinifier';
 
 export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
     private readonly converter: GeekNewsConverter;
@@ -38,7 +39,8 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             throw new Error(`Failed to fetch GeekNews topic details. Status: ${response.status}`);
         }
         const html = await response.text();
-        fs.writeFileSync(tempHtmlPath, html, 'utf-8');
+        const minifiedHtml = await GeekNewsHtmlMinifier.minify(html);
+        fs.writeFileSync(tempHtmlPath, minifiedHtml, 'utf-8');
     }
 
     protected processMetadata(htmlContent: string, id: string, url: string): GeekNewsMeta {

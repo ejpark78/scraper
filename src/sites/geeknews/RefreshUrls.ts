@@ -1,9 +1,9 @@
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
 
-export class GeekNewsFixQueue {
+export class GeekNewsRefreshUrls {
     public async run(): Promise<void> {
-        console.log('🔄 [GeekNews Fix Queue] Starting precision recovery of uncollected targets...');
+        console.log('🔄 [GeekNews Refresh Urls] Starting precision recovery of uncollected targets...');
         const mongo = MongoDatabase.getInstance();
         await mongo.connect();
 
@@ -18,11 +18,21 @@ export class GeekNewsFixQueue {
             const completedIds = await bronzeGeeknews.distinct('id');
             console.log(`📥 Loaded ${completedIds.length} already completed GeekNews IDs.`);
 
-            // 2. 현재 Redis geeknews_queue 에 존재하는 URL 목록 추출
-            const queueLength = await redis.llen('geeknews_queue');
-            const existingQueueUrls = queueLength > 0 ? await redis.lrange('geeknews_queue', 0, -1) : [];
-            const existingQueueSet = new Set(existingQueueUrls);
-            console.log(`📥 Loaded ${existingQueueSet.size} URLs currently in Redis geeknews_queue.`);
+            // 2. 현재 Redis scrape_queue 에 존재하는 GeekNews URL 목록 추출
+            const queueLength = await redis.llen('scrape_queue');
+            const existingQueuePayloads = queueLength > 0 ? await redis.lrange('scrape_queue', 0, -1) : [];
+            const existingQueueUrls = new Set<string>();
+            for (const payloadStr of existingQueuePayloads) {
+                try {
+                    const payload = JSON.parse(payloadStr);
+                    if (payload.site === 'geeknews' && payload.url) {
+                        existingQueueUrls.add(payload.url);
+                    }
+                } catch (e) {
+                    // Ignored if not JSON or different structure
+                }
+            }
+            console.log(`📥 Loaded ${existingQueueUrls.size} GeekNews URLs currently in Redis scrape_queue.`);
 
             // 3. 미수집 잔여 타겟 선별
             const uncollectedNews = await geeknewsUrlsColl.find({
@@ -34,16 +44,26 @@ export class GeekNewsFixQueue {
             console.log(`🔍 Found ${uncollectedNews.length} uncollected target items in database.`);
 
             // 4. 이미 Redis 큐에 대기 중인 URL 필터링
-            const filteredJobs = uncollectedNews.filter(j => j.url && !existingQueueSet.has(j.url));
+            const filteredJobs = uncollectedNews.filter(j => j.url && !existingQueueUrls.has(j.url));
             console.log(`💡 Filtered out ${uncollectedNews.length - filteredJobs.length} items already waiting in Redis queue.`);
 
             if (filteredJobs.length > 0) {
-                const urlsToPush = filteredJobs.map(j => j.url).filter(Boolean);
+                const newsToPush = filteredJobs.filter(j => j.url);
                 const idsToUpdate = filteredJobs.map(j => j.id);
 
-                // 5. Redis geeknews_queue 에 적재
-                console.log(`📥 Pushing ${urlsToPush.length} URLs to Redis geeknews_queue...`);
-                await redis.rpush('geeknews_queue', ...urlsToPush);
+                // 5. Redis scrape_queue 에 적재
+                console.log(`📥 Pushing ${newsToPush.length} URLs to Redis scrape_queue...`);
+                const payloads = newsToPush.map(j => JSON.stringify({
+                    site: 'geeknews',
+                    url: j.url,
+                    attempt: 1
+                }));
+
+                const chunkSize = 1000;
+                for (let i = 0; i < payloads.length; i += chunkSize) {
+                    const chunk = payloads.slice(i, i + chunkSize);
+                    await redis.rpush('scrape_queue', ...chunk);
+                }
 
                 // 6. MongoDB 상태를 pushedToRedis: true, status: 'new' 로 갱신
                 const result = await geeknewsUrlsColl.updateMany(
@@ -51,7 +71,7 @@ export class GeekNewsFixQueue {
                     { $set: { pushedToRedis: true, status: 'new', updatedAt: new Date() } }
                 );
 
-                console.log(`✨ Recovery complete! Redis Queue Pushed: ${urlsToPush.length}, MongoDB Modified Count: ${result.modifiedCount}`);
+                console.log(`✨ Recovery complete! Redis Queue Pushed: ${newsToPush.length}, MongoDB Modified Count: ${result.modifiedCount}`);
             } else {
                 console.log('💡 No new uncollected target items to recover.');
             }
@@ -61,11 +81,12 @@ export class GeekNewsFixQueue {
         } finally {
             await redis.quit();
             await mongo.close();
+            process.exit(0);
         }
     }
 }
 
 if (require.main === module) {
-    const fixQueue = new GeekNewsFixQueue();
-    fixQueue.run().catch(console.error).then(() => process.exit(0));
+    const refreshUrls = new GeekNewsRefreshUrls();
+    refreshUrls.run().catch(console.error);
 }

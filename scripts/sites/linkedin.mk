@@ -48,7 +48,3 @@ refresh-md:
 
 status:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/linkedin/jobs/StatusReport.ts
-
-restart:
-	@$(COMPOSE) up -d --build clipper-scraper
-	@$(COMPOSE) up -d --build clipper-transformer

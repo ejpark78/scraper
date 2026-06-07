@@ -127,7 +127,7 @@ export abstract class BasePipeline<TMeta> {
                 const dbInstance = MongoDatabase.getInstance();
                 
                 if (this.getDomainName() === '채용공고') {
-                    const bronzeJobs = await dbInstance.getCollection('bronze/linkedin.html');
+                    const bronzeJobs = await dbInstance.getCollection('bronze/linkedin.jobs');
                     const jobIds = await bronzeJobs.distinct('jobId');
                     jobIds.forEach((jobId: any) => {
                         if (jobId && /^\d+$/.test(jobId)) {
