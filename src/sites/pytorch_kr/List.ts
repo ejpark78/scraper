@@ -103,13 +103,14 @@ export class PyTorchKRList {
             const alreadyPushed = doc?.pushedToRedis || false;
 
             if (!alreadyPushed) {
-                // Push to Redis Queue (Unified scrape_queue)
+                // Push to Redis Queue (Unified scrape_queue with priority format)
                 const payload = JSON.stringify({
                     site: 'pytorch_kr',
                     url: detailUrl,
-                    attempt: 1
+                    attempt: 1,
+                    priority: 'medium'
                 });
-                await this.redis.rpush('scrape_queue', payload);
+                await this.redis.rpush('scrape_queue:pytorch_kr:medium', payload);
                 await pytorchUrlsColl.updateOne(
                     { id },
                     { $set: { pushedToRedis: true } }

@@ -56,13 +56,14 @@ export class GptersRefreshUrls {
                 const payloads = newsToPush.map(j => JSON.stringify({
                     site: 'gpters',
                     url: j.url,
-                    attempt: 1
+                    attempt: 1,
+                    priority: 'medium'
                 }));
 
                 const chunkSize = 1000;
                 for (let i = 0; i < payloads.length; i += chunkSize) {
                     const chunk = payloads.slice(i, i + chunkSize);
-                    await redis.rpush('scrape_queue', ...chunk);
+                    await redis.rpush('scrape_queue:gpters:medium', ...chunk);
                 }
 
                 // 6. MongoDB 상태를 pushedToRedis: true, status: 'new' 로 갱신

@@ -45,6 +45,32 @@ export class GeekNewsBackfill {
             }
 
             const html = await response.text();
+            
+            // 🧹 HTML Minify 및 MongoDB bronze/geeknews.lists 저장 추가
+            try {
+                const { GeekNewsHtmlMinifier } = require('./HtmlMinifier');
+                const minifiedHtml = await GeekNewsHtmlMinifier.minify(html);
+                const dbInstance = MongoDatabase.getInstance();
+                const geeknewsListsColl = await dbInstance.getCollection('bronze/geeknews.lists');
+                
+                await geeknewsListsColl.updateOne(
+                    { day, page },
+                    {
+                        $set: {
+                            day,
+                            page,
+                            rawHtml: minifiedHtml,
+                            url,
+                            scrapedAt: new Date()
+                        }
+                    },
+                    { upsert: true }
+                );
+                console.log(`💾 [MongoDB Write] Saved minified HTML of ${day} (page ${page}) list to bronze/geeknews.lists`);
+            } catch (minifyErr: any) {
+                console.error(`⚠️ Failed to minify or save list HTML to MongoDB: ${minifyErr.message}`);
+            }
+
             const $ = cheerio.load(html);
             const topicRows = $('.topic_row');
             console.log(`🔍 [GeekNews Backfill] Found ${topicRows.length} topics on page.`);
@@ -136,6 +162,7 @@ export class GeekNewsBackfill {
 
                 if (!alreadyPushed) {
                     const scraperSlackVal = process.env.SCRAPER_SLACK ? parseInt(process.env.SCRAPER_SLACK, 10) : 0;
+                    const priority = (process.env.PRIORITY || 'medium').toLowerCase().trim();
                     
                     const payload = JSON.stringify({
                         site: 'geeknews',
@@ -143,12 +170,25 @@ export class GeekNewsBackfill {
                         attempt: 1,
                         ...(scraperSlackVal > 0 ? { scraperSlack: scraperSlackVal } : {})
                     });
-                    await this.redis.rpush('scrape_queue', payload);
+
+                    // 🚦 Priority-based push to Redis
+                    const targetQueue = `scrape_queue:geeknews:${priority}`;
+                    if (priority === 'high') {
+                        // High priority: Insert at the head of the queue (L-PUSH)
+                        await this.redis.lpush(targetQueue, payload);
+                    } else if (priority === 'low') {
+                        // Low priority: Insert at the tail of the queue (R-PUSH)
+                        await this.redis.rpush(targetQueue, payload);
+                    } else {
+                        // Medium priority (default): Insert at the tail of the queue (R-PUSH)
+                        await this.redis.rpush(targetQueue, payload);
+                    }
+
                     await geeknewsUrlsColl.updateOne(
                         { id },
                         { $set: { pushedToRedis: true } }
                     );
-                    console.log(`🚀 [GeekNews Backfill] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
+                    console.log(`🚀 [GeekNews Backfill] Queued (${priority.toUpperCase()} priority): [ID: ${id}] ${title} -> ${detailUrl}`);
                     queuedCount++;
                 }
             }
@@ -174,9 +214,19 @@ function getDatesInRange(startStr: string, endStr: string): string[] {
     const dates: string[] = [];
     const current = new Date(startStr);
     const end = new Date(endStr);
-    while (current <= end) {
-        dates.push(current.toISOString().split('T')[0]);
-        current.setDate(current.getDate() + 1);
+    
+    if (current <= end) {
+        // Ascending order (past to recent)
+        while (current <= end) {
+            dates.push(current.toISOString().split('T')[0]);
+            current.setDate(current.getDate() + 1);
+        }
+    } else {
+        // Descending order (recent to past)
+        while (current >= end) {
+            dates.push(current.toISOString().split('T')[0]);
+            current.setDate(current.getDate() - 1);
+        }
     }
     return dates;
 }

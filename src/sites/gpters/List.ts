@@ -137,13 +137,14 @@ export class GptersList {
             const alreadyPushed = doc?.pushedToRedis || false;
 
             if (!alreadyPushed) {
-                // Push to Redis Queue (Unified scrape_queue)
+                // Push to Redis Queue (Unified scrape_queue with priority format)
                 const payload = JSON.stringify({
                     site: 'gpters',
                     url: detailUrl,
-                    attempt: 1
+                    attempt: 1,
+                    priority: 'medium'
                 });
-                await this.redis.rpush('scrape_queue', payload);
+                await this.redis.rpush('scrape_queue:gpters:medium', payload);
                 await gptersUrlsColl.updateOne(
                     { id },
                     { $set: { pushedToRedis: true } }

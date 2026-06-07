@@ -67,9 +67,29 @@ async function main() {
   const dispatcher = new ScraperDispatcher();
   Logger.info(`Scraper Worker started, listening to: ${SCRAPE_QUEUE}`);
 
+  const siteQueues = [
+    // 1순위: High Priorities (교차 배치)
+    'scrape_queue:linkedin:high',
+    'scrape_queue:geeknews:high',
+    'scrape_queue:gpters:high',
+    'scrape_queue:pytorch_kr:high',
+    // 2순위: Medium Priorities (교차 배치)
+    'scrape_queue:linkedin:medium',
+    'scrape_queue:geeknews:medium',
+    'scrape_queue:gpters:medium',
+    'scrape_queue:pytorch_kr:medium',
+    // 3순위: Low Priorities (교차 배치)
+    'scrape_queue:linkedin:low',
+    'scrape_queue:geeknews:low',
+    'scrape_queue:gpters:low',
+    'scrape_queue:pytorch_kr:low',
+    // 하위 호환용 레거시 단일 큐
+    'scrape_queue'
+  ];
+
   while (true) {
     try {
-      const res = await redis.blpop(SCRAPE_QUEUE, 5);
+      const res = await redis.blpop(...siteQueues, 5);
       if (!res) continue;
 
       const payloadRaw = res[1].trim();
@@ -96,10 +116,26 @@ async function main() {
       // Run Scraping
       const tempHtmlPath = path.join(os.tmpdir(), `temp_raw_${site}_${id}.html`);
       try {
-        if (scraperSlack && scraperSlack > 0) {
-          Logger.info(`[Scraper] Waiting for scraper slack time: ${scraperSlack}s before scraping [${site}] ID: ${id}`);
-          await new Promise(resolve => setTimeout(resolve, scraperSlack * 1000));
+        // 🚦 Redis-based distributed rate limiting per site
+        const now = Date.now();
+        const rateLimitKey = `last_scrape_time:${site}`;
+        const lastScrapeTimeRaw = await redis.get(rateLimitKey);
+        const lastScrapeTime = lastScrapeTimeRaw ? parseInt(lastScrapeTimeRaw, 10) : 0;
+        
+        // Define min intervals: 3s default, 0 for LinkedIn (since it uses Puppeteer/Playwright and internal rate limit/delay)
+        const defaultSlack = site === 'linkedin' ? 0 : 3;
+        const slackSeconds = scraperSlack !== undefined ? scraperSlack : defaultSlack;
+        const minInterval = slackSeconds * 1000;
+
+        const timePassed = now - lastScrapeTime;
+        if (timePassed < minInterval) {
+          const delay = minInterval - timePassed;
+          Logger.info(`[Scraper] [${site}] Rate-limit active. Delaying for ${delay}ms before scraping ID: ${id}`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
+
+        // Update last scrape time immediately before starting scrape to block concurrent workers
+        await redis.set(rateLimitKey, Date.now().toString());
 
         await dispatcher.scrape(site, url, tempHtmlPath);
 
@@ -156,10 +192,17 @@ async function main() {
         Logger.error(`[Scraper] Scrape execution failed for [${site}] ID: ${id} on attempt ${attempt}`, scrapeErr);
 
         if (attempt < 3) {
-          // Re-queue task to scrape_queue
-          const retryTask = { site, url, attempt: attempt + 1, ...(scraperSlack !== undefined ? { scraperSlack } : {}) };
-          await redis.rpush(SCRAPE_QUEUE, JSON.stringify(retryTask));
-          Logger.info(`[Scraper] Re-queued task to retry. Attempt: ${attempt + 1}`);
+          // Re-queue task to the corresponding site/priority queue
+          const priority = (payload as any).priority || 'medium';
+          const retryTask = { site, url, attempt: attempt + 1, priority, ...(scraperSlack !== undefined ? { scraperSlack } : {}) };
+          const targetQueue = `scrape_queue:${site}:${priority}`;
+          
+          if (priority === 'high') {
+            await redis.lpush(targetQueue, JSON.stringify(retryTask));
+          } else {
+            await redis.rpush(targetQueue, JSON.stringify(retryTask));
+          }
+          Logger.info(`[Scraper] Re-queued task to ${targetQueue} retry. Attempt: ${attempt + 1}`);
         } else {
           // Push to Dead Letter Queue
           const deadTask = { site, url, error: scrapeErr.message, failedAt: new Date().toISOString() };

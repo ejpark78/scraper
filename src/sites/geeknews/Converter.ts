@@ -37,13 +37,10 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
             externalUrl = url; // Fallback to GeekNews topic details URL
         }
         
-        // 2. Extract description/content
-        const topicDescEl = $('.topicdesc');
-        const content = topicDescEl.text().trim() || '';
-        
-        // 3. Extract JSON-LD and comments
+        // 2. Extract JSON-LD and comments & content
         const comments: GeekNewsComment[] = [];
         let jsonLdRaw: string | null = null;
+        let content = '';
         
         try {
             const jsonLdScript = $('script[type="application/ld+json"]');
@@ -51,6 +48,15 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
                 jsonLdRaw = jsonLdScript.html();
                 if (jsonLdRaw) {
                     const data = JSON.parse(jsonLdRaw);
+                    // Prioritize JSON-LD description text
+                    if (data.text) {
+                        content = data.text.trim();
+                    } else if (data.articleBody) {
+                        content = data.articleBody.trim();
+                    } else if (data.description) {
+                        content = data.description.trim();
+                    }
+                    
                     let commentDataList = data.comment || [];
                     if (commentDataList && !Array.isArray(commentDataList)) {
                         commentDataList = [commentDataList];
@@ -85,7 +91,27 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
             console.error(`⚠️ JSON-LD 파싱 중 에러 발생: ${e.message}`);
         }
         
-        // Fallback to HTML comment parsing if no comments found from JSON-LD
+        // 3. Fallback to HTML description/content if JSON-LD content is empty
+        if (!content) {
+            const topicDescEl = $('.topicdesc');
+            if (topicDescEl.length > 0) {
+                const html = topicDescEl.html() || '';
+                try {
+                    const TurndownService = require('turndown');
+                    const turndownService = new TurndownService({
+                        headingStyle: 'atx',
+                        hr: '---',
+                        bullet: '-',
+                        codeBlockStyle: 'fenced'
+                    });
+                    content = turndownService.turndown(html).trim();
+                } catch (err) {
+                    content = topicDescEl.text().trim();
+                }
+            }
+        }
+        
+        // 4. Fallback to HTML comment parsing if no comments found from JSON-LD
         if (comments.length === 0) {
             $('.comment_row').each((_, el) => {
                 const row = $(el);

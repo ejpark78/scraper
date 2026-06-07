@@ -138,14 +138,15 @@ export class GeekNewsList {
                 // Read SCRAPER_SLACK environment variable
                 const scraperSlackVal = process.env.SCRAPER_SLACK ? parseInt(process.env.SCRAPER_SLACK, 10) : 0;
                 
-                // Push to Redis Queue (Unified scrape_queue)
+                // Push to Redis Queue (Unified scrape_queue with priority format)
                 const payload = JSON.stringify({
                     site: 'geeknews',
                     url: detailUrl,
                     attempt: 1,
+                    priority: 'medium',
                     ...(scraperSlackVal > 0 ? { scraperSlack: scraperSlackVal } : {})
                 });
-                await this.redis.rpush('scrape_queue', payload);
+                await this.redis.rpush('scrape_queue:geeknews:medium', payload);
                 await geeknewsUrlsColl.updateOne(
                     { id },
                     { $set: { pushedToRedis: true } }

@@ -20,9 +20,9 @@ refresh:
 refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/RefreshUrls.ts
 
-DAY ?= 2026-06-05
+PRIORITY ?= medium
 
 backfill:
-	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) clipper npx ts-node src/sites/geeknews/Backfill.ts $(DAY)
+	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/geeknews/Backfill.ts $(DAY)
 
 

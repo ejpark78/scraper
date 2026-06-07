@@ -442,9 +442,10 @@ export class LinkedInListScraper {
                     const scrapeTask = {
                         site: 'linkedin',
                         url: job.url,
-                        attempt: 1
+                        attempt: 1,
+                        priority: 'medium'
                     };
-                    await redis.rpush('scrape_queue', JSON.stringify(scrapeTask));
+                    await redis.rpush('scrape_queue:linkedin:medium', JSON.stringify(scrapeTask));
                     await jobUrlsColl.updateOne(
                         { jobId: job.jobId },
                         { $set: { pushedToRedis: true } }
