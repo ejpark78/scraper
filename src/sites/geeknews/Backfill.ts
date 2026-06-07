@@ -17,6 +17,11 @@ export class GeekNewsBackfill {
         if (this.redis) {
             await this.redis.quit();
         }
+        try {
+            await MongoDatabase.getInstance().close();
+        } catch (err: any) {
+            console.warn(`⚠️ Error closing MongoDB connection: ${err.message}`);
+        }
     }
 
     public async run(day: string): Promise<number> {
