@@ -17,12 +17,13 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app-container">
+  <div class="app-container" id="app-container">
     <!-- 1. Left Sidebar: Collections -->
     <aside class="sidebar">
       <div class="brand">
         <span class="brand-icon">🛸</span>
         <h2>Antigravity</h2>
+        <button id="sidebar-toggle" class="sidebar-toggle" title="Collapse Sidebar">◀</button>
       </div>
       <div class="section-title">Collections</div>
       <ul id="collection-list" class="collection-list">
@@ -39,19 +40,29 @@
     <!-- 2. Middle Panel: Document list & Search -->
     <section class="list-panel">
       <div class="search-header">
+        <button id="sidebar-expand" class="sidebar-expand hidden" title="Expand Sidebar">☰</button>
         <div class="search-box">
           <span class="search-icon">🔍</span>
           <input type="text" id="search-input" placeholder="Search documents..." autocomplete="off">
         </div>
+      </div>
+      <div class="country-filters hidden" id="country-filters">
+        <button class="country-badge active" data-country="">🌎 All</button>
+        <button class="country-badge" data-country="Japan">🇯🇵 Japan</button>
+        <button class="country-badge" data-country="United Arab Emirates">🇦🇪 UAE</button>
+        <button class="country-badge" data-country="Austria">🇦🇹 Austria</button>
+        <button class="country-badge" data-country="South Korea">🇰🇷 Korea</button>
+        <button class="country-badge" data-country="Germany">🇩🇪 Germany</button>
+        <button class="country-badge" data-country="Canada">🇨🇦 Canada</button>
       </div>
       <div class="list-container">
         <div id="document-list" class="document-list">
           <div class="empty-state">Select a collection to browse documents</div>
         </div>
         <div class="pagination" id="pagination-controls">
-          <button id="prev-page" disabled>◀</button>
+          <button id="prev-page" class="page-btn" disabled>◀</button>
           <span id="page-indicator">Page 1</span>
-          <button id="next-page" disabled>▶</button>
+          <button id="next-page" class="page-btn" disabled>▶</button>
         </div>
       </div>
     </section>

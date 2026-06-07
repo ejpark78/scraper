@@ -51,43 +51,98 @@ app.get('/api/documents', async (req: Request, res: Response) => {
     if (collectionName === 'linkedin.jobs') {
       const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
       const silverColl = await mongo.getCollection('silver/linkedin.jobs');
+      const country = req.query.country as string || '';
       
       let query: any = {};
-      if (search) {
+      let total = 0;
+      let hasPaginatedInSilver = false;
+      
+      if (country) {
+        const countryRegex = new RegExp(country, 'i');
+        const silverQuery: any = { location: countryRegex };
+        
+        if (search) {
+          const regex = new RegExp(search, 'i');
+          silverQuery.$or = [
+            { title: regex },
+            { companyName: regex },
+            { description: regex },
+            { markdown: regex },
+            { jobId: regex }
+          ];
+        }
+
+        // Get true total count from Silver (very fast count)
+        total = await silverColl.countDocuments(silverQuery);
+
+        // Paginate in Silver to get exact 30 IDs for the current page
+        const matchingSilverDocs = await silverColl.find(silverQuery)
+          .sort({ _id: -1 })
+          .skip(skip)
+          .limit(limit)
+          .project({ jobId: 1 })
+          .toArray();
+        const matchingJobIds = matchingSilverDocs.map(d => d.jobId).filter(Boolean);
+        
+        query = { jobId: { $in: matchingJobIds } };
+        hasPaginatedInSilver = true;
+      } else if (search) {
         const regex = new RegExp(search, 'i');
-        // Retrieve matching jobIds from Silver
-        const matchingSilverDocs = await silverColl.find({
+        const silverQuery = {
           $or: [
             { title: regex },
             { companyName: regex },
             { description: regex },
+            { markdown: regex },
             { jobId: regex }
           ]
-        }).project({ jobId: 1 }).limit(2000).toArray();
-        
+        };
+
+        total = await silverColl.countDocuments(silverQuery);
+
+        // Paginate in Silver to get exact 30 IDs for the current page
+        const matchingSilverDocs = await silverColl.find(silverQuery)
+          .sort({ _id: -1 })
+          .skip(skip)
+          .limit(limit)
+          .project({ jobId: 1 })
+          .toArray();
         const matchingJobIds = matchingSilverDocs.map(d => d.jobId).filter(Boolean);
         
-        // Match either silver jobIds OR bronze jobId directly
         query = {
           $or: [
             { jobId: { $in: matchingJobIds } },
             { jobId: regex }
           ]
         };
+        hasPaginatedInSilver = true;
+      } else {
+        total = await bronzeColl.estimatedDocumentCount();
       }
 
-      const total = search ? await bronzeColl.countDocuments(query) : await bronzeColl.estimatedDocumentCount();
-      const bronzeDocs = await bronzeColl.find(query)
-        .project({
-          _id: 1,
-          jobId: 1,
-          scrapedAt: 1,
-          url: 1
-        })
-        .sort({ _id: -1 })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
+      // Query bronze docs
+      const bronzeDocs = await (hasPaginatedInSilver
+        ? bronzeColl.find(query)
+            .project({
+              _id: 1,
+              jobId: 1,
+              scrapedAt: 1,
+              url: 1
+            })
+            .sort({ _id: -1 })
+            .toArray()
+        : bronzeColl.find(query)
+            .project({
+              _id: 1,
+              jobId: 1,
+              scrapedAt: 1,
+              url: 1
+            })
+            .sort({ _id: -1 })
+            .skip(skip)
+            .limit(limit)
+            .toArray()
+      );
 
       // Stitch silver metadata
       const jobIds = bronzeDocs.map(d => d.jobId).filter(Boolean);
@@ -130,6 +185,7 @@ app.get('/api/documents', async (req: Request, res: Response) => {
           { url: regex },
           { text: regex },
           { content: regex },
+          { markdown: regex },
           { id: regex },
           { jobId: regex },
           { topicId: regex },
@@ -314,6 +370,7 @@ function registerMcpHandlers(server: Server) {
           { url: regex },
           { text: regex },
           { content: regex },
+          { markdown: regex },
           { id: regex },
           { jobId: regex },
           { topicId: regex },

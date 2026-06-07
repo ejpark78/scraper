@@ -1,5 +1,6 @@
 let currentCollection = '';
 let currentSearch = '';
+let currentCountry = '';
 let currentPage = 1;
 const limit = 30;
 let activeDoc = null; // Store current active document for lazy loading
@@ -11,6 +12,7 @@ let searchTimeout = null;
 const collectionList = document.getElementById('collection-list');
 const documentList = document.getElementById('document-list');
 const searchInput = document.getElementById('search-input');
+const countryFilters = document.getElementById('country-filters');
 const detailEmpty = document.getElementById('detail-empty');
 const detailContent = document.getElementById('detail-content');
 const docTitle = document.getElementById('doc-title');
@@ -20,6 +22,9 @@ const docUrl = document.getElementById('doc-url');
 const prevPageBtn = document.getElementById('prev-page');
 const nextPageBtn = document.getElementById('next-page');
 const pageIndicator = document.getElementById('page-indicator');
+const appContainer = document.getElementById('app-container');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebarExpand = document.getElementById('sidebar-expand');
 
 // App Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -46,6 +51,75 @@ function setupEventListeners() {
     });
   });
 
+  // Country badges filtering
+  const countryBadges = document.querySelectorAll('.country-badge');
+  countryBadges.forEach(badge => {
+    badge.addEventListener('click', () => {
+      // If we were dragging, prevent click logic or treat as click if no drag occurred
+      if (countryFilters.classList.contains('was-dragging')) {
+        return;
+      }
+      countryBadges.forEach(b => b.classList.remove('active'));
+      badge.classList.add('active');
+      currentCountry = badge.getAttribute('data-country') || '';
+      currentPage = 1;
+      if (currentCollection) {
+        loadDocuments(currentCollection, currentSearch, currentPage);
+      }
+    });
+  });
+
+  // Horizontal drag-to-scroll for country-filters
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+  let dragThreshold = false;
+
+  countryFilters.addEventListener('mousedown', (e) => {
+    isDown = true;
+    countryFilters.classList.add('dragging');
+    countryFilters.classList.remove('was-dragging');
+    startX = e.pageX - countryFilters.offsetLeft;
+    scrollLeft = countryFilters.scrollLeft;
+    dragThreshold = false;
+  });
+
+  countryFilters.addEventListener('mouseleave', () => {
+    isDown = false;
+    countryFilters.classList.remove('dragging');
+  });
+
+  countryFilters.addEventListener('mouseup', () => {
+    isDown = false;
+    countryFilters.classList.remove('dragging');
+    // Add a tiny delay to clear was-dragging so clicks aren't registered right after drag
+    if (dragThreshold) {
+      countryFilters.classList.add('was-dragging');
+      setTimeout(() => {
+        countryFilters.classList.remove('was-dragging');
+      }, 50);
+    }
+  });
+
+  countryFilters.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - countryFilters.offsetLeft;
+    const walk = (x - startX) * 1.5; // Scroll speed multiplier
+    if (Math.abs(walk) > 5) {
+      dragThreshold = true;
+    }
+    countryFilters.scrollLeft = scrollLeft - walk;
+  });
+
+  // Horizontal wheel scroll for country-filters
+  countryFilters.addEventListener('wheel', (e) => {
+    if (countryFilters.scrollWidth > countryFilters.clientWidth) {
+      e.preventDefault();
+      countryFilters.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+
   // Debounced search
   searchInput.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
@@ -62,13 +136,28 @@ function setupEventListeners() {
   prevPageBtn.addEventListener('click', () => {
     if (currentPage > 1) {
       currentPage--;
-      loadDocuments(currentCollection, currentSearch, currentPage);
+      if (currentCollection) {
+        loadDocuments(currentCollection, currentSearch, currentPage);
+      }
     }
   });
 
   nextPageBtn.addEventListener('click', () => {
     currentPage++;
-    loadDocuments(currentCollection, currentSearch, currentPage);
+    if (currentCollection) {
+      loadDocuments(currentCollection, currentSearch, currentPage);
+    }
+  });
+
+  // Sidebar collapse/expand toggles
+  sidebarToggle.addEventListener('click', () => {
+    appContainer.classList.add('sidebar-collapsed');
+    sidebarExpand.classList.remove('hidden');
+  });
+
+  sidebarExpand.addEventListener('click', () => {
+    appContainer.classList.remove('sidebar-collapsed');
+    sidebarExpand.classList.add('hidden');
   });
 }
 
@@ -90,6 +179,23 @@ async function loadCollections() {
         li.classList.add('active');
         currentCollection = col.id;
         currentPage = 1;
+        
+        // Show/hide country filter badges only for LinkedIn Jobs
+        if (col.id === 'linkedin.jobs') {
+          countryFilters.classList.remove('hidden');
+        } else {
+          countryFilters.classList.add('hidden');
+          currentCountry = '';
+          // Reset badge active state to 'All'
+          document.querySelectorAll('.country-badge').forEach(b => {
+            if (b.getAttribute('data-country') === '') {
+              b.classList.add('active');
+            } else {
+              b.classList.remove('active');
+            }
+          });
+        }
+        
         loadDocuments(col.id, currentSearch, currentPage);
       });
       
@@ -108,6 +214,7 @@ async function loadCollections() {
 
 // 2. Fetch Documents List
 async function loadDocuments(collection, search, page) {
+  resetDetailPanel();
   documentList.innerHTML = `
     <div class="loading-container">
       <div class="spinner"></div>
@@ -116,7 +223,7 @@ async function loadDocuments(collection, search, page) {
   `;
   
   try {
-    const url = `/api/documents?collection=${encodeURIComponent(collection)}&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`;
+    const url = `/api/documents?collection=${encodeURIComponent(collection)}&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}&country=${encodeURIComponent(currentCountry)}`;
     const response = await fetch(url);
     const data = await response.json();
     
@@ -233,9 +340,11 @@ async function loadDocumentDetail(id, collection) {
     
     // Tab 1: Rendered markdown (Silver)
     const renderedPane = document.getElementById('tab-rendered');
-    const mdContent = silver.markdown || silver.description || silver.content || '';
+    let mdContent = silver.markdown || silver.description || silver.content || '';
     if (mdContent) {
-      renderedPane.innerHTML = marked.parse(mdContent);
+      const cleanedMd = cleanMarkdownContent(mdContent);
+      const metaTable = generateMetaTableMarkdown(silver, bronze, collection);
+      renderedPane.innerHTML = marked.parse(cleanedMd + metaTable);
     } else if (bronze.rawHtml) {
       renderedPane.innerHTML = `<blockquote>No markdown parsed from Silver layer yet. Showing raw HTML source instead. Use Bronze (HTML) tab for preview.</blockquote>`;
     } else {
@@ -272,7 +381,12 @@ function triggerLazyTabLoad(tabId) {
   
   if (tabId === 'tab-markdown') {
     const mdCode = document.getElementById('markdown-code');
-    const mdContent = activeDoc.silver.markdown || activeDoc.silver.description || activeDoc.silver.content || '';
+    let mdContent = activeDoc.silver.markdown || activeDoc.silver.description || activeDoc.silver.content || '';
+    if (mdContent) {
+      const cleanedMd = cleanMarkdownContent(mdContent);
+      const metaTable = generateMetaTableMarkdown(activeDoc.silver, activeDoc.bronze, currentCollection);
+      mdContent = cleanedMd + metaTable;
+    }
     mdCode.textContent = mdContent || 'No markdown content available.';
     
     if (mdContent.length < 100000) {
@@ -333,3 +447,81 @@ function updatePagination(total, page) {
   prevPageBtn.disabled = (page <= 1);
   nextPageBtn.disabled = (page >= totalPages);
 }
+
+function generateMetaTableMarkdown(silver, bronze, collection) {
+  const rows = [];
+  
+  const title = silver.title || silver.jobTitle || '';
+  if (title) rows.push(`| **Title (제목)** | ${title} |`);
+  
+  const company = silver.companyName || '';
+  if (company) rows.push(`| **Company (회사)** | ${company} |`);
+  
+  const loc = silver.location || '';
+  if (loc) rows.push(`| **Location (위치)** | ${loc} |`);
+  
+  const docId = silver.jobId || silver.id || silver.topicId || silver.postId || bronze.jobId || '';
+  if (docId) rows.push(`| **Document ID** | \`${docId}\` |`);
+  
+  const source = getSiteNameFromCollection(collection);
+  rows.push(`| **Source (출처)** | ${source} (\`${collection}\`) |`);
+  
+  const url = bronze.url || silver.url || '';
+  if (url) rows.push(`| **URL** | [Link ↗](${url}) |`);
+  
+  const dateVal = silver.updatedAt || silver.collectedAt || silver.createdAt || bronze.scrapedAt;
+  if (dateVal) {
+    const formattedDate = new Date(dateVal).toLocaleString('ko-KR');
+    rows.push(`| **Date (수집일)** | ${formattedDate} |`);
+  }
+  
+  if (rows.length === 0) return '';
+  
+  return `
+
+---
+
+### 📋 LLM Wiki Metadata
+
+| Key (속성) | Value (값) |
+| :--- | :--- |
+${rows.join('\n')}
+`;
+}
+
+function cleanMarkdownContent(mdContent) {
+  if (!mdContent) return '';
+  
+  let cleaned = mdContent.trim();
+  
+  // 1. Remove Frontmatter (YAML blocks)
+  if (cleaned.startsWith('---')) {
+    const nextDashes = cleaned.indexOf('---', 3);
+    if (nextDashes !== -1) {
+      cleaned = cleaned.substring(nextDashes + 3).trim();
+    }
+  }
+  
+  // 2. Remove summary / basic info sections for LinkedIn Jobs
+  // Match "## 🏢 기본 및 근무 정보" or "# 📌 채용 공고 핵심 요약" up to "## 📝 JD"
+  const jdMatch = cleaned.match(/## 📝 JD/i);
+  if (jdMatch) {
+    const jdIndex = cleaned.indexOf(jdMatch[0]);
+    cleaned = cleaned.substring(jdIndex).trim();
+  }
+  
+  return cleaned;
+}
+
+function resetDetailPanel() {
+  detailEmpty.classList.remove('hidden');
+  detailContent.classList.add('hidden');
+  activeDoc = null;
+  // Clear tab contents to avoid page flashing
+  document.getElementById('tab-rendered').innerHTML = '';
+  document.getElementById('markdown-code').textContent = '';
+  document.getElementById('silver-json-code').textContent = '';
+  document.getElementById('html-preview').srcdoc = '';
+  document.getElementById('bronze-json-code').textContent = '';
+}
+
