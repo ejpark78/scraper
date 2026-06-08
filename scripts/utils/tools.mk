@@ -4,10 +4,10 @@
 
 .PHONY: *
 
-up: tools-up-kasm tools-up-mongo tools-up-redis tools-up-yacht tools-up-dozzle tools-up-cronicle tools-up-jupyter
+up-tools: tools-up-kasm tools-up-mongo tools-up-redis tools-up-yacht tools-up-dozzle tools-up-cronicle tools-up-jupyter
 	@echo "✅ 모든 Tools가 실행되었습니다."
 
-down:
+down-tools:
 	$(COMPOSE) --profile tools down traefik kasm mongo-express redisinsight yacht dozzle cronicle jupyter
 	@echo "🛑 Tools가 중지되었습니다."
 

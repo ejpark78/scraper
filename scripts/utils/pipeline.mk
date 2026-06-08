@@ -7,5 +7,4 @@
 SCALE ?= 3
 
 restart:
-	@$(COMPOSE) up -d --build --scale clipper-scraper=$(SCALE) clipper-transformer
-
+	SCALE=$(SCALE) $(COMPOSE) up -d --build clipper-scraper clipper-transformer

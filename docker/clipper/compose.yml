@@ -71,7 +71,7 @@ services:
       timeout: 5s
       retries: 3
     deploy:
-      replicas: 2
+      replicas: ${SCALE:-2}
 
   clipper-transformer:
     build:

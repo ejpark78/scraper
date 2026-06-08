@@ -14,17 +14,14 @@ export RUN_USER
 lint:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx yaml-lint compose.yml "docker/**/*.yml"
 
-# --- 2. include common and helper scripts directly (browser.mk, docker.mk, mongo.mk) ---
+# --- 2. include common and helper scripts directly (browser.mk, docker.mk) ---
 -include scripts/utils/browser.mk
 -include scripts/utils/docker.mk
--include scripts/utils/mongo.mk
 -include scripts/utils/pipeline.mk
+-include scripts/utils/tools.mk
 
 test-%:
 	@$(MAKE) -f scripts/utils/tests.mk $*
-
-tools-%:
-	@$(MAKE) -f scripts/utils/tools.mk $*
 
 # --- 3. delegate site-specific commands to prevent target name conflicts ---
 li-%:
@@ -38,3 +35,6 @@ gn-%:
 
 pk-%:
 	@$(MAKE) -f scripts/sites/pytorch_kr.mk $*
+
+mongo-%:
+	@$(MAKE) -f scripts/utils/mongo.mk $*
