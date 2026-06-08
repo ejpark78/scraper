@@ -19,11 +19,12 @@
 #    - traefik/compose.yml : 각 어드민 툴들을 nip.io 및 localhost HTTPS 도메인으로 변환하는 라우터
 #
 # 3. 🛠️ Developer Tools (profile: tools)
-#    - yacht/compose.yml   : 경량 웹 도커 컨테이너 대시보드
-#    - dozzle/compose.yml  : 실시간 컨테이너 로그 탐색기
-#    - jupyter/compose.yml : 시장 데이터 통계 분석 및 NER 스택 추출 Notebook 환경
-#    - cronicle/compose.yml: 정기 크롤링 태스크 스케줄 관리자
-#    - kasm/compose.yml    : 브라우저 격리 샌드박스 GUI 개발 환경
+#    - yacht/compose.yml    : 경량 웹 도커 컨테이너 대시보드
+#    - dozzle/compose.yml   : 실시간 컨테이너 로그 탐색기
+#    - jupyter/compose.yml  : 시장 데이터 통계 분석 및 NER 스택 추출 Notebook 환경
+#    - cronicle/compose.yml : 정기 크롤링 태스크 스케줄 관리자
+#    - kasm/compose.yml     : 브라우저 격리 샌드박스 GUI 개발 환경
+#    - opencode/compose.yml : Opencode Coding Agent 
 #
 # 4. 🏃 Runtime & Pipeline (profile: runtime)
 #    - clipper/compose.yml : 목록/상세 수집기 CLI 및 복수 인스턴스 Redis Worker 엔진
@@ -31,15 +32,14 @@
 # ==============================================================================
 
 include:
+  - docker/clipper/compose.yml
+  - docker/cronicle/compose.yml
+  - docker/dozzle/compose.yml
+  - docker/jupyter/compose.yml
+  - docker/kasm/compose.yml
   - docker/mongodb/compose.yml
+  - docker/opencode/compose.yml
   - docker/redis/compose.yml
   - docker/traefik/compose.yml
   - docker/viewer/compose.yml
   - docker/yacht/compose.yml
-  - docker/dozzle/compose.yml
-  - docker/jupyter/compose.yml
-  - docker/cronicle/compose.yml
-  - docker/kasm/compose.yml
-  - docker/clipper/compose.yml
-
-

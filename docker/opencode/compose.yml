@@ -1,0 +1,31 @@
+
+# (echo "# UID/GID"; echo "UID=$(id -u)"; echo "GID=$(id -g)") | tee -a .env
+
+services:
+  opencode:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: linkedin/opencode:latest
+    tty: true
+    stdin_open: true    
+    profiles:
+      - tools
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      - TZ=Asia/Seoul
+      - TERM=xterm-256color
+      - HOME=/tmp
+      - OPENCODE_API_KEY=${OPENCODE_API_KEY:-}
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}:${HOST_PROJECT_PATH:-/workspace}
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    working_dir: ${HOST_PROJECT_PATH:-/workspace}
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f opencode || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
