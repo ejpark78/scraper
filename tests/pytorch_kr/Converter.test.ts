@@ -1,0 +1,50 @@
+import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
+import { PyTorchKRConverter } from '../../src/sites/pytorch_kr/Converter';
+
+const converter = new PyTorchKRConverter();
+
+function readFixture(name: string): string {
+  return fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf-8');
+}
+
+console.log('🧪 [시작] PyTorchKR Converter 단위 테스트\n');
+
+// ── raw HTML (SPA shell) ──────────────────────────────
+console.log('── SPA HTML (실제 스크래퍼 수집본) ──');
+
+{
+  const html = readFixture('10483.html');  // raw SPA shell
+  const result = converter.convertHtmlToMarkdown(html, '10483', 'https://discuss.pytorch.kr/t/1-260-feat-anthropic/10483');
+  assert.ok(result.title.startsWith('사회과학 분야'), 'Title should be extracted from <title>');
+  assert.ok(result.rawContent.includes('# 📂 [PyTorch KR]'), 'Markdown should contain header');
+  // post body is empty because Discourse is SPA — docs the bug
+  assert.strictEqual(result.content.includes('Full content extraction not implemented'), true,
+    'SPA HTML → content should be fallback (current known limitation)');
+  console.log('✅ SPA HTML: title/structure OK, content = fallback message (known bug)');
+}
+
+// ── JSON API 재구성 HTML ──────────────────────────────
+console.log('\n── JSON API 재구성 HTML ──');
+
+const testCases: { id: string; titlePrefix: string; minContentLen: number }[] = [
+  { id: '10483', titlePrefix: '사회과학 분야에 코딩 에이전트', minContentLen: 10000 },
+  { id: '10523', titlePrefix: 'Microsoft AI, 5개 분야 7종 MAI', minContentLen: 12000 },
+  { id: '10492', titlePrefix: 'Nango: AI 에이전트와 제품', minContentLen: 4000 },
+];
+
+for (const tc of testCases) {
+  const html = readFixture(`${tc.id}.json.html`);
+  const result = converter.convertHtmlToMarkdown(html, tc.id, `https://discuss.pytorch.kr/t/topic/${tc.id}`);
+  const expected = readFixture(`${tc.id}.expected.md`);
+
+  assert.ok(result.title.startsWith(tc.titlePrefix), `#${tc.id}: Title should match`);
+  assert.ok(result.content.length >= tc.minContentLen, `#${tc.id}: Content should be substantial (≥${tc.minContentLen})`);
+  assert.strictEqual(result.rawContent.trim(), expected.trim(), `#${tc.id}: rawContent should match expected markdown`);
+  assert.ok(result.rawContent.includes('📝 본문 내용'), `#${tc.id}: Should contain 본문 내용 header`);
+  assert.ok(result.rawContent.includes('원본 링크'), `#${tc.id}: Should contain 원본 링크`);
+  console.log(`✅ #${tc.id}: ${result.title.substring(0, 40)}... (${result.content.length} chars)`);
+}
+
+console.log('\n🎉 [성공] 모든 PyTorchKR Converter 테스트가 통과되었습니다!');

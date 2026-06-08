@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head><title>Nango: AI 에이전트와 제품을 800여 개 API에 연결하는 통합 플랫폼 - PyTorchKR</title>
+<link rel="canonical" href="https://discuss.pytorch.kr/t/nango-ai-800-api/10492">
+<meta property="article:published_time" content="2026-06-04T03:30:14.273Z">
+</head>
+<body>
+<div class="post" itemprop="text"><p><div class="lightbox-wrapper"><a class="lightbox" href="https://discuss.pytorch.kr/uploads/default/original/3X/0/c/0cd7428fed10898c9507e6894aa7e22b79e5a298.jpeg" data-download-href="https://discuss.pytorch.kr/uploads/default/0cd7428fed10898c9507e6894aa7e22b79e5a298" title="Nango: AI 에이전트와 제품을 800여 개 API에 연결하는 통합 플랫폼"><img src="https://discuss.pytorch.kr/uploads/default/optimized/3X/0/c/0cd7428fed10898c9507e6894aa7e22b79e5a298_2_1028x685.jpeg" alt="Nango: AI 에이전트와 제품을 800여 개 API에 연결하는 통합 플랫폼" data-base62-sha1="1PAVav7NZwaxLcSa0TzMHr8mZPq" width="1028" height="685" srcset="https://discuss.pytorch.kr/uploads/default/optimized/3X/0/c/0cd7428fed10898c9507e6894aa7e22b79e5a298_2_1028x685.jpeg, https://discuss.pytorch.kr/uploads/default/original/3X/0/c/0cd7428fed10898c9507e6894aa7e22b79e5a298.jpeg 1.5x, https://discuss.pytorch.kr/uploads/default/original/3X/0/c/0cd7428fed10898c9507e6894aa7e22b79e5a298.jpeg 2x" data-dominant-color="F2ECEB"><div class="meta"><svg class="fa d-icon d-icon-far-image svg-icon" aria-hidden="true"><use href="#far-image"></use></svg><span class="filename">Nango: AI 에이전트와 제품을 800여 개 API에 연결하는 통합 플랫폼</span><span class="informations">1536×1024 221 KB</span><svg class="fa d-icon d-icon-discourse-expand svg-icon" aria-hidden="true"><use href="#discourse-expand"></use></svg></div></a></div></p>
+<h2><a name="p-20109-nango-1" class="anchor" href="#p-20109-nango-1" aria-label="Heading link"></a>Nango 소개</h2>
+<p>외부 서비스와 연동하는 기능을 제품에 붙이는 일은 거의 모든 SaaS 개발에서 반복적으로 등장하지만, 막상 손대 보면 단순하지 않습니다. OAuth 플로우와 토큰 갱신, API 키 저장, 멀티 테넌트 환경에서의 연결 관리, 속도 제한과 재시도 처리까지 직접 구현하다 보면 정작 제품의 핵심 로직보다 연동 코드에 더 많은 시간을 쓰게 됩니다. 여기에 최근에는 AI 에이전트가 외부 API를 직접 호출해 작업을 수행하는 패턴까지 더해지면서, 연동 계층을 다루는 부담은 오히려 커지고 있습니다.</p>
+<p>Nango는 이런 제품 통합(Product Integration)을 한곳에서 다루기 위한 플랫폼입니다. 800여 개의 외부 API에 대한 인증과 요청, 실행 로직을 표준화된 방식으로 제공하며, 백엔드 언어나 프레임워크에 종속되지 않고 AI 코딩 도구·에이전트 SDK와도 함께 동작합니다. 연동 로직을 타입스크립트(TypeScript) 함수로 직접 작성하거나, 자연어 설명을 주면 AI가 그 함수를 생성하도록 맡길 수 있고, 작성된 코드는 Nango가 운영하는 프로덕션 런타임에 배포되어 인증·실행·확장·관측(Observability)을 함께 처리합니다.</p>
+<p>Nango는 Replit, Ramp, Mercor를 비롯한 여러 회사의 프로덕션 환경에서 사용되고 있습니다. 이 글에서는 Nango가 제공하는 세 가지 통합 기본요소와 동작 흐름, 설치와 사용 방법, 그리고 라이선스를 정리합니다.</p>
+<h2><a name="p-20109-nango-2" class="anchor" href="#p-20109-nango-2" aria-label="Heading link"></a>Nango의 동작 흐름</h2>
+<p>Nango는 제품과 AI 에이전트가 외부 API와 통신할 때 그 사이에 들어가는 중간 런타임 역할을 합니다. 애플리케이션은 자격 증명을 직접 다루지 않고 Nango에 요청을 보내며, Nango가 공급자(provider)를 식별하고 자격 증명을 주입한 뒤 응답을 돌려줍니다.</p>
+<p><div class="lightbox-wrapper"><a class="lightbox" href="https://discuss.pytorch.kr/uploads/default/original/3X/b/7/b72a06547f9ddf0aea0043c13468a5e542336255.jpeg" data-download-href="https://discuss.pytorch.kr/uploads/default/b72a06547f9ddf0aea0043c13468a5e542336255" title="Nango의 동작 흐름 다이어그램"><img src="https://discuss.pytorch.kr/uploads/default/optimized/3X/b/7/b72a06547f9ddf0aea0043c13468a5e542336255_2_1028x685.jpeg" alt="Nango의 동작 흐름 다이어그램" data-base62-sha1="q8lpHVHG4NUw91y4QTS57DqfCKh" width="1028" height="685" srcset="https://discuss.pytorch.kr/uploads/default/optimized/3X/b/7/b72a06547f9ddf0aea0043c13468a5e542336255_2_1028x685.jpeg, https://discuss.pytorch.kr/uploads/default/original/3X/b/7/b72a06547f9ddf0aea0043c13468a5e542336255.jpeg 1.5x, https://discuss.pytorch.kr/uploads/default/original/3X/b/7/b72a06547f9ddf0aea0043c13468a5e542336255.jpeg 2x" data-dominant-color="F7E8E3"><div class="meta"><svg class="fa d-icon d-icon-far-image svg-icon" aria-hidden="true"><use href="#far-image"></use></svg><span class="filename">Nango의 동작 흐름 다이어그램</span><span class="informations">1536×1024 253 KB</span><svg class="fa d-icon d-icon-discourse-expand svg-icon" aria-hidden="true"><use href="#discourse-expand"></use></svg></div></a></div></p>
+<h2><a name="p-20109-nango-3" class="anchor" href="#p-20109-nango-3" aria-label="Heading link"></a>Nango의 세 가지 통합 기본요소</h2>
+<p>Nango는 모든 통합 패턴을 세 가지 기본요소(primitive)로 다룹니다. 인증(Auth), 프록시(Proxy), 함수(Functions)이며, 각각 자격 증명 관리, 요청 대행, 사용자 정의 로직 실행을 담당합니다.</p>
+<h3><a name="p-20109-auth-4" class="anchor" href="#p-20109-auth-4" aria-label="Heading link"></a>인증 (Auth)</h3>
+<p>800여 개 API에 대한 OAuth, API 키, 토큰 갱신을 Nango가 관리합니다. 화이트 라벨 인증 플로우를 애플리케이션 프론트엔드에 그대로 임베드할 수 있으며, 자격 증명 저장과 토큰 관리, 멀티 테넌트 연결 관리는 Nango가 맡습니다.</p>
+<pre data-code-wrap="typescript"><code class="lang-typescript">// 프론트엔드에 인증 플로우 임베드
+nango.openConnectUI({ onEvent: (event) =&gt; { /* handle completion */ } });
+</code></pre>
+<h3><a name="p-20109-proxy-5" class="anchor" href="#p-20109-proxy-5" aria-label="Heading link"></a>프록시 (Proxy)</h3>
+<p>사용자를 대신해 인증된 API 요청을 보냅니다. 요청을 Nango 프록시로 보내면 공급자를 식별해 자격 증명을 주입하고, 재시도와 속도 제한을 처리한 뒤 응답을 반환합니다.</p>
+<pre data-code-wrap="typescript"><code class="lang-typescript">import { Nango } from '@nangohq/node';
+
+const nango = new Nango({ secretKey: '&lt;NANGO-SECRET-KEY&gt;' });
+
+// 어떤 API든 인증된 요청을 보낼 수 있습니다
+const response = await nango.get({
+    endpoint: '/v3/contacts',
+    providerConfigKey: '&lt;INTEGRATION-ID&gt;',
+    connectionId: '&lt;CONNECTION-ID&gt;'
+});
+</code></pre>
+<h3><a name="p-20109-functions-6" class="anchor" href="#p-20109-functions-6" aria-label="Heading link"></a>함수 (Functions)</h3>
+<p>통합 로직을 타입스크립트 함수로 작성해 Nango에 배포합니다. 함수는 API 접근, 재시도, 스토리지, 관측 기능이 내장된 프로덕션 런타임에서 실행됩니다. 사용 사례를 자연어로 설명하면 <strong>AI 빌더(AI builder)</strong> 가 이 함수를 대신 생성해 줍니다.</p>
+<pre data-code-wrap="typescript"><code class="lang-typescript">export default async function run(nango: Nango) {
+    const { owner, repo, title, body } = nango.input;
+
+    const response = await nango.post({
+        endpoint: `/repos/${owner}/${repo}/issues`,
+        data: { title, body }
+    });
+
+    return response.data;
+}
+</code></pre>
+<h2><a name="p-20109-nango-7" class="anchor" href="#p-20109-nango-7" aria-label="Heading link"></a>Nango로 만들 수 있는 통합 패턴</h2>
+<p>Nango는 일반적인 통합 패턴 대부분을 지원하며, AI 에이전트가 외부 API를 호출하도록 도구(tool)를 제공하는 작업도 그중 하나입니다. 아래는 <a href="https://nango.dev/docs/integrations/overview">공식 문서</a>가 정리한 주요 사용 사례입니다.</p>
+<div class="md-table">
+<table>
+<thead>
+<tr>
+<th>사용 사례</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI 도구 호출 및 MCP</td>
+<td>AI 에이전트가 외부 API를 실제로 호출해 작업을 수행하도록 도구를 제공</td>
+</tr>
+<tr>
+<td>데이터 동기화</td>
+<td>RAG 파이프라인, 인덱싱, 트리거를 위한 단방향 또는 양방향 동기화</td>
+</tr>
+<tr>
+<td>웹훅 처리</td>
+<td>외부 API에서 오는 웹훅을 안정적으로 수신하고 처리</td>
+</tr>
+<tr>
+<td>API 통일</td>
+<td>서로 다른 API를 자체 통합 스키마로 정규화</td>
+</tr>
+<tr>
+<td>액션</td>
+<td>사용자를 대신해 데이터를 쓰고 작업을 실행</td>
+</tr>
+<tr>
+<td>고객별 설정</td>
+<td>고객마다 통합 동작을 다르게 구성</td>
+</tr>
+</tbody>
+</table>
+</div><h2><a name="p-20109-nango-8" class="anchor" href="#p-20109-nango-8" aria-label="Heading link"></a>Nango 설치 및 사용법</h2>
+<p>Nango는 클라우드(Nango Cloud)에 가입해 바로 쓰거나, 자체 인프라에 셀프 호스팅(self-hosting)할 수 있습니다. 클라우드 기준으로 통합을 만들고 API에 연결하는 과정은 다음과 같습니다.</p>
+<p>먼저 <a href="https://app.nango.dev/signup">가입</a> 후 Integrations 탭에서 새 통합을 설정하고, Connections 탭에서 연결을 만들어 인증 플로우를 완료합니다. 이렇게 만든 인증 플로우는 이후 제품에 그대로 임베드할 수 있습니다.</p>
+<pre data-code-wrap="typescript"><code class="lang-typescript">nango.openConnectUI({ onEvent: (event) =&gt; { /* handle completion */ } });
+</code></pre>
+<p>연결이 만들어지면 자격 증명을 가져와 인증된 요청을 보낼 수 있습니다.</p>
+<pre data-code-wrap="typescript"><code class="lang-typescript">import { Nango } from '@nangohq/node';
+
+const nango = new Nango({ secretKey: '&lt;NANGO-SECRET-KEY&gt;' });
+
+const connection = await nango.getConnection('&lt;INTEGRATION-ID&gt;', '&lt;CONNECTION-ID&gt;');
+console.log(connection.credentials);
+</code></pre>
+<p>Nango는 CLI와 API로 전부 조작할 수 있으며, Cursor·Codex·Claude Code 같은 AI 코딩 도구와 MCP·LangChain 같은 에이전트 SDK와 호환됩니다.</p>
+<h2><a name="p-20109-nango-9" class="anchor" href="#p-20109-nango-9" aria-label="Heading link"></a>Nango를 선택하는 이유</h2>
+<p>Nango가 강조하는 차별점은 <em>"AI가 생성하지만 사람이 제어하는 코드"</em> 입니다. AI 빌더가 자연어로부터 타입스크립트 통합 함수를 생성하되, 블랙박스 형태가 아니라 검토·수정·버전 관리가 가능한 코드를 그대로 내준다는 점입니다. 타입 안전성과 내장 테스트 프레임워크도 함께 제공된다고 설명합니다.</p>
+<p>저자는 Nango 런타임이 테넌트별 격리, 탄력적 확장, 자동 재시도, 속도 제한 처리를 제공하며 수십억 건의 API 요청을 처리한다고 밝히고 있습니다. 또한 SOC 2 Type II, HIPAA, GDPR을 준수한다고 명시하고 있어, 자격 증명과 외부 연동을 다루는 도구에서 중요한 운영 요건을 함께 고려한 것으로 보입니다.</p>
+<h2><a name="p-20109-nango-10" class="anchor" href="#p-20109-nango-10" aria-label="Heading link"></a>Nango의 라이선스</h2>
+<p>Nango는 <a href="https://github.com/NangoHQ/nango/blob/master/LICENSE">Elastic License</a>로 공개되어 있습니다. 소스 코드를 자유롭게 열람하고 자체 인프라에서 셀프 호스팅할 수 있지만, Elastic License는 OSI 승인 오픈소스 라이선스와 달리 관리형 서비스 형태로 제3자에게 제공하는 등의 사용에 제약이 있으므로, 상업적 활용을 계획한다면 <a href="https://github.com/NangoHQ/nango/blob/master/LICENSE">라이선스 원문</a>을 직접 확인하는 것이 좋습니다. 클라우드와 엔터프라이즈 셀프 호스팅 버전은 모든 기능을 제공하며, 기능이 제한된 무료 셀프 호스팅도 가능합니다.</p>
+<h2><a name="p-20109-house-nango-11" class="anchor" href="#p-20109-house-nango-11" aria-label="Heading link"></a><img src="https://discuss.pytorch.kr/images/emoji/fluentui/house.png?v=15" title=":house:" class="emoji" alt=":house:" loading="lazy" width="20" height="20"> Nango 공식 홈페이지</h2>
+<aside class="onebox allowlistedgeneric" data-onebox-src="https://nango.dev">
+  <header class="source">
+      <img src="https://nango.dev/favicon-16x16.png" class="site-icon" alt="" width="16" height="16">
+
+      <a href="https://nango.dev" target="_blank" rel="noopener">nango.dev</a>
+  </header>
+
+  <article class="onebox-body">
+    <div class="aspect-image" style="--aspect-ratio:1028/539;"><img src="https://nango.dev/opengraph-image.png" class="thumbnail" alt="" width="1028" height="539"></div>
+
+<h3><a href="https://nango.dev" target="_blank" rel="noopener">Nango | Build integrations with AI</a></h3>
+
+  <p>Connect your product &amp; AI agents with 800+ APIs. Build, run, and maintain integrations with AI in code, on infrastructure built for scale.</p>
+
+
+  </article>
+
+  <div class="onebox-metadata">
+    
+    
+  </div>
+
+  <div style="clear: both"></div>
+</aside>
+
+<h2><a name="p-20109-books-nango-12" class="anchor" href="#p-20109-books-nango-12" aria-label="Heading link"></a><img src="https://discuss.pytorch.kr/images/emoji/fluentui/books.png?v=15" title=":books:" class="emoji" alt=":books:" loading="lazy" width="20" height="20"> Nango 문서 사이트</h2>
+<aside class="onebox allowlistedgeneric" data-onebox-src="https://nango.dev/docs/getting-started/intro-to-nango">
+  <header class="source">
+      <img src="https://nango.dev/docs/_mintlify/favicons/nango/iNHYMOr3i0RB7qXT/_generated/favicon/android-chrome-192x192.png" class="site-icon" alt="" width="192" height="192">
+
+      <a href="https://nango.dev/docs/getting-started/intro-to-nango" target="_blank" rel="noopener">Nango Docs</a>
+  </header>
+
+  <article class="onebox-body">
+    <div class="aspect-image" style="--aspect-ratio:695/364;"><img src="https://nango.mintlify.app/_next/image?url=%2F_mintlify%2Fapi%2Fog%3Fdivision%3DGetting%2Bstarted%26appearance%3Dsystem%26title%3DIntroduction%26description%3DBuild%2Bproduct%2Bintegrations%2Bwith%2BAI%252C%2Busing%2Bcode%2Byou%2Bcontrol%2Band%2Binfrastructure%2Bbuilt%2Bfor%2Bscale.%26logoLight%3Dhttps%253A%252F%252Fmintcdn.com%252Fnango%252Fh2zzveDlAs05T6zr%252Fimages%252FNango-Light-Mode.svg%253Ffit%253Dmax%2526auto%253Dformat%2526n%253Dh2zzveDlAs05T6zr%2526q%253D85%2526s%253D0c2845b2219705011e11ef4985aa9d91%26logoDark%3Dhttps%253A%252F%252Fmintcdn.com%252Fnango%252Fh2zzveDlAs05T6zr%252Fimages%252FNango-Dark-Mode.svg%253Ffit%253Dmax%2526auto%253Dformat%2526n%253Dh2zzveDlAs05T6zr%2526q%253D85%2526s%253D850ee557541d6e0b523aa22a086f45c5%26primaryColor%3D%252329abe2%26lightColor%3D%252371c0e2%26darkColor%3D%2523217ea6%26backgroundLight%3D%2523ffffff%26backgroundDark%3D%25230b0b0c&amp;w=1200&amp;q=100" class="thumbnail" alt="" width="1028" height="539"></div>
+
+<h3><a href="https://nango.dev/docs/getting-started/intro-to-nango" target="_blank" rel="noopener">Introduction - Nango Docs</a></h3>
+
+  <p>Build product integrations with AI, using code you control and infrastructure built for scale.</p>
+
+
+  </article>
+
+  <div class="onebox-metadata">
+    
+    
+  </div>
+
+  <div style="clear: both"></div>
+</aside>
+
+<h2><a name="p-20109-github-nango-github-13" class="anchor" href="#p-20109-github-nango-github-13" aria-label="Heading link"></a><img src="https://discuss.pytorch.kr/uploads/default/original/2X/7/70a6220c603eed42089b4f67366225849e119e20.svg?v=15" title=":github:" class="emoji emoji-custom" alt=":github:" loading="lazy" width="20" height="20"> Nango 프로젝트 GitHub 저장소</h2>
+<aside class="onebox githubrepo" data-onebox-src="https://github.com/NangoHQ/nango">
+  <header class="source">
+
+      <a href="https://github.com/NangoHQ/nango" target="_blank" rel="noopener">github.com</a>
+  </header>
+
+  <article class="onebox-body">
+    <div class="github-row" data-github-private-repo="false">
+  <img width="695" height="347" src="https://opengraph.githubassets.com/523975f2ebce5d1538b72f805e149476/NangoHQ/nango" class="thumbnail">
+
+  <h3><a href="https://github.com/NangoHQ/nango" target="_blank" rel="noopener">GitHub - NangoHQ/nango: Build product integrations with AI.</a></h3>
+
+    <p><span class="github-repo-description">Build product integrations with AI.</span></p>
+</div>
+
+  </article>
+
+  <div class="onebox-metadata">
+    
+    
+  </div>
+
+  <div style="clear: both"></div>
+</aside>
+
+<h2><a name="p-20109-h-14" class="anchor" href="#p-20109-h-14" aria-label="Heading link"></a>더 읽어보기</h2>
+<ul>
+<li>
+<p><a href="https://discuss.pytorch.kr/t/deepmcpagent-mcp-langchain-langgraph-mcp/7617" class="inline-onebox">DeepMCPAgent: MCP를 활용해 도구를 자동으로 탐색하고 연결하는 LangChain/LangGraph 기반 MCP 에이전트</a></p>
+</li>
+<li>
+<p><a href="https://discuss.pytorch.kr/t/github-mcp-server-github-api-mcp/6713" class="inline-onebox">GitHub MCP Server: GitHub API와의 원활한 통합을 위한 공식 MCP 서버</a></p>
+</li>
+<li>
+<p><a href="https://discuss.pytorch.kr/t/agentapi-ai-code-assistant-http-api/6834" class="inline-onebox">AgentAPI: AI Code Assistant를 위한 통합 HTTP API</a></p>
+</li>
+<li>
+<p><a href="https://discuss.pytorch.kr/t/pg-mcp-postgresql-ai-mcp-server/6683" class="inline-onebox">PG-MCP, PostgreSQL과 AI 에이전트를 연결해주는 MCP Server</a></p>
+</li>
+</ul>
+<p><br><br></p>
+<hr>
+<p><em>이 글은 GPT 모델로 정리한 글을 바탕으로 한 것으로, 원문의 내용 또는 의도와 다르게 정리된 내용이 있을 수 있습니다. 관심있는 내용이시라면 원문도 함께 참고해주세요! 읽으시면서 어색하거나 잘못된 내용을 발견하시면 덧글로 알려주시기를 부탁드립니다.</em> <img src="https://discuss.pytorch.kr/images/emoji/fluentui/hugs.png?v=15" title=":hugs:" class="emoji" alt=":hugs:" loading="lazy" width="20" height="20"></p>
+<p><a href="https://pytorch.kr/"><img src="https://discuss.pytorch.kr/uploads/default/original/2X/f/fa98c2196c22febe7475e503792febf39ba7a0de.svg?v=15" title=":pytorch:" class="emoji emoji-custom" alt=":pytorch:" loading="lazy" width="20" height="20">파이토치 한국 사용자 모임<img src="https://discuss.pytorch.kr/images/emoji/fluentui/south_korea.png?v=15" title=":south_korea:" class="emoji" alt=":south_korea:" loading="lazy" width="20" height="20"></a>이 정리한 이 글이 유용하셨나요? <a href="https://discuss.pytorch.kr/signup">회원으로 가입</a>하시면 주요 글들을 이메일<img src="https://discuss.pytorch.kr/images/emoji/fluentui/love_letter.png?v=15" title=":love_letter:" class="emoji" alt=":love_letter:" loading="lazy" width="20" height="20">로 보내드립니다! (기본은 Weekly지만 <a href="https://discuss.pytorch.kr/my/preferences/emails">Daily로 변경도 가능</a>합니다.)</p>
+<p><img src="https://discuss.pytorch.kr/images/emoji/fluentui/wrapped_gift.png?v=15" title=":wrapped_gift:" class="emoji" alt=":wrapped_gift:" loading="lazy" width="20" height="20"> 아래<img src="https://discuss.pytorch.kr/images/emoji/fluentui/down_right_arrow.png?v=15" title=":down_right_arrow:" class="emoji" alt=":down_right_arrow:" loading="lazy" width="20" height="20">쪽에 좋아요<img src="https://discuss.pytorch.kr/images/emoji/fluentui/+1.png?v=15" title=":+1:" class="emoji" alt=":+1:" loading="lazy" width="20" height="20">를 눌러주시면 새로운 소식들을 정리하고 공유하는데 힘이 됩니다~ <img src="https://discuss.pytorch.kr/images/emoji/fluentui/star_struck.png?v=15" title=":star_struck:" class="emoji" alt=":star_struck:" loading="lazy" width="20" height="20"></p></div>
+</body>
+</html>
