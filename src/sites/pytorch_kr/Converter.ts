@@ -14,7 +14,7 @@ export interface PyTorchKRMeta {
 export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
     
     public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): PyTorchKRMeta {
-        const $ = cheerio.load(htmlContent);
+        const $ = cheerio.load(htmlContent, { _useHtmlParser2: true } as any);
         
         // Extract canonical URL if available
         const canonical = $('link[rel="canonical"]').attr('href');

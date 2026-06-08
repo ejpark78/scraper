@@ -11,18 +11,17 @@ function readFixture(name: string): string {
 
 console.log('🧪 [시작] PyTorchKR Converter 단위 테스트\n');
 
-// ── raw HTML (SPA shell) ──────────────────────────────
-console.log('── SPA HTML (기존 bronze — executeScrape 수정 전 데이터) ──');
+// ── raw HTML (Discourse full page) ──────────────────────────────
+console.log('── Discourse full HTML (server-rendered page with post content) ──');
 
 {
-  const html = readFixture('10483.html');  // raw SPA shell
+  const html = readFixture('10483.html');  // Discourse full page
   const result = converter.convertHtmlToMarkdown(html, '10483', 'https://discuss.pytorch.kr/t/1-260-feat-anthropic/10483');
   assert.ok(result.title.startsWith('사회과학 분야'), 'Title should be extracted from <title>');
   assert.ok(result.rawContent.includes('# 📂 [PyTorch KR]'), 'Markdown should contain header');
-  // post body is empty because Discourse is SPA — docs the bug
-  assert.strictEqual(result.content.includes('Full content extraction not implemented'), true,
-    'SPA HTML → content should be fallback (current known limitation)');
-  console.log('✅ SPA HTML: title/structure OK, content = fallback message (known bug)');
+  // With htmlparser2, cheerio can parse the server-rendered HTML and extract post content
+  assert.ok(result.content.length > 5000, 'Content should be extracted from Discourse HTML (≥5000 chars)');
+  console.log(`✅ Discourse full HTML: title OK, content = ${result.content.length} chars`);
 }
 
 // ── publishedAt fallback ──────────────────────────────

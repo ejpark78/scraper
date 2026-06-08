@@ -421,9 +421,10 @@ function triggerLazyTabLoad(tabId) {
     const htmlIframe = document.getElementById('html-preview');
     if (activeDoc.bronze.rawHtml) {
       // Detect Discourse SPA shell (no real content) and show fallback
-      const isSpaShell = activeDoc.bronze.rawHtml.includes('<div id="main-outlet"') || 
-                         activeDoc.bronze.rawHtml.includes('id="discourse-comments"') && 
-                         !activeDoc.bronze.rawHtml.includes('itemprop="text"');
+      const hasMainOutlet = activeDoc.bronze.rawHtml.includes('id="main-outlet"');
+      const hasComments = activeDoc.bronze.rawHtml.includes('id="discourse-comments"');
+      const hasItempropText = activeDoc.bronze.rawHtml.includes('itemprop="text"');
+      const isSpaShell = (hasMainOutlet || hasComments) && !hasItempropText;
       if (isSpaShell) {
         htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:30px;text-align:center;">
           <h3>⚠️ Bronze HTML is a Discourse SPA shell</h3>

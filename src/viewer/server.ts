@@ -360,7 +360,9 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
         } else if (collectionName === 'silver/pytorch_kr.contents' && doc.id) {
           const bronzeColl = await mongo.getCollection('bronze/pytorch_kr.html');
           const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }, { topicId: doc.id }] });
-          if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+          if (bronzeDoc && bronzeDoc.rawHtml) {
+            doc.rawHtml = bronzeDoc.rawHtml;
+          }
         }
       } catch (stitchErr) {
         console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);

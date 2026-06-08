@@ -2,7 +2,7 @@
 # 🔥 PyTorch KR Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh-urls refresh-md fix-bronze-html
+.PHONY: list refresh-urls refresh-md
 
 PAGE ?= 1-10
 SLACK_TIME ?= 3
@@ -19,8 +19,5 @@ refresh-urls:
 
 refresh-md:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/QueueTransform.ts
-
-fix-bronze-html:
-	$(COMPOSE) run --rm $(RUN_USER) clipper node --max-old-space-size=2048 --require ts-node/register src/sites/pytorch_kr/FixBronzeHtml.ts
 
 
