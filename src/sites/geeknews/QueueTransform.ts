@@ -15,7 +15,7 @@ async function main() {
     try {
         const bronzeGeeknews = await mongo.getCollection('bronze/geeknews.html');
         const cursor = bronzeGeeknews.find({});
-        const total = await cursor.count();
+        const total = await bronzeGeeknews.countDocuments();
         console.log(`📥 Found ${total} documents in bronze/geeknews.html.`);
 
         let count = 0;

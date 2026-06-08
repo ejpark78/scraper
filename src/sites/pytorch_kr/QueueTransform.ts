@@ -15,7 +15,7 @@ async function main() {
     try {
         const bronzePytorch = await mongo.getCollection('bronze/pytorch_kr.html');
         const cursor = bronzePytorch.find({});
-        const total = await cursor.count();
+        const total = await bronzePytorch.countDocuments();
         console.log(`📥 Found ${total} documents in bronze/pytorch_kr.html.`);
 
         let count = 0;
@@ -25,7 +25,7 @@ async function main() {
             while (await cursor.hasNext() && batch.length < BATCH_SIZE) {
                 const doc = await cursor.next();
                 if (!doc) continue;
-                const id = doc.id || doc._id?.toString();
+                const id = doc.topicId || doc.id || doc._id?.toString();
                 if (!id) continue;
 
                 const payload = JSON.stringify({

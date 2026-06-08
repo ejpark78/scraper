@@ -4,7 +4,7 @@
 
 .PHONY: list refresh-urls refresh-md
 
-PAGE ?= 1-5
+PAGE ?= 1-10
 SLACK_TIME ?= 3
 SCRAPER_SLACK ?= 0
 PRIORITY ?= medium

@@ -82,9 +82,13 @@ class ScraperDispatcher {
         await this.linkedinCrawler.scrapeJob(url, tempPath);
         break;
       case 'geeknews':
-      case 'gpters':
-      case 'pytorch_kr':
         await this.scrapeHttpFetch(url, tempPath);
+        break;
+      case 'gpters':
+        await this.scrapeHttpFetch(url, tempPath);
+        break;
+      case 'pytorch_kr':
+        await this.scrapePytorchKr(url, tempPath);
         break;
       default:
         throw new Error(`Unsupported site scraper: ${site}`);
@@ -102,6 +106,43 @@ class ScraperDispatcher {
       throw new Error(`HTTP status ${response.status} when scraping ${url}`);
     }
     const html = await response.text();
+    fs.writeFileSync(tempPath, html, 'utf-8');
+  }
+
+  private async scrapePytorchKr(url: string, tempPath: string): Promise<void> {
+    const jsonUrl = url.includes('.json') ? url : `${url}.json`;
+    console.log(`🌐 [PyTorch KR] Fetching JSON API: ${jsonUrl} ...`);
+    const response = await fetch(jsonUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`PyTorch KR JSON API HTTP status ${response.status} when scraping ${url}`);
+    }
+
+    const data = await response.json();
+    const title: string = data.title || 'Unknown Title';
+    const createdAt: string = data.created_at || '';
+    const cooked: string = data.post_stream?.posts?.[0]?.cooked || '';
+
+    if (!cooked) {
+      throw new Error(`No cooked content in JSON API response for ${url}`);
+    }
+
+    const html = `<!DOCTYPE html>
+<html>
+<head><title>${title.replace(/</g, '&lt;')} - PyTorchKR</title>
+<link rel="canonical" href="${url}">
+<meta property="article:published_time" content="${createdAt}">
+</head>
+<body>
+<div class="post" itemprop="text">${cooked}</div>
+</body>
+</html>`;
+
     fs.writeFileSync(tempPath, html, 'utf-8');
   }
 }

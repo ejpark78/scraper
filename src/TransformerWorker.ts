@@ -70,7 +70,7 @@ async function main() {
         const pathSpec = `${dbName}/${collectionName}` as `${'bronze' | 'silver'}/${string}`;
         const bronzeColl = await mongo.getCollection(pathSpec);
         
-        const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { postId: id } : { topicId: id };
+        const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { postId: id } : site === 'pytorch_kr' ? { $or: [{ topicId: id }, { id: id }] } : { topicId: id };
         const rawDoc = await bronzeColl.findOne(filter);
 
         if (!rawDoc || !rawDoc.rawHtml) {
@@ -79,7 +79,17 @@ async function main() {
 
         // Run Transform
         const converter = ConverterFactory.getConverter(site);
-        const meta = converter.convertHtmlToMarkdown(rawDoc.rawHtml, id, rawDoc.url || '');
+        let meta = converter.convertHtmlToMarkdown(rawDoc.rawHtml, id, rawDoc.url || '');
+
+        // Fallback: for pytorch_kr, try JSON API when content is empty (old SPA bronze data)
+        if (site === 'pytorch_kr' && (!meta.content?.trim() || meta.content === `${meta.title}\n`)) {
+          Logger.info(`[Transformer] Content empty for [${site}] ID: ${id}, trying JSON API fallback...`);
+          const jsonMeta = await converter.fetchAndConvertFromJsonApi(rawDoc.url, id);
+          if (jsonMeta) {
+            meta = jsonMeta;
+            Logger.info(`[Transformer] JSON API fallback succeeded for [${site}] ID: ${id}`);
+          }
+        }
 
         // Run Load (TBD Target PostgreSQL Layer)
         await TargetLoader.load(site, id, meta);

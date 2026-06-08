@@ -58,8 +58,29 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
             const metaTime = $('meta[property="article:published_time"]').attr('content');
             if (metaTime) publishedAt = metaTime;
         }
+
+        // Extract content from built-in selectors (synchronous HTML parse)
+        let contentText = this.extractContentFromHtml($, title);
+
+        // Build result
+        const fullContent = `${title}\n${contentText}`;
         
-        // Extract main content
+        let markdown = `# 📂 [PyTorch KR] ${title}\n\n`;
+        markdown += `* **작성일:** ${publishedAt || '정보 없음'}\n`;
+        markdown += `* **원본 링크:** [바로가기](${finalUrl})\n\n`;
+        markdown += `## 📝 본문 내용\n\n${contentText}\n`;
+        
+        return {
+            id,
+            title,
+            url: finalUrl,
+            publishedAt,
+            content: fullContent,
+            rawContent: markdown
+        };
+    }
+
+    private extractContentFromHtml($: cheerio.CheerioAPI, title: string): string {
         let contentText = '';
 
         // 1. Try Discourse post layout (forum topics)
@@ -116,28 +137,43 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
             }
         }
 
-        if (!contentText) {
-            contentText = 'Full content extraction not implemented or post structure changed.';
-        }
-        
-        const fullContent = `${title}\n${contentText}`;
-        
-        // Generate Markdown format
-        let markdown = `# 📂 [PyTorch KR] ${title}\n\n`;
-        markdown += `* **작성일:** ${publishedAt || '정보 없음'}\n`;
-        markdown += `* **원본 링크:** [바로가기](${finalUrl})\n\n`;
-        markdown += `## 📝 본문 내용\n\n${contentText}\n`;
-        
-        return {
-            id,
-            title,
-            url: finalUrl,
-            publishedAt,
-            content: fullContent,
-            rawContent: markdown
-        };
+        return contentText;
     }
-    
+
+    public async fetchAndConvertFromJsonApi(url: string, id: string): Promise<PyTorchKRMeta | null> {
+        const jsonUrl = url.includes('.json') ? url : `${url}.json`;
+        try {
+            const response = await fetch(jsonUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Accept': 'application/json'
+                }
+            });
+            if (!response.ok) return null;
+
+            const data = await response.json();
+            const title: string = data.title || 'Unknown Title';
+            const createdAt: string = data.created_at || '';
+            const cooked: string = data.post_stream?.posts?.[0]?.cooked || '';
+            if (!cooked) return null;
+
+            const html = `<!DOCTYPE html>
+<html>
+<head><title>${title.replace(/</g, '&lt;')} - PyTorchKR</title>
+<link rel="canonical" href="${url}">
+<meta property="article:published_time" content="${createdAt}">
+</head>
+<body>
+<div class="post" itemprop="text">${cooked}</div>
+</body>
+</html>`;
+
+            return this.convertHtmlToMarkdown(html, id, url);
+        } catch {
+            return null;
+        }
+    }
+
     public async prettify(rawText: string): Promise<string> {
         const formatted = await prettier.format(rawText, {
             parser: 'markdown',

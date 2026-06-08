@@ -38,3 +38,7 @@ up-cronicle:
 up-jupyter:
 	$(COMPOSE) --profile tools up -d jupyter
 	@echo "🚀 Jupyter GUI가 실행되었습니다. https://jupyter.localhost 에 접속하세요."
+
+up-viewer:
+	$(COMPOSE) --profile tools up -d viewer
+	@echo "🚀 Viewer GUI가 실행되었습니다. https://viewer.localhost 에 접속하세요."

@@ -4,7 +4,7 @@
 
 .PHONY: list refresh-urls refresh-md backfill
 
-PAGE ?= 1
+PAGE ?= 1-5
 SLACK_TIME ?= 3
 SCRAPER_SLACK ?= 0
 PRIORITY ?= medium
