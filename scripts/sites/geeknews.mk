@@ -2,7 +2,7 @@
 # 📰 GeekNews Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list contents refresh refresh-urls
+.PHONY: list contents refresh refresh-urls refresh-md
 
 PAGE ?= 1
 SLACK_TIME ?= 3
@@ -18,6 +18,9 @@ refresh:
 
 refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/RefreshUrls.ts
+
+refresh-md:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/QueueTransform.ts
 
 backfill:
 	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/geeknews/Backfill.ts $(DAY)

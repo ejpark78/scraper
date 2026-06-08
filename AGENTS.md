@@ -1,4 +1,4 @@
-# 🤖 Antigravity Agent Work Guide (AGENTS.md)
+# 🤖 Agent Project Rules (AGENTS.md)
 
 ## ⚠️ Critical Constraints
 
@@ -22,3 +22,8 @@
 
 6. **Symbolic Links for Artifacts**:
    - Automatically link created/modified artifacts to `.agents/brain/`.
+
+## ⚠️ Security Rules
+- **DO NOT** read, write, or access `.env` or `.env.*` files under any circumstances.
+- Never expose API keys or credentials in terminal outputs (e.g., `cat`, `echo`).
+- Use `.env.example` to reference env structure. Instruct users to update `.env` manually.

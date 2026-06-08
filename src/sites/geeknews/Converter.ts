@@ -127,7 +127,10 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
             });
         }
         
-        // 4. Generate Markdown
+        // 5. Clean content
+        content = this.cleanContent(content);
+        
+        // 6. Generate Markdown
         let markdown = `# 📰 ${title}\n\n`;
         markdown += `* **기사 링크:** [바로가기](${externalUrl})\n\n`;
         markdown += `## 📝 요약 설명\n${content}\n\n`;
@@ -150,6 +153,17 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
         };
     }
     
+    private cleanContent(raw: string): string {
+        let c = raw;
+        // Strip leading article number like "* '#10345'", "* #10345", or "#10345"
+        c = c.replace(/^\*?\s*['"#]*\d+\s*['"]*\s*\n?/, '');
+        // Normalize list markers: * at line start → -
+        c = c.replace(/^[ \t]*\*[ \t]/gm, '- ');
+        // Shift heading levels down by 1 (## → ###, ### → ####, etc.), preserve # (h1)
+        c = c.replace(/^(#{2,})\s/gm, (_, hashes: string) => '#'.repeat(hashes.length + 1) + ' ');
+        return c.trimStart();
+    }
+
     public async prettify(rawText: string): Promise<string> {
         const formatted = await prettier.format(rawText, {
             parser: 'markdown',
