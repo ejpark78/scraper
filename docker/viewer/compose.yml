@@ -31,6 +31,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
+      traefik:
+        condition: service_healthy
       mongodb:
         condition: service_healthy
     healthcheck:
