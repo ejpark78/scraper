@@ -12,7 +12,7 @@ function readFixture(name: string): string {
 console.log('🧪 [시작] PyTorchKR Converter 단위 테스트\n');
 
 // ── raw HTML (SPA shell) ──────────────────────────────
-console.log('── SPA HTML (실제 스크래퍼 수집본) ──');
+console.log('── SPA HTML (기존 bronze — executeScrape 수정 전 데이터) ──');
 
 {
   const html = readFixture('10483.html');  // raw SPA shell
@@ -23,6 +23,25 @@ console.log('── SPA HTML (실제 스크래퍼 수집본) ──');
   assert.strictEqual(result.content.includes('Full content extraction not implemented'), true,
     'SPA HTML → content should be fallback (current known limitation)');
   console.log('✅ SPA HTML: title/structure OK, content = fallback message (known bug)');
+}
+
+// ── publishedAt fallback ──────────────────────────────
+console.log('\n── publishedAt fallback (meta[property=article:published_time]) ──');
+
+{
+  // HTML without time[datetime] but with meta tag
+  const html = '<html><head><meta property="article:published_time" content="2026-06-04T06:30:39+00:00"></head><body><div class="post" itemprop="text"><p>test</p></div></body></html>';
+  const result = converter.convertHtmlToMarkdown(html, 'test', 'https://example.com');
+  assert.strictEqual(result.publishedAt, '2026-06-04T06:30:39+00:00', 'Should extract from meta tag when time[datetime] missing');
+  console.log('✅ meta[article:published_time] fallback: OK');
+}
+
+{
+  // HTML without any time/meta
+  const html = '<html><head></head><body><div class="post" itemprop="text"><p>test</p></div></body></html>';
+  const result = converter.convertHtmlToMarkdown(html, 'test', 'https://example.com');
+  assert.strictEqual(result.publishedAt, null, 'Should be null when no date info');
+  console.log('✅ No date info → null: OK');
 }
 
 // ── JSON API 재구성 HTML ──────────────────────────────
@@ -44,6 +63,8 @@ for (const tc of testCases) {
   assert.strictEqual(result.rawContent.trim(), expected.trim(), `#${tc.id}: rawContent should match expected markdown`);
   assert.ok(result.rawContent.includes('📝 본문 내용'), `#${tc.id}: Should contain 본문 내용 header`);
   assert.ok(result.rawContent.includes('원본 링크'), `#${tc.id}: Should contain 원본 링크`);
+  assert.ok(result.publishedAt !== null, `#${tc.id}: publishedAt should be extracted`);
+  assert.ok(result.publishedAt!.includes('T'), `#${tc.id}: publishedAt should be ISO format`);
   console.log(`✅ #${tc.id}: ${result.title.substring(0, 40)}... (${result.content.length} chars)`);
 }
 

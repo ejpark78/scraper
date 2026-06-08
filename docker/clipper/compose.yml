@@ -53,7 +53,6 @@ services:
     command: ["npx", "ts-node", "src/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
-      - AUTH=${AUTH:-}
       - JSON_LOG=true
       - SLACK_TIME=0
       - PARALLEL=1

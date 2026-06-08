@@ -21,7 +21,7 @@ function getSystemStatus(): { mongoStatus: string; redisStatus: string; scale: s
   } catch (e) {}
 
   try {
-    const mk = path.join(__dirname, '../../scripts/pipeline.mk');
+    const mk = path.join(__dirname, '../../scripts/utils/pipeline.mk');
     if (fs.existsSync(mk)) {
       const m = fs.readFileSync(mk, 'utf-8').match(/SCALE\s*\?=\s*(\d+)/);
       if (m) scale = m[1];

@@ -27,16 +27,39 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
     }
 
     protected async executeScrape(url: string, tempHtmlPath: string): Promise<void> {
-        console.log(`🌐 [PyTorch KR Fetch] Fetching ${url} ...`);
-        const response = await fetch(url, {
+        console.log(`🌐 [PyTorch KR Fetch] Fetching JSON API: ${url}.json ...`);
+        const response = await fetch(`${url}.json`, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
             }
         });
         if (!response.ok) {
-            throw new Error(`Failed to fetch PyTorch KR details. Status: ${response.status}`);
+            throw new Error(`Failed to fetch PyTorch KR JSON API. Status: ${response.status}`);
         }
-        const html = await response.text();
+
+        const data = await response.json();
+        const title: string = data.title || 'Unknown Title';
+        const createdAt: string = data.created_at || '';
+        const cooked: string = data.post_stream?.posts?.[0]?.cooked || '';
+        const slug: string = data.slug || '';
+
+        if (!cooked) {
+            throw new Error(`No cooked content in JSON API response for ${url}`);
+        }
+
+        // Reconstruct HTML with div.post[itemprop="text"] for Converter compatibility
+        const html = `<!DOCTYPE html>
+<html>
+<head><title>${title.replace(/</g, '&lt;')} - PyTorchKR</title>
+<link rel="canonical" href="${url}">
+<meta property="article:published_time" content="${createdAt}">
+</head>
+<body>
+<div class="post" itemprop="text">${cooked}</div>
+</body>
+</html>`;
+
         fs.writeFileSync(tempHtmlPath, html, 'utf-8');
     }
 

@@ -27,8 +27,15 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
         }
         
         // Extract publication date
+        let publishedAt: string | null = null;
         const timeTag = $('time[datetime]').first();
-        const publishedAt = timeTag.attr('datetime') || null;
+        if (timeTag.length) {
+            publishedAt = timeTag.attr('datetime') || null;
+        }
+        if (!publishedAt) {
+            const metaTime = $('meta[property="article:published_time"]').attr('content');
+            if (metaTime) publishedAt = metaTime;
+        }
         
         // Extract main text from Discourse post layout
         const postDiv = $('div.post[itemprop="text"]').first();
