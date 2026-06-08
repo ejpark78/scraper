@@ -21,26 +21,49 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
         const finalUrl = canonical || url;
         
         // Extract title
-        let title = $('title').text() || 'Unknown Title';
-        if (title.includes(' - ')) {
-            title = title.split(' - ')[0];
+        let title = '';
+
+        // 1. Try blog layout title
+        const blogTitle = $('h1 a.blog-title').first().text().trim();
+        if (blogTitle) {
+            title = blogTitle;
         }
-        
+
+        // 2. Fallback to <title> tag
+        if (!title) {
+            title = $('title').text() || 'Unknown Title';
+            const sep = title.includes(' | ') ? ' | ' : ' - ';
+            title = title.split(sep)[0];
+        }
+
         // Extract publication date
         let publishedAt: string | null = null;
-        const timeTag = $('time[datetime]').first();
-        if (timeTag.length) {
-            publishedAt = timeTag.attr('datetime') || null;
+
+        // 1. Try blog layout date
+        const featuredPost = $('p.featured-post').first().text().trim();
+        if (featuredPost) {
+            publishedAt = featuredPost;
         }
+
+        // 2. Try <time datetime> tag
+        if (!publishedAt) {
+            const timeTag = $('time[datetime]').first();
+            if (timeTag.length) {
+                publishedAt = timeTag.attr('datetime') || null;
+            }
+        }
+
+        // 3. Try meta property
         if (!publishedAt) {
             const metaTime = $('meta[property="article:published_time"]').attr('content');
             if (metaTime) publishedAt = metaTime;
         }
         
-        // Extract main text from Discourse post layout
-        const postDiv = $('div.post[itemprop="text"]').first();
+        // Extract main content
         let contentText = '';
-        
+
+        // 1. Try Discourse post layout (forum topics)
+        const postDiv = $('div.post[itemprop="text"]').first();
         if (postDiv.length > 0) {
             // Process lightbox wrappers
             postDiv.find('div.lightbox-wrapper').each((_, el) => {
@@ -49,7 +72,7 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
                 const alt = img.attr('alt') || '';
                 const info = lb.find('span.informations');
                 const infoText = info.text() || '';
-                
+
                 const parts: string[] = [];
                 if (alt && alt !== title) {
                     parts.push(alt);
@@ -59,13 +82,12 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
                 }
                 lb.replaceWith(parts.join('\n'));
             });
-            
+
             // Handle other images (like emojis or external images)
             postDiv.find('img').each((_, el) => {
                 const img = $(el);
                 const alt = img.attr('alt') || '';
                 if (alt.startsWith(':')) {
-                    // Emoji
                     img.remove();
                 } else if (alt && alt !== title) {
                     img.replaceWith(alt);
@@ -73,11 +95,28 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
                     img.remove();
                 }
             });
-            
-            // Clean up and construct text
+
             const lines = postDiv.text().split('\n').map(line => line.trim()).filter(line => line.length > 0);
             contentText = lines.join('\n');
-        } else {
+        }
+
+        // 2. Try blog page layout (pytorch.kr/blog/...)
+        if (!contentText) {
+            const blogContent = $('article.pytorch-article div.blog-content').first();
+            if (blogContent.length > 0) {
+                const TurndownService = require('turndown');
+                const turndownService = new TurndownService({
+                    headingStyle: 'atx',
+                    codeBlockStyle: 'fenced',
+                    emDelimiter: '*',
+                    bulletListMarker: '-',
+                });
+                const html = blogContent.html() || '';
+                contentText = turndownService.turndown(html).trim();
+            }
+        }
+
+        if (!contentText) {
             contentText = 'Full content extraction not implemented or post structure changed.';
         }
         
