@@ -338,13 +338,26 @@ async function loadDocumentDetail(id, collection) {
       docUrl.classList.add('hidden');
     }
     
+    // Reference URL (original article) extracted from markdown
+    const docRefUrl = document.getElementById('doc-ref-url');
+    const refMatch = (silver.markdown || '').match(/\[바로가기\]\((https?:\/\/[^)]+)\)/);
+    if (refMatch) {
+      docRefUrl.href = refMatch[1];
+      docRefUrl.classList.remove('hidden');
+    } else {
+      docRefUrl.classList.add('hidden');
+    }
+    
     // Tab 1: Rendered markdown (Silver)
     const renderedPane = document.getElementById('tab-rendered');
     let mdContent = silver.markdown || silver.description || silver.content || '';
     if (mdContent) {
       const cleanedMd = cleanMarkdownContent(mdContent);
+      // Strip comments/discussion section for cleaner rendering
+      const commentMatch = cleanedMd.match(/## 💬 댓글|## 💬 Discussion|## 💬 Comments/i);
+      const displayMd = commentMatch ? cleanedMd.substring(0, cleanedMd.indexOf(commentMatch[0])).trim() : cleanedMd;
       const metaTable = generateMetaTableMarkdown(silver, bronze, collection);
-      renderedPane.innerHTML = marked.parse(cleanedMd + metaTable);
+      renderedPane.innerHTML = marked.parse(displayMd + '\n\n' + metaTable);
     } else if (bronze.rawHtml) {
       renderedPane.innerHTML = `<blockquote>No markdown parsed from Silver layer yet. Showing raw HTML source instead. Use Bronze (HTML) tab for preview.</blockquote>`;
     } else {

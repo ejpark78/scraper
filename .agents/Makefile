@@ -2,7 +2,7 @@
 # 🤖 Agent Infrastructure Management Makefile (.agents/Makefile)
 # ==============================================================================
 
-.PHONY: dump-transcripts dump-context dump-brain
+.PHONY: dump-transcripts dump-context dump-brain prune
 
 dump-transcripts:
 	@npx ts-node .agents/scripts/dump_transcript.ts --all
@@ -22,9 +22,7 @@ compress-rules:
 lint-rules:
 	@npx ts-node .agents/scripts/lint_rules.ts
 
+prune:
+	@npx ts-node .agents/scripts/prune_session.ts
+
 dump-all: dump-sysinfo dump-transcripts dump-context dump-brain compress-rules lint-rules
-
-
-
-
-
