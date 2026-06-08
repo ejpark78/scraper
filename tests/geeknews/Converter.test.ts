@@ -138,7 +138,7 @@ try {
     assert.ok(!content.includes('id="'), 'No id=" in content (HTML attributes)');
     
     // Bullet format validation
-    const bulletLines = content.split('\n').filter(l => l.startsWith('- '));
+    const bulletLines = content.split('\n').filter((l: string) => l.startsWith('- '));
     assert.ok(bulletLines.length >= 10, 'Should have many bullet points');
     
     console.log(`✅ #4265 전체 변환 (${bulletLines.length} bullet points)`);
