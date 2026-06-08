@@ -1,120 +1,93 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
+import { createAdapter, parseAgentsFromArg, assignSessionNumbers, AgentSession, AgentMessage } from './lib/agent_adapter';
 
-class BrainDumper {
-  private readonly baseBrainDir: string;
+function buildBrainDump(session: AgentSession, messages: AgentMessage[]): string {
+  const dateStr = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + ' KST';
+  const totalUserTurns = messages.filter(m => m.role === 'user').length;
+  let totalToolCalls = 0;
+  const toolSummary: Record<string, number> = {};
 
-  constructor() {
-    this.baseBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
+  for (const msg of messages) {
+    if (msg.role === 'assistant') {
+      for (const tool of msg.toolCalls) {
+        totalToolCalls++;
+        toolSummary[tool.name] = (toolSummary[tool.name] || 0) + 1;
+      }
+    }
   }
 
-  public run(allMode: boolean): void {
+  let md = `# 🧠 Brain Dump (Session: ${session.id})\n`;
+  md += `- **Agent**: ${session.agent || 'unknown'}\n`;
+  md += `- **Model**: ${session.model || 'unknown'}\n`;
+  md += `- **Dumped Date**: ${dateStr}\n`;
+  md += `- **Total Turns**: ${totalUserTurns}\n`;
+  md += `- **Total Tool Calls**: ${totalToolCalls}\n`;
+  if (session.tokensInput > 0) {
+    md += `- **Tokens (I/O/Reason)**: ${session.tokensInput} / ${session.tokensOutput} / ${session.tokensReasoning}\n`;
+  }
+  md += '\n';
+
+  md += `## 📊 Tool Usage Summary\n`;
+  if (Object.keys(toolSummary).length > 0) {
+    for (const [tool, count] of Object.entries(toolSummary).sort((a, b) => b[1] - a[1])) {
+      md += `- **${tool}**: ${count} times\n`;
+    }
+  } else {
+    md += '- No tools executed in this session.\n';
+  }
+  md += '\n';
+
+  md += `## 💬 Conversation Summary Timeline\n`;
+  for (const msg of messages) {
+    const roleIcon = msg.role === 'user' ? '🗣️ User' : '🤖 Agent';
+    const truncated = msg.content.length > 300
+      ? msg.content.substring(0, 300).replace(/\n/g, ' ') + '...'
+      : msg.content.replace(/\n/g, ' ');
+    md += `* **[Step ${msg.stepIndex}] ${roleIcon}**: ${truncated}\n`;
+  }
+
+  return md.trim();
+}
+
+function run() {
+  const args = process.argv.slice(2);
+  const allMode = args.includes('--all') || args.includes('-a');
+  const agentFlag = args.find(a => a.startsWith('--agent='));
+  const agents = agentFlag ? parseAgentsFromArg(agentFlag.split('=')[1]) : ['agy'];
+
+  for (const agentName of agents) {
+    console.log(`🧠 Dumping brain for ${agentName}...`);
+
     try {
-      const sessionIds = this.getSessions(allMode);
-      console.log(allMode ? `🧠 Dumping brain data for ALL (${sessionIds.length}) sessions...` : `🧠 Dumping brain data for latest session...`);
+      const adapter = createAdapter(agentName);
+      const sessions = adapter.getSessions(allMode);
+      const pathMap = assignSessionNumbers(sessions);
 
-      sessionIds.forEach(id => {
-        console.log(`-> Session ID: ${id}`);
-        this.dumpBrain(id);
+      sessions.forEach(s => {
+        const info = pathMap.get(s.id);
+        if (!info) return;
+        console.log(`  -> ${info.tag} (${s.title})`);
+
+        const detail = adapter.getSessionDetail(s.id);
+        const md = buildBrainDump(detail.session, detail.messages);
+
+        const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir, info.tag);
+        fs.mkdirSync(outDir, { recursive: true });
+        const outPath = path.join(outDir, 'brain_dump.md');
+        fs.writeFileSync(outPath, md, 'utf-8');
+        console.log(`  ✨ Saved: ${outPath}`);
       });
-      console.log('✅ Done.');
+
     } catch (err: any) {
-      console.error('❌ Error:', err.message);
-      process.exit(1);
+      console.error(`  ❌ Error for ${agentName}: ${err.message}`);
+      if (process.exitCode === undefined) process.exitCode = 1;
     }
   }
 
-  private getSessions(all: boolean): string[] {
-    if (!fs.existsSync(this.baseBrainDir)) {
-      throw new Error(`Directory not found: ${this.baseBrainDir}`);
-    }
-
-    const dirs = fs.readdirSync(this.baseBrainDir)
-      .map(name => {
-        const fullPath = path.join(this.baseBrainDir, name);
-        return {
-          name,
-          isDir: fs.statSync(fullPath).isDirectory(),
-          mtime: fs.statSync(fullPath).mtimeMs
-        };
-      })
-      .filter(item => item.isDir && item.name !== 'scratch' && item.name !== '.system_generated')
-      .sort((a, b) => b.mtime - a.mtime);
-
-    if (dirs.length === 0) {
-      throw new Error('No conversation sessions found.');
-    }
-
-    return all ? dirs.map(d => d.name) : [dirs[0].name];
-  }
-
-  private dumpBrain(conversationId: string): void {
-    const logFilePath = path.join(this.baseBrainDir, conversationId, '.system_generated/logs/transcript_full.jsonl');
-    const outputFilePath = path.join(__dirname, `../transcripts/${conversationId}/brain_dump.md`);
-
-    if (!fs.existsSync(logFilePath)) {
-      console.warn(`[Skip] Log file not found for session ${conversationId}: ${logFilePath}`);
-      return;
-    }
-
-    const lines = fs.readFileSync(logFilePath, 'utf-8').split('\n').filter(Boolean);
-    let totalToolCalls = 0;
-    let toolSummary: { [key: string]: number } = {};
-    const messages: { role: string; content: string; stepIndex: number }[] = [];
-
-    lines.forEach((line) => {
-      try {
-        const step = JSON.parse(line);
-        const stepIndex = step.step_index ?? 0;
-        const rawContent = step.content ?? '';
-        if (step.type === 'USER_INPUT') {
-          messages.push({ role: 'user', content: rawContent, stepIndex });
-        }
-        if (step.type === 'PLANNER_RESPONSE') {
-          messages.push({ role: 'agent', content: rawContent, stepIndex });
-          if (step.tool_calls && step.tool_calls.length > 0) {
-            step.tool_calls.forEach((tool: any) => {
-              totalToolCalls++;
-              toolSummary[tool.name] = (toolSummary[tool.name] || 0) + 1;
-            });
-          }
-        }
-      } catch (e) {}
-    });
-
-    const dateStr = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + ' KST';
-    
-    let brainDumpContent = `# 🧠 Brain Dump (Session: ${conversationId})
-- **Dumped Date**: ${dateStr}
-- **Total Turns**: ${messages.filter(m => m.role === 'user').length}
-- **Total Tool/Command Calls**: ${totalToolCalls}
-
-## 📊 Tool Usage Summary
-${Object.keys(toolSummary).length > 0 
-  ? Object.entries(toolSummary).map(([tool, count]) => `- **${tool}**: ${count} times`).join('\n')
-  : '- No tools executed in this session.'
-}
-
-## 💬 Conversation Summary Timeline
-`;
-
-    messages.forEach((msg) => {
-      const roleIcon = msg.role === 'user' ? '🗣️ User' : '🤖 Agent';
-      const truncatedContent = msg.content.length > 300 
-        ? msg.content.substring(0, 300).replace(/\n/g, ' ') + '...'
-        : msg.content.replace(/\n/g, ' ');
-      brainDumpContent += `* **[Step ${msg.stepIndex}] ${roleIcon}**: ${truncatedContent}\n`;
-    });
-
-    fs.mkdirSync(path.dirname(outputFilePath), { recursive: true });
-    fs.writeFileSync(outputFilePath, brainDumpContent.trim(), 'utf-8');
-    console.log(`✨ Saved brain dump: ${outputFilePath}`);
+  if (process.exitCode !== 1) {
+    console.log('✅ Done.');
   }
 }
 
-const args = process.argv.slice(2);
-const allMode = args.includes('--all') || args.includes('-a');
-
-const dumper = new BrainDumper();
-dumper.run(allMode);
+run();

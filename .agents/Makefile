@@ -1,17 +1,25 @@
 # ==============================================================================
 # 🤖 Agent Infrastructure Management Makefile (.agents/Makefile)
 # ==============================================================================
+# Usage:
+#   make -f .agents/Makefile <TARGET>             # agy only (default)
+#   make -f .agents/Makefile AGENTS=opencode <T>
+#   make -f .agents/Makefile AGENTS=agy,opencode <T>
+
+AGENTS ?= agy
 
 .PHONY: dump-transcripts dump-context dump-brain prune
 
+AGENTS_FLAG = --agent=$(AGENTS)
+
 dump-transcripts:
-	@npx ts-node .agents/scripts/dump_transcript.ts --all
+	@npx ts-node .agents/scripts/dump_transcript.ts --all $(AGENTS_FLAG)
 
 dump-context:
-	@npx ts-node .agents/scripts/dump_context.ts --all
+	@npx ts-node .agents/scripts/dump_context.ts --all $(AGENTS_FLAG)
 
 dump-brain:
-	@npx ts-node .agents/scripts/dump_brain.ts --all
+	@npx ts-node .agents/scripts/dump_brain.ts --all $(AGENTS_FLAG)
 
 dump-sysinfo:
 	@npx ts-node .agents/scripts/dump_sysinfo.ts
