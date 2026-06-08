@@ -18,7 +18,6 @@ const detailContent = document.getElementById('detail-content');
 const docTitle = document.getElementById('doc-title');
 const docSourceBadge = document.getElementById('doc-source-badge');
 const docDate = document.getElementById('doc-date');
-const docUrl = document.getElementById('doc-url');
 const prevPageBtn = document.getElementById('prev-page');
 const nextPageBtn = document.getElementById('next-page');
 const pageIndicator = document.getElementById('page-indicator');
@@ -326,23 +325,19 @@ async function loadDocumentDetail(id, collection) {
       docTitle.textContent = detailSuffix ? `${titleStr} - #${detailSuffix}` : titleStr;
     }
     docSourceBadge.textContent = silver.companyName || silver.site || getSiteNameFromCollection(collection);
+    const gnUrl = silver.id ? `https://news.hada.io/topic?id=${silver.id}` : null;
+    if (gnUrl) {
+      docSourceBadge.href = gnUrl;
+    }
     
     const detailDateVal = silver.updatedAt || silver.collectedAt || silver.createdAt || bronze.scrapedAt;
     docDate.textContent = detailDateVal ? new Date(detailDateVal).toLocaleDateString('ko-KR') : 'N/A';
     
-    const docUrlVal = bronze.url || silver.url;
-    if (docUrlVal) {
-      docUrl.href = docUrlVal;
-      docUrl.classList.remove('hidden');
-    } else {
-      docUrl.classList.add('hidden');
-    }
-    
-    // Reference URL (original article) extracted from markdown
+    // Reference URL (original article link) — silver.url is the external URL for GeekNews
     const docRefUrl = document.getElementById('doc-ref-url');
-    const refMatch = (silver.markdown || '').match(/\[바로가기\]\((https?:\/\/[^)]+)\)/);
-    if (refMatch) {
-      docRefUrl.href = refMatch[1];
+    const refUrl = silver.url;
+    if (refUrl && refUrl !== gnUrl) {
+      docRefUrl.href = refUrl;
       docRefUrl.classList.remove('hidden');
     } else {
       docRefUrl.classList.add('hidden');
@@ -353,9 +348,11 @@ async function loadDocumentDetail(id, collection) {
     let mdContent = silver.markdown || silver.description || silver.content || '';
     if (mdContent) {
       const cleanedMd = cleanMarkdownContent(mdContent);
+      // Strip HTML tags (some JSON-LD text contains raw HTML)
+      const noHtml = cleanedMd.replace(/<[^>]*>/g, '');
       // Strip comments/discussion section for cleaner rendering
-      const commentMatch = cleanedMd.match(/## 💬 댓글|## 💬 Discussion|## 💬 Comments/i);
-      const displayMd = commentMatch ? cleanedMd.substring(0, cleanedMd.indexOf(commentMatch[0])).trim() : cleanedMd;
+      const commentMatch = noHtml.match(/## 💬 댓글|## 💬 Discussion|## 💬 Comments/i);
+      const displayMd = commentMatch ? noHtml.substring(0, noHtml.indexOf(commentMatch[0])).trim() : noHtml;
       const metaTable = generateMetaTableMarkdown(silver, bronze, collection);
       renderedPane.innerHTML = marked.parse(displayMd + '\n\n' + metaTable);
     } else if (bronze.rawHtml) {
@@ -397,8 +394,9 @@ function triggerLazyTabLoad(tabId) {
     let mdContent = activeDoc.silver.markdown || activeDoc.silver.description || activeDoc.silver.content || '';
     if (mdContent) {
       const cleanedMd = cleanMarkdownContent(mdContent);
+      const noHtml = cleanedMd.replace(/<[^>]*>/g, '');
       const metaTable = generateMetaTableMarkdown(activeDoc.silver, activeDoc.bronze, currentCollection);
-      mdContent = cleanedMd + metaTable;
+      mdContent = noHtml + '\n' + metaTable;
     }
     mdCode.textContent = mdContent || 'No markdown content available.';
     

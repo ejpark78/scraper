@@ -42,20 +42,13 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
         let jsonLdRaw: string | null = null;
         let content = '';
         
+        // 2. Extract JSON-LD for comments only; don't use it for content (strips formatting)
         try {
             const jsonLdScript = $('script[type="application/ld+json"]');
             if (jsonLdScript.length > 0) {
                 jsonLdRaw = jsonLdScript.html();
                 if (jsonLdRaw) {
                     const data = JSON.parse(jsonLdRaw);
-                    // Prioritize JSON-LD description text
-                    if (data.text) {
-                        content = data.text.trim();
-                    } else if (data.articleBody) {
-                        content = data.articleBody.trim();
-                    } else if (data.description) {
-                        content = data.description.trim();
-                    }
                     
                     let commentDataList = data.comment || [];
                     if (commentDataList && !Array.isArray(commentDataList)) {
@@ -91,24 +84,50 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
             console.error(`⚠️ JSON-LD 파싱 중 에러 발생: ${e.message}`);
         }
         
-        // 3. Fallback to HTML description/content if JSON-LD content is empty
-        if (!content) {
-            const topicDescEl = $('.topicdesc');
-            if (topicDescEl.length > 0) {
-                const html = topicDescEl.html() || '';
-                try {
-                    const TurndownService = require('turndown');
-                    const turndownService = new TurndownService({
-                        headingStyle: 'atx',
-                        hr: '---',
-                        bullet: '-',
-                        codeBlockStyle: 'fenced'
-                    });
-                    content = turndownService.turndown(html).trim();
-                } catch (err) {
-                    content = topicDescEl.text().trim();
-                }
+        // 3. Extract content: prefer topicdesc / topic_contents HTML with TurndownService
+        //    (preserves formatting vs JSON-LD which often strips newlines)
+        const topicContentsEl = $('.topicdesc, #topic_contents, .topic_contents');
+        if (topicContentsEl.length > 0) {
+            const html = topicContentsEl.first().html() || '';
+            try {
+                const TurndownService = require('turndown');
+                const turndownService = new TurndownService({
+                    headingStyle: 'atx',
+                    hr: '---',
+                    bullet: '-',
+                    codeBlockStyle: 'fenced'
+                });
+                content = turndownService.turndown(html).trim();
+            } catch (err) {
+                // Fall through to JSON-LD fallback
             }
+        }
+        
+        // 4. Fallback to JSON-LD text fields if HTML extraction failed
+        if (!content) {
+            try {
+                const jsonLdScript = $('script[type="application/ld+json"]');
+                if (jsonLdScript.length > 0) {
+                    const raw = jsonLdScript.html();
+                    if (raw) {
+                        const data = JSON.parse(raw);
+                        if (data.articleBody) {
+                            content = data.articleBody.trim();
+                        } else if (data.description) {
+                            content = data.description.trim();
+                        } else if (data.text) {
+                            content = data.text.trim();
+                        }
+                    }
+                }
+            } catch (e: any) {
+                console.error(`⚠️ JSON-LD 콘텐츠 폴백 중 에러: ${e.message}`);
+            }
+        }
+        
+        // 5. Last resort: .topicdesc / #topic_contents plain text
+        if (!content && topicContentsEl.length > 0) {
+            content = topicContentsEl.first().text().trim();
         }
         
         // 4. Fallback to HTML comment parsing if no comments found from JSON-LD
@@ -155,10 +174,23 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
     
     private cleanContent(raw: string): string {
         let c = raw;
+        // Strip HTML tags (JSON-LD text sometimes contains raw HTML)
+        c = c.replace(/<[^>]*>/g, '');
+        // Convert inline dash-separated list to proper markdown bullets
+        // (JSON-LD text often flattens multi-line content into "item - item - item")
+        const dashCount = (c.match(/\s+-\s+/g) || []).length;
+        if (dashCount >= 3 && (c.match(/\n/g) || []).length <= 1) {
+            const parts = c.split(/\s+-\s+/);
+            if (parts.every(p => p.trim().length >= 3)) {
+                c = parts.map(p => `- ${p.trim()}`).join('\n');
+            }
+        }
         // Strip leading article number like "* '#10345'", "* #10345", or "#10345"
         c = c.replace(/^\*?\s*['"#]*\d+\s*['"]*\s*\n?/, '');
         // Normalize list markers: * at line start → -
         c = c.replace(/^[ \t]*\*[ \t]/gm, '- ');
+        // Unescape leading dashes (TurndownService escapes when HTML lacks list tags)
+        c = c.replace(/^\\- /gm, '- ');
         // Shift heading levels down by 1 (## → ###, ### → ####, etc.), preserve # (h1)
         c = c.replace(/^(#{2,})\s/gm, (_, hashes: string) => '#'.repeat(hashes.length + 1) + ' ');
         return c.trimStart();
