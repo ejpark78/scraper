@@ -419,14 +419,26 @@ function triggerLazyTabLoad(tabId) {
   }
   else if (tabId === 'tab-html') {
     const htmlIframe = document.getElementById('html-preview');
-    if (!htmlIframe.srcdoc || htmlIframe.srcdoc === 'about:blank' || htmlIframe.contentWindow.document.body.innerHTML === '') {
-      if (activeDoc.bronze.rawHtml) {
-        htmlIframe.srcdoc = activeDoc.bronze.rawHtml;
-      } else {
-        htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:20px;text-align:center;">
-          <h3>No original HTML preview available for this document</h3>
+    if (activeDoc.bronze.rawHtml) {
+      // Detect Discourse SPA shell (no real content) and show fallback
+      const isSpaShell = activeDoc.bronze.rawHtml.includes('<div id="main-outlet"') || 
+                         activeDoc.bronze.rawHtml.includes('id="discourse-comments"') && 
+                         !activeDoc.bronze.rawHtml.includes('itemprop="text"');
+      if (isSpaShell) {
+        htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:30px;text-align:center;">
+          <h3>⚠️ Bronze HTML is a Discourse SPA shell</h3>
+          <p style="max-width:500px;margin:20px auto;line-height:1.6;">
+            The raw HTML was collected as a JavaScript-rendered SPA page without actual post content.
+            Use the <strong>Silver (Rendered)</strong> or <strong>Silver (JSON)</strong> tabs to view the extracted markdown content.
+          </p>
         </body>`;
+      } else {
+        htmlIframe.srcdoc = activeDoc.bronze.rawHtml;
       }
+    } else {
+      htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:20px;text-align:center;">
+        <h3>No original HTML preview available for this document</h3>
+      </body>`;
     }
   } 
   else if (tabId === 'tab-bronze-json') {

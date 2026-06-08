@@ -12,7 +12,7 @@ down-tools:
 	@echo "🛑 Tools가 중지되었습니다."
 
 up-kasm:
-	$(COMPOSE) --profile tools up -d kasm
+	$(COMPOSE) --profile tools up -d --build kasm
 	@echo "🚀 KASM VDI가 실행되었습니다. https://kasm.localhost 에 접속하세요."
 
 up-mongo:
@@ -36,9 +36,9 @@ up-cronicle:
 	@echo "🚀 Cronicle GUI가 실행되었습니다. https://cron.localhost 에 접속하세요."
 
 up-jupyter:
-	$(COMPOSE) --profile tools up -d jupyter
+	$(COMPOSE) --profile tools up -d --build jupyter
 	@echo "🚀 Jupyter GUI가 실행되었습니다. https://jupyter.localhost 에 접속하세요."
 
 up-viewer:
-	$(COMPOSE) --profile tools up -d viewer
+	$(COMPOSE) --profile tools up -d --build viewer
 	@echo "🚀 Viewer GUI가 실행되었습니다. https://viewer.localhost 에 접속하세요."
