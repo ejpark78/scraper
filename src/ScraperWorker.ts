@@ -85,7 +85,7 @@ class ScraperDispatcher {
         await this.scrapeHttpFetch(url, tempPath);
         break;
       case 'gpters':
-        await this.scrapeHttpFetch(url, tempPath);
+        await this.scrapeGpters(url, tempPath);
         break;
       case 'pytorch_kr':
         await this.scrapePytorchKr(url, tempPath);
@@ -93,6 +93,11 @@ class ScraperDispatcher {
       default:
         throw new Error(`Unsupported site scraper: ${site}`);
     }
+  }
+
+  private extractIdFromGptersUrl(url: string): string {
+    const parts = url.split('-');
+    return parts[parts.length - 1] || '';
   }
 
   private async scrapeHttpFetch(url: string, tempPath: string): Promise<void> {
@@ -107,6 +112,42 @@ class ScraperDispatcher {
     }
     const html = await response.text();
     fs.writeFileSync(tempPath, html, 'utf-8');
+  }
+
+  private async scrapeGpters(url: string, tempPath: string): Promise<void> {
+    const id = this.extractIdFromGptersUrl(url);
+    console.log(`🌐 [GPTERS] Fetching GraphQL API for ID: ${id} ...`);
+    const query = `
+query getPost($id: ID!) {
+  post(id: $id) {
+    id
+    title
+    slug
+    createdAt
+    author { name }
+    reactionsCount
+    repliesCount
+    shortContent
+  }
+}`;
+    const response = await fetch('https://api.bettermode.com/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+      },
+      body: JSON.stringify({ query, variables: { id } })
+    });
+    if (!response.ok) {
+      throw new Error(`GPTERS GraphQL HTTP status ${response.status} for ID ${id}`);
+    }
+    const resJson = await response.json();
+    const post = resJson.data?.post;
+    if (!post) {
+      throw new Error(`GPTERS post ID ${id} not found in GraphQL response`);
+    }
+    fs.writeFileSync(tempPath, JSON.stringify(post), 'utf-8');
   }
 
   private async scrapePytorchKr(url: string, tempPath: string): Promise<void> {
@@ -317,6 +358,7 @@ class ScraperWorker {
     const updateFilter = { [config.updateFilterKey]: id };
     const updatePayload = {
       ...updateFilter,
+      id,
       url,
       rawHtml,
       scrapedAt: new Date(),

@@ -70,16 +70,26 @@ async function main() {
         const pathSpec = `${dbName}/${collectionName}` as `${'bronze' | 'silver'}/${string}`;
         const bronzeColl = await mongo.getCollection(pathSpec);
         
-        const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { postId: id } : site === 'pytorch_kr' ? { $or: [{ topicId: id }, { id: id }] } : { topicId: id };
+        const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { $or: [{ postId: id }, { id: id }] } : site === 'pytorch_kr' ? { $or: [{ topicId: id }, { id: id }] } : { topicId: id };
         const rawDoc = await bronzeColl.findOne(filter);
 
-        if (!rawDoc || !rawDoc.rawHtml) {
-          throw new Error(`Raw HTML document not found in ${pathSpec} for ID ${id}`);
+        if (!rawDoc) {
+          throw new Error(`Raw document not found in ${pathSpec} for ID ${id}`);
+        }
+
+        // Accept rawHtml (new) or rawJson (legacy) for gpters
+        let rawContent: string;
+        if (rawDoc.rawHtml) {
+          rawContent = rawDoc.rawHtml;
+        } else if (rawDoc.rawJson) {
+          rawContent = typeof rawDoc.rawJson === 'string' ? rawDoc.rawJson : JSON.stringify(rawDoc.rawJson);
+        } else {
+          throw new Error(`No rawHtml or rawJson found in ${pathSpec} for ID ${id}`);
         }
 
         // Run Transform
         const converter = ConverterFactory.getConverter(site);
-        let meta = converter.convertHtmlToMarkdown(rawDoc.rawHtml, id, rawDoc.url || '');
+        let meta = converter.convertHtmlToMarkdown(rawContent, id, rawDoc.url || '');
 
         // Fallback: for pytorch_kr, try JSON API when content is empty (old SPA bronze data)
         if (site === 'pytorch_kr' && (!meta.content?.trim() || meta.content === `${meta.title}\n`)) {
