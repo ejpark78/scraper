@@ -326,8 +326,12 @@ async function loadDocumentDetail(id, collection) {
     }
     docSourceBadge.textContent = silver.companyName || silver.site || getSiteNameFromCollection(collection);
     const isGeeknews = collection.includes('geeknews');
+    const isGpters = collection.includes('gpters');
     const gnUrl = isGeeknews && silver.id ? `https://news.hada.io/topic?id=${silver.id}` : null;
     const refUrl = silver.url;
+    if (isGpters && silver.spaceName) {
+      docSourceBadge.textContent = `GPters · ${silver.spaceName}`;
+    }
     if (gnUrl) {
       docSourceBadge.href = gnUrl;
     } else if (refUrl) {
@@ -487,6 +491,9 @@ function generateMetaTableMarkdown(silver, bronze, collection) {
   
   const source = getSiteNameFromCollection(collection);
   rows.push(`| **Source (출처)** | ${source} (\`${collection}\`) |`);
+  
+  const space = silver.spaceName || '';
+  if (space) rows.push(`| **Space (스페이스)** | ${space} |`);
   
   const url = bronze.url || silver.url || '';
   if (url) rows.push(`| **URL** | [Link ↗](${url}) |`);

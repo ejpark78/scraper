@@ -72,7 +72,7 @@ export class TargetLoader {
 
     } else if (site === 'gpters') {
       const collection = await mongo.getCollection('silver/gpters.contents');
-      const doc = {
+      const doc: Record<string, any> = {
         id: id,
         title: meta.title || 'Untitled',
         url: meta.url || null,
@@ -84,6 +84,9 @@ export class TargetLoader {
         markdown: meta.rawContent || null,
         updatedAt: new Date()
       };
+      if (meta.spaceId) doc.spaceId = meta.spaceId;
+      if (meta.spaceName) doc.spaceName = meta.spaceName;
+      if (meta.spaceSlug) doc.spaceSlug = meta.spaceSlug;
 
       await collection.updateOne(
         { id: id },

@@ -24,57 +24,45 @@ export class GptersList {
         }
     }
 
+    private async fetchGuestToken(): Promise<string> {
+        const res = await fetch('https://www.gpters.org/news');
+        const html = await res.text();
+        const match = html.match(/accessToken":"([^"]+)"/);
+        if (!match) {
+            throw new Error('Failed to extract GPTERS guest access token from homepage');
+        }
+        return match[1];
+    }
+
     public async run(limit: number = 20): Promise<number> {
-        console.log(`🌐 [GPTERS List] Fetching news feed via GraphQL...`);
+        const pageEnv = process.env.PAGE || '0';
+        const maxPages = parseInt(pageEnv, 10) || 0;
+        const slackSec = parseInt(process.env.SLACK_TIME || '3', 10);
+        console.log(`🌐 [GPTERS List] Fetching guest access token...`);
+        const token = await this.fetchGuestToken();
 
         const query = `
-        query getNewsFeed($spaceSlug: String!, $limit: Int!, $after: String) { 
-          posts(spaceSlug: $spaceSlug, limit: $limit, after: $after) { 
+        query getNewsFeed($limit: Int!, $after: String) {
+          posts(limit: $limit, after: $after) {
             nodes {
-              id 
-              title 
-              slug 
-              createdAt 
-              author { 
-                name 
-              } 
-              reactionsCount 
-              repliesCount 
+              id
+              title
+              slug
+              createdAt
+              createdBy { member { name } }
+              reactionsCount
+              repliesCount
               shortContent
+              fields { key value }
+              space { id name slug }
             }
             pageInfo {
               hasNextPage
               endCursor
             }
-          } 
+          }
         }
         `;
-
-        const response = await fetch('https://api.bettermode.com/graphql', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-            },
-            body: JSON.stringify({
-                operationName: 'getNewsFeed',
-                query,
-                variables: {
-                    spaceSlug: 'news',
-                    limit,
-                    after: null
-                }
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch GPTERS index via GraphQL. Status: ${response.status}`);
-        }
-
-        const resJson = await response.json();
-        const posts = resJson.data?.posts?.nodes || [];
-        console.log(`🔍 [GPTERS List] Found ${posts.length} posts on index.`);
 
         const dbInstance = MongoDatabase.getInstance();
         const gptersUrlsColl = await dbInstance.getCollection('bronze/gpters.urls');
@@ -100,8 +88,53 @@ export class GptersList {
         }
 
         let queuedCount = 0;
+        const overwrite = process.env.OVERWRITE === 'true';
+        let after: string | null = null;
+        let page = 0;
+        let hasNextPage = true;
+        let r: Response;
+        let resJson: any;
+        let postData: any;
+        let posts: any[];
+        let pageInfo: any;
 
-        for (const post of posts) {
+        do {
+            page++;
+            console.log(`📄 [GPTERS List] Fetching page ${page}${maxPages > 0 ? '/' + maxPages : ''}...`);
+
+            r = await fetch('https://api.bettermode.com/graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                },
+                body: JSON.stringify({
+                    operationName: 'getNewsFeed',
+                    query,
+                    variables: { limit, after }
+                })
+            });
+
+            if (!r.ok) {
+                const body = await r.text().catch(() => '');
+                throw new Error(`Failed to fetch GPTERS index via GraphQL. Status: ${r.status}: ${body.slice(0, 200)}`);
+            }
+
+            resJson = await r.json();
+            postData = resJson.data?.posts;
+            posts = postData?.nodes || [];
+            pageInfo = postData?.pageInfo || {};
+            hasNextPage = pageInfo.hasNextPage || false;
+            console.log(`🔍 [GPTERS List] Page ${page}: ${posts.length} posts (hasNextPage: ${hasNextPage})`);
+
+            if (posts.length === 0) {
+                console.log(`📭 [GPTERS List] No more posts, stopping early.`);
+                break;
+            }
+
+            for (const post of posts) {
             const id = post.id;
             const slug = post.slug;
             const title = post.title;
@@ -111,26 +144,33 @@ export class GptersList {
             // GPTERS post URL structure
             const detailUrl = `https://www.gpters.org/news/post/${slug}-${id}`;
 
+            if (overwrite) {
+                await this.redis.srem(CACHE_SET_KEY, id);
+            }
+
             // Check if already completed
-            const isCompleted = await this.redis.sismember(CACHE_SET_KEY, id);
+            const isCompleted = overwrite ? false : await this.redis.sismember(CACHE_SET_KEY, id);
 
             // Upsert URL metadata to MongoDB
-            await gptersUrlsColl.updateOne(
-                { id },
-                {
-                    $set: {
-                        id,
-                        url: detailUrl,
-                        title,
-                        status: isCompleted ? 'completed' : 'new',
-                        updatedAt: new Date()
-                    },
-                    $setOnInsert: {
-                        pushedToRedis: isCompleted ? true : false
-                    }
-                },
-                { upsert: true }
-            );
+            const updateDoc: any = {
+                $set: {
+                    id,
+                    url: detailUrl,
+                    title,
+                    status: isCompleted ? 'completed' : 'new',
+                    updatedAt: new Date()
+                }
+            };
+
+            if (overwrite) {
+                updateDoc.$set.pushedToRedis = false;
+            } else {
+                updateDoc.$setOnInsert = {
+                    pushedToRedis: isCompleted ? true : false
+                };
+            }
+
+            await gptersUrlsColl.updateOne({ id }, updateDoc, { upsert: true });
 
             if (isCompleted) {
                 console.log(`⏭️ [GPTERS List] Skipping already completed item: [ID: ${id}] ${title}`);
@@ -155,12 +195,23 @@ export class GptersList {
                     { id },
                     { $set: { pushedToRedis: true } }
                 );
-                console.log(`🚀 [GPTERS List] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
+                console.log(`🚀 [GPTERS List] Queued (Force Overwrite: ${overwrite}): [ID: ${id}] ${title} -> ${detailUrl}`);
                 queuedCount++;
             }
         }
 
-        console.log(`🎉 [GPTERS List] Successfully queued ${queuedCount} items.`);
+            after = pageInfo.endCursor || null;
+            if (queuedCount > 0) {
+                console.log(`⏳ [GPTERS List] ${queuedCount} queued so far (page ${page})`);
+            }
+
+            if (hasNextPage && (maxPages === 0 || page < maxPages) && slackSec > 0) {
+                console.log(`💤 [GPTERS List] ${slackSec}초 대기 후 다음 페이지 요청...`);
+                await new Promise(resolve => setTimeout(resolve, slackSec * 1000));
+            }
+        } while (hasNextPage && (maxPages === 0 || page < maxPages));
+
+        console.log(`🎉 [GPTERS List] Done. Queried ${page} page(s), queued ${queuedCount} items.`);
         return queuedCount;
     }
 }

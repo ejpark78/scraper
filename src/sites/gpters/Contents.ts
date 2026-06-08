@@ -29,8 +29,15 @@ export class GptersContents extends BasePipeline<GptersMeta> {
 
     protected async executeScrape(url: string, tempHtmlPath: string): Promise<void> {
         const id = this.extractId(url);
-        console.log(`🌐 [GPTERS GraphQL Fetch] Fetching single post ID: ${id} ...`);
 
+        console.log(`🌐 [GPTERS] Fetching guest access token...`);
+        const tokenRes = await fetch('https://www.gpters.org/news');
+        const tokenHtml = await tokenRes.text();
+        const tokenMatch = tokenHtml.match(/accessToken":"([^"]+)"/);
+        if (!tokenMatch) throw new Error('Failed to extract GPTERS guest access token');
+        const token = tokenMatch[1];
+
+        console.log(`🔑 [GPTERS GraphQL Fetch] Fetching single post ID: ${id} ...`);
         const query = `
         query getPost($id: ID!) {
           post(id: $id) {
@@ -38,12 +45,12 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             title
             slug
             createdAt
-            author {
-              name
-            }
+            createdBy { member { name } }
             reactionsCount
             repliesCount
             shortContent
+            fields { key value }
+            space { id name slug }
           }
         }
         `;
@@ -53,6 +60,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`,
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
             },
             body: JSON.stringify({
@@ -62,7 +70,8 @@ export class GptersContents extends BasePipeline<GptersMeta> {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch GPTERS post details via GraphQL. Status: ${response.status}`);
+            const body = await response.text().catch(() => '');
+            throw new Error(`Failed to fetch GPTERS post details via GraphQL. Status: ${response.status}: ${body.slice(0, 200)}`);
         }
 
         const resJson = await response.json();

@@ -114,9 +114,21 @@ class ScraperDispatcher {
     fs.writeFileSync(tempPath, html, 'utf-8');
   }
 
+  private async fetchGptersGuestToken(): Promise<string> {
+    const res = await fetch('https://www.gpters.org/news');
+    const html = await res.text();
+    const match = html.match(/accessToken":"([^"]+)"/);
+    if (!match) {
+      throw new Error('Failed to extract GPTERS guest access token from homepage');
+    }
+    return match[1];
+  }
+
   private async scrapeGpters(url: string, tempPath: string): Promise<void> {
     const id = this.extractIdFromGptersUrl(url);
-    console.log(`🌐 [GPTERS] Fetching GraphQL API for ID: ${id} ...`);
+    console.log(`🌐 [GPTERS] Fetching guest access token...`);
+    const token = await this.fetchGptersGuestToken();
+    console.log(`🔑 [GPTERS] Fetching GraphQL API for ID: ${id} ...`);
     const query = `
 query getPost($id: ID!) {
   post(id: $id) {
@@ -124,10 +136,12 @@ query getPost($id: ID!) {
     title
     slug
     createdAt
-    author { name }
+    createdBy { member { name } }
     reactionsCount
     repliesCount
     shortContent
+    fields { key value }
+    space { id name slug }
   }
 }`;
     const response = await fetch('https://api.bettermode.com/graphql', {
@@ -135,12 +149,14 @@ query getPost($id: ID!) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
       },
       body: JSON.stringify({ query, variables: { id } })
     });
     if (!response.ok) {
-      throw new Error(`GPTERS GraphQL HTTP status ${response.status} for ID ${id}`);
+      const body = await response.text().catch(() => '');
+      throw new Error(`GPTERS GraphQL HTTP status ${response.status} for ID ${id}: ${body.slice(0, 200)}`);
     }
     const resJson = await response.json();
     const post = resJson.data?.post;

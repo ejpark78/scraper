@@ -134,25 +134,30 @@ export class GeekNewsList {
             if (!id) continue;
 
             // Check if already completed
-            const isCompleted = await this.redis.sismember(CACHE_SET_KEY, id);
+            const overwrite = process.env.OVERWRITE === 'true';
+            if (overwrite) {
+                await this.redis.srem(CACHE_SET_KEY, id);
+            }
+            const isCompleted = overwrite ? false : await this.redis.sismember(CACHE_SET_KEY, id);
 
             // Upsert URL metadata to MongoDB
-            await geeknewsUrlsColl.updateOne(
-                { id },
-                {
-                    $set: {
-                        id,
-                        url: detailUrl,
-                        title,
-                        status: isCompleted ? 'completed' : 'new',
-                        updatedAt: new Date()
-                    },
-                    $setOnInsert: {
-                        pushedToRedis: isCompleted ? true : false
-                    }
-                },
-                { upsert: true }
-            );
+            const updateDoc: any = {
+                $set: {
+                    id,
+                    url: detailUrl,
+                    title,
+                    status: isCompleted ? 'completed' : 'new',
+                    updatedAt: new Date()
+                }
+            };
+            if (overwrite) {
+                updateDoc.$set.pushedToRedis = false;
+            } else {
+                updateDoc.$setOnInsert = {
+                    pushedToRedis: isCompleted ? true : false
+                };
+            }
+            await geeknewsUrlsColl.updateOne({ id }, updateDoc, { upsert: true });
 
             if (isCompleted) {
                 console.log(`⏭️ [GeekNews List] Skipping already completed item: [ID: ${id}] ${title}`);
@@ -181,7 +186,7 @@ export class GeekNewsList {
                     { id },
                     { $set: { pushedToRedis: true } }
                 );
-                console.log(`🚀 [GeekNews List] Queued: [ID: ${id}] ${title} -> ${detailUrl}`);
+                console.log(`🚀 [GeekNews List] Queued (Force Overwrite: ${overwrite}): [ID: ${id}] ${title} -> ${detailUrl}`);
                 queuedCount++;
             }
         }
