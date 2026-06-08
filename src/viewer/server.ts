@@ -29,9 +29,9 @@ app.get('/api/collections', async (req: Request, res: Response) => {
     const collections = [
       { id: 'linkedin.jobs', name: 'LinkedIn Jobs' },
       { id: 'silver/linkedin.companies', name: 'LinkedIn Companies' },
-      { id: 'silver/geeknews.contents', name: 'GeekNews Contents' },
-      { id: 'silver/gpters.contents', name: 'GPters Contents' },
-      { id: 'silver/pytorch_kr.contents', name: 'PyTorch KR Contents' }
+      { id: 'silver/geeknews.contents', name: 'GeekNews' },
+      { id: 'silver/gpters.contents', name: 'GPters' },
+      { id: 'silver/pytorch_kr.contents', name: 'PyTorch KR' }
     ];
     res.json(collections);
   } catch (error: any) {

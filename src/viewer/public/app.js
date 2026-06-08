@@ -325,23 +325,21 @@ async function loadDocumentDetail(id, collection) {
       docTitle.textContent = detailSuffix ? `${titleStr} - #${detailSuffix}` : titleStr;
     }
     docSourceBadge.textContent = silver.companyName || silver.site || getSiteNameFromCollection(collection);
-    const gnUrl = silver.id ? `https://news.hada.io/topic?id=${silver.id}` : null;
+    const isGeeknews = collection.includes('geeknews');
+    const gnUrl = isGeeknews && silver.id ? `https://news.hada.io/topic?id=${silver.id}` : null;
+    const refUrl = silver.url;
     if (gnUrl) {
       docSourceBadge.href = gnUrl;
+    } else if (refUrl) {
+      docSourceBadge.href = refUrl;
+    } else {
+      docSourceBadge.removeAttribute('href');
     }
     
     const detailDateVal = silver.updatedAt || silver.collectedAt || silver.createdAt || bronze.scrapedAt;
     docDate.textContent = detailDateVal ? new Date(detailDateVal).toLocaleDateString('ko-KR') : 'N/A';
     
-    // Reference URL (original article link) — silver.url is the external URL for GeekNews
-    const docRefUrl = document.getElementById('doc-ref-url');
-    const refUrl = silver.url;
-    if (refUrl && refUrl !== gnUrl) {
-      docRefUrl.href = refUrl;
-      docRefUrl.classList.remove('hidden');
-    } else {
-      docRefUrl.classList.add('hidden');
-    }
+    document.getElementById('doc-ref-url').classList.add('hidden');
     
     // Tab 1: Rendered markdown (Silver)
     const renderedPane = document.getElementById('tab-rendered');

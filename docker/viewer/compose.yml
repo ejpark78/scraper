@@ -23,10 +23,6 @@ services:
       - REDIS_URL=redis://redis:6379
       - PORT=3000
     volumes:
-      - ${HOST_PROJECT_PATH:-.}/src:/app/src
-      - ${HOST_PROJECT_PATH:-.}/tests:/app/tests
-      - ${HOST_PROJECT_PATH:-.}/package.json:/app/package.json
-      - ${HOST_PROJECT_PATH:-.}/tsconfig.json:/app/tsconfig.json
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
