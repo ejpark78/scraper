@@ -18,10 +18,6 @@ export class PyTorchKRRefresh {
             const totalDocs = await bronzePytorch.countDocuments({});
             console.log(`📥 Found ${totalDocs} raw topics in bronze.pytorch_kr.`);
 
-            const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'pytorch_kr');
-            fs.mkdirSync(path.join(baseDir, 'html'), { recursive: true });
-            fs.mkdirSync(path.join(baseDir, 'markdown'), { recursive: true });
-
             let processed = 0;
             while (await cursor.hasNext()) {
                 const doc = await cursor.next();
@@ -33,10 +29,11 @@ export class PyTorchKRRefresh {
                 try {
                     // 1. Convert to Markdown
                     let meta = converter.convertHtmlToMarkdown(rawHtml, id, url || '');
+                    const { year, month } = this.getDatePathParts(meta.publishedAt);
 
                     // 1b. Download images and update markdown URLs
                     try {
-                        const imageBaseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'images', 'pytorch_kr', id);
+                        const imageBaseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'pytorch_kr', year, month, 'images', id);
                         fs.mkdirSync(imageBaseDir, { recursive: true });
 
                         const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
@@ -101,7 +98,7 @@ export class PyTorchKRRefresh {
                                     : '.jpg';
                                 const filename = `img_${processedUrls.size}${ext}`;
                                 fs.writeFileSync(path.join(imageBaseDir, filename), buffer);
-                                processedUrls.set(originalSrc, `/images/pytorch_kr/${id}/${filename}`);
+                                processedUrls.set(originalSrc, `/pytorch_kr/${year}/${month}/images/${id}/${filename}`);
                             } catch (imgErr: any) {
                                 console.warn(`⚠️ [PyTorch KR Image] Failed to download
           doc : ${url}
@@ -145,6 +142,7 @@ export class PyTorchKRRefresh {
                     );
 
                     // 3. Local Backup Files
+                    const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'pytorch_kr', year, month);
                     const htmlPath = path.join(baseDir, 'html', `${id}.html`);
                     const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
                     fs.writeFileSync(htmlPath, rawHtml, 'utf-8');
@@ -164,6 +162,19 @@ export class PyTorchKRRefresh {
         } finally {
             await mongo.close();
         }
+    }
+
+    private getDatePathParts(publishedAt: string | null): { year: string; month: string } {
+        if (publishedAt) {
+            const d = new Date(publishedAt);
+            if (!isNaN(d.getTime())) {
+                return {
+                    year: d.getFullYear().toString(),
+                    month: String(d.getMonth() + 1).padStart(2, '0')
+                };
+            }
+        }
+        return { year: 'unknown', month: 'unknown' };
     }
 }
 

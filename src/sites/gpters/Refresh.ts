@@ -18,10 +18,6 @@ export class GptersRefresh {
             const docs = await cursor.toArray();
             console.log(`📥 Loaded ${docs.length} raw posts from bronze.gpters.`);
 
-            const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'gpters');
-            fs.mkdirSync(path.join(baseDir, 'json'), { recursive: true });
-            fs.mkdirSync(path.join(baseDir, 'markdown'), { recursive: true });
-
             let processed = 0;
             for (const doc of docs) {
                 const { id, rawHtml, rawJson, url } = doc;
@@ -47,6 +43,7 @@ export class GptersRefresh {
                         rawJsonStr = String(post);
                         meta = converter.convertHtmlToMarkdown(rawJsonStr, id, url || '');
                     }
+                    const { year, month } = this.getDatePathParts(meta.publishedAt);
 
                     // 1b. Download images and update markdown URLs
                     try {
@@ -58,7 +55,7 @@ export class GptersRefresh {
                         }
                         const htmlContent = (post && typeof post === 'object' ? (fieldsMap.content || post.shortContent || '') : String(post)).replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
 
-                        const imageBaseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'images', 'gpters', id);
+                        const imageBaseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'gpters', year, month, 'images', id);
                         fs.mkdirSync(imageBaseDir, { recursive: true });
 
                         const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
@@ -123,7 +120,7 @@ export class GptersRefresh {
                                     : '.jpg';
                                 const filename = `img_${processedUrls.size}${ext}`;
                                 fs.writeFileSync(path.join(imageBaseDir, filename), buffer);
-                                processedUrls.set(originalSrc, `/images/gpters/${id}/${filename}`);
+                                processedUrls.set(originalSrc, `/gpters/${year}/${month}/images/${id}/${filename}`);
                             } catch (imgErr: any) {
                                 console.warn(`⚠️ [GPTers Image] Failed to download
           doc : ${url}
@@ -170,9 +167,10 @@ export class GptersRefresh {
                     );
 
                     // 3. Local Backup Files
+                    const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'gpters', year, month);
                     const jsonPath = path.join(baseDir, 'json', `${id}.json`);
                     const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
-                    fs.writeFileSync(jsonPath, rawJsonStr, 'utf-8');
+                    await converter.prettifyJsonAndSave(rawJsonStr, jsonPath);
                     await converter.prettifyAndSave(meta.rawContent, mdPath);
 
                     processed++;
@@ -189,6 +187,19 @@ export class GptersRefresh {
         } finally {
             await mongo.close();
         }
+    }
+
+    private getDatePathParts(publishedAt: string | null): { year: string; month: string } {
+        if (publishedAt) {
+            const d = new Date(publishedAt);
+            if (!isNaN(d.getTime())) {
+                return {
+                    year: d.getFullYear().toString(),
+                    month: String(d.getMonth() + 1).padStart(2, '0')
+                };
+            }
+        }
+        return { year: 'unknown', month: 'unknown' };
     }
 }
 

@@ -87,7 +87,21 @@ export class GptersContents extends BasePipeline<GptersMeta> {
         return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
     }
 
+    private getDatePathParts(publishedAt: string | null): { year: string; month: string } {
+        if (publishedAt) {
+            const d = new Date(publishedAt);
+            if (!isNaN(d.getTime())) {
+                return {
+                    year: d.getFullYear().toString(),
+                    month: String(d.getMonth() + 1).padStart(2, '0')
+                };
+            }
+        }
+        return { year: 'unknown', month: 'unknown' };
+    }
+
     protected async saveResults(meta: GptersMeta, id: string, tempHtmlPath: string, _redisInstance?: any): Promise<{ targetDirName: string }> {
+        const { year, month } = this.getDatePathParts(meta.publishedAt);
         const rawJsonContent = fs.readFileSync(tempHtmlPath, 'utf-8');
         let parsedJson: any = {};
         try {
@@ -106,7 +120,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             const htmlContent = (fieldsMap.content || parsedJson.shortContent || '').replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
 
             const projectRoot = path.resolve(__dirname, '..', '..', '..');
-            const imageBaseDir = path.join(projectRoot, 'data', 'sites', 'images', 'gpters', id);
+            const imageBaseDir = path.join(projectRoot, 'data', 'sites', 'gpters', year, month, 'images', id);
             fs.mkdirSync(imageBaseDir, { recursive: true });
 
             const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
@@ -178,7 +192,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
                     const filepath = path.join(imageBaseDir, filename);
                     fs.writeFileSync(filepath, buffer);
 
-                    const localUrl = `/images/gpters/${id}/${filename}`;
+                    const localUrl = `/gpters/${year}/${month}/images/${id}/${filename}`;
                     processedUrls.set(originalSrc, localUrl);
                     console.log(`✅ [GPTers Image] Saved ${filename} (${buffer.length} bytes) from ${absoluteUrl}`);
                 } catch (err: any) {
@@ -257,7 +271,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
 
             // 4. Local File System Backup
             const projectRoot = path.resolve(__dirname, '..', '..', '..');
-            const baseDir = path.join(projectRoot, 'data', 'sites', 'gpters');
+            const baseDir = path.join(projectRoot, 'data', 'sites', 'gpters', year, month);
             const jsonPath = path.join(baseDir, 'json', `${id}.json`);
             const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
 
@@ -266,7 +280,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             fs.mkdirSync(path.dirname(mdPath), { recursive: true });
 
             // Save JSON
-            fs.writeFileSync(jsonPath, rawJsonContent, 'utf-8');
+            await this.converter.prettifyJsonAndSave(rawJsonContent, jsonPath);
 
             // Save Markdown
             await this.converter.prettifyAndSave(meta.rawContent, mdPath);

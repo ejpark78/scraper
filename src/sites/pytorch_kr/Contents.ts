@@ -89,14 +89,28 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
         return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
     }
 
+    private getDatePathParts(publishedAt: string | null): { year: string; month: string } {
+        if (publishedAt) {
+            const d = new Date(publishedAt);
+            if (!isNaN(d.getTime())) {
+                return {
+                    year: d.getFullYear().toString(),
+                    month: String(d.getMonth() + 1).padStart(2, '0')
+                };
+            }
+        }
+        return { year: 'unknown', month: 'unknown' };
+    }
+
     protected async saveResults(meta: PyTorchKRMeta, id: string, tempHtmlPath: string, _redisInstance?: any): Promise<{ targetDirName: string }> {
+        const { year, month } = this.getDatePathParts(meta.publishedAt);
         const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
         // Download images from rawHtml and replace URLs in markdown
         let updatedMarkdown = meta.rawContent;
         try {
             const projectRoot = path.resolve(__dirname, '..', '..', '..');
-            const imageBaseDir = path.join(projectRoot, 'data', 'sites', 'images', 'pytorch_kr', id);
+            const imageBaseDir = path.join(projectRoot, 'data', 'sites', 'pytorch_kr', year, month, 'images', id);
             fs.mkdirSync(imageBaseDir, { recursive: true });
 
             const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
@@ -162,7 +176,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
 
                     const filename = `img_${processedUrls.size}${ext}`;
                     fs.writeFileSync(path.join(imageBaseDir, filename), buffer);
-                    processedUrls.set(originalSrc, `/images/pytorch_kr/${id}/${filename}`);
+                    processedUrls.set(originalSrc, `/pytorch_kr/${year}/${month}/images/${id}/${filename}`);
                     console.log(`✅ [PyTorch KR Image] Saved ${filename} (${buffer.length} bytes) from ${absoluteUrl}`);
                 } catch (err: any) {
                     console.warn(`⚠️ [PyTorch KR Image] Failed to download
@@ -236,7 +250,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
 
             // 4. Local File System Backup
             const projectRoot = path.resolve(__dirname, '..', '..', '..');
-            const baseDir = path.join(projectRoot, 'data', 'sites', 'pytorch_kr');
+            const baseDir = path.join(projectRoot, 'data', 'sites', 'pytorch_kr', year, month);
             const htmlPath = path.join(baseDir, 'html', `${id}.html`);
             const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
 

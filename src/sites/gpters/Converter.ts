@@ -78,9 +78,30 @@ export class GptersConverter implements IConverter<GptersMeta> {
         });
         return formatted.trim() + '\n';
     }
+
+    public async prettifyJson(rawJsonStr: string): Promise<string> {
+        if (!rawJsonStr.trim()) return rawJsonStr;
+        const formatted = await prettier.format(rawJsonStr, {
+            parser: 'json',
+            tabWidth: 2,
+            printWidth: 100
+        });
+        return formatted.trim() + '\n';
+    }
     
     public async prettifyAndSave(rawText: string, outputPath: string): Promise<void> {
         const result = await this.prettify(rawText);
+        const fs = require('fs');
+        const path = require('path');
+        const parentDir = path.dirname(outputPath);
+        if (!fs.existsSync(parentDir)) {
+            fs.mkdirSync(parentDir, { recursive: true });
+        }
+        fs.writeFileSync(outputPath, result, 'utf-8');
+    }
+
+    public async prettifyJsonAndSave(rawJsonStr: string, outputPath: string): Promise<void> {
+        const result = await this.prettifyJson(rawJsonStr);
         const fs = require('fs');
         const path = require('path');
         const parentDir = path.dirname(outputPath);
