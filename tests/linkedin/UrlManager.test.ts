@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { LinkedInUrlManager, Config } from '../../src/sites/linkedin/jobs/UrlManager';
+import { LinkedInUrlManager, Config } from '../../src/crawler/sites/linkedin/jobs/UrlManager';
 
 console.log('🧪 [시작] url_manager.ts 단위 테스트(Unit Test)를 실행합니다.');
 

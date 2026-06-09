@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { GeekNewsConverter } from '../../src/sites/geeknews/Converter';
+import { GeekNewsConverter } from '../../src/crawler/sites/geeknews/Converter';
 
 console.log('🧪 [시작] GeekNews Converter 단위 테스트\n');
 

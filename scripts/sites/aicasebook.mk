@@ -12,10 +12,10 @@ OVERWRITE ?= false
 
 list: PRIORITY := high
 list:
-	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/aicasebook/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/aicasebook/List.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/aicasebook/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/aicasebook/RefreshUrls.ts
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/aicasebook/QueueTransform.ts
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler/sites/aicasebook/QueueTransform.ts

@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { PyTorchKRConverter } from '../../src/sites/pytorch_kr/Converter';
+import { PyTorchKRConverter } from '../../src/crawler/sites/pytorch_kr/Converter';
 
 const converter = new PyTorchKRConverter();
 

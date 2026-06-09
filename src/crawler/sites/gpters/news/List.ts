@@ -1,0 +1,232 @@
+import Redis from 'ioredis';
+import { MongoDatabase } from '../../../../database/mongo';
+
+const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
+const QUEUE_KEY = 'gpters_queue';
+const CACHE_SET_KEY = 'completed_news';
+
+export class GptersList {
+    private redis!: Redis;
+
+    public async init(): Promise<void> {
+        this.redis = new Redis(REDIS_URL);
+        console.log(`📡 [GPTERS List] Connected to Redis for queueing.`);
+    }
+
+    public async close(): Promise<void> {
+        if (this.redis) {
+            await this.redis.quit();
+        }
+        try {
+            await MongoDatabase.getInstance().close();
+        } catch (err: any) {
+            console.warn(`⚠️ Error closing MongoDB connection: ${err.message}`);
+        }
+    }
+
+    private async fetchGuestToken(): Promise<string> {
+        const res = await fetch('https://www.gpters.org/news');
+        const html = await res.text();
+        const match = html.match(/accessToken":"([^"]+)"/);
+        if (!match) {
+            throw new Error('Failed to extract GPTERS guest access token from homepage');
+        }
+        return match[1];
+    }
+
+    public async run(limit: number = 20): Promise<number> {
+        const pageEnv = process.env.PAGE || '0';
+        const maxPages = parseInt(pageEnv, 10) || 0;
+        const slackSec = parseInt(process.env.SLACK_TIME || '3', 10);
+        console.log(`🌐 [GPTERS List] Fetching guest access token...`);
+        const token = await this.fetchGuestToken();
+
+        const query = `
+        query getNewsFeed($limit: Int!, $after: String) {
+          posts(limit: $limit, after: $after) {
+            nodes {
+              id
+              title
+              slug
+              createdAt
+              createdBy { member { name } }
+              reactionsCount
+              repliesCount
+              shortContent
+              fields { key value }
+              space { id name slug }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+        `;
+
+        const dbInstance = MongoDatabase.getInstance();
+        const gptersUrlsColl = await dbInstance.getCollection('bronze/gpters.urls');
+
+        // Synchronize Completed cache with MongoDB first if Redis cache is empty
+        const completedCount = await this.redis.scard(CACHE_SET_KEY);
+        if (completedCount === 0) {
+            try {
+                console.log(`🔍 [GPTERS List] Redis cache is empty. Seeding from MongoDB bronze.gpters...`);
+                const bronzeGpters = await dbInstance.getCollection('bronze/gpters.html');
+                const existing = await bronzeGpters.find({}, { projection: { id: 1, _id: 0 } }).toArray();
+                if (existing.length > 0) {
+                    const pipeline = this.redis.pipeline();
+                    existing.forEach((doc: any) => {
+                        if (doc.id) pipeline.sadd(CACHE_SET_KEY, doc.id);
+                    });
+                    await pipeline.exec();
+                    console.log(`📡 [GPTERS List] Seeded ${existing.length} completed IDs into Redis cache.`);
+                }
+            } catch (err: any) {
+                console.warn(`⚠️ MongoDB seed skipped or failed: ${err.message}`);
+            }
+        }
+
+        let queuedCount = 0;
+        const overwrite = process.env.OVERWRITE === 'true';
+        let after: string | null = null;
+        let page = 0;
+        let hasNextPage = true;
+        let r: Response;
+        let resJson: any;
+        let postData: any;
+        let posts: any[];
+        let pageInfo: any;
+
+        do {
+            page++;
+            console.log(`📄 [GPTERS List] Fetching page ${page}${maxPages > 0 ? '/' + maxPages : ''}...`);
+
+            r = await fetch('https://api.bettermode.com/graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                },
+                body: JSON.stringify({
+                    operationName: 'getNewsFeed',
+                    query,
+                    variables: { limit, after }
+                })
+            });
+
+            if (!r.ok) {
+                const body = await r.text().catch(() => '');
+                throw new Error(`Failed to fetch GPTERS index via GraphQL. Status: ${r.status}: ${body.slice(0, 200)}`);
+            }
+
+            resJson = await r.json();
+            postData = resJson.data?.posts;
+            posts = postData?.nodes || [];
+            pageInfo = postData?.pageInfo || {};
+            hasNextPage = pageInfo.hasNextPage || false;
+            console.log(`🔍 [GPTERS List] Page ${page}: ${posts.length} posts (hasNextPage: ${hasNextPage})`);
+
+            if (posts.length === 0) {
+                console.log(`📭 [GPTERS List] No more posts, stopping early.`);
+                break;
+            }
+
+            for (const post of posts) {
+            const id = post.id;
+            const slug = post.slug;
+            const title = post.title;
+
+            if (!id || !slug) continue;
+
+            // GPTERS post URL structure
+            const detailUrl = `https://www.gpters.org/news/post/${slug}-${id}`;
+
+            if (overwrite) {
+                await this.redis.srem(CACHE_SET_KEY, id);
+            }
+
+            // Check if already completed
+            const isCompleted = overwrite ? false : await this.redis.sismember(CACHE_SET_KEY, id);
+
+            // Upsert URL metadata to MongoDB
+            const updateDoc: any = {
+                $set: {
+                    id,
+                    url: detailUrl,
+                    title,
+                    status: isCompleted ? 'completed' : 'new',
+                    updatedAt: new Date()
+                }
+            };
+
+            if (overwrite) {
+                updateDoc.$set.pushedToRedis = false;
+            } else {
+                updateDoc.$setOnInsert = {
+                    pushedToRedis: isCompleted ? true : false
+                };
+            }
+
+            await gptersUrlsColl.updateOne({ id }, updateDoc, { upsert: true });
+
+            if (isCompleted) {
+                console.log(`⏭️ [GPTERS List] Skipping already completed item: [ID: ${id}] ${title}`);
+                continue;
+            }
+
+            // Check if already pushed to Redis
+            const doc = await gptersUrlsColl.findOne({ id });
+            const alreadyPushed = doc?.pushedToRedis || false;
+
+            if (!alreadyPushed) {
+                const priority = process.env.PRIORITY || 'medium';
+                // Push to Redis Queue (Unified scrape_queue with priority format)
+                const payload = JSON.stringify({
+                    site: 'gpters',
+                    url: detailUrl,
+                    attempt: 1,
+                    priority: priority
+                });
+                await this.redis.rpush(`scrape_queue:gpters:${priority}`, payload);
+                await gptersUrlsColl.updateOne(
+                    { id },
+                    { $set: { pushedToRedis: true } }
+                );
+                console.log(`🚀 [GPTERS List] Queued (Force Overwrite: ${overwrite}): [ID: ${id}] ${title} -> ${detailUrl}`);
+                queuedCount++;
+            }
+        }
+
+            after = pageInfo.endCursor || null;
+            if (queuedCount > 0) {
+                console.log(`⏳ [GPTERS List] ${queuedCount} queued so far (page ${page})`);
+            }
+
+            if (hasNextPage && (maxPages === 0 || page < maxPages) && slackSec > 0) {
+                console.log(`💤 [GPTERS List] ${slackSec}초 대기 후 다음 페이지 요청...`);
+                await new Promise(resolve => setTimeout(resolve, slackSec * 1000));
+            }
+        } while (hasNextPage && (maxPages === 0 || page < maxPages));
+
+        console.log(`🎉 [GPTERS List] Done. Queried ${page} page(s), queued ${queuedCount} items.`);
+        return queuedCount;
+    }
+}
+
+if (require.main === module) {
+    (async () => {
+        const list = new GptersList();
+        try {
+            await list.init();
+            const limit = process.argv[2] ? parseInt(process.argv[2]) : 20;
+            await list.run(limit);
+        } catch (e: any) {
+            console.error(`❌ List failed: ${e.message}`);
+        } finally {
+            await list.close();
+        }
+    })();
+}
