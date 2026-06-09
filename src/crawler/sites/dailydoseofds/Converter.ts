@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import * as turndown from 'turndown';
+import TurndownService from 'turndown';
 import { IConverter } from '../../core/IConverter';
 
 export interface DailyDoseDSMeta {
@@ -16,10 +16,8 @@ export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
         const $ = cheerio.load(htmlContent);
         
         // 1. Cleanup: Remove noise and navigation elements
-        // Remove course navigation lists, pagination, and member-only banners
         $('.gh-nav-list, .gh-pagination, #sx-lazy-script, .membership-notice, [data-sx-pagination-btn]').remove();
         
-        // Remove the internal course linking lists that often appear at the top/bottom
         $('div').each((_, el) => {
             const $el = $(el);
             if ($el.text().includes('Reinforcement Learning Course') && $el.find('a[href*="/rl-course-part-"]').length > 0) {
@@ -28,20 +26,19 @@ export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
         });
 
         // Remove "On this page" TOC section
-        $('h2:contains("On this page"), a[href*="#___TOCBOT___"]').parentsUntil('div', 1).remove();
+        $('h2:contains("On this page"), a[href*="#___TOCBOT___"]').parentsUntil('div').remove();
 
         const title = $('h1').first().text().trim() || $('title').text().split('|')[0].trim() || 'Unknown Title';
         const publishedAt = $('time').first().attr('datetime') || null;
         
         // 2. Content Extraction
-        // Target the main content area, prioritizing Ghost's common content classes
         let contentEl = $('.gh-content').first();
         if (!contentEl.length) contentEl = $('main').first();
         if (!contentEl.length) contentEl = $('article').first();
 
-        const turndownService = new turndown.TurndownService({
+        const turndownService = new TurndownService({
             headingStyle: 'atx',
-            codeBlock laStyle: 'fenced',
+            codeBlockStyle: 'fenced',
             emDelimiter: '*',
             bulletListMarker: '-',
         });
@@ -61,5 +58,9 @@ export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
             content: contentText,
             rawContent
         };
+    }
+
+    public async prettifyAndSave(id: string, html: string): Promise<void> {
+        // Not implemented for this site
     }
 }
