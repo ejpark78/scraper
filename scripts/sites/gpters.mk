@@ -2,7 +2,7 @@
 # 💡 GPTERS Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh refresh-urls refresh-silver
+.PHONY: list refresh refresh-urls refresh-silver newsletter-list newsletter-refresh
 
 LIMIT ?= 20
 OVERWRITE ?= false
@@ -22,3 +22,10 @@ refresh-urls:
 
 refresh-silver:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/QueueTransform.ts
+
+newsletter-list: PRIORITY := high
+newsletter-list:
+	$(COMPOSE) run --rm $(RUN_USER) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/sites/gpters/newsletter/List.ts $(LIMIT)
+
+newsletter-refresh:
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/newsletter/Refresh.ts

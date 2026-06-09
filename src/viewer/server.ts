@@ -19,6 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const projectRoot = path.resolve(__dirname, '..', '..');
 app.use('/geeknews', express.static(path.join(projectRoot, 'data', 'sites', 'geeknews')));
 app.use('/gpters', express.static(path.join(projectRoot, 'data', 'sites', 'gpters')));
+app.use('/gpters_newsletter', express.static(path.join(projectRoot, 'data', 'sites', 'gpters_newsletter')));
 app.use('/pytorch_kr', express.static(path.join(projectRoot, 'data', 'sites', 'pytorch_kr')));
 
 // Request logging middleware for debugging
@@ -37,6 +38,7 @@ app.get('/api/collections', async (req: Request, res: Response) => {
       { id: 'silver/linkedin.companies', name: 'LinkedIn Companies' },
       { id: 'silver/geeknews.contents', name: 'GeekNews' },
       { id: 'silver/gpters.contents', name: 'GPters' },
+      { id: 'silver/gpters_newsletter.contents', name: 'GPters Newsletter' },
       { id: 'silver/pytorch_kr.contents', name: 'PyTorch KR' }
     ];
     res.json(collections);

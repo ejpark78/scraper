@@ -61,6 +61,16 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
       return parts[parts.length - 1] || '';
     },
   },
+  gpters_newsletter: {
+    collectionName: 'bronze/gpters_newsletter.html',
+    targetCollection: 'gpters_newsletter.html',
+    updateFilterKey: 'id',
+    defaultSlack: 3,
+    extractId: (url) => {
+      const parts = url.split('-');
+      return parts[parts.length - 1] || '';
+    },
+  },
 };
 
 interface ScrapePayload {
@@ -85,6 +95,7 @@ class ScraperDispatcher {
         await this.scrapeHttpFetch(url, tempPath);
         break;
       case 'gpters':
+      case 'gpters_newsletter':
         await this.scrapeGpters(url, tempPath);
         break;
       case 'pytorch_kr':
@@ -136,6 +147,7 @@ query getPost($id: ID!) {
     title
     slug
     createdAt
+    publishedAt
     createdBy { member { name } }
     reactionsCount
     repliesCount
@@ -209,6 +221,7 @@ class QueueManager {
     'scrape_queue:linkedin:high',
     'scrape_queue:geeknews:high',
     'scrape_queue:gpters:high',
+    'scrape_queue:gpters_newsletter:high',
     'scrape_queue:pytorch_kr:high',
   ];
 
@@ -216,6 +229,7 @@ class QueueManager {
     'scrape_queue:linkedin:medium',
     'scrape_queue:geeknews:medium',
     'scrape_queue:gpters:medium',
+    'scrape_queue:gpters_newsletter:medium',
     'scrape_queue:pytorch_kr:medium',
   ];
 
@@ -223,6 +237,7 @@ class QueueManager {
     'scrape_queue:linkedin:low',
     'scrape_queue:geeknews:low',
     'scrape_queue:gpters:low',
+    'scrape_queue:gpters_newsletter:low',
     'scrape_queue:pytorch_kr:low',
   ];
 

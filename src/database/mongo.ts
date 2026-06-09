@@ -105,6 +105,12 @@ export class MongoDatabase {
                   { title: 'text', content: 'text', markdown: 'text', url: 'text' },
                   { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
                 );
+                await silverDb.collection('gpters_newsletter.contents').createIndex({ id: 1 }, { unique: true });
+                await silverDb.collection('gpters_newsletter.contents').createIndex({ publishedAt: -1 });
+                await silverDb.collection('gpters_newsletter.contents').createIndex(
+                  { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+                  { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
+                );
                 await silverDb.collection('pytorch_kr.contents').createIndex({ id: 1 });
                 await silverDb.collection('pytorch_kr.contents').createIndex({ publishedAt: -1 });
                 await silverDb.collection('pytorch_kr.contents').createIndex(

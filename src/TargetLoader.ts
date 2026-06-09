@@ -70,8 +70,8 @@ export class TargetLoader {
         { upsert: true }
       );
 
-    } else if (site === 'gpters') {
-      const collection = await mongo.getCollection('silver/gpters.contents');
+    } else if (site === 'gpters' || site === 'gpters_newsletter') {
+      const collection = await mongo.getCollection(`silver/${site}.contents`);
       const doc: Record<string, any> = {
         id: id,
         title: meta.title || 'Untitled',
