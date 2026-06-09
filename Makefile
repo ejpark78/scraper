@@ -26,6 +26,10 @@ test-%:
 agent-%:
 	@$(MAKE) -f scripts/utils/coding_agents.mk $*
 
+# --- 4. tool commands ---
+gm-%:
+	@$(MAKE) -f scripts/tools/gmail.mk $*
+
 # --- 3. delegate site-specific commands to prevent target name conflicts ---
 li-%:
 	@$(MAKE) -f scripts/sites/linkedin.mk $*

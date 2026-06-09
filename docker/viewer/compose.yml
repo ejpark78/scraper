@@ -12,7 +12,7 @@ services:
   viewer:
     build:
       context: ../../
-      dockerfile: docker/clipper/Dockerfile
+      dockerfile: docker/viewer/Dockerfile
     image: linkedin/clipper:latest
     command: ["npx", "ts-node", "src/viewer/server.ts"]
     profiles:
@@ -23,7 +23,6 @@ services:
       - REDIS_URL=redis://redis:6379
       - PORT=3000
     volumes:
-      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped

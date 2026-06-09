@@ -27,12 +27,16 @@
 #    - opencode/compose.yml : Opencode Coding Agent 
 #
 # 4. 🏃 Runtime & Pipeline (profile: runtime)
-#    - clipper/compose.yml : 목록/상세 수집기 CLI 및 복수 인스턴스 Redis Worker 엔진
+#    - worker/compose.yml : 목록/상세 수집기 CLI 및 복수 인스턴스 Redis Worker 엔진
+#
+# 5. 📧 Gmail Export Tool
+#    - gmail/compose.yml : IMAP 기반 Gmail 메일 대량 마크다운 내보내기
 #
 # ==============================================================================
 
 include:
-  - docker/clipper/compose.yml
+  - docker/worker/compose.yml
+  - docker/gmail/compose.yml
   - docker/cronicle/compose.yml
   - docker/dozzle/compose.yml
   - docker/jupyter/compose.yml
