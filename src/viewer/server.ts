@@ -62,11 +62,14 @@ app.get('/api/collections', async (req: Request, res: Response) => {
       collections.push({ id: `silver/${name}`, name: displayName });
     }
     
+    
     // Add LinkedIn Companies if exists in silver
     const hasCompanies = (await silverDb.listCollections({ name: 'linkedin.companies' }).toArray()).length > 0;
     if (hasCompanies) {
       collections.push({ id: 'silver/linkedin.companies', name: 'LinkedIn Companies' });
     }
+
+    collections.sort((a, b) => a.name.localeCompare(b.name));
 
     res.json(collections);
   } catch (error: any) {

@@ -135,6 +135,23 @@ export class TargetLoader {
         { $set: doc },
         { upsert: true }
       );
+    } else if (site === 'dailydose_ds') {
+      const collection = await mongo.getCollection('silver/dailydose_ds.contents');
+      const doc = {
+        id: id,
+        title: meta.title || 'Untitled',
+        url: meta.url || null,
+        publishedAt: meta.publishedAt || null,
+        content: meta.content || null,
+        markdown: meta.rawContent || null,
+        updatedAt: new Date()
+      };
+
+      await collection.updateOne(
+        { id: id },
+        { $set: doc },
+        { upsert: true }
+      );
     }
   }
 }
