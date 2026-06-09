@@ -10,7 +10,7 @@ function getTimestamp(): string {
 }
 
 async function runBrowser() {
-    const sessionPath = path.join(__dirname, '..', '..', 'data', 'sessions', `${process.env.SITE || 'linkedin'}.json`);
+    const sessionPath = path.join(process.env.SESSION_DIR || path.resolve(process.cwd(), 'data/sessions'), `${process.env.SITE || 'linkedin'}.json`);
     const htmlDir = path.join(__dirname, '..', '..', 'data', 'browser', 'html');
     const jsonDir = path.join(__dirname, '..', '..', 'data', 'browser', 'json');
 

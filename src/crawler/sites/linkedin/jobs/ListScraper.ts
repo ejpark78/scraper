@@ -7,7 +7,7 @@ import { MongoDatabase } from '../../../../database/mongo';
 import Redis from 'ioredis';
 
 export class LinkedInListScraper {
-    private readonly sessionPath: string = path.join(__dirname, '..', '..', '..', '..', 'data', 'sessions', 'linkedin.json');
+    private readonly sessionPath: string = path.join(process.env.SESSION_DIR || path.resolve(process.cwd(), 'data/sessions'), 'linkedin.json');
     private readonly useLogin: boolean;
 
     constructor() {

@@ -12,7 +12,7 @@ export interface ICrawler {
 }
 
 export class LinkedInCrawler implements ICrawler {
-    private readonly sessionPath: string = path.join(__dirname, '..', 'data', 'sessions', `${process.env.SITE || 'linkedin'}.json`);
+    private readonly sessionPath: string = path.join(process.env.SESSION_DIR || path.resolve(process.cwd(), 'data/sessions'), `${process.env.SITE || 'linkedin'}.json`);
     private readonly useLogin: boolean;
 
     constructor(options: { login?: boolean } = {}) {
