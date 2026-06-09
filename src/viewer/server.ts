@@ -15,6 +15,11 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve downloaded images from site scrapers
+const projectRoot = path.resolve(__dirname, '..', '..');
+app.use('/images/gpters', express.static(path.join(projectRoot, 'data', 'sites', 'images', 'gpters')));
+app.use('/images/pytorch_kr', express.static(path.join(projectRoot, 'data', 'sites', 'images', 'pytorch_kr')));
+
 // Request logging middleware for debugging
 app.use((req: Request, res: Response, next) => {
   console.log(`[HTTP] ${req.method} ${req.url}`);

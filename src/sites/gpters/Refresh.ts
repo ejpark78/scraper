@@ -1,5 +1,5 @@
 import { MongoDatabase } from '../../database/mongo';
-import { GptersConverter } from './Converter';
+import { GptersConverter, GptersMeta } from './Converter';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -18,19 +18,136 @@ export class GptersRefresh {
             const docs = await cursor.toArray();
             console.log(`📥 Loaded ${docs.length} raw posts from bronze.gpters.`);
 
-            const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'gpters');
+            const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'gpters');
             fs.mkdirSync(path.join(baseDir, 'json'), { recursive: true });
             fs.mkdirSync(path.join(baseDir, 'markdown'), { recursive: true });
 
             let processed = 0;
             for (const doc of docs) {
-                const { id, rawJson, url } = doc;
-                if (!id || !rawJson) continue;
+                const { id, rawHtml, rawJson, url } = doc;
+                if (!id) continue;
+                // Accept both rawHtml (JSON string from ScraperWorker) and rawJson (parsed object from Contents.ts)
+                let post: any;
+                if (rawHtml) {
+                    try { post = JSON.parse(rawHtml); } catch { post = rawHtml; }
+                } else if (rawJson) {
+                    post = rawJson;
+                } else {
+                    continue;
+                }
 
+                let rawJsonStr = '';
                 try {
                     // 1. Convert to Markdown
-                    const rawJsonStr = JSON.stringify(rawJson);
-                    const meta = converter.convertHtmlToMarkdown(rawJsonStr, id, url || '');
+                    let meta: GptersMeta;
+                    if (typeof post === 'object') {
+                        rawJsonStr = JSON.stringify(post);
+                        meta = converter.convertHtmlToMarkdown(rawJsonStr, id, url || '');
+                    } else {
+                        rawJsonStr = String(post);
+                        meta = converter.convertHtmlToMarkdown(rawJsonStr, id, url || '');
+                    }
+
+                    // 1b. Download images and update markdown URLs
+                    try {
+                        const fieldsMap: Record<string, string> = {};
+                        if (post && typeof post === 'object' && Array.isArray(post.fields)) {
+                            for (const f of post.fields) {
+                                fieldsMap[f.key] = f.value;
+                            }
+                        }
+                        const htmlContent = (post && typeof post === 'object' ? (fieldsMap.content || post.shortContent || '') : String(post)).replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
+
+                        const imageBaseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'images', 'gpters', id);
+                        fs.mkdirSync(imageBaseDir, { recursive: true });
+
+                        const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+                        let match;
+                        const processedUrls = new Map<string, string>();
+                        const skippedFavicons = new Set<string>();
+
+                        while ((match = imgRegex.exec(htmlContent)) !== null) {
+                            const originalSrc = match[1];
+                            if (processedUrls.has(originalSrc)) continue;
+                            if (originalSrc.startsWith('data:')) {
+                                processedUrls.set(originalSrc, originalSrc);
+                                continue;
+                            }
+
+                            // Skip favicon images
+                            const lowerSrc = originalSrc.toLowerCase();
+                            if (lowerSrc.includes('favicon') || lowerSrc.endsWith('.ico')) {
+                                skippedFavicons.add(originalSrc);
+                                continue;
+                            }
+
+                            // Vercel _next/image — not downloadable server-side, keep original URL for browser
+                            if (lowerSrc.includes('_next/image')) {
+                                processedUrls.set(originalSrc, originalSrc);
+                                continue;
+                            }
+
+                            let absoluteUrl = originalSrc;
+                            if (originalSrc.startsWith('//')) {
+                                absoluteUrl = 'https:' + originalSrc;
+                            } else if (originalSrc.startsWith('/')) {
+                                absoluteUrl = 'https://www.gpters.org' + originalSrc;
+                            } else if (!/^https?:\/\//i.test(originalSrc)) {
+                                absoluteUrl = 'https://www.gpters.org/' + originalSrc;
+                            }
+
+                            try {
+                                const response = await fetch(absoluteUrl, {
+                                    headers: {
+                                        Referer: url,
+                                        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                        Accept: 'image/webp,image/avif,image/*,*/*;q=0.8',
+                                    }
+                                });
+                                if (!response.ok) {
+                                    const respHeaders = Array.from(response.headers.entries()).map(([k, v]) => `${k}: ${v}`).join('\n          ');
+                                    console.warn(`⚠️ [GPTers Image] HTTP ${response.status}
+          doc : ${url}
+          img : ${absoluteUrl}
+          headers:
+          ${respHeaders}`);
+                                    continue;
+                                }
+                                const arrayBuffer = await response.arrayBuffer();
+                                const buffer = Buffer.from(arrayBuffer);
+                                const contentType = response.headers.get('content-type') || '';
+                                const ext = contentType.includes('png') ? '.png'
+                                    : contentType.includes('gif') ? '.gif'
+                                    : contentType.includes('webp') ? '.webp'
+                                    : contentType.includes('svg') ? '.svg'
+                                    : '.jpg';
+                                const filename = `img_${processedUrls.size}${ext}`;
+                                fs.writeFileSync(path.join(imageBaseDir, filename), buffer);
+                                processedUrls.set(originalSrc, `/images/gpters/${id}/${filename}`);
+                            } catch (imgErr: any) {
+                                console.warn(`⚠️ [GPTers Image] Failed to download
+          doc : ${url}
+          img : ${absoluteUrl}
+          err : ${imgErr.message}`);
+                            }
+                        }
+
+                        if (processedUrls.size > 0 || skippedFavicons.size > 0) {
+                            let updatedMarkdown = meta.rawContent;
+                            for (const [originalSrc, localUrl] of processedUrls) {
+                                if (originalSrc === localUrl) continue;
+                                const escaped = originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                updatedMarkdown = updatedMarkdown.replace(new RegExp(escaped, 'g'), localUrl);
+                            }
+                            for (const faviconUrl of skippedFavicons) {
+                                const escaped = faviconUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                updatedMarkdown = updatedMarkdown.replace(new RegExp(`!\\[.*?\\]\\(${escaped}\\)`, 'g'), '');
+                            }
+                            meta = { ...meta, rawContent: updatedMarkdown };
+                        }
+                    } catch (imgErr: any) {
+                        console.warn(`⚠️ [GPTers Image Processing] Error in backfill: ${imgErr.message}`);
+                    }
 
                     // 2. Update Silver layer
                     await silverGpters.updateOne(

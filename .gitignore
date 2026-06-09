@@ -1,3 +1,4 @@
+.agents/brain/
 .agents/transcripts/
 .agents/sysinfo_cache.json
 .agents/rules_compact.txt

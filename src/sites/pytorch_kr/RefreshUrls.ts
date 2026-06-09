@@ -1,6 +1,8 @@
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
 
+const CACHE_SET_KEY = 'completed_news';
+
 export class PyTorchKRRefreshUrls {
     public async run(): Promise<void> {
         console.log('🔄 [PyTorch KR Refresh Urls] Starting precision recovery of uncollected targets...');
@@ -34,24 +36,30 @@ export class PyTorchKRRefreshUrls {
             }
             console.log(`📥 Loaded ${existingQueueUrls.size} PyTorch KR URLs currently in Redis scrape_queue.`);
 
-            // 3. 미수집 잔여 타겟 선별
-            const uncollectedNews = await pytorchUrlsColl.find({
-                id: { $nin: completedIds }
-            }, {
+            // 3. 타겟 선별 (OVERWRITE=true면 전체 재수집)
+            const overwrite = process.env.OVERWRITE === 'true';
+            const query = overwrite ? {} : { id: { $nin: completedIds } };
+            const targets = await pytorchUrlsColl.find(query, {
                 projection: { id: 1, url: 1 }
             }).toArray();
-
-            console.log(`🔍 Found ${uncollectedNews.length} uncollected target items in database.`);
+            console.log(`🔍 Found ${targets.length} target items in database${overwrite ? ' (OVERWRITE mode)' : ''}.`);
 
             // 4. 이미 Redis 큐에 대기 중인 URL 필터링
-            const filteredJobs = uncollectedNews.filter(j => j.url && !existingQueueUrls.has(j.url));
-            console.log(`💡 Filtered out ${uncollectedNews.length - filteredJobs.length} items already waiting in Redis queue.`);
+            const filteredJobs = targets.filter(j => j.url && (overwrite || !existingQueueUrls.has(j.url)));
+            console.log(`💡 Filtered out ${targets.length - filteredJobs.length} items already waiting in Redis queue.`);
 
             if (filteredJobs.length > 0) {
                 const newsToPush = filteredJobs.filter(j => j.url);
                 const idsToUpdate = filteredJobs.map(j => j.id);
 
-                // 5. Redis scrape_queue 에 적재
+                // 5. Redis 캐시 초기화 (OVERWRITE 모드)
+                if (overwrite) {
+                    for (const id of idsToUpdate) {
+                        await redis.srem(CACHE_SET_KEY, id);
+                    }
+                }
+
+                // 6. Redis scrape_queue 에 적재
                 console.log(`📥 Pushing ${newsToPush.length} URLs to Redis scrape_queue...`);
                 const priority = process.env.PRIORITY || 'medium';
                 const payloads = newsToPush.map(j => JSON.stringify({
@@ -67,7 +75,7 @@ export class PyTorchKRRefreshUrls {
                     await redis.rpush(`scrape_queue:pytorch_kr:${priority}`, ...chunk);
                 }
 
-                // 6. MongoDB 상태를 pushedToRedis: true, status: 'new' 로 갱신
+                // 7. MongoDB 상태를 pushedToRedis: true, status: 'new' 로 갱신
                 const result = await pytorchUrlsColl.updateMany(
                     { id: { $in: idsToUpdate } },
                     { $set: { pushedToRedis: true, status: 'new', updatedAt: new Date() } }
@@ -75,7 +83,7 @@ export class PyTorchKRRefreshUrls {
 
                 console.log(`✨ Recovery complete! Redis Queue Pushed: ${newsToPush.length}, MongoDB Modified Count: ${result.modifiedCount}`);
             } else {
-                console.log('💡 No new uncollected target items to recover.');
+                console.log('💡 No new target items to recover.');
             }
 
         } catch (err: any) {

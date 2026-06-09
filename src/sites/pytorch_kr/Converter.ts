@@ -82,6 +82,8 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
 
     private extractContentFromHtml($: cheerio.CheerioAPI, title: string): string {
         let contentText = '';
+        // Collect image URLs for download tracking
+        const imageUrls: Array<{ src: string; alt: string }> = [];
 
         // 1. Try Discourse post layout (forum topics)
         const postDiv = $('div.post[itemprop="text"]').first();
@@ -90,28 +92,40 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
             postDiv.find('div.lightbox-wrapper').each((_, el) => {
                 const lb = $(el);
                 const img = lb.find('img');
+                const src = img.attr('src') || '';
                 const alt = img.attr('alt') || '';
+                const link = lb.find('a.lightbox');
+                const fullSrc = link.attr('href') || src;
                 const info = lb.find('span.informations');
                 const infoText = info.text() || '';
 
+                imageUrls.push({ src: fullSrc, alt });
+
                 const parts: string[] = [];
                 if (alt && alt !== title) {
-                    parts.push(alt);
+                    parts.push(`![${alt}](${fullSrc})`);
+                } else {
+                    parts.push(`![](${fullSrc})`);
                 }
                 if (infoText) {
-                    parts.push(infoText);
+                    parts.push(`*${infoText}*`);
                 }
-                lb.replaceWith(parts.join('\n'));
+                lb.replaceWith(parts.join(' '));
             });
 
             // Handle other images (like emojis or external images)
             postDiv.find('img').each((_, el) => {
                 const img = $(el);
+                const src = img.attr('src') || '';
                 const alt = img.attr('alt') || '';
                 if (alt.startsWith(':')) {
                     img.remove();
                 } else if (alt && alt !== title) {
-                    img.replaceWith(alt);
+                    imageUrls.push({ src, alt });
+                    img.replaceWith(`![${alt}](${src})`);
+                } else if (src) {
+                    imageUrls.push({ src, alt: '' });
+                    img.replaceWith(`![](${src})`);
                 } else {
                     img.remove();
                 }

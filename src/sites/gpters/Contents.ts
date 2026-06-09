@@ -88,7 +88,123 @@ export class GptersContents extends BasePipeline<GptersMeta> {
     }
 
     protected async saveResults(meta: GptersMeta, id: string, tempHtmlPath: string, _redisInstance?: any): Promise<{ targetDirName: string }> {
-        const rawJson = fs.readFileSync(tempHtmlPath, 'utf-8');
+        const rawJsonContent = fs.readFileSync(tempHtmlPath, 'utf-8');
+        let parsedJson: any = {};
+        try {
+            parsedJson = JSON.parse(rawJsonContent);
+        } catch { /* ignore */ }
+
+        // Download images from HTML content and replace URLs in markdown
+        let updatedMarkdown = meta.rawContent;
+        try {
+            const fieldsMap: Record<string, string> = {};
+            if (Array.isArray(parsedJson.fields)) {
+                for (const f of parsedJson.fields) {
+                    fieldsMap[f.key] = f.value;
+                }
+            }
+            const htmlContent = (fieldsMap.content || parsedJson.shortContent || '').replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
+
+            const projectRoot = path.resolve(__dirname, '..', '..', '..');
+            const imageBaseDir = path.join(projectRoot, 'data', 'sites', 'images', 'gpters', id);
+            fs.mkdirSync(imageBaseDir, { recursive: true });
+
+            const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+            let match;
+            const processedUrls = new Map<string, string>();
+            const skippedFavicons = new Set<string>();
+
+            while ((match = imgRegex.exec(htmlContent)) !== null) {
+                const originalSrc = match[1];
+                if (processedUrls.has(originalSrc)) continue;
+
+                // Skip data URIs
+                if (originalSrc.startsWith('data:')) {
+                    processedUrls.set(originalSrc, originalSrc);
+                    continue;
+                }
+
+                // Skip favicon images
+                const lowerSrc = originalSrc.toLowerCase();
+                if (lowerSrc.includes('favicon') || lowerSrc.endsWith('.ico')) {
+                    skippedFavicons.add(originalSrc);
+                    continue;
+                }
+
+                // Vercel _next/image — not downloadable server-side, keep original URL for browser
+                if (lowerSrc.includes('_next/image')) {
+                    processedUrls.set(originalSrc, originalSrc);
+                    continue;
+                }
+
+                // Resolve relative URLs
+                let absoluteUrl = originalSrc;
+                if (originalSrc.startsWith('//')) {
+                    absoluteUrl = 'https:' + originalSrc;
+                } else if (originalSrc.startsWith('/')) {
+                    absoluteUrl = 'https://www.gpters.org' + originalSrc;
+                } else if (!/^https?:\/\//i.test(originalSrc)) {
+                    absoluteUrl = 'https://www.gpters.org/' + originalSrc;
+                }
+
+                try {
+                    const response = await fetch(absoluteUrl, {
+                        headers: {
+                            Referer: meta.url,
+                            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            Accept: 'image/webp,image/avif,image/*,*/*;q=0.8',
+                        }
+                    });
+                    if (!response.ok) {
+                        const respHeaders = Array.from(response.headers.entries()).map(([k, v]) => `${k}: ${v}`).join('\n          ');
+                        console.warn(`⚠️ [GPTers Image] HTTP ${response.status}
+          doc : ${meta.url}
+          img : ${absoluteUrl}
+          headers:
+          ${respHeaders}`);
+                        continue;
+                    }
+                    const arrayBuffer = await response.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+
+                    const contentType = response.headers.get('content-type') || '';
+                    const ext = contentType.includes('png') ? '.png'
+                        : contentType.includes('gif') ? '.gif'
+                        : contentType.includes('webp') ? '.webp'
+                        : contentType.includes('svg') ? '.svg'
+                        : '.jpg';
+
+                    const filename = `img_${processedUrls.size}${ext}`;
+                    const filepath = path.join(imageBaseDir, filename);
+                    fs.writeFileSync(filepath, buffer);
+
+                    const localUrl = `/images/gpters/${id}/${filename}`;
+                    processedUrls.set(originalSrc, localUrl);
+                    console.log(`✅ [GPTers Image] Saved ${filename} (${buffer.length} bytes) from ${absoluteUrl}`);
+                } catch (err: any) {
+                    console.warn(`⚠️ [GPTers Image] Failed to download
+          doc : ${meta.url}
+          img : ${absoluteUrl}
+          err : ${err.message}`);
+                }
+            }
+
+            // Replace original URLs with local URLs in markdown
+            if (processedUrls.size > 0 || skippedFavicons.size > 0) {
+                for (const [originalSrc, localUrl] of processedUrls) {
+                    if (originalSrc === localUrl) continue;
+                    const escaped = originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    updatedMarkdown = updatedMarkdown.replace(new RegExp(escaped, 'g'), localUrl);
+                }
+                for (const faviconUrl of skippedFavicons) {
+                    const escaped = faviconUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    updatedMarkdown = updatedMarkdown.replace(new RegExp(`!\\[.*?\\]\\(${escaped}\\)`, 'g'), '');
+                }
+                meta.rawContent = updatedMarkdown;
+            }
+        } catch (imgErr: any) {
+            console.warn(`⚠️ [GPTers Image Processing] Error: ${imgErr.message}`);
+        }
 
         try {
             const { MongoDatabase } = require('../database/mongo');
@@ -102,7 +218,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
                     $set: {
                         id: id,
                         url: meta.url,
-                        rawJson: JSON.parse(rawJson),
+                        rawJson: parsedJson,
                         collectedAt: new Date()
                     }
                 },
@@ -139,8 +255,9 @@ export class GptersContents extends BasePipeline<GptersMeta> {
 
             console.log(`📡 [MongoDB Write] Successfully saved GPTERS ID ${id} and marked url as completed.`);
 
-            // 3. Local File System Backup
-            const baseDir = path.join(__dirname, '..', '..', 'data', 'gpters');
+            // 4. Local File System Backup
+            const projectRoot = path.resolve(__dirname, '..', '..', '..');
+            const baseDir = path.join(projectRoot, 'data', 'sites', 'gpters');
             const jsonPath = path.join(baseDir, 'json', `${id}.json`);
             const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
 
@@ -149,7 +266,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             fs.mkdirSync(path.dirname(mdPath), { recursive: true });
 
             // Save JSON
-            fs.writeFileSync(jsonPath, rawJson, 'utf-8');
+            fs.writeFileSync(jsonPath, rawJsonContent, 'utf-8');
 
             // Save Markdown
             await this.converter.prettifyAndSave(meta.rawContent, mdPath);

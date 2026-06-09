@@ -19,7 +19,7 @@ refresh:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/Refresh.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/gpters/RefreshUrls.ts
 
 refresh-md:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/QueueTransform.ts

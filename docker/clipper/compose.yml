@@ -38,6 +38,7 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
       - ${HOST_PROJECT_PATH:-.}/src:/app/src
       - ${HOST_PROJECT_PATH:-.}/config:/app/config
       - ${HOST_PROJECT_PATH:-.}/package.json:/app/package.json
@@ -60,6 +61,7 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
       - ${HOST_PROJECT_PATH:-.}/src:/app/src
       - ${HOST_PROJECT_PATH:-.}/config:/app/config
       - /etc/localtime:/etc/localtime:ro
@@ -89,6 +91,7 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
       - ${HOST_PROJECT_PATH:-.}/src:/app/src
       - ${HOST_PROJECT_PATH:-.}/config:/app/config
       - /etc/localtime:/etc/localtime:ro

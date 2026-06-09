@@ -35,7 +35,7 @@ export class GptersConverter implements IConverter<GptersMeta> {
                 fieldsMap[f.key] = f.value;
             }
         }
-        const longContent = fieldsMap.content || post.shortContent || '';
+        const longContent = (fieldsMap.content || post.shortContent || '').replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
         const publishedAt = post.createdAt || null;
         const reactionsCount = post.reactionsCount || 0;
         const repliesCount = post.repliesCount || 0;

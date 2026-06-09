@@ -2,7 +2,7 @@
 # 📰 GeekNews Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh-urls refresh-md backfill
+.PHONY: list refresh refresh-urls refresh-md backfill
 
 PAGE ?= 1-5
 SLACK_TIME ?= 3
@@ -14,13 +14,15 @@ list: PRIORITY := high
 list:
 	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/geeknews/List.ts 1-5
 
+refresh:
+	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/geeknews/Backfill.ts $(DAY)
+
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/geeknews/RefreshUrls.ts
 
 refresh-md:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/geeknews/QueueTransform.ts
 
-backfill:
-	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/sites/geeknews/Backfill.ts $(DAY)
+backfill: refresh
 
 

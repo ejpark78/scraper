@@ -350,11 +350,9 @@ async function loadDocumentDetail(id, collection) {
     let mdContent = silver.markdown || silver.description || silver.content || '';
     if (mdContent) {
       const cleanedMd = cleanMarkdownContent(mdContent);
-      // Strip HTML tags (some JSON-LD text contains raw HTML)
-      const noHtml = cleanedMd.replace(/<[^>]*>/g, '');
       // Strip comments/discussion section for cleaner rendering
-      const commentMatch = noHtml.match(/## 💬 댓글|## 💬 Discussion|## 💬 Comments/i);
-      const displayMd = commentMatch ? noHtml.substring(0, noHtml.indexOf(commentMatch[0])).trim() : noHtml;
+      const commentMatch = cleanedMd.match(/## 💬 댓글|## 💬 Discussion|## 💬 Comments/i);
+      const displayMd = commentMatch ? cleanedMd.substring(0, cleanedMd.indexOf(commentMatch[0])).trim() : cleanedMd;
       const metaTable = generateMetaTableMarkdown(silver, bronze, collection);
       renderedPane.innerHTML = marked.parse(displayMd + '\n\n' + metaTable);
     } else if (bronze.rawHtml) {
@@ -422,10 +420,22 @@ function triggerLazyTabLoad(tabId) {
   else if (tabId === 'tab-html') {
     const htmlIframe = document.getElementById('html-preview');
     if (activeDoc.bronze.rawHtml) {
-      // Detect Discourse SPA shell (no real content) and show fallback
-      const hasMainOutlet = activeDoc.bronze.rawHtml.includes('id="main-outlet"');
-      const hasComments = activeDoc.bronze.rawHtml.includes('id="discourse-comments"');
-      const hasItempropText = activeDoc.bronze.rawHtml.includes('itemprop="text"');
+      const raw = activeDoc.bronze.rawHtml;
+      const isJsonStr = typeof raw === 'string' && /^\s*[{[]/.test(raw);
+      let displayHtml = raw;
+      if (isJsonStr) {
+        try {
+          const parsed = JSON.parse(raw);
+          const fieldsMap = {};
+          if (Array.isArray(parsed.fields)) {
+            for (const f of parsed.fields) fieldsMap[f.key] = f.value;
+          }
+          displayHtml = (fieldsMap.content || parsed.shortContent || raw).replace(/\\(["nrt\\])/g, (_, c) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' })[c] || _);
+        } catch {}
+      }
+      const hasMainOutlet = displayHtml.includes('id="main-outlet"');
+      const hasComments = displayHtml.includes('id="discourse-comments"');
+      const hasItempropText = displayHtml.includes('itemprop="text"');
       const isSpaShell = (hasMainOutlet || hasComments) && !hasItempropText;
       if (isSpaShell) {
         htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:30px;text-align:center;">
@@ -436,8 +446,11 @@ function triggerLazyTabLoad(tabId) {
           </p>
         </body>`;
       } else {
-        htmlIframe.srcdoc = activeDoc.bronze.rawHtml;
+        htmlIframe.srcdoc = displayHtml;
       }
+    } else if (activeDoc.bronze.rawJson) {
+      const prettyJson = JSON.stringify(activeDoc.bronze.rawJson, null, 2);
+      htmlIframe.srcdoc = `<body style="background:#0f131a;color:#e2e8f0;font-family:monospace;padding:20px;font-size:12px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(prettyJson)}</body>`;
     } else {
       htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:20px;text-align:center;">
         <h3>No original HTML preview available for this document</h3>
@@ -516,6 +529,12 @@ function generateMetaTableMarkdown(silver, bronze, collection) {
 | :--- | :--- |
 ${rows.join('\n')}
 `;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
 }
 
 function cleanMarkdownContent(mdContent) {
