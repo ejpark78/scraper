@@ -5,7 +5,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const CACHE_SET_KEY = 'completed_gpters_newsletter';
 
 const NEWSLETTER_QUERY = `
-query GetPosts($after: String, $before: String, $filterBy: [String!], $limit: Int!, $orderByString: String, $postTypeIds: [String!], $reverse: Boolean, $spaceIds: [String!]) {
+query GetPosts($after: String, $before: String, $filterBy: [PostListFilterByInput!], $limit: Int!, $orderByString: String, $postTypeIds: [String!], $reverse: Boolean, $spaceIds: [ID!]) {
   posts(after: $after, before: $before, filterBy: $filterBy, limit: $limit, orderByString: $orderByString, postTypeIds: $postTypeIds, reverse: $reverse, spaceIds: $spaceIds) {
     nodes {
       id
