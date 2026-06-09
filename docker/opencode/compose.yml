@@ -21,6 +21,7 @@ services:
       - ${HOST_PROJECT_PATH:-.}:${HOST_PROJECT_PATH:-/workspace}
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     working_dir: ${HOST_PROJECT_PATH:-/workspace}
     healthcheck:
