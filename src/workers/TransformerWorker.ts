@@ -1,15 +1,15 @@
 import * as os from 'os';
 import Redis from 'ioredis';
-import { MongoDatabase } from './database/mongo';
-import { UrlUtils, NamingUtils, Logger } from './utils';
+import { MongoDatabase } from '../database/mongo';
+import { UrlUtils, NamingUtils, Logger } from '../utils';
 
 // Converters
-import { LinkedInMarkdownConverter } from './sites/linkedin/jobs/Converter';
-import { CompanyMarkdownConverter } from './sites/linkedin/company/Converter';
-import { GeekNewsConverter } from './sites/geeknews/Converter';
-import { GptersConverter } from './sites/gpters/Converter';
-import { PyTorchKRConverter } from './sites/pytorch_kr/Converter';
-import { AiCasebookConverter } from './sites/aicasebook/Converter';
+import { LinkedInMarkdownConverter } from '../sites/linkedin/jobs/Converter';
+import { CompanyMarkdownConverter } from '../sites/linkedin/company/Converter';
+import { GeekNewsConverter } from '../sites/geeknews/Converter';
+import { GptersConverter } from '../sites/gpters/Converter';
+import { PyTorchKRConverter } from '../sites/pytorch_kr/Converter';
+import { AiCasebookConverter } from '../sites/aicasebook/Converter';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const TRANSFORM_QUEUE = 'transform_queue';

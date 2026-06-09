@@ -1,5 +1,5 @@
-import { MongoDatabase } from './database/mongo';
-import { UrlUtils, NamingUtils } from './utils';
+import { MongoDatabase } from '../database/mongo';
+import { UrlUtils, NamingUtils } from '../utils';
 
 export class TargetLoader {
   /**

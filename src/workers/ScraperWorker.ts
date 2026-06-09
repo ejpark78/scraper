@@ -3,9 +3,9 @@ import Redis from 'ioredis';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MongoDatabase } from './database/mongo';
-import { LinkedInCrawler } from './Crawler';
-import { UrlUtils, Logger } from './utils';
+import { MongoDatabase } from '../database/mongo';
+import { LinkedInCrawler } from '../sites/linkedin/Crawler';
+import { UrlUtils, Logger } from '../utils';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const SCRAPE_QUEUE = 'scrape_queue';

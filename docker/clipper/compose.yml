@@ -57,7 +57,7 @@ services:
         - BUILD_DATE
         - VCS_REF
     image: linkedin/clipper:latest
-    command: ["npx", "ts-node", "src/ScraperWorker.ts"]
+    command: ["npx", "ts-node", "src/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - JSON_LOG=true
@@ -89,7 +89,7 @@ services:
         - BUILD_DATE
         - VCS_REF
     image: linkedin/clipper:latest
-    command: ["npx", "ts-node", "src/TransformerWorker.ts"]
+    command: ["npx", "ts-node", "src/workers/TransformerWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}

@@ -1,1 +1,1 @@
-../../src/sites/gpters/QueueTransform.ts
+../../src/sites/gpters/news/QueueTransform.ts
