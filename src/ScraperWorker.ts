@@ -71,6 +71,16 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
       return parts[parts.length - 1] || '';
     },
   },
+  aicasebook: {
+    collectionName: 'bronze/aicasebook.html',
+    targetCollection: 'aicasebook.html',
+    updateFilterKey: 'id',
+    defaultSlack: 3,
+    extractId: (url) => {
+      const match = url.match(/\/setup\/(\d+)/);
+      return match ? match[1] : '';
+    },
+  },
 };
 
 interface ScrapePayload {
@@ -100,6 +110,9 @@ class ScraperDispatcher {
         break;
       case 'pytorch_kr':
         await this.scrapePytorchKr(url, tempPath);
+        break;
+      case 'aicasebook':
+        await this.scrapeHttpFetch(url, tempPath);
         break;
       default:
         throw new Error(`Unsupported site scraper: ${site}`);
@@ -223,6 +236,7 @@ class QueueManager {
     'scrape_queue:gpters:high',
     'scrape_queue:gpters_newsletter:high',
     'scrape_queue:pytorch_kr:high',
+    'scrape_queue:aicasebook:high',
   ];
 
   private mediumQueues = [
@@ -231,6 +245,7 @@ class QueueManager {
     'scrape_queue:gpters:medium',
     'scrape_queue:gpters_newsletter:medium',
     'scrape_queue:pytorch_kr:medium',
+    'scrape_queue:aicasebook:medium',
   ];
 
   private lowQueues = [
@@ -239,6 +254,7 @@ class QueueManager {
     'scrape_queue:gpters:low',
     'scrape_queue:gpters_newsletter:low',
     'scrape_queue:pytorch_kr:low',
+    'scrape_queue:aicasebook:low',
   ];
 
   private legacyQueues = ['scrape_queue'];

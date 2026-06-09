@@ -1,6 +1,3 @@
-import { decodeHeader } from 'email-js-mime-parser'; // 필요한 경우 내장 헬퍼 대체 가능
-import re from 'util';
-
 export class EmailParser {
     static cleanFilename(title: string | undefined): string {
         if (!title) return "Untitled_Mail";

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { BasePipeline } from '../../core/BasePipeline';
-import { GptersMeta, GptersConverter } from './Converter';
+import { BasePipeline } from '../../../core/BasePipeline';
+import { GptersMeta, GptersConverter } from '../Converter';
 
 export class GptersContents extends BasePipeline<GptersMeta> {
     private readonly converter: GptersConverter;
@@ -119,7 +119,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             }
             const htmlContent = (fieldsMap.content || parsedJson.shortContent || '').replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
 
-            const projectRoot = path.resolve(__dirname, '..', '..', '..');
+            const projectRoot = path.resolve(__dirname, '..', '..', '..', '..');
             const imageBaseDir = path.join(projectRoot, 'data', 'sites', 'gpters', year, month, 'images', id);
             fs.mkdirSync(imageBaseDir, { recursive: true });
 
@@ -221,7 +221,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
         }
 
         try {
-            const { MongoDatabase } = require('../database/mongo');
+            const { MongoDatabase } = require('../../../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw JSON) 저장
@@ -270,7 +270,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             console.log(`📡 [MongoDB Write] Successfully saved GPTERS ID ${id} and marked url as completed.`);
 
             // 4. Local File System Backup
-            const projectRoot = path.resolve(__dirname, '..', '..', '..');
+            const projectRoot = path.resolve(__dirname, '..', '..', '..', '..');
             const baseDir = path.join(projectRoot, 'data', 'sites', 'gpters', year, month);
             const jsonPath = path.join(baseDir, 'json', `${id}.json`);
             const mdPath = path.join(baseDir, 'markdown', `${id}.md`);

@@ -21,6 +21,7 @@ app.use('/geeknews', express.static(path.join(projectRoot, 'data', 'sites', 'gee
 app.use('/gpters', express.static(path.join(projectRoot, 'data', 'sites', 'gpters')));
 app.use('/gpters_newsletter', express.static(path.join(projectRoot, 'data', 'sites', 'gpters_newsletter')));
 app.use('/pytorch_kr', express.static(path.join(projectRoot, 'data', 'sites', 'pytorch_kr')));
+app.use('/aicasebook', express.static(path.join(projectRoot, 'data', 'sites', 'aicasebook')));
 
 // Request logging middleware for debugging
 app.use((req: Request, res: Response, next) => {
@@ -39,7 +40,8 @@ app.get('/api/collections', async (req: Request, res: Response) => {
       { id: 'silver/geeknews.contents', name: 'GeekNews' },
       { id: 'silver/gpters.contents', name: 'GPters' },
       { id: 'silver/gpters_newsletter.contents', name: 'GPters Newsletter' },
-      { id: 'silver/pytorch_kr.contents', name: 'PyTorch KR' }
+      { id: 'silver/pytorch_kr.contents', name: 'PyTorch KR' },
+      { id: 'silver/aicasebook.contents', name: 'AiCasebook' }
     ];
     res.json(collections);
   } catch (error: any) {
@@ -340,6 +342,12 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
           if (bronzeDoc && bronzeDoc.rawHtml) {
             doc.rawHtml = bronzeDoc.rawHtml;
           }
+        } else if (collectionName === 'silver/aicasebook.contents' && doc.id) {
+          const bronzeColl = await mongo.getCollection('bronze/aicasebook.html');
+          const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
+          if (bronzeDoc && bronzeDoc.rawHtml) {
+            doc.rawHtml = bronzeDoc.rawHtml;
+          }
         }
       } catch (stitchErr) {
         console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);
@@ -360,7 +368,7 @@ function registerMcpHandlers(server: Server) {
       tools: [
         {
           name: 'search_documents',
-          description: 'Search documents (LinkedIn jobs, geeknews, gpters, pytorch_kr) stored in MongoDB',
+          description: 'Search documents (LinkedIn jobs, geeknews, gpters, pytorch_kr, aicasebook) stored in MongoDB',
           inputSchema: {
             type: 'object',
             properties: {

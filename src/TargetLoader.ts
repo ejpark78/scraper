@@ -111,6 +111,30 @@ export class TargetLoader {
         { $set: doc },
         { upsert: true }
       );
+    } else if (site === 'aicasebook') {
+      const collection = await mongo.getCollection('silver/aicasebook.contents');
+      const doc = {
+        id: id,
+        title: meta.title || 'Untitled',
+        url: meta.url || null,
+        summary: meta.summary || null,
+        author: meta.author || null,
+        categories: meta.categories || [],
+        tags: meta.tags || [],
+        publishedAt: meta.publishedAt || null,
+        views: meta.views || 0,
+        sourceLink: meta.sourceLink || null,
+        seriesName: meta.seriesName || null,
+        body: meta.body || null,
+        markdown: meta.rawContent || null,
+        updatedAt: new Date()
+      };
+
+      await collection.updateOne(
+        { id: id },
+        { $set: doc },
+        { upsert: true }
+      );
     }
   }
 }

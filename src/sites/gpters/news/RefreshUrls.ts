@@ -1,4 +1,4 @@
-import { MongoDatabase } from '../../database/mongo';
+import { MongoDatabase } from '../../../database/mongo';
 import Redis from 'ioredis';
 
 const CACHE_SET_KEY = 'completed_news';

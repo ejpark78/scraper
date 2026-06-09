@@ -12,16 +12,16 @@ SLACK_TIME ?= 3
 
 list: PRIORITY := high
 list:
-	$(COMPOSE) run --rm $(RUN_USER) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/sites/gpters/List.ts $(LIMIT)
+	$(COMPOSE) run --rm $(RUN_USER) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/sites/gpters/news/List.ts $(LIMIT)
 
 refresh:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/Refresh.ts
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/news/Refresh.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/gpters/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/gpters/news/RefreshUrls.ts
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/QueueTransform.ts
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/gpters/news/QueueTransform.ts
 
 newsletter-list: PRIORITY := high
 newsletter-list:

@@ -9,6 +9,7 @@ import { CompanyMarkdownConverter } from './sites/linkedin/company/Converter';
 import { GeekNewsConverter } from './sites/geeknews/Converter';
 import { GptersConverter } from './sites/gpters/Converter';
 import { PyTorchKRConverter } from './sites/pytorch_kr/Converter';
+import { AiCasebookConverter } from './sites/aicasebook/Converter';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const TRANSFORM_QUEUE = 'transform_queue';
@@ -22,6 +23,7 @@ class ConverterFactory {
   private static geeknews = new GeekNewsConverter();
   private static gpters = new GptersConverter();
   private static pytorch = new PyTorchKRConverter();
+  private static aicasebook = new AiCasebookConverter();
 
   public static getConverter(site: string): any {
     if (site === 'linkedin') return this.linkedinJobs;
@@ -29,6 +31,7 @@ class ConverterFactory {
     if (site === 'geeknews') return this.geeknews;
     if (site === 'gpters' || site === 'gpters_newsletter') return this.gpters;
     if (site === 'pytorch_kr') return this.pytorch;
+    if (site === 'aicasebook') return this.aicasebook;
     throw new Error(`Unsupported converter site type: ${site}`);
   }
 }
@@ -70,7 +73,7 @@ async function main() {
         const pathSpec = `${dbName}/${collectionName}` as `${'bronze' | 'silver'}/${string}`;
         const bronzeColl = await mongo.getCollection(pathSpec);
         
-        const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { $or: [{ postId: id }, { id: id }] } : site === 'gpters_newsletter' ? { id } : site === 'pytorch_kr' ? { $or: [{ topicId: id }, { id: id }] } : { topicId: id };
+        const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { $or: [{ postId: id }, { id: id }] } : site === 'gpters_newsletter' ? { id } : site === 'pytorch_kr' ? { $or: [{ topicId: id }, { id: id }] } : site === 'aicasebook' ? { id } : { topicId: id };
         const rawDoc = await bronzeColl.findOne(filter);
 
         if (!rawDoc) {
@@ -105,7 +108,7 @@ async function main() {
         await TargetLoader.load(site, id, meta);
 
         // Update status collections if applicable
-        if (site === 'geeknews' || site === 'gpters' || site === 'gpters_newsletter' || site === 'pytorch_kr') {
+        if (site === 'geeknews' || site === 'gpters' || site === 'gpters_newsletter' || site === 'pytorch_kr' || site === 'aicasebook') {
           const urlsCollName = `bronze/${site}.urls` as `${'bronze' | 'silver'}/${string}`;
           const urlsColl = await mongo.getCollection(urlsCollName);
           await urlsColl.updateOne(
@@ -127,7 +130,7 @@ async function main() {
         }
 
         // Add to completed lists if applicable
-        const cacheSetKey = site === 'linkedin' ? 'completed_jobs' : site === 'gpters_newsletter' ? 'completed_gpters_newsletter' : 'completed_news';
+        const cacheSetKey = site === 'linkedin' ? 'completed_jobs' : site === 'gpters_newsletter' ? 'completed_gpters_newsletter' : site === 'aicasebook' ? 'completed_aicasebook' : 'completed_news';
         await redis.sadd(cacheSetKey, id);
 
         Logger.info(`[Transformer] Successfully completed pipeline for [${site}] ID: ${id}`, {

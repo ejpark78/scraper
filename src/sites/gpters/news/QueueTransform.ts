@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { MongoDatabase } from '../../database/mongo';
+import { MongoDatabase } from '../../../database/mongo';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6377';
 const BATCH_SIZE = 500;

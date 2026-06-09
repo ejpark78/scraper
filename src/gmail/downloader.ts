@@ -27,7 +27,7 @@ export class GmailBulkDownloader {
         return s.replace(/&([A-Za-z0-9+,]+)-/g, (match, p1) => {
             let b64Str = p1.replace(/,/g, '/');
             if (b64Str.length % 4) b64Str += '='.repeat(4 - (b64Str.length % 4));
-            try { return Buffer.from(b64Str, 'base64').toString('utf-16be'); } catch { return match; }
+            try { return new TextDecoder('utf-16be').decode(Buffer.from(b64Str, 'base64')); } catch { return match; }
         }).replace(/&-/g, '&');
     }
 
@@ -54,7 +54,8 @@ export class GmailBulkDownloader {
             if (total === 0) return;
 
             // 1. 대기 현상을 유발하는 전체 fetch 대신, 메일 UID 배열만 쿼리로 즉시 확보
-            const uids = await this.client.search({ all: true });
+            const searchResult = await this.client.search({ all: true });
+            const uids = Array.isArray(searchResult) ? searchResult : [];
             
             let idx = 0;
             let skipped = 0;
@@ -71,7 +72,8 @@ export class GmailBulkDownloader {
                     if (!msgMeta) continue;
 
                     const subject = msgMeta.envelope?.subject || "제목 없음";
-                    const dateObj = msgMeta.envelope?.date || msgMeta.internalDate;
+                    const rawDate = msgMeta.envelope?.date ?? msgMeta.internalDate;
+                    const dateObj: Date | undefined = typeof rawDate === 'string' ? new Date(rawDate) : rawDate;
                     const [isoDateKst] = EmailParser.convertToKstIso(dateObj);
                     const shortSubject = subject.length > 30 ? subject.substring(0, 30) + "..." : subject;
 

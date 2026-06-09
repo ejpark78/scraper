@@ -39,5 +39,8 @@ gn-%:
 pk-%:
 	@$(MAKE) -f scripts/sites/pytorch_kr.mk $*
 
+ab-%:
+	@$(MAKE) -f scripts/sites/aicasebook.mk $*
+
 mongo-%:
 	@$(MAKE) -f scripts/utils/mongo.mk $*

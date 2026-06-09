@@ -1,5 +1,5 @@
-import { MongoDatabase } from '../../database/mongo';
-import { GptersConverter, GptersMeta } from './Converter';
+import { MongoDatabase } from '../../../database/mongo';
+import { GptersConverter, GptersMeta } from '../Converter';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -55,7 +55,7 @@ export class GptersRefresh {
                         }
                         const htmlContent = (post && typeof post === 'object' ? (fieldsMap.content || post.shortContent || '') : String(post)).replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
 
-                        const imageBaseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'gpters', year, month, 'images', id);
+                        const imageBaseDir = path.join(__dirname, '..', '..', '..', '..', 'data', 'sites', 'gpters', year, month, 'images', id);
                         fs.mkdirSync(imageBaseDir, { recursive: true });
 
                         const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
@@ -167,7 +167,7 @@ export class GptersRefresh {
                     );
 
                     // 3. Local Backup Files
-                    const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'gpters', year, month);
+                    const baseDir = path.join(__dirname, '..', '..', '..', '..', 'data', 'sites', 'gpters', year, month);
                     const jsonPath = path.join(baseDir, 'json', `${id}.json`);
                     const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
                     await converter.prettifyJsonAndSave(rawJsonStr, jsonPath);

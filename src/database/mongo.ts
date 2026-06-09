@@ -88,6 +88,8 @@ export class MongoDatabase {
                 await bronzeDb.collection('pytorch_kr.lists').createIndex({ id: 1 });
                 await bronzeDb.collection('pytorch_kr.lists').createIndex({ collectedAt: 1 });
                 await bronzeDb.collection('pytorch_kr.urls').createIndex({ id: 1 });
+                await bronzeDb.collection('aicasebook.html').createIndex({ id: 1 });
+                await bronzeDb.collection('aicasebook.urls').createIndex({ id: 1 });
 
                 // 📁 Silver Active Collections Indices
                 const silverDb = this.client.db('silver');
@@ -116,6 +118,12 @@ export class MongoDatabase {
                 await silverDb.collection('pytorch_kr.contents').createIndex(
                   { title: 'text', content: 'text', markdown: 'text', url: 'text' },
                   { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
+                );
+                await silverDb.collection('aicasebook.contents').createIndex({ id: 1 });
+                await silverDb.collection('aicasebook.contents').createIndex({ publishedAt: -1 });
+                await silverDb.collection('aicasebook.contents').createIndex(
+                  { title: 'text', summary: 'text', body: 'text', markdown: 'text', tags: 'text' },
+                  { weights: { title: 10, summary: 5, body: 3, markdown: 2, tags: 8 }, name: 'text_idx' }
                 );
                 await silverDb.collection('linkedin.jobs').createIndex(
                   { title: 'text', companyName: 'text', description: 'text', markdown: 'text' },
