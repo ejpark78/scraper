@@ -22,6 +22,7 @@ app.use('/gpters', express.static(path.join(projectRoot, 'data', 'sites', 'gpter
 app.use('/gpters_newsletter', express.static(path.join(projectRoot, 'data', 'sites', 'gpters_newsletter')));
 app.use('/pytorch_kr', express.static(path.join(projectRoot, 'data', 'sites', 'pytorch_kr')));
 app.use('/aicasebook', express.static(path.join(projectRoot, 'data', 'sites', 'aicasebook')));
+app.use('/dailydose_ds', express.static(path.join(projectRoot, 'data', 'sites', 'dailydose_ds')));
 
 // Request logging middleware for debugging
 app.use((req: Request, res: Response, next) => {
@@ -34,15 +35,39 @@ const mongo = MongoDatabase.getInstance();
 // 1. HTTP REST API
 app.get('/api/collections', async (req: Request, res: Response) => {
   try {
-    const collections = [
-      { id: 'linkedin.jobs', name: 'LinkedIn Jobs' },
-      { id: 'silver/linkedin.companies', name: 'LinkedIn Companies' },
-      { id: 'silver/geeknews.contents', name: 'GeekNews' },
-      { id: 'silver/gpters.contents', name: 'GPters' },
-      { id: 'silver/gpters_newsletter.contents', name: 'GPters Newsletter' },
-      { id: 'silver/pytorch_kr.contents', name: 'PyTorch KR' },
-      { id: 'silver/aicasebook.contents', name: 'AiCasebook' }
-    ];
+    await mongo.connect();
+    const client = (mongo as any).client; // Access private client via any
+    if (!client) throw new Error('MongoDB client not initialized');
+
+    const collections: any[] = [];
+    
+    // Special case for LinkedIn Jobs (Merged)
+    collections.push({ id: 'linkedin.jobs', name: 'LinkedIn Jobs' });
+
+    // Dynamic fetch from Silver DB
+    const silverDb = client.db('silver');
+    const silverColls = await silverDb.listCollections({ name: /\.contents$/ }).toArray();
+    
+    for (const col of silverColls) {
+      const name = col.name;
+      if (name === 'linkedin.jobs') continue; // Handled by merged case
+      
+      // format: 'geeknews.contents' -> 'GeekNews'
+      const siteName = name.split('.')[0];
+      const displayName = siteName
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/_/g, ' ')
+        .replace(/^\w/, (first: string) => first.toUpperCase());
+      
+      collections.push({ id: `silver/${name}`, name: displayName });
+    }
+    
+    // Add LinkedIn Companies if exists in silver
+    const hasCompanies = (await silverDb.listCollections({ name: 'linkedin.companies' }).toArray()).length > 0;
+    if (hasCompanies) {
+      collections.push({ id: 'silver/linkedin.companies', name: 'LinkedIn Companies' });
+    }
+
     res.json(collections);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -342,16 +367,20 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
           if (bronzeDoc && bronzeDoc.rawHtml) {
             doc.rawHtml = bronzeDoc.rawHtml;
           }
-        } else if (collectionName === 'silver/aicasebook.contents' && doc.id) {
-          const bronzeColl = await mongo.getCollection('bronze/aicasebook.html');
-          const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
-          if (bronzeDoc && bronzeDoc.rawHtml) {
-            doc.rawHtml = bronzeDoc.rawHtml;
-          }
-        }
-      } catch (stitchErr) {
-        console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);
-      }
+         } else if (collectionName === 'silver/aicasebook.contents' && doc.id) {
+           const bronzeColl = await mongo.getCollection('bronze/aicasebook.html');
+           const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
+           if (bronzeDoc && bronzeDoc.rawHtml) {
+             doc.rawHtml = bronzeDoc.rawHtml;
+           }
+         } else if (collectionName === 'silver/dailydose_ds.contents' && doc.id) {
+           const bronzeColl = await mongo.getCollection('bronze/dailydose_ds.html');
+           const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }] });
+           if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+         }
+       } catch (stitchErr) {
+         console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);
+       }
     }
 
     res.json(doc);

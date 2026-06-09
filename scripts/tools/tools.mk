@@ -49,3 +49,6 @@ up-viewer:
 
 opencode:
 	$(COMPOSE) --profile tools run --rm $(RUN_USER) opencode
+
+ollama:
+	ollama launch opencode --model gemma4:31b-cloud

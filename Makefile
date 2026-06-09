@@ -35,6 +35,9 @@ gpt-%:
 gn-%:
 	@$(MAKE) -f scripts/sites/geeknews.mk $*
 
+ddds-%:
+	@$(MAKE) -f scripts/sites/dailydoseofds.mk $*
+
 pk-%:
 	@$(MAKE) -f scripts/sites/pytorch_kr.mk $*
 

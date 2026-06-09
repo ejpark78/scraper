@@ -10,6 +10,7 @@ import { GeekNewsConverter } from '../sites/geeknews/Converter';
 import { GptersConverter } from '../sites/gpters/Converter';
 import { PyTorchKRConverter } from '../sites/pytorch_kr/Converter';
 import { AiCasebookConverter } from '../sites/aicasebook/Converter';
+import { DailyDoseDSConverter } from '../sites/dailydoseofds/Converter';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const TRANSFORM_QUEUE = 'transform_queue';
@@ -24,6 +25,7 @@ class ConverterFactory {
   private static gpters = new GptersConverter();
   private static pytorch = new PyTorchKRConverter();
   private static aicasebook = new AiCasebookConverter();
+  private static dailydose = new DailyDoseDSConverter();
 
   public static getConverter(site: string): any {
     if (site === 'linkedin') return this.linkedinJobs;
@@ -32,6 +34,7 @@ class ConverterFactory {
     if (site === 'gpters' || site === 'gpters_newsletter') return this.gpters;
     if (site === 'pytorch_kr') return this.pytorch;
     if (site === 'aicasebook') return this.aicasebook;
+    if (site === 'dailydose_ds') return this.dailydose;
     throw new Error(`Unsupported converter site type: ${site}`);
   }
 }
@@ -73,7 +76,7 @@ async function main() {
         const pathSpec = `${dbName}/${collectionName}` as `${'bronze' | 'silver'}/${string}`;
         const bronzeColl = await mongo.getCollection(pathSpec);
         
-        const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { $or: [{ postId: id }, { id: id }] } : site === 'gpters_newsletter' ? { id } : site === 'pytorch_kr' ? { $or: [{ topicId: id }, { id: id }] } : site === 'aicasebook' ? { id } : { topicId: id };
+        const filter = site === 'linkedin' ? { jobId: id } : site === 'geeknews' ? { topicId: id } : site === 'gpters' ? { $or: [{ postId: id }, { id: id }] } : site === 'gpters_newsletter' ? { id } : site === 'pytorch_kr' ? { $or: [{ topicId: id }, { id: id }] } : site === 'aicasebook' ? { id } : site === 'dailydose_ds' ? { id } : { topicId: id };
         const rawDoc = await bronzeColl.findOne(filter);
 
         if (!rawDoc) {

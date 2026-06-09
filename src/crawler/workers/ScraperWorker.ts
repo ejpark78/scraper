@@ -81,6 +81,16 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
       return match ? match[1] : '';
     },
   },
+  dailydose_ds: {
+    collectionName: 'bronze/dailydose_ds.html',
+    targetCollection: 'dailydose_ds.html',
+    updateFilterKey: 'id',
+    defaultSlack: 3,
+    extractId: (url) => {
+      // Base64 encoding used in List.ts
+      return Buffer.from(url).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+    },
+  },
 };
 
 interface ScrapePayload {
@@ -112,6 +122,9 @@ class ScraperDispatcher {
         await this.scrapePytorchKr(url, tempPath);
         break;
       case 'aicasebook':
+        await this.scrapeHttpFetch(url, tempPath);
+        break;
+      case 'dailydose_ds':
         await this.scrapeHttpFetch(url, tempPath);
         break;
       default:
@@ -237,6 +250,7 @@ class QueueManager {
     'scrape_queue:gpters_newsletter:high',
     'scrape_queue:pytorch_kr:high',
     'scrape_queue:aicasebook:high',
+    'scrape_queue:dailydose_ds:high',
   ];
 
   private mediumQueues = [
@@ -246,6 +260,7 @@ class QueueManager {
     'scrape_queue:gpters_newsletter:medium',
     'scrape_queue:pytorch_kr:medium',
     'scrape_queue:aicasebook:medium',
+    'scrape_queue:dailydose_ds:medium',
   ];
 
   private lowQueues = [
@@ -255,6 +270,7 @@ class QueueManager {
     'scrape_queue:gpters_newsletter:low',
     'scrape_queue:pytorch_kr:low',
     'scrape_queue:aicasebook:low',
+    'scrape_queue:dailydose_ds:low',
   ];
 
   private legacyQueues = ['scrape_queue'];

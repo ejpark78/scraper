@@ -1,0 +1,1377 @@
+<!DOCTYPE html><html dir="ltr" lang="en" class="group/html min-h-dvh light has-grayscale-Gray" data-sx-content-api-url="https://daily-dose-of-data-science-1.ghost.io/ghost/api/content/" data-sx-content-api-key="59065599b5c21100e85d179b92" data-prismjs-copy="Copy" data-prismjs-copy-error="Error" data-prismjs-copy-success="Copied" style="--ghost-accent-color-light-rgb: 43 121 195; --c-primary-light-hsl: 209.21052631578945 63.86554621848738% 46.666666666666664%; --c-primary-light-hsl-50: 209.21052631578945 100% 90%; --c-primary-light-hsl-950: 209.21052631578945 80% 10%; --color-contrast-light: #fff;">
+    <body class="post-template tag-hash-newsletter tag-llms tag-hash-archive  min-h-dvh antialiased overflow-x-hidden text-gray-500 bg-background dark:text-gray-400 dark:bg-background-dark [&amp;.has-modal]:h-dvh [&amp;.has-modal]:overflow-hidden"><div id="MathJax_Message" style="display: none;"></div>
+        <div id="sx-tone" class=" hidden  fixed z-4999999 inset-0 bg-primary opacity-3 dark:opacity-5 pointer-events-none"></div>
+
+
+
+        <div id="sx-viewport" class="min-h-dvh flex flex-col">
+            <a href="https://www.dailydoseofds.com/p/speculative-decoding-in-llms/#sx-main" class="sr-only focus:not-sr-only focus-within:not-sr-only outline-hidden">
+                <span class="relative flex items-center justify-center w-full h-12 font-semibold text-gray-950 dark:text-gray-50 text-sm ring-3 ring-inset ring-accent">
+                    Skip to main content
+                </span>
+            </a>       
+
+            <header id="sx-header" class="
+        sticky z-50 top-0 min-h-16 lg:h-16 flex flex-wrap flex-none items-center border-b border-transparent transition-colors duration-200
+        [&amp;.stuck]:border-gray-950/5 [&amp;.stuck]:bg-background/90
+        dark:[&amp;.stuck]:border-gray-50/10 dark:[&amp;.stuck]:bg-background-dark/70
+    ">
+    <nav class="outer xl:outer-xl flex items-center w-full py-1.5">
+        <div class="inner flex items-center min-h-10">
+            <a id="sx-header-brand" class="shrink me-4 xs:me-8 font-bold text-xl text-gray-950 dark:text-gray-50" href="https://www.dailydoseofds.com/" aria-label="Daily Dose of Data Science">
+                        <img class="max-h-9 w-auto" src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2025/12/dailyds-logo-transparent-1.png" alt="Daily Dose of Data Science">
+            </a>
+
+            
+    <ul id="sx-nav-lg" data-sx-nav="" class="hidden lg:flex ms-auto gap-2" role="list">
+             
+                <li class="relative inline-flex nth-[n+8]:hidden max-xl:nth-[n+6]:hidden" data-sx-slug="newsletter" data-sx-current="false">
+                     
+                        <a href="https://dailydoseofds.github.io/ai-engg-book/" data-sx-slug="newsletter" class="p-2 inline-flex items-center font-medium text-sm whitespace-nowrap transition-colors duration-200 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 from-gray-50 from-50% [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-transparent dark:[&amp;.current-parent]:text-transparent dark:[&amp;.current]:bg-linear-to-br dark:[&amp;.current]:bg-clip-text dark:[&amp;.current-parent]:bg-linear-to-br dark:[&amp;.current-parent]:bg-clip-text sx-external" target="_blank">
+                            Newsletter
+
+                            <svg class="[.sx-external>&amp;]:inline hidden shrink-0 w-3 h-3 ms-0.5 -me-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+                        </a>
+                </li>
+             
+                <li class="relative inline-flex nth-[n+8]:hidden max-xl:nth-[n+6]:hidden" data-sx-slug="archive" data-sx-current="false">
+                     
+                        <a href="https://www.dailydoseofds.com/archive/" data-sx-slug="archive" class="
+                                        p-2 inline-flex items-center font-medium text-sm whitespace-nowrap transition-colors duration-200
+        text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 from-gray-50 from-50%
+        [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-transparent dark:[&amp;.current-parent]:text-transparent
+        dark:[&amp;.current]:bg-linear-to-br dark:[&amp;.current]:bg-clip-text 
+        dark:[&amp;.current-parent]:bg-linear-to-br dark:[&amp;.current-parent]:bg-clip-text
+                                         
+                            ">
+                            Archive
+
+                            <svg class="[.sx-external>&amp;]:inline hidden shrink-0 w-3 h-3 ms-0.5 -me-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+                        </a>
+                </li>
+             
+                <li class="relative inline-flex nth-[n+8]:hidden max-xl:nth-[n+6]:hidden" data-sx-slug="guidebooks" data-sx-current="false">
+                     
+                        <button data-sx-dropdown-toggle="" class="        p-2 inline-flex items-center font-medium text-sm whitespace-nowrap transition-colors duration-200
+        text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 from-gray-50 from-50%
+        [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-transparent dark:[&amp;.current-parent]:text-transparent
+        dark:[&amp;.current]:bg-linear-to-br dark:[&amp;.current]:bg-clip-text 
+        dark:[&amp;.current-parent]:bg-linear-to-br dark:[&amp;.current-parent]:bg-clip-text
+ peer [&amp;.open]:text-gray-950 dark:[&amp;.open]:text-gray-50 dark:[&amp;.open.current]:text-transparent">
+                             Guidebooks
+                            <svg class="[.open>&amp;]:rotate-180 dark:[.current>&amp;]:text-gray-50 inline shrink-0 w-3 h-3 ms-0.5 -me-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"></path>
+</svg>
+                        </button>
+                        <ul data-sx-dropdown="" role="list" class="hidden peer-[.open]:block absolute z-50 top-14 -end-4 w-60 max-h-[calc(100vh-(--spacing(24)))] 
+                                overflow-y-auto backdrop-blur-sm bg-white/90 ring-1 ring-gray-900/5 shadow-pretty rounded-xl 
+                                dark:bg-background-dark/80 dark:ring-white/5 dark:ring-inset dark:shadow-lg dark:shadow-black/60
+                            " style="background: #fbf9fa">
+                            <li class="py-2 px-3 grid grid-cols-1 gap-1 dark:bg-white/5 rounded-inherit">
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/what-is-mcp/" data-sx-slug="mcp-guidebook" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 MCP Guidebook<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://drive.google.com/file/d/1Th8mN_IF7Ttc8bI_OLtUuQ7Mjx3aJ6Hi/view" data-sx-slug="agents-guidebook" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                                 Agents Guidebook<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://drive.google.com/file/d/1_s2UaD7tEPECjgC5YMOa1LIOB9HUWFO-/view" data-sx-slug="ai-engineering-guidebook" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                                 AI Engineering Guidebook<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://drive.google.com/file/d/1ZunUHwkD2Ut0_LrgDTDmlQRQkfT2lkVf/view" data-sx-slug="ds-guidebook" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                                 DS Guidebook<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden  hidden ">
+                                            <a href="https://www.dailydoseofds.com/" data-sx-slug="courses" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 Courses<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/mlops-crash-course-part-1/" data-sx-slug="mlops-llmops-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 MLOps/LLMOps Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/rl-course-part-1/" data-sx-slug="reinforcement-learning-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 Reinforcement Learning Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/ai-agents-crash-course-part-1-with-implementation/" data-sx-slug="ai-agents-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 AI Agents Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/model-context-protocol-crash-course-part-1/" data-sx-slug="mcp-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 MCP Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-1-with-implementations/" data-sx-slug="rag-systems-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 RAG Systems Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                            </li>
+                        </ul>                    
+                                    </li>
+                                                             
+                <li class="relative inline-flex nth-[n+8]:hidden max-xl:nth-[n+6]:hidden" data-sx-slug="courses" data-sx-current="false">
+                     
+                        <button data-sx-dropdown-toggle="" class="        p-2 inline-flex items-center font-medium text-sm whitespace-nowrap transition-colors duration-200
+        text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 from-gray-50 from-50%
+        [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-transparent dark:[&amp;.current-parent]:text-transparent
+        dark:[&amp;.current]:bg-linear-to-br dark:[&amp;.current]:bg-clip-text 
+        dark:[&amp;.current-parent]:bg-linear-to-br dark:[&amp;.current-parent]:bg-clip-text
+ peer [&amp;.open]:text-gray-950 dark:[&amp;.open]:text-gray-50 dark:[&amp;.open.current]:text-transparent">
+                             Courses
+                            <svg class="[.open>&amp;]:rotate-180 dark:[.current>&amp;]:text-gray-50 inline shrink-0 w-3 h-3 ms-0.5 -me-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"></path>
+</svg>
+                        </button>
+                        <ul data-sx-dropdown="" role="list" class="hidden peer-[.open]:block absolute z-50 top-14 -end-4 w-60 max-h-[calc(100vh-(--spacing(24)))] 
+                                overflow-y-auto backdrop-blur-sm bg-white/90 ring-1 ring-gray-900/5 shadow-pretty rounded-xl 
+                                dark:bg-background-dark/80 dark:ring-white/5 dark:ring-inset dark:shadow-lg dark:shadow-black/60
+                            " style="background: #fbf9fa">
+                            <li class="py-2 px-3 grid grid-cols-1 gap-1 dark:bg-white/5 rounded-inherit">
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/mlops-crash-course-part-1/" data-sx-slug="mlops-llmops-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 MLOps/LLMOps Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/rl-course-part-1/" data-sx-slug="reinforcement-learning-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 Reinforcement Learning Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/ai-agents-crash-course-part-1-with-implementation/" data-sx-slug="ai-agents-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 AI Agents Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/model-context-protocol-crash-course-part-1/" data-sx-slug="mcp-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 MCP Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-1-with-implementations/" data-sx-slug="rag-systems-course" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 RAG Systems Course<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/bi-encoders-and-cross-encoders-for-sentence-pair-similarity-scoring-part-1/" data-sx-slug="llm-and-fine-tuning" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 LLM and Fine-tuning<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/where-did-the-assumptions-of-linear-regression-originate-from/" data-sx-slug="classical-ml-and-deep-learning" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 Classical ML and Deep Learning<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                                        <div class="peer peer-[.hidden]:hidden ">
+                                            <a href="https://www.dailydoseofds.com/8-fatal-yet-non-obvious-pitfalls-and-cautionary-measures-in-data-science/" data-sx-slug="engineering-best-practices" class="px-3 py-2 w-full inline-block font-medium text-sm transition-colors duration-200
+                                                    text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50
+                                                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                             
+                                                ">
+                                                 Engineering Best Practices<!--
+                                                --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                            </a>   
+                                        </div>                                
+                            </li>
+                        </ul>                    
+                                    </li>
+                                                                                                
+        <li class="relative inline-flex xl:nth-[-n+8]:hidden max-xl:nth-[-n+6]:hidden">
+            <button id="sx-nav-more-toggle" data-sx-dropdown-toggle="" aria-label="Toggle menu" class="peer p-1.5 -ms-0.5 -me-2.5 text-gray-500 hover:text-gray-950 [&amp;.open]:text-gray-950 transition-colors duration-200
+                    dark:text-gray-400 dark:hover:text-gray-50 dark:[&amp;.open]:text-gray-50
+                    [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50
+                ">
+                <svg class="relative top-px w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" focusable="false" aria-hidden="true">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"></path>
+</svg>
+            </button>   
+
+            <ul data-sx-dropdown="" role="list" class="hidden peer-[.open]:block absolute z-50 top-14 -end-4 w-60 max-h-[calc(100vh-(--spacing(24)))] 
+                    overflow-y-auto backdrop-blur-sm bg-white/90 ring-1 ring-gray-900/5 shadow-pretty rounded-xl 
+                    dark:bg-background-dark/80 dark:ring-white/5 dark:ring-inset dark:shadow-lg dark:shadow-black/60
+                " style="background: #fbf9fa">
+                <li class="py-2 px-3 grid grid-cols-1 gap-1 dark:bg-white/5 rounded-inherit">
+                            <div class="hidden nth-[n+8]:block max-xl:nth-[n+6]:block" data-sx-slug="newsletter" data-sx-current="false">    
+                                                 
+                                    <a href="https://dailydoseofds.github.io/ai-engg-book/" data-sx-slug="newsletter" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                        Newsletter<!--
+                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                    </a>   
+                            </div>
+                            <div class="hidden nth-[n+8]:block max-xl:nth-[n+6]:block" data-sx-slug="archive" data-sx-current="false">    
+                                                 
+                                    <a href="https://www.dailydoseofds.com/archive/" data-sx-slug="archive" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50
+                                                     
+                                        ">
+                                        Archive<!--
+                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                    </a>   
+                            </div>
+                            <div class="hidden nth-[n+8]:block max-xl:nth-[n+6]:block" data-sx-slug="guidebooks" data-sx-current="false">    
+                                 
+                                    <button data-sx-dropdown-toggle="" class="[&amp;.open]:text-gray-950 dark:[&amp;.open]:text-gray-50 peer relative px-3 py-2 w-full flex items-center font-medium text-start text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50
+                                        ">
+                                        <span class="me-auto">
+                                             Guidebooks
+                                        </span>
+
+                                        <svg class="[.open>&amp;]:rotate-180 inline shrink-0 w-3 h-3 ms-0.5 -me-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"></path>
+</svg>
+                                    </button>        
+
+                                    <ul data-sx-dropdown="inline" class="ps-3 space-y-1 mt-1 hidden peer-[.open]:block" role="list" style="background: #fbf9fa">
+                                                <li data-sx-slug="mcp-guidebook" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/what-is-mcp/" data-sx-slug="mcp-guidebook" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         MCP Guidebook<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="agents-guidebook" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://drive.google.com/file/d/1Th8mN_IF7Ttc8bI_OLtUuQ7Mjx3aJ6Hi/view" data-sx-slug="agents-guidebook" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                                         Agents Guidebook<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="ai-engineering-guidebook" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://drive.google.com/file/d/1_s2UaD7tEPECjgC5YMOa1LIOB9HUWFO-/view" data-sx-slug="ai-engineering-guidebook" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                                         AI Engineering Guidebook<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="ds-guidebook" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://drive.google.com/file/d/1ZunUHwkD2Ut0_LrgDTDmlQRQkfT2lkVf/view" data-sx-slug="ds-guidebook" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                                         DS Guidebook<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="courses" data-sx-current="false" class="peer peer-[.hidden]:hidden  hidden ">
+                                                    <a href="https://www.dailydoseofds.com/" data-sx-slug="courses" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         Courses<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="mlops-llmops-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/mlops-crash-course-part-1/" data-sx-slug="mlops-llmops-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         MLOps/LLMOps Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="reinforcement-learning-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/rl-course-part-1/" data-sx-slug="reinforcement-learning-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         Reinforcement Learning Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="ai-agents-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/ai-agents-crash-course-part-1-with-implementation/" data-sx-slug="ai-agents-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         AI Agents Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="mcp-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/model-context-protocol-crash-course-part-1/" data-sx-slug="mcp-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         MCP Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="rag-systems-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-1-with-implementations/" data-sx-slug="rag-systems-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         RAG Systems Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                    </ul>                             
+                                                            </div>
+                            <div class="hidden nth-[n+8]:block max-xl:nth-[n+6]:block" data-sx-slug="courses" data-sx-current="false">    
+                                 
+                                    <button data-sx-dropdown-toggle="" class="[&amp;.open]:text-gray-950 dark:[&amp;.open]:text-gray-50 peer relative px-3 py-2 w-full flex items-center font-medium text-start text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50
+                                        ">
+                                        <span class="me-auto">
+                                             Courses
+                                        </span>
+
+                                        <svg class="[.open>&amp;]:rotate-180 inline shrink-0 w-3 h-3 ms-0.5 -me-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"></path>
+</svg>
+                                    </button>        
+
+                                    <ul data-sx-dropdown="inline" class="ps-3 space-y-1 mt-1 hidden peer-[.open]:block" role="list" style="background: #fbf9fa">
+                                                <li data-sx-slug="mlops-llmops-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/mlops-crash-course-part-1/" data-sx-slug="mlops-llmops-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         MLOps/LLMOps Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="reinforcement-learning-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/rl-course-part-1/" data-sx-slug="reinforcement-learning-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         Reinforcement Learning Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="ai-agents-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/ai-agents-crash-course-part-1-with-implementation/" data-sx-slug="ai-agents-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         AI Agents Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="mcp-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/model-context-protocol-crash-course-part-1/" data-sx-slug="mcp-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         MCP Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="rag-systems-course" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-1-with-implementations/" data-sx-slug="rag-systems-course" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         RAG Systems Course<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="llm-and-fine-tuning" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/bi-encoders-and-cross-encoders-for-sentence-pair-similarity-scoring-part-1/" data-sx-slug="llm-and-fine-tuning" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         LLM and Fine-tuning<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="classical-ml-and-deep-learning" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/where-did-the-assumptions-of-linear-regression-originate-from/" data-sx-slug="classical-ml-and-deep-learning" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         Classical ML and Deep Learning<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                                <li data-sx-slug="engineering-best-practices" data-sx-current="false" class="peer peer-[.hidden]:hidden ">
+                                                    <a href="https://www.dailydoseofds.com/8-fatal-yet-non-obvious-pitfalls-and-cautionary-measures-in-data-science/" data-sx-slug="engineering-best-practices" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 transition-colors duration-200
+                                                            dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                                     
+                                                        ">
+                                                         Engineering Best Practices<!--
+                                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                                    </a>   
+                                                </li>
+                                    </ul>                             
+                                                            </div>
+                </li>
+            </ul>                     
+        </li>
+    </ul>
+
+
+
+
+            <div id="sx-header-buttons" class="flex flex-row-reverse items-center ms-auto gap-3.5 xs:flex-row lg:me-0 lg:ps-4 lg:pe-0 lg:gap-4 border-gray-950/10 dark:border-gray-50/15 
+                     me-3.5 xs:pe-3.5 lg:ms-4 xs:border-e lg:border-e-0 lg:border-s 
+                ">
+                
+                <button data-ghost-search="" title="Quick search..." aria-label="Quick search..." class="flex-none p-1.5 -mx-1.5 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 transition-colors">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+</svg>                </button>
+
+                    <button data-portal="signin" class="hidden xs:block py-1.5 font-medium text-sm whitespace-nowrap text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 transition-colors duration-200 gh-portal-close">
+                         Sign In 
+                    </button>
+
+                        <a href="https://www.dailydoseofds.com/membership" class="relative inline-flex justify-center items-center px-4 py-2.5 rounded-full border border-transparent
+                                font-medium text-sm leading-none bg-primary shadow-primary text-primary-contrast hover:opacity-80 transition-opacity duration-200
+                                from-gray-50 from-50% dark:border-gray-50/10 dark:bg-transparent dark:bg-linear-to-br dark:bg-clip-text dark:text-transparent dark:shadow-none dark:hover:opacity-100
+                            ">
+                            <span>Get Started</span>
+
+                            <span class="hidden dark:block absolute -inset-px -z-10 rounded-full bg-linear-to-br from-white from-0% to-30%"></span>
+                            <span class="hidden dark:block not-supports-relative-colors:hidden! absolute -inset-px -z-10 rounded-full drop-shadow-white-sm animation-state-paused [:hover>&amp;]:animation-state-running opacity-0 [:hover>&amp;]:opacity-100 transition-opacity duration-500">
+                                <span class="absolute inset-0 rounded-full -z-10 transition-opacity duration-500 bg-conic-white-sm animate-rotate-angle animation-state-inherit"></span>
+                            </span>
+                            <span class="hidden dark:block absolute inset-0 -z-10 rounded-full bg-background-dark"></span>
+                            <span class="hidden dark:block absolute -inset-px -z-10 rounded-full bg-radial-[90%_90%_at_0%_0%] from-white transition-opacity duration-1000 opacity-25 [:hover>&amp;]:opacity-40"></span>
+                        </a>
+            </div>
+
+            <button id="sx-mobile-menu-toggle" class="lg:hidden p-1.5 -mx-2 flex-none flex items-center justify-center 
+                    
+                " title="Toggle menu" aria-label="Toggle menu">
+                
+<svg class="w-5 h-5 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 -rotate-180 transition-colors duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75Zm0 10.5a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75ZM2 10a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 2 10Z" clip-rule="evenodd"></path>
+</svg>
+            </button>
+        </div>
+    </nav>
+
+    <div data-sx-breadcrumbs="" class="outer xl:outer-xl hidden relative top-px lg:[.has-breadcrumbs>&amp;]:hidden [.has-breadcrumbs>&amp;]:flex items-center w-full h-10 text-2xs border-y border-gray-950/5 dark:border-gray-50/5">
+        <div class="inner flex items-center">
+            <button data-sx-breadcrumbs-button="" class="flex items-center overflow-hidden min-w-0 w-full" aria-label="Toggle menu">
+                <span class="flex-none flex items-center justify-center h-8 w-8 -ms-2 me-0.5">
+                    
+<svg class="flex-none h-5 w-5 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75Zm0 10.5a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75ZM2 10a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 2 10Z" clip-rule="evenodd"></path>
+</svg>
+                </span>
+
+                <span data-sx-breadcrumbs-section="" class="inline-flex flex-none max-w-1/2 truncate text-gray-500 dark:text-gray-400">
+                    <span data-sx-breadcrumbs-section-text="" class="truncate"></span>
+                    <span class="mx-2">/</span>
+                </span>
+                <span data-sx-breadcrumbs-current="" class="truncate font-medium text-gray-950 dark:text-gray-50"></span>
+            </button>
+        </div>
+    </div>        
+
+    <div class="hidden [.stuck>&amp;]:block absolute inset-0 -z-50 backdrop-blur-sm"></div>
+
+    <div class="hidden dark:[.stuck>&amp;]:block outer xl:outer-xl absolute -bottom-px start-0 w-full h-px pointer-events-none">
+        <div class="inner">
+            <div class="w-1/2 xs:w-1/3 md:w-1/4 lg:w-1/8 h-px bg-linear-to-r from-white/0 via-white/30 -translate-x-1/8"></div>
+        </div>        
+    </div>
+</header>
+
+<nav id="sx-mobile-menu" class="invisible flex lg:hidden fixed inset-0 -z-10 [&amp;.open]:visible [&amp;.open]:z-3999999">
+    <div data-sx-mobile-menu-close="" class="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-xs"></div>
+
+    <div class="fixed top-0 end-0 bottom-0 w-full max-w-xs shadow-lg bg-gray-50 dark:bg-gray-950 border-s border-gray-950/5 dark:border-gray-50/5 transition ease-out translate-x-full [.open>&amp;]:translate-x-0 ">
+        <div class="relative ps-9 pe-16 pb-6 pt-14 h-full overflow-y-scroll overflow-x-hidden">
+            <button data-sx-mobile-menu-close="" aria-label="Close" class="fixed flex items-center justify-center top-4 end-3 p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                
+<svg class="h-5 w-5" style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+    <path d="M14 12l-10 0"></path>
+    <path d="M14 12l-4 4"></path>
+    <path d="M14 12l-4 -4"></path>
+    <path d="M20 4l0 16"></path>
+</svg>            </button>
+
+            <div class="grid grid-cols-1 min-h-full">
+                    <ul id="sx-nav-sm" data-sx-nav="" class="flex flex-col space-y-2 -mx-3.5">
+             
+                <li data-sx-slug="newsletter" data-sx-current="false">
+                     
+                        <a href="https://dailydoseofds.github.io/ai-engg-book/" data-sx-slug="newsletter" class="px-3 py-2 inline-block font-medium text-sm text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                            Newsletter<!--
+                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                        </a>
+                </li>
+             
+                <li data-sx-slug="archive" data-sx-current="false">
+                     
+                        <a href="https://www.dailydoseofds.com/archive/" data-sx-slug="archive" class="px-3 py-2 inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50
+                                         
+                            ">
+                            Archive<!--
+                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                        </a>
+                </li>
+             
+                <li data-sx-slug="guidebooks" data-sx-current="false">
+                     
+                        <button data-sx-dropdown-toggle="" class="peer [&amp;.open]:text-gray-950 dark:[&amp;.open]:text-gray-50 relative px-3 py-2 w-full flex items-center font-medium text-sm text-gray-500 hover:text-gray-950 
+                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50
+                            ">
+                            <span class="me-auto">
+                                 Guidebooks
+                            </span>
+
+                            <svg class="[.open>&amp;]:rotate-180 inline shrink-0 w-3 h-3 ms-0.5 -me-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"></path>
+</svg>
+                        </button>
+                        <ul data-sx-dropdown="inline" class="ps-3 space-y-1 mt-1 hidden peer-[.open]:block" role="list" style="background: #fbf9fa">
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/what-is-mcp/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             MCP Guidebook<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://drive.google.com/file/d/1Th8mN_IF7Ttc8bI_OLtUuQ7Mjx3aJ6Hi/view" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                             Agents Guidebook<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://drive.google.com/file/d/1_s2UaD7tEPECjgC5YMOa1LIOB9HUWFO-/view" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                             AI Engineering Guidebook<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://drive.google.com/file/d/1ZunUHwkD2Ut0_LrgDTDmlQRQkfT2lkVf/view" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 sx-external" target="_blank">
+                                             DS Guidebook<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden  hidden ">
+                                        <a href="https://www.dailydoseofds.com/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             Courses<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/mlops-crash-course-part-1/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             MLOps/LLMOps Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/rl-course-part-1/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             Reinforcement Learning Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/ai-agents-crash-course-part-1-with-implementation/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             AI Agents Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/model-context-protocol-crash-course-part-1/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             MCP Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-1-with-implementations/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             RAG Systems Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                        </ul>                    
+                                    </li>
+                                                             
+                <li data-sx-slug="courses" data-sx-current="false">
+                     
+                        <button data-sx-dropdown-toggle="" class="peer [&amp;.open]:text-gray-950 dark:[&amp;.open]:text-gray-50 relative px-3 py-2 w-full flex items-center font-medium text-sm text-gray-500 hover:text-gray-950 
+                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50
+                            ">
+                            <span class="me-auto">
+                                 Courses
+                            </span>
+
+                            <svg class="[.open>&amp;]:rotate-180 inline shrink-0 w-3 h-3 ms-0.5 -me-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"></path>
+</svg>
+                        </button>
+                        <ul data-sx-dropdown="inline" class="ps-3 space-y-1 mt-1 hidden peer-[.open]:block" role="list" style="background: #fbf9fa">
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/mlops-crash-course-part-1/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             MLOps/LLMOps Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/rl-course-part-1/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             Reinforcement Learning Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/ai-agents-crash-course-part-1-with-implementation/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             AI Agents Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/model-context-protocol-crash-course-part-1/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             MCP Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-1-with-implementations/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             RAG Systems Course<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/bi-encoders-and-cross-encoders-for-sentence-pair-similarity-scoring-part-1/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             LLM and Fine-tuning<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/where-did-the-assumptions-of-linear-regression-originate-from/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             Classical ML and Deep Learning<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                                    <li class="peer peer-[.hidden]:hidden ">
+                                        <a href="https://www.dailydoseofds.com/8-fatal-yet-non-obvious-pitfalls-and-cautionary-measures-in-data-science/" class="px-3 py-2 w-full inline-block font-medium text-sm text-gray-500 hover:text-gray-950
+                                                dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 
+                                                         
+                                            ">
+                                             Engineering Best Practices<!--
+                                            --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                        </a>   
+                                    </li>
+                        </ul>                    
+                                    </li>
+                                                                                                
+            <li class="mt-auto xs:hidden">
+                <button data-portal="signin" class="px-3 py-2 inline-block font-medium text-sm text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 [&amp;.current]:text-gray-950 [&amp;.current-parent]:text-gray-950 dark:[&amp;.current]:text-gray-50 dark:[&amp;.current-parent]:text-gray-50 w-full text-start gh-portal-close">
+                     Sign In 
+                </button>
+            </li>        
+    </ul>
+
+
+
+            </div>
+        </div>
+    </div>
+</nav> 
+
+            <main id="sx-main" tabindex="-1" class="flex-none outline-hidden">
+                
+        
+
+<div class="border-b border-gray-100 dark:border-gray-800" style="width: 100%;"></div>
+
+<div class="outer xl:outer-xl">
+    <div class="inner">
+        <article class="mx-auto pt-10 sm:pt-12 px-4 sm:px-6" style="max-width: 680px;">
+                <div class="flex items-center gap-3 mb-4">
+                    <time class="text-sm text-gray-500 dark:text-gray-400" datetime="2026-05-13" style="font-size: 0.9rem;">
+                        May 13, 2026
+                    </time>
+                        <span class="inline-block px-2 py-0.5 text-2xs font-medium text-gray-600 dark:text-gray-300 rounded-full" style="border: 1.5px solid #6e6e6e;">
+                            LLMs
+                        </span>
+                </div>
+
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100" style="font-family: 'Domine', serif; line-height: 1.2;">
+                Speculative Decoding in LLMs
+            </h1>
+
+                <p class="mt-3 text-lg sm:text-xl text-gray-500 dark:text-gray-400" style="line-height: 1.5;">
+                    ...explained with code and tradeoffs.
+                </p>
+
+                <div class="flex items-center mt-4">
+                    <div class="flex items-center" style="margin-right: 10px;">
+                            <div class="block rounded-full" style="">
+                                    <img class="rounded-full object-cover border-2 border-white dark:border-gray-900" src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/size/w400/2026/03/avi-google.jpg" alt="Avi Chawla" style="width: 32px; height: 32px;">
+                            </div>
+                    </div>
+                    <div class="text-sm" style="color: #747474; font-family: 'Noto Serif', serif;">
+                        Avi Chawla
+                    </div>
+                </div>
+
+                <div class="mt-5 border-b border-gray-200 dark:border-gray-700"></div>
+        </article>
+    </div>
+</div>
+
+<div class="outer xl:outer-xl">
+    <div class="inner">
+        <div class="mx-auto pt-10 pb-14 px-4 sm:px-6" style="max-width: 680px;">
+                <div class="kg-card kg-callout-card kg-callout-card-purple" style="margin-top: 0; margin-bottom: 1rem;">
+                    <div class="kg-callout-emoji">👉</div>
+                    <div id="parity-banner-container-default" class="kg-callout-text" data-has-access="true" style="color: #1a1a1a; font-size: 1.1em;">Hey! Enjoy the free article. It looks like you are from <b>United States of America 🇺🇸</b>. So whenever you are ready, join by visiting this <b><u><a href="https://www.dailydoseofds.com/membership-7XQP25LK-HRVB64C2A/">membership page</a></u></b> for relief pricing of <b>20%</b> off on your full access, FOREVER.</div>
+                </div>
+                
+                <hr style="margin-bottom: 2rem;">
+
+            <div data-sx-toc-src="">
+                <div class="content">
+                    <p>Google uses speculative decoding in AI Overviews to serve over a billion Search users.</p><figure class="kg-card kg-image-card"><img src="https://substackcdn.com/image/fetch/$s_!jvKB!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F6515aeef-10b9-44dc-968f-04ca92e8e9c0_1057x463.png" class="kg-image" alt="" loading="lazy" width="496" height="217"></figure><p>It’s also how Anthropic, Meta, and most major inference providers reduce latency at scale and get 2-3x more tokens per second, with mathematically identical outputs.</p><blockquote><a href="https://www.dailydoseofds.com/llmops-crash-course-part-13/"><strong>We covered the mechanics of LLM inference (prefill and decode phases, KV caching, speculative decoding, batching, and optimization techniques that improve latency and throughput here in the LLMOps course →</strong></a></blockquote><p>The idea comes from CPU architecture. A small draft model proposes several tokens ahead, and then a large model verifies them all in a single forward pass. Correct predictions (which are typically 60-80% of tokens) get accepted at the inference cost of the small model.</p><p>The diagram below depicts how speculative decoding differs from standard decoding:</p><figure class="kg-card kg-image-card"><img src="https://substackcdn.com/image/fetch/$s_!IBkn!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fce4e25ca-1b23-4118-a4c7-ecbf8087e961_1166x1166.gif" class="kg-image" alt="" loading="lazy" width="1166" height="1166"></figure><p>Let's dive in to understand the key problem it solves and how it works!</p><hr><h2 id="the-problem">The problem</h2><p>A 70B parameter model in FP16 occupies roughly 140 GB of GPU memory.</p><p>During the decode phase, EVERY SINGLE TOKEN requires a full forward pass through all 70B parameters (due to autoregressive generation), reading the entire model weights from memory.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-23.png" class="kg-image" alt="" loading="lazy" width="680" height="341"></figure><p>On an H100 (3.35 TB/s memory bandwidth), it would take around 42 milliseconds just to move the weights and produce exactly one token.</p><p>And here's what makes it feel particularly wasteful. The token the 70B model produces at each step is often a common, predictable word ("the", "is", "of") that even a 0.5B model could have gotten right too.</p><p>Nonetheless, you end up paying the full cost of reading 140 GB of weights to generate a token that a model 100x smaller could have produced in a fraction of the time.</p><p>Speculative decoding exploits this observation.</p><h2 id="how-speculative-decoding-works">How speculative decoding works</h2><p>Essentially, you let the small model handle the core generation process.</p><p>After a certain number of tokens (say, 5), use the large model to verify the tokens generated in a single forward pass.</p><p>Since verification processes multiple tokens at once (this is structurally identical to the prefill phase), the GPU's compute units are actually saturated rather than sitting idle waiting on memory reads.</p><p>Here's how the loop runs:</p><figure class="kg-card kg-image-card"><img src="https://substackcdn.com/image/fetch/$s_!IBkn!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fce4e25ca-1b23-4118-a4c7-ecbf8087e961_1166x1166.gif" class="kg-image" alt="" loading="lazy" width="1166" height="1166"></figure><ul><li>First, a small model (e.g., Qwen2.5 0.5B) generates 5 candidate tokens autoregressively. Because it's 100x smaller than the target, this costs roughly 1-2% of a single large model forward pass.</li><li>Then the large model (e.g., Qwen2.5 7B) processes all 5 draft tokens in a single forward pass, computing its probability distribution at each position. The draft model already produced its own distribution during drafting. Both distributions now exist side by side for comparison.</li><li>The verification step walks through draft tokens sequentially. If the large model agrees with tokens 1, 2, and 3, but disagrees at token 4, tokens 1-3 are accepted as-is (the small model got them right), the large model replaces token 4 with its own prediction (which it already computed during the verification pass), and token 5 is discarded without evaluation.</li></ul><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-24.png" class="kg-image" alt="" loading="lazy" width="680" height="380"></figure><p>Best case, all 5 draft tokens are accepted plus one bonus token from the large model, giving you 6 tokens from just a single forward pass through the large model.</p><p>Worst case, every draft token is rejected, and you still get 1 token from the large model, which is the same as standard decoding.</p><p>The worst-case scenario is marginally more expensive than using the large model itself, but at the same time, it's also a rare incident.</p><p>Moreover, the output is mathematically identical to running the large model alone.</p><p>This is because the large model doesn't just check whether the draft tokens look right.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-25.png" class="kg-image" alt="" loading="lazy" width="680" height="380"></figure><p>Instead, it computes its full probability distribution at every position and compares it against the small model's distribution.</p><p>Tokens are accepted only when the large model would have produced the same prediction. When it disagrees, it substitutes its own token. So every token in the final output is either directly approved or directly generated by the large model, guaranteeing an identical output distribution regardless of how good or bad the draft model is.</p><h2 id="implementation">Implementation</h2><p>Hugging Face Transformers already exposes speculative decoding as <code>assistant_model</code> in the <code>generate()</code> call.</p><p>Let's look at how to use it:</p><h3 id="1-load-the-models">1) Load the models</h3><div class="code-toolbar"><pre class="language-python" tabindex="0"><code class="language-python"><span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoModelForCausalLM<span class="token punctuation">,</span> AutoTokenizer
+<span class="token keyword">import</span> torch<span class="token punctuation">,</span> time
+
+target_id <span class="token operator">=</span> <span class="token string">"facebook/opt-6.7b"</span>
+draft_id  <span class="token operator">=</span> <span class="token string">"facebook/opt-125m"</span>
+
+tokenizer <span class="token operator">=</span> AutoTokenizer<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>target_id<span class="token punctuation">)</span>
+
+target <span class="token operator">=</span> AutoModelForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>target_id<span class="token punctuation">,</span> torch_dtype<span class="token operator">=</span>torch<span class="token punctuation">.</span>float16<span class="token punctuation">,</span> device_map<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">)</span>
+draft  <span class="token operator">=</span> AutoModelForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>draft_id<span class="token punctuation">,</span>  torch_dtype<span class="token operator">=</span>torch<span class="token punctuation">.</span>float16<span class="token punctuation">,</span> device_map<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">)</span></code></pre><div class="toolbar"><div class="toolbar-item"><button class="copy-to-clipboard-button" type="button" data-copy-state="copy"><span>Copy</span></button></div></div></div><p>The target model (6.7B) is the one whose output quality we want.</p><p>The draft model (125M) is the cheap, fast one that proposes candidate tokens. Both are from the OPT family and share the exact same tokenizer, so verification happens directly at the token ID level with zero overhead.</p><h3 id="2-set-up-streaming-and-the-input-prompt"><strong>2) </strong>Set up streaming and the input prompt</h3><div class="code-toolbar"><pre class="language-python" tabindex="0"><code class="language-python"><span class="token keyword">from</span> transformers <span class="token keyword">import</span> TextStreamer
+streamer <span class="token operator">=</span> TextStreamer<span class="token punctuation">(</span>tokenizer<span class="token punctuation">,</span> skip_special_tokens<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+prompt <span class="token operator">=</span> <span class="token string">"Explain how a transformer model processes input tokens step by step."</span>
+inputs <span class="token operator">=</span> tokenizer<span class="token punctuation">(</span>prompt<span class="token punctuation">,</span> return_tensors<span class="token operator">=</span><span class="token string">"pt"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>target<span class="token punctuation">.</span>device<span class="token punctuation">)</span></code></pre><div class="toolbar"><div class="toolbar-item"><button class="copy-to-clipboard-button" type="button" data-copy-state="copy"><span>Copy</span></button></div></div></div><p>The <code>TextStreamer</code> prints each token to the console as it's generated. With standard decoding, tokens appear one at a time. With speculative decoding, they arrive in visible bursts whenever a batch of draft tokens gets accepted.</p><h3 id="3-baseline-standard-decoding"><strong>3) Baseline (standard decoding)</strong></h3><div class="code-toolbar"><pre class="language-python" tabindex="0"><code class="language-python">t0 <span class="token operator">=</span> time<span class="token punctuation">.</span>perf_counter<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+base_out <span class="token operator">=</span> target<span class="token punctuation">.</span>generate<span class="token punctuation">(</span><span class="token operator">**</span>inputs<span class="token punctuation">,</span> max_new_tokens<span class="token operator">=</span><span class="token number">200</span><span class="token punctuation">,</span> do_sample<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> streamer<span class="token operator">=</span>streamer<span class="token punctuation">)</span>
+
+base_time <span class="token operator">=</span> time<span class="token punctuation">.</span>perf_counter<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> t0
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\n⏱ Without Speculative Decoding:"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  Runtime: </span><span class="token interpolation"><span class="token punctuation">{</span>base_time<span class="token punctuation">:</span><span class="token format-spec">.2f</span><span class="token punctuation">}</span></span><span class="token string">s"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  Token speed: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>base_out<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">/</span> base_time<span class="token punctuation">:</span><span class="token format-spec">.1f</span><span class="token punctuation">}</span></span><span class="token string"> tok/s"</span></span><span class="token punctuation">)</span></code></pre><div class="toolbar"><div class="toolbar-item"><button class="copy-to-clipboard-button" type="button" data-copy-state="copy"><span>Copy</span></button></div></div></div><p>This is the standard decode loop.</p><p>Every token requires a full forward pass through the 6.7B model. The GPU reads ~13 GB of weights from memory per token, producing one token at a time.</p><h3 id="4-speculative-decoding-67b-125m">4) Speculative decoding (6.7B + 125M)</h3><div class="code-toolbar"><pre class="language-python" tabindex="0"><code class="language-python">t0 <span class="token operator">=</span> time<span class="token punctuation">.</span>perf_counter<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+spec_out <span class="token operator">=</span> target<span class="token punctuation">.</span>generate<span class="token punctuation">(</span>
+    <span class="token operator">**</span>inputs<span class="token punctuation">,</span> max_new_tokens<span class="token operator">=</span><span class="token number">200</span><span class="token punctuation">,</span> do_sample<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span>
+    assistant_model<span class="token operator">=</span>draft<span class="token punctuation">,</span>
+    streamer<span class="token operator">=</span>streamer<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+spec_time <span class="token operator">=</span> time<span class="token punctuation">.</span>perf_counter<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> t0
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"\n⏱ With Speculative Decoding:"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  Runtime: </span><span class="token interpolation"><span class="token punctuation">{</span>spec_time<span class="token punctuation">:</span><span class="token format-spec">.2f</span><span class="token punctuation">}</span></span><span class="token string">s"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  Token speed: </span><span class="token interpolation"><span class="token punctuation">{</span><span class="token builtin">len</span><span class="token punctuation">(</span>spec_out<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">/</span> spec_time<span class="token punctuation">:</span><span class="token format-spec">.1f</span><span class="token punctuation">}</span></span><span class="token string"> tok/s"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"  Speedup over standard decoding: </span><span class="token interpolation"><span class="token punctuation">{</span>base_time <span class="token operator">/</span> spec_time<span class="token punctuation">:</span><span class="token format-spec">.2f</span><span class="token punctuation">}</span></span><span class="token string">x"</span></span><span class="token punctuation">)</span></code></pre><div class="toolbar"><div class="toolbar-item"><button class="copy-to-clipboard-button" type="button" data-copy-state="copy"><span>Copy</span></button></div></div></div><p>In this specific invocation, the only addition is assistant_model=draft. </p><p>Behind the scenes, the 125M model drafts ~5 tokens autoregressively, the 6.7B model verifies all of them in a single forward pass, accepted tokens go straight to the output, and the first rejected token is replaced with the 6.7B model's own prediction. This repeats until 200 tokens are generated.</p><p>The video below shows this in action:</p><figure class="kg-card kg-video-card kg-width-regular" data-kg-thumbnail="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/media/2026/06/Speculative-decoding-video_thumb.jpg" data-kg-custom-thumbnail="">
+            <div class="kg-video-container" style="padding-bottom: 60.185%;">
+                <video src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/media/2026/06/Speculative-decoding-video.mp4" poster="https://img.spacergif.org/v1/1080x650/0a/spacer.png" width="1080" height="650" playsinline="true" preload="metadata" style="background: url(&quot;https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/media/2026/06/Speculative-decoding-video_thumb.jpg&quot;) 50% 50% / cover no-repeat transparent; max-width: 100%; height: auto;" controls="true" controlslist="nodownload"></video>
+                
+                
+            </div>
+            
+        </figure><ul><li>The left side runs standard decoding (one token per forward pass), while the right side runs speculative decoding with the same 6.7B target model.</li><li>The speculative run produces tokens in visible bursts as batches of draft tokens get accepted, finishing in roughly half the time with a 1.9x speedup.</li></ul><p>For production serving, vLLM supports draft models, EAGLE, n-gram, and MTP out of the box:</p><div class="code-toolbar"><pre class="language-python" tabindex="0"><code class="language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM<span class="token punctuation">,</span> SamplingParams
+
+llm <span class="token operator">=</span> LLM<span class="token punctuation">(</span>
+    model<span class="token operator">=</span><span class="token string">"Qwen/Qwen2.5-72B-Instruct"</span><span class="token punctuation">,</span>
+    speculative_model<span class="token operator">=</span><span class="token string">"Qwen/Qwen2.5-0.5B-Instruct"</span><span class="token punctuation">,</span>
+    num_speculative_tokens<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span>
+    tensor_parallel_size<span class="token operator">=</span><span class="token number">4</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+outputs <span class="token operator">=</span> llm<span class="token punctuation">.</span>generate<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">"Explain speculative decoding."</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                       SamplingParams<span class="token punctuation">(</span>temperature<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> max_tokens<span class="token operator">=</span><span class="token number">256</span><span class="token punctuation">)</span><span class="token punctuation">)</span></code></pre><div class="toolbar"><div class="toolbar-item"><button class="copy-to-clipboard-button" type="button" data-copy-state="copy"><span>Copy</span></button></div></div></div><h3 id="the-tokenizer-constraint">The tokenizer constraint</h3><p>Traditionally, both models had to share the same tokenizer.</p><p>This is because the verification step discussed above compares the probability distributions of the large and small models at each token position.</p><p>If both models use the same tokenizer, token positions align perfectly, and the comparison is direct.</p><p>But if the tokenizers differ, the same word might get split into three tokens by one tokenizer and two tokens by another.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-26.png" class="kg-image" alt="" loading="lazy" width="680" height="380"></figure><p>The probability distributions are now over different token spaces at different positions, and there's no meaningful way to compare them directly.</p><p>This limited speculative decoding to same-family pairs like Llama 3.2 1B with Llama 3.1 70B, Qwen2.5 0.5B with Qwen2.5 72B, etc.</p><p>In fact, at times, even models from the same family don't always share the same tokenizer.</p><p>For instance, Qwen2.5-7B-Instruct and Qwen2.5-0.5B-Instruct have the same vocabulary: </p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-27.png" class="kg-image" alt="" loading="lazy" width="679" height="305"></figure><p>But they still differ in chat template configs, so HF Transformers framework detects this as a tokenizer mismatch:</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-29.png" class="kg-image" alt="" loading="lazy" width="679" height="429"></figure><p>Hugging Face shipped Universal Assisted Generation (UAG) in Transformers 4.46 (October 2024), removing that constraint entirely.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-31.png" class="kg-image" alt="" loading="lazy" width="680" height="563"></figure><p><a href="https://x.com/_avichawla/article/2054860740541207032/media/2054842485630005248?ref=dailydoseofds.com" class="sx-external" target="_blank"></a></p><p>Under the hood, UAG decodes tokens generated by the small model back to text, re-encodes them with the large model's tokenizer, and aligns the sequences using longest common subsequence matching.</p><p>This lets you pair any two models regardless of tokenizer, i.e., a Qwen small model can have a Gemma large model, despite completely different tokenizers.</p><p>The tradeoff is that the same-tokenizer pairs still give better speedups (1.5-3x) compared to cross-tokenizer pairs (1.5-1.9x) because the native path skips the re-encoding overhead entirely.</p><blockquote>One thing I noticed with speculative decoding is that even Instruct variants within the same family (e.g., Qwen2.5-7B-Instruct and Qwen2.5-0.5B-Instruct) can trigger the UAG path because Transformers compares tokenizer configs including chat templates, not just vocabulary. Using base models instead of Instruct variants avoids this and keeps you on the faster native path.</blockquote><hr><h2 id="production-tradeoffs">Production tradeoffs</h2><p>A larger draft model (the model that generates the tokens autoregressively) improves the acceptance rate. But at the same time, it also increases drafting latency.</p><p>For instance:</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-32.png" class="kg-image" alt="" loading="lazy" width="680" height="380"></figure><ul><li>When Llama 3.2 1B was used as the draft model for Llama 3.1 70B, it achieved 2.31x speedup</li><li>But when Llama 3.2 8B was used as the draft model, it achieved 2.08x speed up.</li></ul><p>So despite its higher acceptance rate, the overall setup runs a bit slower.Sampling temperature also affects speedup.</p><ul><li>At temperature ~0 (greedy decoding), both models tend to agree on the top token, so acceptance rates are highest.</li><li>As temperature increases, the probability distributions flatten, the small and large models agree less often, and more draft tokens get rejected. Creative generation tasks at high temperature see noticeably lower speedups than deterministic tasks.</li></ul><p><a href="https://www.dailydoseofds.com/p/what-is-temperature-in-llms/"><strong>We covered Temperature in LLMs here if you want to learn more →</strong></a></p><hr><h2 id="speculative-decoding-without-a-small-model"><strong>Speculative decoding without a small model</strong></h2><p>The two-model setup has two pain points:</p><ul><li>You need a matched small model from the same family (for better speedups)</li><li>Having a small model means extra GPU memory.</li></ul><p>Several variants eliminate one or both of these problems.</p><h3 id="1-eagle">1) EAGLE </h3><p>EAGLE replaces the separate draft model with a lightweight head (&lt; 1B params) trained directly on top of the larger model.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-33.png" class="kg-image" alt="" loading="lazy" width="680" height="469"></figure><p>Here's how it works step by step.</p><ul><li>When the large model generates a token, every layer in the transformer produces a hidden state vector for that token.</li><li>EAGLE takes the hidden state from the second-to-last layer (the one just before the final prediction layer) because it contains rich semantic information about what the model "thinks" should come next.</li><li>The EAGLE head is a small neural network that takes this hidden state as input and outputs a prediction for the next token, without running the full model again.</li></ul><p>Think of it as a shortcut. Instead of passing through all the layers of a large model to predict the next token, you pass through just the EAGLE head, which is a few layers at most.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-34.png" class="kg-image" alt="" loading="lazy" width="680" height="380"></figure><p>Now I want to depict how EAGLE works by depicting this particular idea that the first token is emitted from the large model, and then it uses the prediction head 2 or whatever. </p><p>Once it has drafted K tokens this way, the large model verifies all of them in a single forward pass, exactly like standard speculative decoding.</p><p>The key advantage is that these predictions are grounded in the large model's own internal representations, not from a separate, smaller model that was trained independently.</p><p>This is also why there's no tokenizer issue since the EAGLE head lives inside the target model's architecture and operates in the same token space.</p><h3 id="2-medusa"><strong>2) Medusa</strong></h3><p>Instead of drafting tokens one after another, it predicts multiple future tokens simultaneously from a single forward pass.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-35.png" class="kg-image" alt="" loading="lazy" width="680" height="503"></figure><p>Under the hood, Medusa attaches several small prediction heads to the large model, each responsible for a different position ahead.</p><ul><li>Head 1 predicts what the next token will be.</li><li>Head 2 predicts what the token two positions ahead will be.</li><li>Head 3 predicts three positions ahead, and so on.</li></ul><p>All these heads run in parallel during a single forward pass of the large model. So from one pass, you get predictions for the next 5 positions at once, not just one.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-36.png" class="kg-image" alt="" loading="lazy" width="680" height="380"></figure><p>As expected, one key problem is that each head makes its prediction independently. Head 2 doesn't know what Head 1 predicted.</p><p>In normal autoregressive generation, the prediction for token 3 depends on what token 2 actually was.</p><p>Medusa can't do that because all heads run at the same time. So head 3 might predict "model" assuming token 2 was "language," while head 2 actually predicted "learning."</p><p>The candidates can be inconsistent with each other, which lowers acceptance rates compared to EAGLE, where each drafted token is conditioned on the previous one.</p><p>The upside is that there's no separate model and extra memory required for a drafter. The heads are also tiny (a few linear layers each), so the overhead per forward pass is minimal.</p><h3 id="3-self-speculative-decoding">3) Self-speculative decoding</h3><p>This method requires no separate model, additional heads, or training at all.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-37.png" class="kg-image" alt="" loading="lazy" width="680" height="480"></figure><p>It uses the large model itself as both the drafter and the verifier. The idea relies on how transformers are structured.</p><p>A 70B model might have 80 layers, and each layer refines the prediction from the previous one.</p><p>For many tokens, the model's early layers (say, the first 12 out of 80) already have enough information to make the right prediction.</p><p>The remaining 68 layers just confirm what the early layers already figured out.</p><p>Self-speculative decoding exploits this observation.</p><p>During drafting, the model runs only its first N layers and exits early with a prediction.</p><p>It does this K times to produce K draft tokens.</p><p>Then, during verification, the full model (all 80 layers) runs a single forward pass over all K tokens to check which ones the early exit got right.</p><p>For easy, predictable tokens, the early layers are usually sufficient, and those tokens get accepted.</p><p>For harder tokens where the later layers would have changed the prediction, the draft gets rejected, and the full model's output is used instead.</p><p>The speedups are more modest (1.3-1.8x) because the drafter isn't a separate cheap model.</p><p>It's still the same large model, just running fewer layers. But the tradeoff is that you need absolutely nothing extra, like a second model to download, heads to train, or extra GPU memory.</p><h3 id="4-diffusion-based-drafting">4) Diffusion-based drafting</h3><p>This method addresses a fundamental inefficiency in all the methods above.</p><p>Even with EAGLE, Medusa, or a separate draft model, the drafting process itself is still autoregressive. The drafter generates token 1, then token 2, then token 3, one at a time.</p><p>The draft model is faster because it's smaller, but it's still sequential.</p><p>Diffusion models work completely differently.</p><p>Instead of predicting one token at a time, a diffusion model starts with a block of random noise tokens and iteratively refines all of them in parallel.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-38.png" class="kg-image" alt="" loading="lazy" width="680" height="380"></figure><p>In just a few refinement steps, the entire block converges to coherent text. So where an autoregressive drafter generates 8 tokens in 8 sequential steps, a diffusion drafter generates all 8 in a single forward pass (or a small fixed number of passes regardless of how many tokens you want).</p><p>DFlash takes this idea and makes it practical for speculative decoding. Instead of training a standalone diffusion model from scratch (which would be large and expensive), it trains a small diffusion head that takes the target model's hidden states as conditioning input, similar to how EAGLE uses the target model's representations.</p><p>The diffusion head then generates an entire draft block in parallel, conditioned on what the large model has already computed.</p><p>This way, the drafting cost no longer scales with the number of tokens you want to propose.</p><p>An autoregressive drafter that proposes 16 tokens needs 16 sequential steps. A diffusion drafter proposes all 16 in one pass.</p><p>The speed up is evident from the video below:</p><figure class="kg-card kg-video-card kg-width-regular" data-kg-thumbnail="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/media/2026/06/dflash-github-shoutout_thumb.jpg" data-kg-custom-thumbnail="">
+            <div class="kg-video-container" style="padding-bottom: 93.913%;">
+                <video src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/media/2026/06/dflash-github-shoutout.mp4" poster="https://img.spacergif.org/v1/1150x1080/0a/spacer.png" width="1150" height="1080" playsinline="true" preload="metadata" style="background: url(&quot;https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/media/2026/06/dflash-github-shoutout_thumb.jpg&quot;) 50% 50% / cover no-repeat transparent; max-width: 100%; height: auto;" controls="true" controlslist="nodownload"></video>
+                
+                
+            </div>
+            
+        </figure><p>The verification step remains the same as standard speculative decoding. The large model checks all proposed tokens in a single forward pass and accepts or rejects them.</p><p>The only difference is how the draft tokens were generated, i.e., in parallel via diffusion rather than sequentially via autoregression.</p><hr><p>Speculative decoding is converging toward single-model solutions where the draft capability is built into the target model itself.</p><p>For most production setups today, the two-model approach with a same-family drafter remains the simplest path to 2-3x speedups.</p><p>But regardless of which variant you use, all of them rely on KV caching internally to work efficiently.</p><p>The draft model maintains its own KV cache, so each draft token builds on the previous one cheaply.</p><p>The target model's verification pass extends its KV cache with accepted tokens, so the next iteration doesn't recompute anything for them.</p><p>Without KV caching, both drafting and verification would be far more expensive, and the speedups from speculative decoding would largely disappear.</p><p>In other words, speculative decoding reduces how many forward passes you need, and KV caching makes each of those forward passes efficient. They work together, not as alternatives.</p><p>As further reading:</p><p><a href="https://www.dailydoseofds.com/llmops-crash-course-part-13/"><strong>We covered the mechanics of LLM inference (prefill and decode phases, KV caching, speculative decoding, batching, and optimization techniques that improve latency and throughput here in the LLMOps course →</strong></a></p><p><a href="https://www.dailydoseofds.com/p/72-techniques-to-optimize-llms-in-production/"><strong>And we covered 72 techniques to optimize LLMs in production here →</strong></a></p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/72-llm-optimization-techniques-visual.png" class="kg-image" alt="" loading="lazy" width="1189" height="1101"></figure><p>Thanks for reading!</p>
+                </div>
+            </div>
+
+            <div class="mt-12" style="margin-bottom: 3rem;">
+                <div class="mt-8 flex flex-wrap items-center justify-between gap-x-4 gap-y-5 js-toc-ignore">
+        <div data-sx-updated-on="" class="flex-none max-w-full text-xs text-gray-500 dark:text-gray-400">
+            Published on May 13, 2026
+        </div>
+
+
+    <div class="flex flex-none gap-2">
+            <button data-sx-comments-toggle="6a21e86c981b550001cdb35c" class="relative flex-none px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-400 font-medium flex items-center rounded-full bg-white shadow-pretty dark:bg-transparent dark:shadow-none transition-colors duration-200">
+                <div class="absolute -inset-px -z-10 dark:bg-white/5 dark:[:hover>&amp;]:bg-white/10 rounded-full border border-gray-950/5 dark:border-gray-50/5 transition-colors duration-200"></div>
+                
+<svg class="w-4 h-4 me-1 opacity-70" style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z"></path>
+</svg>
+
+                Comments
+                <div data-sx-comments-count="" class="absolute top-1/2 end-1 -translate-y-5.75 flex flex-none items-center justify-center min-w-4 rounded-full bg-primary text-primary-contrast text-3xs leading-3 px-1 py-0.5 drop-shadow-primary-sm pointer-events-none">
+                    
+                </div>
+            </button>
+
+        <div class="flex-none relative">
+            <button data-sx-share="" class="peer relative flex-none px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-400 font-medium flex items-center rounded-full bg-white shadow-pretty dark:bg-transparent dark:shadow-none transition-colors duration-200">
+                <div class="absolute -inset-px -z-10 dark:bg-white/5 dark:[:hover>&amp;]:bg-white/10 rounded-full border border-gray-950/5 dark:border-gray-50/5 transition-colors duration-200"></div>
+                
+<svg class="w-3.5 h-3.5 me-1 opacity-80" style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">
+  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+  <polyline points="16 6 12 2 8 6"></polyline>
+  <line x1="12" y1="2" x2="12" y2="15"></line>
+</svg>                Share
+            </button>
+            <div data-sx-share-dropdown="" class="hidden peer-[.open]:grid absolute z-50 top-14 -end-4 w-60
+                    gap-2 p-2 backdrop-blur-sm bg-white/90 ring-1 ring-gray-900/5 shadow-pretty rounded-xl 
+                    dark:bg-background-dark/80 dark:ring-white/5 dark:ring-inset dark:shadow-lg
+                ">
+                <div class="absolute inset-0 -z-10 dark:bg-white/5 rounded-xl pointer-events-none"></div>
+
+                <button data-sx-share-copy="https://www.dailydoseofds.com/p/speculative-decoding-in-llms/" class="p-2 w-full flex items-center text-sm font-medium leading-6 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 transition-colors duration-200">
+                    <span class="flex items-center">
+<svg class="w-5 h-5 me-3" style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke-width="1.5" stroke="currentColor" focusable="false" aria-hidden="true">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"></path>
+</svg>
+ Copy link</span>
+                </button>
+                <a href="https://x.com/intent/tweet?url=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fspeculative-decoding-in-llms%2F&amp;text=Speculative%20Decoding%20in%20LLMs" class="p-2 w-full flex items-center text-sm font-medium leading-6 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 transition-colors duration-200" target="_blank">                                            
+                    
+<svg class="w-5 h-5 me-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" focusable="false" aria-hidden="true">
+    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"></path>
+</svg> Share to X
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fspeculative-decoding-in-llms%2F" class="p-2 w-full flex items-center text-sm font-medium leading-6 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 transition-colors duration-200" target="_blank">
+                    
+<svg class="w-5 h-5 me-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" focusable="false" aria-hidden="true">
+    <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"></path>
+</svg> Share to Facebook
+                </a>                                            
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fspeculative-decoding-in-llms%2F" class="p-2 w-full flex items-center text-sm font-medium leading-6 text-gray-500 hover:text-gray-950 dark:text-gray-400 dark:hover:text-gray-50 transition-colors duration-200" target="_blank">
+                    
+<svg class="w-5 h-5 me-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" focusable="false" aria-hidden="true">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+</svg> Share to Linkedin
+                </a>                                            
+            </div>
+            <div data-sx-share-success="" class="hidden absolute z-50
+                    ps-1 pe-1.5 py-0.5 text-3xs text-gray-50 dark:text-gray-950 font-medium [&amp;.open]:flex items-center rounded-full shadow-pretty transition-colors duration-200
+                    backdrop-blur-sm bg-background-dark/80
+                    dark:bg-gray-300 dark:shadow-lg
+                ">
+                
+<svg class="w-3.5 h-3.5 me-0.5 opacity-80" style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd"></path>
+</svg> Copied
+            </div>                                        
+        </div>
+    </div>
+</div>            </div>
+        </div>
+    </div>
+</div>
+
+<div class="outer xl:outer-xl">
+    <div class="inner">
+        <div class="mx-auto px-4 sm:px-6" style="max-width: 680px;">
+            <div class="border-t border-gray-200 dark:border-gray-700" style="padding-top: 1.75rem; padding-bottom: 1.75rem;">
+                        <div class="flex flex-col sm:flex-row sm:space-x-8 js-toc-ignore">
+                                <a href="https://www.dailydoseofds.com/rl-course-part-3/" class="flex flex-col basis-1/2 min-w-0 no-underline">
+                                    <div class="ps-5 mb-1 text-2xs font-normal text-gray-500 dark:text-gray-400 [:hover>&amp;]:text-gray-700 dark:[:hover>&amp;]:text-gray-300 truncate transition-colors duration-200">
+                                        Previous
+                                    </div>
+                                    <div class="relative w-full flex">
+                                        <div class="ps-5 text-pretty text-sm font-medium text-gray-700 dark:text-gray-300 line-clamp-2">
+                                            Bellman Equations and Dynamic Programming
+                                        </div>
+                                        
+
+<svg class="absolute start-0 top-0.5 mt-px w-3.5 h-3.5 flex-none text-gray-500 dark:text-gray-400 [:hover>*>&amp;]:-translate-x-1 transition-transform duration-150" style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" focusable="false" aria-hidden="true">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"></path>
+</svg>
+                                    </div>
+                                </a>
+
+                                <a href="https://www.dailydoseofds.com/p/hermes-agent-masterclass/" class="flex flex-col basis-1/2 min-w-0 no-underline text-end mt-8 sm:mt-0 [.invisible~&amp;]:mt-0">
+                                    <div class="pe-5 mb-1 text-2xs font-normal text-gray-500 dark:text-gray-400 [:hover>&amp;]:text-gray-700 dark:[:hover>&amp;]:text-gray-300 truncate transition-colors duration-200">
+                                        Next
+                                    </div>
+                                    <div class="relative w-full flex justify-end">
+                                        <div class="pe-5 text-pretty text-sm font-medium text-gray-700 dark:text-gray-300 line-clamp-2">
+                                            Hermes Agent Masterclass
+                                        </div>
+                                        <svg class="absolute end-0 top-0.5 mt-px w-3.5 h-3.5 flex-none text-gray-500 dark:text-gray-400 [:hover>*>&amp;]:translate-x-1 transition-transform duration-150" style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" focusable="false" aria-hidden="true">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+</svg>                                    </div>
+                                </a>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    
+        <div data-sx-comments="6a21e86c981b550001cdb35c" class="invisible flex fixed inset-0 -z-10 not-[&amp;.open]:pointer-events-none [&amp;.open]:visible [&amp;.open]:z-3999999">
+        <div data-sx-comments-close="" class="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-xs"></div>
+
+        <div class="fixed top-0 end-0 bottom-0 w-full max-w-md shadow-lg bg-gray-50 dark:bg-gray-950 border-s border-gray-950/5 dark:border-gray-50/5 transition ease-out translate-x-full [.open>&amp;]:translate-x-0">
+            <div class="relative px-outer pb-6 pt-14 h-full overflow-y-scroll overflow-x-hidden">
+                <button data-sx-comments-close="" aria-label="Close" class="fixed flex items-center justify-center top-4 end-3 p-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-gray-50 dark:bg-gray-950 rounded-md">
+                    
+<svg class="h-5 w-5" style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+    <path d="M14 12l-10 0"></path>
+    <path d="M14 12l-4 4"></path>
+    <path d="M14 12l-4 -4"></path>
+    <path d="M20 4l0 16"></path>
+</svg>                </button>
+
+                <div class="dark:hidden grid grid-cols-1 min-h-full text-gray-800 dark:text-gray-400">
+                    
+        <div id="ghost-comments-root"><div src="cid:frame-6191E84CAB7B109B0E8F80A4E9092667@mhtml.blink" innerref="[object Object]" frameborder="0" title="comments-frame" style="width: 100%; height: 152px;" data-original-tag="iframe"><section class="ghost-display " data-loaded="false" data-testid="content-box" style="--gh-accent-color: #2b79c3; padding-top: 0px; padding-bottom: 24px;"><div class="flex h-32 w-full items-center justify-center" data-testid="loading"><svg id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="40px" height="40px" viewBox="0 0 50 50" xml:space="preserve" class="mb-6 size-12 fill-neutral-300/80 dark:fill-white/60"><path d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div></section></div></div>
+    
+                </div>
+
+                <div class="hidden dark:grid grid-cols-1 min-h-full text-gray-800 dark:text-gray-400">
+                    
+        <div id="ghost-comments-root"><div src="cid:frame-3C1BCF376058232590FF03690DC39B91@mhtml.blink" innerref="[object Object]" frameborder="0" title="comments-frame" style="width: 100%; height: 152px;" data-original-tag="iframe"><section class="ghost-display dark" data-loaded="false" data-testid="content-box" style="--gh-accent-color: #2b79c3; padding-top: 0px; padding-bottom: 24px;"><div class="flex h-32 w-full items-center justify-center" data-testid="loading"><svg id="loader-1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="40px" height="40px" viewBox="0 0 50 50" xml:space="preserve" class="mb-6 size-12 fill-neutral-300/80 dark:fill-white/60"><path d="M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg></div></section></div></div>
+    
+                </div>
+            </div>
+        </div>
+    </div> 
+
+            </main>
+
+            <footer id="sx-footer" class=" no-space-top  flex-none mt-auto">
+    <div class="outer xl:outer-xl pb-28 pt-20 mt-20 border-t border-gray-950/5 dark:border-gray-50/5 [.no-space-top>&amp;]:mt-0" style="padding-bottom: 10px;">
+        <div class="inner">
+            <div class="grid gap-10 lg:grid-cols-[1fr_auto]">
+                <div class="mb-6">
+                    <a id="sx-footer-brand" class="flex-none inline-flex font-bold text-xl text-gray-950 dark:text-gray-50" href="https://www.dailydoseofds.com/" aria-label="Daily Dose of Data Science">
+                                <img class="max-h-9 w-auto" src="https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2025/12/dailyds-logo-transparent-1.png" alt="Daily Dose of Data Science" loading="lazy">
+                    </a>
+
+                        <div id="sx-footer-description" class="mt-2 text-base max-w-md text-pretty">
+                            A daily column with insights, observations, tutorials and best practices on python and data science. Read by industry professionals at big tech, startups, and engineering students.
+                        </div>
+                                    </div>
+
+                <div class="flex-none lg:ms-auto">
+                            <nav id="sx-nav-footer" data-sx-nav="" class="w-full grid gap-10 grid-cols-[repeat(auto-fill,minmax(140px,1fr))] not-has-[li]:hidden">
+                    <ul role="list">
+                        <li data-sx-slug="menu" class="mb-4 text-sm font-medium text-gray-950 dark:text-gray-50">
+                             Menu
+                        </li>                                
+
+                                <li data-sx-slug="contact" class="mt-2.5 peer peer-[.hidden]:hidden  flex ">
+                                    <a href="https://www.dailydoseofds.com/contact/" class="inline-block text-sm hover:text-gray-950 dark:hover:text-gray-50 transition-colors duration-200">
+                                         Contact<!--
+                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                    </a>
+                                </li>
+                                <li data-sx-slug="faq" class="mt-2.5 peer peer-[.hidden]:hidden  flex ">
+                                    <a href="https://www.dailydoseofds.com/faq/" class="inline-block text-sm hover:text-gray-950 dark:hover:text-gray-50 transition-colors duration-200">
+                                         FAQ<!--
+                                        --><svg class="[.sx-external>&amp;]:inline hidden relative top-1 shrink-0 w-3 h-3 ms-0.5 -me-0.5 align-top" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false" aria-hidden="true">
+  <path fill-rule="evenodd" d="M4.22 11.78a.75.75 0 0 1 0-1.06L9.44 5.5H5.75a.75.75 0 0 1 0-1.5h5.5a.75.75 0 0 1 .75.75v5.5a.75.75 0 0 1-1.5 0V6.56l-5.22 5.22a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"></path>
+</svg>
+
+                                    </a>
+                                </li>
+                    </ul>                        
+        </nav>
+
+
+
+                </div>
+            </div>
+
+
+            <div class="mt-10 pt-10 lg:pt-0 border-t lg:border-0 border-gray-900/5 dark:border-gray-50/5 lg:has-data-sx-slug:pt-10">
+                <div class="has-data-sx-slug:-my-1.5">
+                            <ul id="sx-nav-footer-flat" data-sx-nav="" class="flex flex-col xs:flex-row gap-3.5 gap-y-1.5 flex-wrap">
+        </ul>
+
+
+  
+                </div>
+
+                <div class="grid sm:grid-cols-[1fr_auto] gap-4 lg:flex lg:gap-5 mt-3.5 max-sm:mt-6">
+                    <div class="max-sm:order-last text-xs sm:leading-6 me-auto">
+                            <span id="sx-footer-copy">
+                                <a href="https://www.dailydoseofds.com/" class="hover:text-gray-950 dark:hover:text-gray-50 transition-colors">Daily Dose of Data Science</a> 
+                                © 2026
+                            </span>
+                    </div>
+
+                    <span class="sm:max-lg:row-start-1 sm:max-lg:col-start-1 sm:max-lg:col-span-2 inline-flex flex-wrap items-center gap-2 md:gap-4 -ms-1 -my-1 md:ms-0 md:my-0 md:py-1 md:pe-4 lg:ms-auto lg:border-e border-gray-950/10 dark:border-white/10 text-gray-400 not-has-[a]:hidden">
+                            <a data-sx-social-link="" class="p-1 md:p-0" href="https://x.com/_avichawla" title="X (Formerly Twitter)" aria-label="X (Formerly Twitter)" target="_blank">
+        
+<svg class="w-4 h-4 hover:text-gray-950 dark:hover:text-gray-50 transition-colors duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" focusable="false" aria-hidden="true">
+    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"></path>
+</svg>    </a>
+
+
+                    </span>
+
+                </div>        
+            </div>
+        </div>
+    </div>
+</footer>        </div>
+
+        <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true" data-error-msg="The image could not be loaded.">
+    <div class="pswp__bg"></div>
+
+    <div class="pswp__scroll-wrap">
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <!-- Preloader -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader" aria-label="Loading">
+                    <svg class="m-1.5 text-white opacity-100 w-8 h-8" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="40px" height="40px" viewBox="0 0 40 40" enable-background="new 0 0 40 40" xml:space="preserve" focusable="false" aria-hidden="true">
+    <path opacity="0.2" fill="currentColor" d="M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946
+s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634
+c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z"></path>
+    <path fill="currentColor" d="M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0
+C22.32,8.481,24.301,9.057,26.013,10.047z">
+        <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="0.5s" repeatCount="indefinite"></animateTransform>
+    </path>
+</svg>                </div>                
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+        
+
+        
+
+        
+
+        <div id="sx-lazy-script" data-src="https://www.dailydoseofds.com/assets/built/lazy.min.js?v=53bbabdad9"></div>
+    
+<div id="sx-search-root"></div><div id="ghost-portal-root" data-testid="portal-root"></div><div id="crisp-loader"></div></body></html>
