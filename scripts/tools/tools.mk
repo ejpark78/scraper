@@ -17,7 +17,7 @@ up-kasm:
 	$(COMPOSE) --profile tools up -d --build kasm
 	@echo "🚀 KASM VDI가 실행되었습니다. https://kasm.localhost 에 접속하세요."
 
-up-mongo:
+up-me:
 	$(COMPOSE) --profile tools up -d mongo-express
 	@echo "🚀 Mongo Express GUI가 실행되었습니다. https://me.localhost 에 접속하세요."
 

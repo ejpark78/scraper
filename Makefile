@@ -10,24 +10,22 @@ export RUN_USER
 
 .PHONY: *
 
-# --- 1. explicit local & data-level targets ---
 lint:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx yaml-lint compose.yml "docker/**/*.yml"
 
-# --- 2. include common and helper scripts directly (browser.mk, docker.mk) ---
 -include scripts/utils/browser.mk
 -include scripts/utils/docker.mk
 -include scripts/utils/pipeline.mk
 -include scripts/tools/tools.mk
 
+list: li-list gpt-list gn-list pk-list ab-list
+
 test-%:
 	@$(MAKE) -f scripts/utils/tests.mk $*
 
-# --- 4. tool commands ---
 gm-%:
 	@$(MAKE) -f scripts/tools/gmail.mk $*
 
-# --- 3. delegate site-specific commands to prevent target name conflicts ---
 li-%:
 	@$(MAKE) -f scripts/sites/linkedin.mk $*
 
