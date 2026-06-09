@@ -1,5 +1,15 @@
 FROM mcr.microsoft.com/playwright:v1.60.0-jammy
 
+ARG BUILD_DATE
+ARG VCS_REF
+
+LABEL org.opencontainers.image.title="LinkedIn Clipper"
+LABEL org.opencontainers.image.description="Playwright-based scraper pipeline for LinkedIn jobs, GeekNews, GPTERS, PyTorch KR"
+LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.licenses="MIT"
+
 # 한글 폰트 미설치 시 덤프 파일 내 한글 깨짐 현상 예방
 RUN apt-get update && apt-get install -y \
     fonts-nanum \

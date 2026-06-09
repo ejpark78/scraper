@@ -1,5 +1,14 @@
-
-# (echo "# USER_UID/USER_GID"; echo "USER_UID=$(id -u)"; echo "USER_GID=$(id -g)"; echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)") | tee -a .env
+# ==============================================================================
+# 🤖 Opencode Coding Agent Service (profile: tools)
+# ==============================================================================
+# 1. opencode
+#    - 용도: AI 기반 코딩 에이전트로, 프로젝트 소스 코드를 분석하고 수정 명령을 수행합니다.
+#    - 접속: `docker attach` 또는 `make agent-*` 명령어를 통해 상호작용
+#    - 권한: Docker 소켓 마운트로 호스트 Docker 데몬 제어 가능
+#    - 환경변수: OPENCODE_API_KEY 설정 필요 (opencode.ai API 키)
+#    - 참고: 빌드 전 `USER_UID/GID`, `DOCKER_GID`를 `.env`에 설정해야 합니다.
+#      (echo "USER_UID=$(id -u)"; echo "USER_GID=$(id -g)"; echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)") | tee -a .env
+# ==============================================================================
 
 services:
   opencode:
@@ -7,6 +16,8 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        - BUILD_DATE
+        - VCS_REF
         - USER_UID=${USER_UID:-1000}
         - USER_GID=${USER_GID:-1000}
         - DOCKER_GID=${DOCKER_GID:-989}

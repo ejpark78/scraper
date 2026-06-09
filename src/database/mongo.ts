@@ -94,8 +94,27 @@ export class MongoDatabase {
                 await silverDb.collection('linkedin.jobs').createIndex({ jobId: 1 }, { unique: true });
                 await silverDb.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
                 await silverDb.collection('geeknews.contents').createIndex({ id: 1 });
+                await silverDb.collection('geeknews.contents').createIndex({ publishedAt: -1 });
+                await silverDb.collection('geeknews.contents').createIndex(
+                  { title: 'text', content: 'text', markdown: 'text', url: 'text', companyName: 'text' },
+                  { weights: { title: 10, content: 5, markdown: 3, url: 1, companyName: 3 }, name: 'text_idx' }
+                );
                 await silverDb.collection('gpters.contents').createIndex({ id: 1 }, { unique: true });
+                await silverDb.collection('gpters.contents').createIndex({ publishedAt: -1 });
+                await silverDb.collection('gpters.contents').createIndex(
+                  { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+                  { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
+                );
                 await silverDb.collection('pytorch_kr.contents').createIndex({ id: 1 });
+                await silverDb.collection('pytorch_kr.contents').createIndex({ publishedAt: -1 });
+                await silverDb.collection('pytorch_kr.contents').createIndex(
+                  { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+                  { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
+                );
+                await silverDb.collection('linkedin.jobs').createIndex(
+                  { title: 'text', companyName: 'text', description: 'text', markdown: 'text' },
+                  { weights: { title: 10, companyName: 5, description: 3, markdown: 2 }, name: 'text_idx' }
+                );
             }
 
             console.log('📌 [MongoDB] All collection indexes successfully initialized.');

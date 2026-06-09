@@ -75,14 +75,7 @@ app.get('/api/documents', async (req: Request, res: Response) => {
               { jobId: numId }
             ];
           } else {
-            const regex = new RegExp(search, 'i');
-            silverQuery.$or = [
-              { title: regex },
-              { companyName: regex },
-              { description: regex },
-              { markdown: regex },
-              { jobId: regex }
-            ];
+            silverQuery.$text = { $search: search };
           }
         }
 
@@ -102,7 +95,6 @@ app.get('/api/documents', async (req: Request, res: Response) => {
         hasPaginatedInSilver = true;
       } else if (search) {
         let silverQuery: any = {};
-        const regex = new RegExp(search, 'i');
         if (/^\d+$/.test(search)) {
           const numId = parseInt(search, 10);
           silverQuery = {
@@ -112,15 +104,7 @@ app.get('/api/documents', async (req: Request, res: Response) => {
             ]
           };
         } else {
-          silverQuery = {
-            $or: [
-              { title: regex },
-              { companyName: regex },
-              { description: regex },
-              { markdown: regex },
-              { jobId: regex }
-            ]
-          };
+          silverQuery = { $text: { $search: search } };
         }
 
         total = await silverColl.countDocuments(silverQuery);
@@ -221,22 +205,7 @@ app.get('/api/documents', async (req: Request, res: Response) => {
           ]
         };
       } else {
-        const regex = new RegExp(search, 'i');
-        query = {
-          $or: [
-            { title: regex },
-            { jobTitle: regex },
-            { companyName: regex },
-            { url: regex },
-            { text: regex },
-            { content: regex },
-            { markdown: regex },
-            { id: regex },
-            { jobId: regex },
-            { topicId: regex },
-            { postId: regex }
-          ]
-        };
+        query = { $text: { $search: search } };
       }
     }
 
@@ -259,7 +228,7 @@ app.get('/api/documents', async (req: Request, res: Response) => {
         topicId: 1,
         postId: 1
       })
-      .sort({ _id: -1 })
+      .sort({ publishedAt: -1, _id: -1 })
       .skip(skip)
       .limit(limit)
       .toArray();
@@ -425,22 +394,7 @@ function registerMcpHandlers(server: Server) {
 
     try {
       const collection = await mongo.getCollection(collectionName as `${'bronze' | 'silver'}/${string}`);
-      const regex = new RegExp(search, 'i');
-      const query = {
-        $or: [
-          { title: regex },
-          { jobTitle: regex },
-          { companyName: regex },
-          { url: regex },
-          { text: regex },
-          { content: regex },
-          { markdown: regex },
-          { id: regex },
-          { jobId: regex },
-          { topicId: regex },
-          { postId: regex }
-        ]
-      };
+      const query = { $text: { $search: search } };
 
       const docs = await collection.find(query)
         .sort({ _id: -1 })

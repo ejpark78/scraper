@@ -14,6 +14,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
     image: linkedin/cronicle:latest
     hostname: localhost
     depends_on:

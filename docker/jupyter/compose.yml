@@ -13,6 +13,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
     image: linkedin/jupyter:latest
     profiles:
       - tools

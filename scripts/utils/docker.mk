@@ -4,8 +4,11 @@
 
 .PHONY: build up down kasm
 
+BUILD_DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+VCS_REF := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
 build:
-	$(COMPOSE) --profile runtime build
+	BUILD_DATE=$(BUILD_DATE) VCS_REF=$(VCS_REF) $(COMPOSE) --profile runtime build
 
 up:
 	$(COMPOSE) up -d

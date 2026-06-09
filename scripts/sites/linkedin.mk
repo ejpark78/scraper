@@ -2,7 +2,7 @@
 # 💼 LinkedIn Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list company extract-urls refresh-urls restart help
+.PHONY: list company extract-urls refresh-urls refresh-silver status help
 
 # 📝 환경변수 기본값 설정
 GEOS       ?= South Korea,United Arab Emirates,Japan
@@ -46,7 +46,7 @@ extract-urls:
 refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) -e GEOS="$(GEOS)" clipper npx ts-node src/sites/linkedin/jobs/RefreshUrls.ts
 
-refresh-md:
+refresh-silver:
 	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/linkedin/jobs/TransformerRefresh.ts
 
 status:

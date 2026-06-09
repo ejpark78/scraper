@@ -2,7 +2,7 @@
 # 🗄️ MongoDB Backup & Restore Commands
 # ==============================================================================
 
-.PHONY: dump dump-db restore-db show-job
+.PHONY: dump restore
 
 DB ?= bronze,silver
 DUMP_DIR ?= data/mongodb_backup_$(shell date +%Y%m%d_%H%M%S)

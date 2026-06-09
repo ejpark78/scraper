@@ -1,5 +1,15 @@
 FROM kasmweb/core-ubuntu-noble:1.18.0
 
+ARG BUILD_DATE
+ARG VCS_REF
+
+LABEL org.opencontainers.image.title="Kasm Dev Workspace"
+LABEL org.opencontainers.image.description="Browser-isolated GUI development shell with Playwright, Docker CLI, and Oh My Zsh"
+LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.licenses="MIT"
+
 USER root
 
 # 한글 깨짐 방지용 폰트(나눔 폰트), make, Docker CLI, Zsh, fzf, eza 및 유틸리티 설치
@@ -46,3 +56,6 @@ WORKDIR /home/kasm-user/linkedin
 
 # 프로젝트에서 사용하는 것과 동일한 버전(1.60.0)의 Playwright Chromium 브라우저 바이너리 사전 설치
 RUN npx playwright@1.60.0 install chromium
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -k https://localhost:6901/api/health || exit 1

@@ -1,8 +1,17 @@
 FROM ghcr.io/anomalyco/opencode
 
+ARG BUILD_DATE
+ARG VCS_REF
 ARG USER_UID=1000
 ARG USER_GID=1000
 ARG DOCKER_GID=999
+
+LABEL org.opencontainers.image.title="Opencode Coding Agent"
+LABEL org.opencontainers.image.description="AI-powered coding assistant with Docker and git integration"
+LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.licenses="MIT"
 
 USER root
 
@@ -26,3 +35,6 @@ WORKDIR /workspace
 RUN chmod 777 /workspace
 
 ENTRYPOINT ["opencode"]
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \
+  CMD pgrep -f opencode || exit 1

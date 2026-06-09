@@ -1,5 +1,15 @@
 FROM jupyter/minimal-notebook:latest
 
+ARG BUILD_DATE
+ARG VCS_REF
+
+LABEL org.opencontainers.image.title="Jupyter Data Analysis"
+LABEL org.opencontainers.image.description="Jupyter notebook environment for market data analysis and NER extraction"
+LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.licenses="MIT"
+
 USER root
 
 # 필요한 OS 의존성이 있다면 설치 (예: curl, git 등)
@@ -17,3 +27,6 @@ RUN pip install --no-cache-dir \
     matplotlib \
     seaborn \
     scikit-learn
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:8888/api || exit 1

@@ -2,7 +2,7 @@
 # 🔥 PyTorch KR Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh refresh-urls refresh-md
+.PHONY: list refresh refresh-urls refresh-silver
 
 PAGE ?= 1-10
 SLACK_TIME ?= 3
@@ -20,7 +20,5 @@ refresh:
 refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/sites/pytorch_kr/RefreshUrls.ts
 
-refresh-md:
+refresh-silver:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/sites/pytorch_kr/QueueTransform.ts
-
-

@@ -21,6 +21,9 @@ services:
     build:
       context: ../../
       dockerfile: docker/clipper/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
     image: linkedin/clipper:latest
     profiles:
       - runtime
@@ -50,6 +53,9 @@ services:
     build:
       context: ../../
       dockerfile: docker/clipper/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
     image: linkedin/clipper:latest
     command: ["npx", "ts-node", "src/ScraperWorker.ts"]
     environment:
@@ -79,6 +85,9 @@ services:
     build:
       context: ../../
       dockerfile: docker/clipper/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
     image: linkedin/clipper:latest
     command: ["npx", "ts-node", "src/TransformerWorker.ts"]
     environment:

@@ -241,7 +241,7 @@ async function loadDocuments(collection, search, page) {
       // Determine displays
       const mainTitle = doc.title || doc.jobTitle;
       const company = doc.companyName;
-      const dateVal = doc.collectedAt || doc.createdAt || doc.scrapedAt || doc.updatedAt || doc.publishedAt;
+      const dateVal = doc.publishedAt || doc.collectedAt || doc.createdAt || doc.scrapedAt || doc.updatedAt;
       
       let dateString = 'N/A';
       if (dateVal) {
