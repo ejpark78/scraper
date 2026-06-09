@@ -1,4 +1,4 @@
-FROM node:22-jammy
+FROM node:22-bookworm
 
 ARG BUILD_DATE
 ARG VCS_REF

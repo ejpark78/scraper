@@ -18,13 +18,10 @@ lint:
 -include scripts/utils/browser.mk
 -include scripts/utils/docker.mk
 -include scripts/utils/pipeline.mk
--include scripts/utils/tools.mk
+-include scripts/tools/tools.mk
 
 test-%:
 	@$(MAKE) -f scripts/utils/tests.mk $*
-
-agent-%:
-	@$(MAKE) -f scripts/utils/coding_agents.mk $*
 
 # --- 4. tool commands ---
 gm-%:

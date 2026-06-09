@@ -1,10 +1,12 @@
 # ==============================================================================
-# 🗄️ Tools
+# 🗄️ Tools & Coding Agents
 # ==============================================================================
 
 .PHONY: *
 
-up-tools: tools-up-kasm tools-up-mongo tools-up-redis tools-up-yacht tools-up-dozzle tools-up-cronicle tools-up-jupyter
+# --- Infrastructure Tools ---
+
+up-tools: up-kasm up-mongo up-redis up-yacht up-dozzle up-cronicle up-jupyter
 	@echo "✅ 모든 Tools가 실행되었습니다."
 
 down-tools:
@@ -42,3 +44,8 @@ up-jupyter:
 up-viewer:
 	$(COMPOSE) --profile tools up -d --build viewer
 	@echo "🚀 Viewer GUI가 실행되었습니다. https://viewer.localhost 에 접속하세요."
+
+# --- Coding Agents ---
+
+opencode:
+	$(COMPOSE) --profile tools run --rm $(RUN_USER) opencode
