@@ -88,7 +88,16 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
         // 1. Try Discourse post layout (forum topics)
         const postDiv = $('div.post[itemprop="text"]').first();
         if (postDiv.length > 0) {
-            // Process lightbox wrappers
+            // Extract actual markdown from the cooked HTML for forum posts
+            const TurndownService = require('turndown');
+            const turndownService = new TurndownService({
+                headingStyle: 'atx',
+                codeBlockStyle: 'fenced',
+                emDelimiter: '*',
+                bulletListMarker: '-',
+            });
+
+            // Handle lightbox wrappers first to preserve image links and captions
             postDiv.find('div.lightbox-wrapper').each((_, el) => {
                 const lb = $(el);
                 const img = lb.find('img');
@@ -99,40 +108,20 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
                 const info = lb.find('span.informations');
                 const infoText = info.text() || '';
 
-                imageUrls.push({ src: fullSrc, alt });
-
-                const parts: string[] = [];
-                if (alt && alt !== title) {
-                    parts.push(`![${alt}](${fullSrc})`);
-                } else {
-                    parts.push(`![](${fullSrc})`);
-                }
-                if (infoText) {
-                    parts.push(`*${infoText}*`);
-                }
-                lb.replaceWith(parts.join(' '));
+                const markdown = `![${alt || ''}](${fullSrc})${infoText ? `\n*${infoText}*` : ''}`;
+                lb.replaceWith(markdown);
             });
 
-            // Handle other images (like emojis or external images)
+            // Handle emojis or specific images to prevent noise in markdown
             postDiv.find('img').each((_, el) => {
                 const img = $(el);
-                const src = img.attr('src') || '';
                 const alt = img.attr('alt') || '';
                 if (alt.startsWith(':')) {
                     img.remove();
-                } else if (alt && alt !== title) {
-                    imageUrls.push({ src, alt });
-                    img.replaceWith(`![${alt}](${src})`);
-                } else if (src) {
-                    imageUrls.push({ src, alt: '' });
-                    img.replaceWith(`![](${src})`);
-                } else {
-                    img.remove();
                 }
             });
 
-            const lines = postDiv.text().split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            contentText = lines.join('\n');
+            contentText = turndownService.turndown(postDiv.html() || '').trim();
         }
 
         // 2. Try blog page layout (pytorch.kr/blog/...)
