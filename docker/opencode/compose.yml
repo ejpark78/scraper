@@ -1,22 +1,31 @@
 
-# (echo "# UID/GID"; echo "UID=$(id -u)"; echo "GID=$(id -g)") | tee -a .env
+# (echo "# USER_UID/USER_GID"; echo "USER_UID=$(id -u)"; echo "USER_GID=$(id -g)"; echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)") | tee -a .env
 
 services:
   opencode:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - USER_UID=${USER_UID:-1000}
+        - USER_GID=${USER_GID:-1000}
+        - DOCKER_GID=${DOCKER_GID:-989}
     image: linkedin/opencode:latest
     tty: true
     stdin_open: true    
     profiles:
       - tools
-    user: "${UID:-1000}:${GID:-1000}"
+    user: "${USER_UID:-1000}:${USER_GID:-1000}"
+    group_add:
+      - "${DOCKER_GID:-989}"    
     environment:
       - TZ=Asia/Seoul
       - TERM=xterm-256color
       - HOME=/tmp
       - OPENCODE_API_KEY=${OPENCODE_API_KEY:-}
+      - USER_UID=${USER_UID:-1000}
+      - USER_GID=${USER_GID:-1000}
+      - DOCKER_GID=${DOCKER_GID:-989}
     volumes:
       - ${HOST_PROJECT_PATH:-.}:${HOST_PROJECT_PATH:-/workspace}
       - /etc/localtime:/etc/localtime:ro
