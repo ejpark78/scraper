@@ -12,6 +12,7 @@ export interface GeekNewsMeta {
     id: string;
     title: string;
     url: string;
+    publishedAt: string | null;
     content: string;
     comments: GeekNewsComment[];
     jsonLdRaw: string | null;
@@ -37,6 +38,9 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
             externalUrl = url; // Fallback to GeekNews topic details URL
         }
         
+        // 2. Extract publication date from JSON-LD or meta
+        let publishedAt: string | null = null;
+
         // 2. Extract JSON-LD and comments & content
         const comments: GeekNewsComment[] = [];
         let jsonLdRaw: string | null = null;
@@ -52,9 +56,14 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
                     
                     let commentDataList = data.comment || [];
                     if (commentDataList && !Array.isArray(commentDataList)) {
-                        commentDataList = [commentDataList];
+                    commentDataList = [commentDataList];
                     }
-                    
+
+                    // Extract publication date from JSON-LD
+                    if (!publishedAt && data.datePublished) {
+                        publishedAt = data.datePublished;
+                    }
+
                     const processJsonLdComment = (commentData: any) => {
                         if (!commentData || typeof commentData !== 'object') return;
                         const text = commentData.text;
@@ -151,6 +160,7 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
         
         // 6. Generate Markdown
         let markdown = `# 📰 ${title}\n\n`;
+        markdown += `* **작성일:** ${publishedAt || '정보 없음'}\n`;
         markdown += `* **기사 링크:** [바로가기](${externalUrl})\n\n`;
         markdown += `## 📝 요약 설명\n${content}\n\n`;
         
@@ -165,6 +175,7 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
             id,
             title,
             url: externalUrl,
+            publishedAt,
             content,
             comments,
             jsonLdRaw,

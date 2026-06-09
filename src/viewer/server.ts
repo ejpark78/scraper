@@ -17,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve downloaded images from site scrapers
 const projectRoot = path.resolve(__dirname, '..', '..');
+app.use('/geeknews', express.static(path.join(projectRoot, 'data', 'sites', 'geeknews')));
 app.use('/gpters', express.static(path.join(projectRoot, 'data', 'sites', 'gpters')));
 app.use('/pytorch_kr', express.static(path.join(projectRoot, 'data', 'sites', 'pytorch_kr')));
 

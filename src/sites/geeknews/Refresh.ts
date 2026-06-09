@@ -18,13 +18,10 @@ export class GeekNewsRefresh {
             const docs = await cursor.toArray();
             console.log(`📥 Loaded ${docs.length} raw articles from bronze.geeknews.`);
 
-            const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'geeknews');
-            fs.mkdirSync(path.join(baseDir, 'html'), { recursive: true });
-            fs.mkdirSync(path.join(baseDir, 'markdown'), { recursive: true });
-
             let processed = 0;
             for (const doc of docs) {
-                const { id, rawHtml, url } = doc;
+                const id = doc.topicId || doc.id;
+                const { rawHtml, url } = doc;
                 if (!id || !rawHtml) continue;
 
                 try {
@@ -39,6 +36,7 @@ export class GeekNewsRefresh {
                                 id,
                                 title: meta.title,
                                 url: meta.url,
+                                publishedAt: meta.publishedAt,
                                 content: meta.content,
                                 comments: meta.comments,
                                 jsonLdRaw: meta.jsonLdRaw,
@@ -50,8 +48,14 @@ export class GeekNewsRefresh {
                     );
 
                     // 3. Local Backup Files
-                    const htmlPath = path.join(baseDir, 'html', `${id}.html`);
-                    const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
+                    const { year, month } = this.getDatePathParts(meta.publishedAt);
+                    const baseDir = path.join(__dirname, '..', '..', '..', 'data', 'sites', 'geeknews', year, month);
+                    const htmlDir = path.join(baseDir, 'html');
+                    const mdDir = path.join(baseDir, 'markdown');
+                    fs.mkdirSync(htmlDir, { recursive: true });
+                    fs.mkdirSync(mdDir, { recursive: true });
+                    const htmlPath = path.join(htmlDir, `${id}.html`);
+                    const mdPath = path.join(mdDir, `${id}.md`);
                     fs.writeFileSync(htmlPath, rawHtml, 'utf-8');
                     await converter.prettifyAndSave(meta.rawContent, mdPath);
 
@@ -69,6 +73,19 @@ export class GeekNewsRefresh {
         } finally {
             await mongo.close();
         }
+    }
+
+    private getDatePathParts(publishedAt: string | null): { year: string; month: string } {
+        if (publishedAt) {
+            const d = new Date(publishedAt);
+            if (!isNaN(d.getTime())) {
+                return {
+                    year: d.getFullYear().toString(),
+                    month: String(d.getMonth() + 1).padStart(2, '0')
+                };
+            }
+        }
+        return { year: 'unknown', month: 'unknown' };
     }
 }
 

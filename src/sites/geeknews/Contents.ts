@@ -47,7 +47,21 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
         return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
     }
 
+    private getDatePathParts(publishedAt: string | null): { year: string; month: string } {
+        if (publishedAt) {
+            const d = new Date(publishedAt);
+            if (!isNaN(d.getTime())) {
+                return {
+                    year: d.getFullYear().toString(),
+                    month: String(d.getMonth() + 1).padStart(2, '0')
+                };
+            }
+        }
+        return { year: 'unknown', month: 'unknown' };
+    }
+
     protected async saveResults(meta: GeekNewsMeta, id: string, tempHtmlPath: string, _redisInstance?: any): Promise<{ targetDirName: string }> {
+        const { year, month } = this.getDatePathParts(meta.publishedAt);
         const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
         // ⚡ [MongoDB 적재] ⚡
@@ -79,6 +93,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
                         id: id,
                         title: meta.title,
                         url: meta.url,
+                        publishedAt: meta.publishedAt,
                         content: meta.content,
                         comments: meta.comments,
                         jsonLdRaw: meta.jsonLdRaw,
@@ -98,8 +113,8 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
 
             console.log(`📡 [MongoDB Write] Successfully saved GeekNews ID ${id} and marked url as completed.`);
 
-            // 3. Local File System Backup
-            const baseDir = path.join(__dirname, '..', '..', 'data', 'geeknews');
+            // 4. Local File System Backup
+            const baseDir = path.join(__dirname, '..', '..', 'data', 'sites', 'geeknews', year, month);
             const htmlPath = path.join(baseDir, 'html', `${id}.html`);
             const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
 
