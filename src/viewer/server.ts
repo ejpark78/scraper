@@ -381,10 +381,18 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
            const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }] });
            if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
          } else if (collectionName === 'silver/uppity.contents' && doc.id) {
-           const bronzeColl = await mongo.getCollection('bronze/uppity.html');
-           const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
-           if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
-         }
+            const bronzeColl = await mongo.getCollection('bronze/uppity.html');
+            const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
+            if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+          } else if (collectionName === 'silver/maily_josh.contents' && doc.id) {
+            const bronzeColl = await mongo.getCollection('bronze/maily_josh.html');
+            const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
+            if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+          } else if (collectionName === 'silver/yozm.contents' && doc.id) {
+            const bronzeColl = await mongo.getCollection('bronze/yozm.html');
+            const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
+            if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+          }
        } catch (stitchErr) {
          console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);
        }

@@ -1,8 +1,9 @@
 .agents/brain/
-.agents/transcripts/
-.agents/sysinfo_cache.json
 .agents/rules_compact.txt
+.agents/sysinfo_cache.json
+.agents/transcripts/
 .env
+.firecrawl/
 data/
 data/sessions/
 node_modules/
