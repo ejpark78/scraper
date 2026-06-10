@@ -6,7 +6,7 @@
 2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes (except for commands listed in Pre-Approved Commands). CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first.
 
 3. **Minimal File Scope**: No root grep/list_dir. Use view_file only on target files.
-4. **Transparent Issues**: Report errors immediately. No silent restores.
+4. **Transparent Issues**: Report errors immediately. No silent restores. Do not exceed 2 autonomous troubleshooting retries without user review.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
 6. **Symbolic Links for Artifacts**: Link created/modified artifacts to `.agents/brain/`.
 7. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
