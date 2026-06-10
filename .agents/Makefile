@@ -1,6 +1,10 @@
 # ==============================================================================
 # 🤖 Agent Infrastructure Management Makefile (.agents/Makefile)
 # ==============================================================================
+# Design Context: Main router for managing agent transcripts, contexts, and usage diagnostics.
+# Constraints:    Requires execute permissions on all helper scripts in .agents/scripts/.
+# Dependencies:   make, ts-node, bash, usage.ts
+# ==============================================================================
 # Usage:
 #   make -f .agents/Makefile <TARGET>             # agy only (default)
 #   make -f .agents/Makefile AGENTS=opencode <T>
@@ -8,7 +12,7 @@
 
 AGENTS ?= agy
 
-.PHONY: dump-transcripts dump-context dump-brain prune
+.PHONY: dump-transcripts dump-context dump-brain prune usage
 
 AGENTS_FLAG = --agent=$(AGENTS)
 
@@ -29,6 +33,9 @@ compress-rules:
 
 lint-rules:
 	@npx ts-node .agents/scripts/lint_rules.ts
+
+usage:
+	@npx ts-node .agents/scripts/usage.ts
 
 prune:
 	@npx ts-node .agents/scripts/prune_session.ts
