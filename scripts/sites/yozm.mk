@@ -19,12 +19,21 @@ help:
 
 list: PRIORITY := high
 list:
+	@echo "──────────────────────────────────────────────────"
+	@echo "📡 [Yozm] Starting list scraping (PAGE: $(PAGE))..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) clipper npx ts-node src/crawler/sites/yozm/List.ts
 
 refresh-urls:
+	@echo "──────────────────────────────────────────────────"
+	@echo "🔄 [Yozm] Refreshing target queue URLs..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts yozm
 
 refresh-silver:
+	@echo "──────────────────────────────────────────────────"
+	@echo "✨ [Yozm] Processing Silver Layer missing items..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts yozm
 
 

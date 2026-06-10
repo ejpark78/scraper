@@ -30,21 +30,39 @@ help:
 # 모든 실행 타겟들을 컨테이너 내부의 npx ts-node 명령으로 직접 맵핑하여 위임
 list: PRIORITY := high
 list:
+	@echo "──────────────────────────────────────────────────"
+	@echo "📡 [LinkedIn Jobs] Starting job list scraping..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/ListScraper.ts
 
 company: PRIORITY := high
 company:
+	@echo "──────────────────────────────────────────────────"
+	@echo "📡 [LinkedIn Company] Starting company scraping..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/company/Pipeline.ts
 
 extract-urls:
+	@echo "──────────────────────────────────────────────────"
+	@echo "🔍 [LinkedIn Jobs] Extracting un-scraped Job URLs..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/ExtractUrls.ts
 
 refresh-urls:
+	@echo "──────────────────────────────────────────────────"
+	@echo "🔄 [LinkedIn Jobs] Refreshing target queue URLs (GEOS: $(GEOS))..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) -e GEOS="$(GEOS)" $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/RefreshUrls.ts
 
 refresh-silver:
+	@echo "──────────────────────────────────────────────────"
+	@echo "✨ [LinkedIn Jobs] Processing Silver Layer missing items..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/RefreshTransform.ts
 
 status:
+	@echo "──────────────────────────────────────────────────"
+	@echo "📊 [LinkedIn Jobs] Showing status report comparison..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/StatusReport.ts
 

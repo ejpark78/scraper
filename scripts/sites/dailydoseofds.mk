@@ -19,12 +19,21 @@ help:
 
 list: PRIORITY := high
 list:
+	@echo "──────────────────────────────────────────────────"
+	@echo "📡 [DailyDoseOfDS] Starting list scraping (PAGE: $(PAGE))..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) clipper npx ts-node src/crawler/sites/dailydoseofds/List.ts
 
 refresh-urls:
+	@echo "──────────────────────────────────────────────────"
+	@echo "🔄 [DailyDoseOfDS] Refreshing target queue URLs..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts dailydose_ds
 
 refresh-silver:
+	@echo "──────────────────────────────────────────────────"
+	@echo "✨ [DailyDoseOfDS] Processing Silver Layer missing items..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts dailydose_ds
 
 

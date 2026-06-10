@@ -19,12 +19,21 @@ help:
 
 list: PRIORITY := high
 list:
+	@echo "──────────────────────────────────────────────────"
+	@echo "📡 [Maily Josh] Starting list scraping (PAGE: $(PAGE))..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) clipper npx ts-node src/crawler/sites/maily_josh/List.ts
 
 refresh-urls:
+	@echo "──────────────────────────────────────────────────"
+	@echo "🔄 [Maily Josh] Refreshing target queue URLs..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts maily_josh
 
 refresh-silver:
+	@echo "──────────────────────────────────────────────────"
+	@echo "✨ [Maily Josh] Processing Silver Layer missing items..."
+	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts maily_josh
 
 
