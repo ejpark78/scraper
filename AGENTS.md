@@ -3,7 +3,7 @@
 ## ⚠️ Critical Constraints
 
 1. **No Arbitrary Bash**: Consent required for logs/ps/mongosh. Compress status checks.
-2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes.
+2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes (except for commands listed in Pre-Approved Commands).
 3. **Minimal File Scope**: No root grep/list_dir. Use view_file only on target files.
 4. **Transparent Issues**: Report errors immediately. No silent restores.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
@@ -22,3 +22,8 @@
 3. **Robust Error Handling**: Never use empty catch blocks. Always log error contexts and close DB/Redis connections in finally blocks.
 4. **Centralized Config**: Access 'process.env' only within dedicated config files. Inject configuration via constructor.
 5. **Agent-Friendly Docstrings**: Start every source file with a JSDoc detailing design context, constraints, and dependencies to prevent agent refactoring loops. Automatically update this header docstring whenever modifying the code's behavior.
+
+## 🔓 Pre-Approved Commands
+The following commands/scripts are pre-approved and exempt from Rule 2's consent loop:
+- `.agents/scripts/commit-changes.sh` (Runs automatically after edits to save progress)
+
