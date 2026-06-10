@@ -172,7 +172,7 @@ export class BaseRefreshUrls {
 
         const htmlDocs = await htmlColl.find({}, { projection: { rawHtml: 1 }, maxTimeMS: 30000 }).toArray();
         const newUrls: { id: string; url: string }[] = [];
-        let totalLinks = 0;
+        const counts = { protocolSkipped: 0, domainSkipped: 0, domainMatched: 0, shareExtracted: 0, binarySkipped: 0, afterClean: 0, idNull: 0, dedupSkipped: 0, totalAnchors: 0 };
 
         for (const doc of htmlDocs) {
             if (!doc?.rawHtml) continue;
@@ -181,23 +181,26 @@ export class BaseRefreshUrls {
             $('a[href]').each((_, el) => {
                 const href = $(el).attr('href');
                 if (!href) return;
-                totalLinks++;
+                counts.totalAnchors++;
 
                 try {
                     let fullUrl = new URL(href, 'https://' + domain).toString();
                     const parsed = new URL(fullUrl);
-                    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
-                    if (parsed.hostname !== domain && !parsed.hostname.endsWith(`.${domain}`)) {
+                    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') { counts.protocolSkipped++; return; }
+                    if (!UrlUtils.isSameDomain(parsed.hostname, domain)) {
                         const extracted = UrlUtils.extractDomainUrl(fullUrl, domain);
-                        if (!extracted) return;
+                        if (!extracted) { counts.domainSkipped++; return; }
                         fullUrl = extracted;
+                        counts.shareExtracted++;
+                    } else {
+                        counts.domainMatched++;
                     }
                     fullUrl = UrlUtils.stripTrackingParams(fullUrl).split('#')[0];
-                    if (UrlUtils.isBinaryUrl(fullUrl)) return;
+                    if (UrlUtils.isBinaryUrl(fullUrl)) { counts.binarySkipped++; return; }
+                    counts.afterClean++;
                     const id = scraper.extractId(fullUrl);
-                    if (!id) return;
-                    if (existingIds.has(id) || queuedIds.has(id)) return;
-                    if (completedIds.includes(id)) return;
+                    if (!id) { counts.idNull++; return; }
+                    if (existingIds.has(id) || queuedIds.has(id) || completedIds.includes(id)) { counts.dedupSkipped++; return; }
 
                     newUrls.push({ id, url: fullUrl });
                     existingIds.add(id);
@@ -205,12 +208,21 @@ export class BaseRefreshUrls {
             });
         }
 
+        const c = counts;
+        console.log(`🔍 Scanned ${c.totalAnchors} links:`);
+        console.log(`    ├─ protocol skip:    ${c.protocolSkipped}`);
+        console.log(`    ├─ domain skip:      ${c.domainSkipped}`);
+        console.log(`    ├─ domain match:     ${c.domainMatched}`);
+        console.log(`    ├─ share extract:    ${c.shareExtracted}`);
+        console.log(`    ├─ binary skip:      ${c.binarySkipped}`);
+        console.log(`    ├─ after clean:      ${c.afterClean}`);
+        console.log(`    ├─ id null skip:     ${c.idNull}`);
+        console.log(`    ├─ dedup skip:       ${c.dedupSkipped}`);
+        console.log(`    └─ new URLs:         ${newUrls.length}`);
         if (newUrls.length === 0) {
             console.log(`💡 No new URLs found in existing HTML docs.`);
             return;
         }
-
-        console.log(`🔍 Scanned ${totalLinks} links, found ${newUrls.length} new URLs.`);
 
         // Add to urls collection
         const chunkSize = 1000;

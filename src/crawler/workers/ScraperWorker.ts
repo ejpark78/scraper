@@ -126,7 +126,7 @@ class ScraperWorker {
     if (desc.domain) {
       try {
         const parsed = new URL(url);
-        if (parsed.hostname !== desc.domain && !parsed.hostname.endsWith(`.${desc.domain}`)) {
+        if (!UrlUtils.isSameDomain(parsed.hostname, desc.domain)) {
           Logger.warn(`[Scraper] Skipping URL outside configured domain for [${site}]: ${url} (hostname: ${parsed.hostname})`);
           return;
         }
@@ -267,7 +267,7 @@ class ScraperWorker {
           fullUrl = new URL(href, currentUrl).toString();
           const parsed = new URL(fullUrl);
           if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') continue;
-          if (parsed.hostname !== desc.domain && !parsed.hostname.endsWith(`.${desc.domain}`)) {
+          if (!UrlUtils.isSameDomain(parsed.hostname, desc.domain)) {
             const extracted = extractDomainUrl(fullUrl, desc.domain);
             if (!extracted) continue;
             fullUrl = extracted;

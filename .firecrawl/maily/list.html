@@ -1,0 +1,1007 @@
+<!DOCTYPE html><html lang="en" class="wf-loading wf-notosanskr-n1-loading wf-notosanskr-n3-loading wf-notosanskr-n4-loading wf-notosanskr-n5-loading wf-notosanskr-n7-loading wf-notosanskr-n9-loading" dir="ltr">
+
+<body class="bg-white dark:bg-stone-900" style="--primary-background-color: #ffffff;
+        --primary-text-color: #000000;">
+
+  <div id="loginModal" data-controller="components--modal components--auth" data-components--modal-initial-status="false">
+  <div data-target="components--modal.modal" style="display: none;" class="fixed bottom-0 inset-x-0 px-4 pb-6 sm:inset-0 sm:p-0 sm:flex sm:items-center sm:justify-center z-40">
+    <div data-action="click->components--modal#hideModal" class="fixed inset-0 transition-opacity">
+      <div class="absolute inset-0 bg-stone-300 dark:bg-stone-700 opacity-75 z-40"></div>
+    </div>
+    <div class="bg-white dark:bg-stone-900 rounded-lg p-4 overflow-auto shadow-xl transform transition-all max-w-sm lg:max-w-lg w-full mx-auto sm:p-6" style="max-height: 75vh;" role="dialog" aria-modal="true" aria-labelledby="modal-headline">
+      <form class="relative" data-components--auth-target="form" action="https://maily.so/josh/users/pin_sign_in" accept-charset="UTF-8" data-remote="true" method="post">
+        <div class="space-y-4">
+          <div class="space-y-1">
+            <p class="text-lg font-medium text-slate-900 dark:text-slate-200">
+              로그인이 필요해요
+            </p>
+            <p class="text-sm text-slate-600 dark:text-slate-300">이메일 인증으로 간편하게 로그인/가입을 하실 수 있어요. (계정이 없으시면, 자동으로 메일리
+              회원가입이 되며 계정 설정에서 비밀번호를 지정하실 수 있어요.)</p>
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium leading-5 text-slate-700 dark:text-slate-300" for="email">이메일</label>
+            <div class="mt-1 flex rounded-md shadow-sm">
+              <div class="relative flex-1 focus-within:z-40">
+                <input data-components--auth-target="email" placeholder="wonderful@gmail.com" required="required" class="bg-white dark:bg-stone-900 bg-dark-maily text-slate-900 dark:text-slate-200 shadow-sm focus:ring-blue-300 focus:border-blue-300 block w-full sm:text-sm border-gray-300 dark:border-gray-500 rounded-none rounded-l-md border-r-0" type="email" name="email" id="email">
+              </div>
+              <button type="button" data-action="click->components--auth#startAuthentication" data-components--auth-target="authButton" class="-ml-px maily-green-button rounded-none rounded-r-md border-green-333 dark:border-green-800">
+                인증하기
+              </button>
+            </div>
+          </div>
+          <div class="hidden" data-target="components--auth.authenticationField">
+            <div class="flex justify-between">
+              <label for="email" class="text-sm font-medium leading-5 text-slate-700 dark:text-slate-300">이메일
+                인증하기</label>
+              <span data-action="click->components--auth#resendPin" class="text-xs font-bold leading-5 text-green-700 cursor-pointer">재발송</span>
+            </div>
+            <div class="mt-1 flex rounded-md shadow-sm">
+              <div class="relative flex-grow focus-within:z-40">
+                <input autocomplete="off" placeholder="12345678" pattern="[0-9]*" inputmode="numeric" data-components--auth-target="pin" class="bg-white dark:bg-stone-900 bg-dark-maily text-slate-900 dark:text-slate-200 shadow-sm focus:ring-blue-300 focus:border-blue-300 block w-full sm:text-sm border-gray-300 dark:border-gray-500 rounded-none rounded-l-md border-r-0" min="10000000" max="99999999" type="number" name="user_pin" id="user_pin">
+              </div>
+              <input type="submit" name="commit" value="확인" class="-ml-px maily-green-button rounded-none rounded-r-md border-green-333 dark:border-green-800" data-disable-with="확인중...">
+            </div>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300" data-target="components--auth.pinNotification">이메일로 전송 된 8자리 숫자를 입력해주세요</p>
+          </div>
+          <div class="mt-3" id="privacyAgreement">
+            <div class="flex items-center">
+              <input required="required" data-components--auth-target="privacyAgreement" class="focus:ring-green-333 h-4 w-4 text-green-700 dark:text-green-700 border-gray-300 dark:border-gray-500 rounded" type="checkbox" value="1" checked="checked" name="privacy_agreement" id="privacy_agreement">
+              <label class="w-full text-left ml-2 block text-xs leading-5 text-gray-700 dark:text-gray-300 cursor-pointer" for="privacy_agreement">
+                메일리 <a target="_blank" class="underline hover:text-slate-700 dark:text-slate-300" href="https://maily.so/app/service_policy">이용약관</a> <a target="_blank" class="underline hover:text-slate-700 dark:text-slate-300" href="https://maily.so/app/privacy_agreement">개인정보처리방침</a>
+                에 동의합니다.
+</label>            </div>
+          </div>
+        </div>
+</form>      <div class="border-t border-gray-100 dark:border-gray-700 my-3 md:my-5"></div>
+      <div class="my-6">
+        
+    <form class="button_to" method="post" action="https://maily.so/app/users/auth/google_oauth2?redirect_path=%2Fjosh&amp;space_url=josh"><button data-turbo="false" class="group relative w-full flex justify-center py-2 px-4 border text-sm leading-5 font-medium rounded-md primary-start border border-gray-300 dark:border-gray-500 text-slate-700 dark:text-slate-300 bg-white dark:bg-stone-900 hover:text-slate-600 dark:text-slate-300 focus:outline-none focus:border-blue-300 focus:ring-blue-300 active:text-gray-800 dark:text-gray-100 active:bg-slate-50 dark:bg-slate-800 astro-primary primary-end transition duration-150 ease-in-out" type="submit">
+      <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+            <svg class="w-5 h-5 mr-2" width="20" height="20" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <path d="M17.64,9.20454545 C17.64,8.56636364 17.5827273,7.95272727 17.4763636,7.36363636 L9,7.36363636 L9,10.845 L13.8436364,10.845 C13.635,11.97 13.0009091,12.9231818 12.0477273,13.5613636 L12.0477273,15.8195455 L14.9563636,15.8195455 C16.6581818,14.2527273 17.64,11.9454545 17.64,9.20454545 L17.64,9.20454545 Z" id="Shape" fill="#4285F4" sketch:type="MSShapeGroup"></path>
+              <path d="M9,18 C11.43,18 13.4672727,17.1940909 14.9563636,15.8195455 L12.0477273,13.5613636 C11.2418182,14.1013636 10.2109091,14.4204545 9,14.4204545 C6.65590909,14.4204545 4.67181818,12.8372727 3.96409091,10.71 L0.957272727,10.71 L0.957272727,13.0418182 C2.43818182,15.9831818 5.48181818,18 9,18 L9,18 Z" id="Shape" fill="#34A853" sketch:type="MSShapeGroup"></path>
+              <path d="M3.96409091,10.71 C3.78409091,10.17 3.68181818,9.59318182 3.68181818,9 C3.68181818,8.40681818 3.78409091,7.83 3.96409091,7.29 L3.96409091,4.95818182 L0.957272727,4.95818182 C0.347727273,6.17318182 0,7.54772727 0,9 C0,10.4522727 0.347727273,11.8268182 0.957272727,13.0418182 L3.96409091,10.71 L3.96409091,10.71 Z" id="Shape" fill="#FBBC05" sketch:type="MSShapeGroup"></path>
+              <path d="M9,3.57954545 C10.3213636,3.57954545 11.5077273,4.03363636 12.4404545,4.92545455 L15.0218182,2.34409091 C13.4631818,0.891818182 11.4259091,0 9,0 C5.48181818,0 2.43818182,2.01681818 0.957272727,4.95818182 L3.96409091,7.29 C4.67181818,5.16272727 6.65590909,3.57954545 9,3.57954545 L9,3.57954545 Z" id="Shape" fill="#EA4335" sketch:type="MSShapeGroup"></path>
+            </svg>
+          </span>
+
+      <span>구글로 시작하기</span>
+</button></form>
+      </div>
+      <div class="text-right">
+        <a class="text-sm lg:text-base leading-5 lg:leading-6 font-medium text-green-700 dark:text-green-700 cursor-pointer hover:text-green-600 dark:hover:text-green-600" href="https://maily.so/josh/users/sign_in?redirect_path=%2Fjosh">
+          비밀번호로 로그인 하기
+</a>      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="subscribeModal" data-controller="components--subscribe-modal" data-components--subscribe-modal-initial-status="false" data-components--subscribe-modal-initial-plan="">
+  <div data-target="components--subscribe-modal.modal" style="display: none;" class="fixed bottom-0 inset-x-0 px-4 pb-6 sm:inset-0 sm:p-0 sm:flex sm:items-center sm:justify-center z-30">
+    <div data-action="click->components--subscribe-modal#hideModal" class="fixed inset-0 transition-opacity">
+      <div class="absolute inset-0 bg-stone-300 dark:bg-stone-700 opacity-75 z-30"></div>
+    </div>
+    <div class="relative bg-white dark:bg-stone-900 rounded-lg px-4 pt-5 pb-4 overflow-auto shadow-xl transform transition-all max-w-sm sm:max-w-xl w-full mx-auto sm:p-6" style="max-height: 75vh;" role="dialog" aria-modal="true" aria-labelledby="modal-headline">
+      <fieldset class="space-y-3 lg:space-y-4">
+        <legend class="text-lg font-medium text-slate-900 dark:text-slate-200 mb-2">
+          조쉬의 뉴스레터 구독하기
+        </legend>
+
+        <p class="text-sm text-slate-900 dark:text-slate-200 text-left whitespace-pre-line" style="word-break: keep-all;">- 뉴스레터는 매주 수요일 오전에 정기적으로 보내드립니다.
+- 해외의 비즈니스, 프로덕트 등의 인터뷰를 제 인사이트와 함께 소개드릴게요.</p>
+      </fieldset>
+
+      
+
+
+      <form id="subscribeModal" class="" data-components--subscribe-modal-target="form" data-controller="google-analytics--form" data-action="submit->google-analytics--form#event" data-event-params="{&quot;name&quot;:&quot;subscribe&quot;,&quot;component&quot;:&quot;modal&quot;}" action="https://maily.so/josh/subscriptions" accept-charset="UTF-8" data-remote="true" method="post">
+        
+        <div style="position: absolute; top: -500px;">
+          <input placeholder="가짜필드" class="" type="text" name="subscription[profile]" id="subscription_profile">
+        </div>
+        <fieldset class="space-y-3 lg:space-y-4">
+            <input id="6253f19cbf6bd28ccb8c6abecfa899be_free" required="required" data-action="click->components--subscribe-modal#forFreePlan" class="hidden" type="radio" value="free" checked="checked" name="subscription[plan]">
+
+          
+        </fieldset>
+
+          <div class="mt-6 space-y-2" data-controller="components--email-validator">
+            <div class="mt-1 relative rounded-md shadow-sm">
+              <label class="absolute -top-2 left-2 inline-block bg-white dark:bg-stone-900 px-1 text-xs font-medium text-slate-900 dark:text-slate-200" for="subscription_email">이메일</label>
+              <input data-components--subscribe-modal-target="email" data-components--email-validator-target="email" data-action="keyup->components--email-validator#validateEmail" placeholder="wonderful@gmail.com" required="required" class="bg-white dark:bg-stone-900 bg-dark-maily text-slate-900 dark:text-slate-200 shadow-sm focus:ring-blue-300 focus:border-blue-300 block w-full sm:text-sm border-gray-300 dark:border-gray-500 rounded-md" type="email" name="subscription[email]" id="subscription_email">
+            </div>
+
+            <p class="hidden mt-1 text-xs text-green-600" data-components--email-validator-target="emailValidation"></p>
+          </div>
+
+            <div class="mt-4 relative rounded-md shadow-sm">
+              <label class="absolute -top-2 left-2 inline-block bg-white dark:bg-stone-900 px-1 text-xs font-medium text-slate-900 dark:text-slate-200" for="subscription_name">닉네임</label>
+              <input placeholder="라이언" data-components--subscribe-modal-target="name" class="bg-white dark:bg-stone-900 bg-dark-maily text-slate-900 dark:text-slate-200 shadow-sm focus:ring-blue-300 focus:border-blue-300 block w-full sm:text-sm border-gray-300 dark:border-gray-500 rounded-md" type="text" name="subscription[name]" id="subscription_name">
+            </div>
+
+
+          <div class="mt-3">
+            
+<div data-sitekey="6LcBSkEaAAAAAP3s5SItSz41SJttHWghaybLELpz" class="g-recaptcha "><div style="width: 304px; height: 78px;"><div><div title="reCAPTCHA" width="304" height="78" role="presentation" name="a-i99y1uc8wmzr" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="https://www.recaptcha.net/recaptcha/api2/anchor?ar=1&amp;k=6LcBSkEaAAAAAP3s5SItSz41SJttHWghaybLELpz&amp;co=aHR0cHM6Ly9tYWlseS5zbzo0NDM.&amp;hl=en&amp;v=ne1iDVwClkE7nKD3uA9Vqsvl&amp;size=normal&amp;anchor-ms=20000&amp;execute-ms=30000&amp;cb=npeyuta53rbx" data-original-tag="iframe">
+
+<title>reCAPTCHA</title>
+
+<link rel="stylesheet" type="text/css" href="https://www.gstatic.com/recaptcha/releases/ne1iDVwClkE7nKD3uA9Vqsvl/styles__ltr.css">
+
+
+<div id="rc-anchor-alert" class="rc-anchor-alert"></div>
+
+<div id="rc-anchor-container" class="rc-anchor rc-anchor-normal rc-anchor-light"><div id="recaptcha-accessible-status" class="rc-anchor-aria-status" aria-hidden="true">Recaptcha requires verification. </div><div class="rc-anchor-error-msg-container" style="display:none"><span class="rc-anchor-error-msg" aria-hidden="true"></span></div><div class="rc-anchor-content"><div class="rc-inline-block"><div class="rc-anchor-center-container"><div class="rc-anchor-center-item rc-anchor-checkbox-holder"><span class="recaptcha-checkbox goog-inline-block recaptcha-checkbox-unchecked rc-anchor-checkbox" role="checkbox" aria-checked="false" id="recaptcha-anchor" tabindex="0" dir="ltr" aria-labelledby="recaptcha-anchor-label"><div class="recaptcha-checkbox-border" role="presentation"></div><div class="recaptcha-checkbox-borderAnimation" role="presentation"></div><div class="recaptcha-checkbox-spinner" role="presentation"><div class="recaptcha-checkbox-spinner-overlay"></div></div><div class="recaptcha-checkbox-checkmark" role="presentation"></div></span></div></div></div><div class="rc-inline-block"><div class="rc-anchor-center-container"><label class="rc-anchor-center-item rc-anchor-checkbox-label" aria-hidden="true" role="presentation" id="recaptcha-anchor-label"><span aria-live="polite" aria-labelledby="recaptcha-accessible-status"></span>I'm not a robot</label></div></div></div><div class="rc-anchor-normal-footer"><div class="rc-anchor-logo-portrait" aria-hidden="true" role="presentation"><div class="rc-anchor-logo-img rc-anchor-logo-img-portrait"></div><div class="rc-anchor-logo-text">reCAPTCHA</div></div><div class="rc-anchor-pt"></div></div></div><div style="display: none;" data-original-tag="iframe"></div></div></div><textarea id="g-recaptcha-response" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid rgb(193, 193, 193); margin: 10px 25px; padding: 0px; resize: none; display: none;"></textarea></div><div style="display: none;" data-original-tag="iframe"></div></div>
+
+          </div>
+          <div class="mt-5 hidden" data-target="components--subscribe-modal.authenticationField">
+            <div class="flex justify-between">
+              <label for="email" class="text-sm font-medium leading-5 text-slate-700 dark:text-slate-300">이메일
+                인증하기</label>
+              <span data-action="click->components--subscribe-modal#resendPin" class="text-xs font-bold leading-5 text-green-700 cursor-pointer">재발송</span>
+            </div>
+            <div class="mt-1 flex rounded-md shadow-sm">
+              <div class="relative flex-grow focus-within:z-30">
+                <input autocomplete="off" placeholder="12345678" pattern="[0-9]*" inputmode="numeric" data-target="components--subscribe-modal.pin" class="bg-white dark:bg-stone-900 bg-dark-maily text-slate-900 dark:text-slate-200 shadow-sm focus:ring-blue-300 focus:border-blue-300 block w-full sm:text-sm border-gray-300 dark:border-gray-500 rounded-none rounded-l-md" min="10000000" max="99999999" type="number" name="subscription[user_pin]" id="subscription_user_pin">
+              </div>
+              <input type="submit" name="commit" value="확인" class="-ml-px maily-green-button rounded-none rounded-r-md" data-disable-with="확인중...">
+            </div>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-300" data-target="components--subscribe-modal.pinNotification">이메일로 전송 된 8자리 숫자를 입력해주세요</p>
+          </div>
+          <div class="mt-3" id="privacyAgreement">
+            <div class="flex items-center">
+              <input required="required" data-target="components--subscribe-modal.privacyAgreement" class="focus:ring-green-333 h-4 w-4 text-green-700 dark:text-green-700 border-gray-300 dark:border-gray-500 rounded" type="checkbox" value="1" checked="checked" name="subscription[privacy_agreement]" id="subscription_privacy_agreement">
+              <label class="w-full text-left ml-2 block text-xs leading-5 text-gray-700 dark:text-gray-300 cursor-pointer" for="subscription_privacy_agreement">
+                [필수]
+                메일리 <a target="_blank" class="underline hover:text-slate-700 dark:text-slate-300" href="https://maily.so/app/service_policy">이용약관</a> <a target="_blank" class="underline hover:text-slate-700 dark:text-slate-300" href="https://maily.so/app/privacy_agreement">개인정보처리방침</a>
+                에 동의합니다.
+</label>            </div>
+          </div>
+
+        <input type="submit" name="commit" value="Create 구독" class="hidden" data-components--subscribe-modal-target="hiddenSubmit" data-disable-with="Create 구독">
+</form>
+      <div class="sticky bottom-0 mt-5 sm:mt-6 grid grid-cols-2 gap-3 grid-flow-row-dense" data-target="components--subscribe-modal.confirmButtons">
+          <span class="flex w-full rounded-md shadow-sm col-start-2" data-target="components--subscribe-modal.confirmFreePlan">
+            <button type="button" data-action="click->components--subscribe-modal#submitForm" class="w-full maily-green-button">
+              구독하기
+            </button>
+          </span>
+
+        <span class="flex w-full rounded-md shadow-sm col-start-2 hidden" data-target="components--subscribe-modal.confirmPaidPlan">
+            <button data-action="click->components--subscribe-modal#startAuthentication" type="button" class="w-full maily-green-button">
+              구독하기
+            </button>
+          </span>
+
+        <span class="flex w-full rounded-md shadow-sm mt-0 col-start-1">
+            <button data-action="click->components--subscribe-modal#hideModal" type="button" class="w-full maily-white-button">취소</button>
+          </span>
+      </div>
+
+        <div class="border-t border-gray-100 dark:border-gray-700 my-3 md:my-5"></div>
+
+        
+    <form class="button_to" method="post" action="https://maily.so/app/users/auth/google_oauth2?redirect_path=%2Fjosh%3Fpop%3Dup&amp;space_url=josh"><button data-turbo="false" class="group relative w-full flex justify-center py-2 px-4 border text-sm leading-5 font-medium rounded-md primary-start border border-gray-300 dark:border-gray-500 text-slate-700 dark:text-slate-300 bg-white dark:bg-stone-900 hover:text-slate-600 dark:text-slate-300 focus:outline-none focus:border-blue-300 focus:ring-blue-300 active:text-gray-800 dark:text-gray-100 active:bg-slate-50 dark:bg-slate-800 astro-primary primary-end transition duration-150 ease-in-out" type="submit">
+      <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+            <svg class="w-5 h-5 mr-2" width="20" height="20" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <path d="M17.64,9.20454545 C17.64,8.56636364 17.5827273,7.95272727 17.4763636,7.36363636 L9,7.36363636 L9,10.845 L13.8436364,10.845 C13.635,11.97 13.0009091,12.9231818 12.0477273,13.5613636 L12.0477273,15.8195455 L14.9563636,15.8195455 C16.6581818,14.2527273 17.64,11.9454545 17.64,9.20454545 L17.64,9.20454545 Z" id="Shape" fill="#4285F4" sketch:type="MSShapeGroup"></path>
+              <path d="M9,18 C11.43,18 13.4672727,17.1940909 14.9563636,15.8195455 L12.0477273,13.5613636 C11.2418182,14.1013636 10.2109091,14.4204545 9,14.4204545 C6.65590909,14.4204545 4.67181818,12.8372727 3.96409091,10.71 L0.957272727,10.71 L0.957272727,13.0418182 C2.43818182,15.9831818 5.48181818,18 9,18 L9,18 Z" id="Shape" fill="#34A853" sketch:type="MSShapeGroup"></path>
+              <path d="M3.96409091,10.71 C3.78409091,10.17 3.68181818,9.59318182 3.68181818,9 C3.68181818,8.40681818 3.78409091,7.83 3.96409091,7.29 L3.96409091,4.95818182 L0.957272727,4.95818182 C0.347727273,6.17318182 0,7.54772727 0,9 C0,10.4522727 0.347727273,11.8268182 0.957272727,13.0418182 L3.96409091,10.71 L3.96409091,10.71 Z" id="Shape" fill="#FBBC05" sketch:type="MSShapeGroup"></path>
+              <path d="M9,3.57954545 C10.3213636,3.57954545 11.5077273,4.03363636 12.4404545,4.92545455 L15.0218182,2.34409091 C13.4631818,0.891818182 11.4259091,0 9,0 C5.48181818,0 2.43818182,2.01681818 0.957272727,4.95818182 L3.96409091,7.29 C4.67181818,5.16272727 6.65590909,3.57954545 9,3.57954545 L9,3.57954545 Z" id="Shape" fill="#EA4335" sketch:type="MSShapeGroup"></path>
+            </svg>
+          </span>
+
+      <span>구글로 시작하기</span>
+</button></form>
+
+        <div class="top-1 lg:top-2 relative col-span-2 text-center text-gray-400 dark:text-gray-600">
+            <span class="text-xs mb-1 cursor-pointer hover:underline" data-controller="components--remote" data-action="click->components--remote#openLoginModal">이미 구독하셨나요?</span>
+        </div>
+    </div>
+  </div>
+</div>
+
+<nav class="bg-white dark:bg-stone-900">
+  <div class="w-full max-w-6xl mx-auto px-5 py-3">
+    <div class="w-full flex justify-between h-10 lg:h-12 space-x-2 lg:space-x-3">
+        <div class="flex-1 flex md:flex items-center space-x-2 truncate">
+          <a class="block shrink-0" href="https://maily.so/">
+            <img alt="메일리 로고" class="w-7 lg:w-8 h-7 lg:h-8 border-2 border-transparent object-cover" src="https://cdn.maily.so/images/logo_icon.png">
+</a>        </div>
+      <div class="flex items-center space-x-4 lg:space-x-5">
+        <button type="button" data-controller="components--darkmode" data-action="click->components--darkmode#toggleColorMode" aria-label="다크/라이트 모드 전환" class="flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="text-yellow-200 hover:text-yellow-300 fill-current stroke-current h-6 w-6 inline-block dark:hidden" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="text-yellow-200 hover:text-yellow-300 fill-current stroke-current h-6 w-6 hidden dark:block" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"></path>
+          </svg>
+        </button>
+          <div class="shrink-0">
+              <div x-data="{ open: false }" class="ml-2 lg:ml-3 shrink-0 flex items-center">
+                <div @click.outside="open = false" class="relative" x-data="{ open: false }">
+                  <div>
+                    <button @click="open = !open" style="touch-action: manipulation;" type="button" class="z-10 z-10 flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out" aria-haspopup="true" aria-expanded="true">
+                      <svg class="h-8 w-8 p-0.5 fill-current text-slate-600 dark:text-slate-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div x-show="open" style="display: none;" x-description="Profile dropdown panel, show/hide based on dropdown state." x-transition:enter="transition ease-out duration-200" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="z-[2000] origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg">
+                    <div class="rounded-md bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-600" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                      <div class="px-4 py-3">
+                        <p class="text-slate-600 dark:text-slate-300 text-sm leading-5">
+                          로그인을 안해도 바로 구독할 수 있어요 :)
+                        </p>
+                      </div>
+                      <div class="border-t border-gray-100 dark:border-gray-700"></div>
+                      <div class="py-1">
+                        <a @click="open = false" data-controller="components--remote" data-action="click->components--remote#openSubscriptionModal" class="cursor-pointer block px-4 py-2 text-sm text-green-700 dark:text-green-700 leading-5 hover:bg-gray-100 dark:bg-stone-900 dark:text-slate-200 dark:hover:bg-stone-700 focus:outline-none focus:bg-gray-100 focus:text-slate-900 dark:text-slate-200" role="menuitem">
+                          구독하기
+                        </a>
+                        <a class="block px-4 py-2 text-sm leading-5 text-slate-600 bg-white hover:text-slate-900 hover:bg-stone-200 dark:bg-stone-900 dark:text-slate-200 dark:hover:bg-stone-700 focus:outline-none focus:bg-gray-100 focus:text-slate-900 dark:text-slate-200" href="https://maily.so/josh/users/sign_in?redirect_path=%2Fjosh">
+                          로그인
+</a>                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+      </div>
+    </div>
+  </div>
+  
+</nav>
+<div class="z-30 fixed inset-0 flex items-end justify-center px-4 py-6 pointer-events-none sm:p-6 sm:items-start sm:justify-end">
+  <div id="flashesContainer" data-controller="components--flashes" data-components--flashes-target="container" class="flex flex-col max-w-sm w-full space-y-2">
+    
+  </div>
+</div>
+
+<div class="pb-14 lg:pb-20 bg-white dark:bg-stone-900" id="appContainer" style="min-height: 75vh;">
+  <div class="w-full mx-auto md:py-8">
+
+  <div class="max-w-space-content mx-auto px-6">
+    <div class="flex mt-4 mb-8">
+      <div class="w-full shrink-0 group block focus:outline-none">
+        <div class="flex items-center">
+          <img alt="조쉬의 뉴스레터의 프로필 이미지" class="inline-block h-16 w-16 md:h-20 md:w-20 object-cover rounded-full shrink-0" loading="lazy" src="https://cdn.maily.so/202410/1728892524889005.png">
+          <div class="ml-3 md:ml-6 flex-1">
+            <div class="flex-1">
+              <h2 class="text-black dark:text-white text-lg md:text-2xl font-bold max-w-3/4">조쉬의 뉴스레터</h2>
+              <div class="sm:mt-1 flex flex-wrap sm:items-center gap-2 sm:gap-3">
+                <div class="flex space-x-2 items-center">
+                  <p class="text-sm md:text-base font-normal text-slate-600 dark:text-slate-300 flex items-center justify-between">joshproductletter@gmail.com</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-slate-900 dark:text-slate-200 text-base md:text-lg leading-6 font-normal whitespace-pre-line max-w-3/4 mb-9">퀄리티 있는 AI, 비즈니스, 프로덕트 이야기를 들려드려요.</p>
+
+    <div class="mb-9 flex">
+      <div class="flex-1 flex space-x-5">
+        <div>
+          <p class="text-sm md:text-base font-normal text-slate-600 dark:text-slate-300 flex items-center justify-between">뉴스레터</p>
+          <h2 class="text-slate-900 dark:text-slate-200 text-xl md:text-2xl font-light">139</h2>
+        </div>
+          <div>
+            <p class="text-sm md:text-base font-normal text-slate-600 dark:text-slate-300 flex items-center justify-between">구독자</p>
+            <h2 class="text-slate-900 dark:text-slate-200 text-xl md:text-2xl font-light">13.8K</h2>
+          </div>
+      </div>
+      <div class="shrink-0 flex items-center">
+          <div x-data="{ feedbackOpen: false }" class="flex items-center">
+    <button class="text-slate-900 dark:text-slate-200 px-3 py-2 text-sm leading-5 font-light cursor-pointer flex items-center leading-tight" @click="feedbackOpen = !feedbackOpen;">응원하기
+    </button>
+
+  <div x-show="feedbackOpen" style="display: none;" class="fixed z-20 inset-0 overflow-y-auto">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div x-show="feedbackOpen" @click="feedbackOpen = !feedbackOpen" style="display: none;" x-description="Background overlay, show/hide based on modal state." class="fixed inset-0 transition-opacity">
+        <div class="absolute inset-0 bg-stone-300 dark:bg-stone-700 opacity-75 z-30"></div>
+      </div>
+
+      <!-- This element is to trick the browser into centering the modal contents. -->
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen"></span>​
+
+      <div x-show="feedbackOpen" style="display: none;" data-controller="components--remote" x-description="Modal panel, show/hide based on modal state." class="inline-block align-bottom bg-white dark:bg-stone-900 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm w-full sm:p-6" role="dialog" aria-modal="true" aria-labelledby="modal-headline">
+
+        <div class="flex items-center space-x-5">
+          <span class="text-2xl lg:text-3xl">☕</span>
+        </div>
+        <div class="mt-3 text-left sm:mt-5">
+          <h3 class="text-base leading-6 font-medium text-slate-900 dark:text-slate-200">
+            조쉬의 뉴스레터 님에게 커피와 쪽지 보내기
+          </h3>
+          <div class="mt-2">
+            <p class="text-sm leading-5 text-slate-600 dark:text-slate-300">
+              커피와 함께 하고싶은 말을 쪽지에 적어주시면 메일리가 전달해드려요.
+            </p>
+
+            <p class="mt-1 italic text-xs text-slate-600 dark:text-slate-300">보내시는 분의 이메일주소, 닉네임과 함께 전달됩니다.</p>
+          </div>
+        </div>
+
+
+        <form action="https://maily.so/josh/writers/buy_coffee" accept-charset="UTF-8" method="post">
+          <div>
+            <div class="mt-6">
+              <label class="block text-base font-medium leading-7 text-slate-900 dark:text-slate-200" for="coffee">커피</label>
+              <select x-ref="coffeeSelect" required="required" class="cursor-pointer bg-gray-100 dark:bg-stone-700 text-slate-900 dark:text-slate-200 mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-blue-300 focus:border-blue-300 sm:text-sm rounded-md" name="coffee" id="coffee"><option value="">메뉴 선택하기</option>
+<option value="커피 우유 (1,500원)">커피 우유 (1,500원)</option>
+<option value="테이크아웃 아메리카노 (3,000원)">테이크아웃 아메리카노 (3,000원)</option>
+<option value="아메리카노 (5,000원)">아메리카노 (5,000원)</option>
+<option value="핸드드립 스페셜티 커피 (9,000원)">핸드드립 스페셜티 커피 (9,000원)</option>
+<option value="라떼와 초콜릿 케이크 (18,000원)">라떼와 초콜릿 케이크 (18,000원)</option>
+<option value="아메리카노 5잔 (25,000원)">아메리카노 5잔 (25,000원)</option>
+<option value="한 달치 커피 (50,000원)">한 달치 커피 (50,000원)</option></select>
+            </div>
+            <div class="mt-4">
+              <label class="block text-base font-medium leading-7 text-slate-900 dark:text-slate-200" for="feedback">쪽지</label>
+              <div class="rounded-md shadow-sm">
+                <textarea data-action="click->components--remote#openLoginModal" name="blocked" readonly="" rows="3" placeholder="로그인 하고 쪽지 보내기 →" class="cursor-pointer bg-gray-100 dark:bg-stone-700 text-slate-900 dark:text-slate-200 shadow-sm focus:ring-blue-300 focus:border-blue-300 block w-full sm:text-sm border-gray-300 dark:border-gray-500 rounded-md"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="mt-5 sm:mt-6 grid grid-cols-2 gap-3 grid-flow-row-dense">
+              <span class="flex w-full rounded-md shadow-sm col-start-2">
+                <button type="button" data-action="click->components--remote#openLoginModal" class="cursor-pointer w-full maily-dark-button opacity-50">보내기</button>
+              </span>
+            <span class="flex w-full rounded-md shadow-sm mt-0 col-start-1">
+              <button type="button" @click="
+                      feedbackOpen = false; setTimeout(() => {
+                        $refs.coffeeSelect.value = '';
+                        $refs.feedbackInput.value = '';
+                      }, 1000);
+                      " class="w-full text-center maily-white-button">
+                나중에 하기
+              </button>
+            </span>
+          </div>
+</form>      </div>
+    </div>
+  </div>
+</div>
+          <span class="inline-flex rounded-md shadow-sm">
+    <button data-controller="components--remote" data-action="click->components--remote#openSubscriptionModal" class="maily-green-button">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current text-white dark:text-white h-4 w-4 mr-1" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      구독하기
+    </button>
+  </span>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-space-content mx-auto bg-white dark:bg-stone-900">
+  <div class="border-b border-gray-200 dark:border-gray-700 md:mx-3 lg:mx-6">
+      <nav class="-mb-px w-full flex items-center gap-1 md:gap-2 overflow-x-auto hide-scrollbar px-6 md:px-0" id="tabs">
+            <a class="shrink-0 text-center min-w-[5em] py-3 md:min-w-[6em] md:py-4 cursor-pointer whitespace-nowrap border-b border-gray-900 dark:border-gray-200 text-sm md:text-lg leading-5 dark:text-slate-300 focus:outline-none focus:text-green-800 focus:border-green-700" href="https://maily.so/josh">뉴스레터</a>
+            <a data-turbo="true" class="shrink-0 text-center min-w-[5em] py-3 md:min-w-[6em] md:py-4 cursor-pointer whitespace-nowrap border-b border-transparent text-sm md:text-lg leading-5 text-slate-600 dark:text-slate-300 hover:border-gray-900 dark:hover:border-gray-200 focus:outline-none focus:text-slate-900 focus:border-gray-900" href="https://maily.so/josh/comments">댓글</a>
+            <a data-turbo="true" class="shrink-0 text-center min-w-[5em] py-3 md:min-w-[6em] md:py-4 cursor-pointer whitespace-nowrap border-b border-transparent text-sm md:text-lg leading-5 text-slate-600 dark:text-slate-300 hover:border-gray-900 dark:hover:border-gray-200 focus:outline-none focus:text-slate-900 focus:border-gray-900" href="https://maily.so/josh/stories">커뮤니티</a>
+            <a class="shrink-0 text-center min-w-[5em] py-3 md:min-w-[6em] md:py-4 cursor-pointer whitespace-nowrap border-b border-transparent text-sm md:text-lg leading-5 text-slate-600 dark:text-slate-300 hover:border-gray-900 dark:hover:border-gray-200 focus:outline-none focus:text-slate-900 focus:border-gray-900" href="https://maily.so/josh/about">메일러 소개</a>
+      </nav>
+  </div>
+  </div>
+
+  <div class="max-w-space-content mx-auto px-3 lg:px-6 py-6 bg-white dark:bg-stone-900">
+    
+    <turbo-frame id="space-josh-posts">
+      <div class="space-y-2 lg:space-y-4 relative">
+        <div class="sticky top-1 space-y-2 z-10">
+          
+  <div class="flex items-start space-x-1">
+    <a class="flex-shrink-0" data-turbo-action="replace" href="https://maily.so/josh/c/all">
+        <span class="w-full inline-flex justify-center items-center px-3 py-2 rounded text-sm border border-gray-300 bg-gray-200 dark:bg-gray-900 text-gray-600 dark:text-gray-100">전체</span>
+</a>
+    <div class="grid grid-rows-1 grid-flow-col gap-1 auto-cols-max justify-start items-center justify-items-stretch content-evenly overflow-auto hide-scrollbar">
+        <a class="filter-link justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/c/insight">
+            <span class="w-full inline-flex justify-center items-center px-3 py-2 rounded text-sm border border-gray-200 bg-gray-50 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">비즈니스 인사이트</span>
+</a>        <a class="filter-link justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/c/solo">
+            <span class="w-full inline-flex justify-center items-center px-3 py-2 rounded text-sm border border-gray-200 bg-gray-50 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">창업가 스토리</span>
+</a>        <a class="filter-link justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/c/podcast">
+            <span class="w-full inline-flex justify-center items-center px-3 py-2 rounded text-sm border border-gray-200 bg-gray-50 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">HOW I AI PODCAST</span>
+</a>    </div>
+
+  </div>
+
+
+          <form class="relative flex" data-turbo-action="replace" action="https://maily.so/josh/posts" accept-charset="UTF-8" method="get">
+            <input placeholder="뉴스레터 찾아보기" autocomplete="off" class="bg-white dark:bg-stone-900 bg-dark-maily text-slate-900 dark:text-slate-200 shadow-sm focus:ring-blue-300 focus:border-blue-300 block w-full sm:text-sm border-gray-300 dark:border-gray-500 rounded-none" type="search" name="keyword" id="keyword">
+            <button type="submit" aria-label="검색하기" class="-ml-px relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-500 text-sm leading-5 font-medium rounded-none text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 hover:text-slate-600 dark:text-slate-300 hover:bg-white dark:bg-stone-900 focus:outline-none focus:ring-blue-300 focus:border-blue-300 active:bg-gray-100 active:text-slate-700 dark:text-slate-300 transition ease-in-out duration-150">
+              <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+              </svg>
+            </button>
+</form>
+            <div class="flex items-center space-x-1">
+              <div class="grid grid-rows-1 grid-flow-col gap-1 auto-cols-max justify-start items-center justify-items-stretch content-evenly overflow-auto hide-scrollbar">
+                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=1%EC%9D%B8+%EC%B0%BD%EC%97%85">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#1인 창업 (25)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EC%8A%A4%ED%83%80%ED%8A%B8%EC%97%85">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#스타트업 (21)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EC%B0%BD%EC%97%85">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#창업 (14)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=1%EC%9D%B8%EC%B0%BD%EC%97%85">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#1인창업 (11)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=AI">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#AI (11)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EB%B0%94%EC%9D%B4%EB%B8%8C%EC%BD%94%EB%94%A9">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#바이브코딩 (7)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EC%9D%B8%EB%94%94%ED%95%B4%EC%BB%A4">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#인디해커 (6)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=1%EC%9D%B8+%EA%B0%9C%EB%B0%9C">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#1인 개발 (5)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EB%89%B4%EC%8A%A4%EB%A0%88%ED%84%B0">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#뉴스레터 (5)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%ED%81%AC%EB%A6%AC%EC%97%90%EC%9D%B4%ED%84%B0">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#크리에이터 (5)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EB%B9%84%EC%A6%88%EB%8B%88%EC%8A%A4">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#비즈니스 (4)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EC%86%94%EB%A1%9C%ED%94%84%EB%A6%AC%EB%84%88">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#솔로프리너 (4)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EC%9E%90%EB%8F%99%ED%99%94">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#자동화 (4)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=%EB%94%94%EC%9E%90%EC%9D%B8">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#디자인 (4)</span>
+</a>                    <a class="justify-self-stretch" data-turbo-action="replace" href="https://maily.so/josh/posts?tag=1%EC%9D%B8%EA%B8%B0%EC%97%85">
+                      <span class="w-full inline-flex justify-center items-center px-2 py-1 rounded text-xs italic leading-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-900 text-gray-600 dark:text-gray-100">#1인기업 (4)</span>
+</a>              </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:gap-4 recent-posts-list-wrap" id="preRenderedPosts" data-controller="posts--infinite" data-posts--infinite-target="postsContainer" data-posts--infinite-filter-api-value="/josh" data-posts--infinite-page-value="2" data-posts--infinite-finished-value="false" data-posts--infinite-params-value="{&quot;controller&quot;:&quot;spaces/pages&quot;,&quot;action&quot;:&quot;home&quot;,&quot;space_url&quot;:&quot;josh&quot;}" data-posts--infinite-user-signed-in-value="false" data-action="scroll@window->posts--infinite#onScroll" data-posts--infinite-loading-value="false">
+              
+<a href="https://maily.so/josh/posts/d5ryw34jz1w" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">코드를 손으로 안 치는 창업자, 한 달 토큰값만 3400만원 씁니다</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">Conductor 공동창업자 찰리 홀츠(Charlie Holtz) 인터뷰. 찰리 홀츠는 자기가 만든 앱으로 그 앱을 다시 만듭니다. 그가 운영하는 'Conductor'는 맥에서 여러 AI 코딩 에이전트를 동시에 돌리고 지휘하게 해주는 앱인데, 정작 본인은</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.06.10</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 3.28K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202606/1780980305499416.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.06.10</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 3.28K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/vpzln42xrk9" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">잭 도시가 직원 40%를 내보내고 회사를 '미니 AGI'로 만든 방법</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">위계를 걷어낸 자리에 AI를 앉힌 블록 CEO의 실험. 잭 도시는 자기 손으로 만든 회사 두 개를 S&amp;P 500에 올린 유일한 창업자예요. 트위터(현 X)를 만들었고, 지금은 결제 회사 블록(Block, 스퀘어·캐시앱의 모회사)을 이끌</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.06.05</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.49K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202606/1780550762703112.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.06.05</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.49K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/wdr9q8x1olx" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">YC 파트너가 말하는 'AI로 스스로 발전하는 회사를 만드는 법'</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">톰 블롬필드(YC 파트너)가 푸는 'AI 네이티브 회사'의 5개 층. 요즘 'AI로 생산성 20% 올렸다'는 말, 한 번쯤 들어보셨을 거예요. 코파일럿을 붙이고, 엔지니어를 더 빠르게 만들고, 소프트웨어를 더 많이 찍어내는 식이죠. 그런데 Monzo</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.06.03</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.11K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202606/1780320753081286.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.06.03</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.11K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/xyow3yl1r28" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">코덱스는 더 이상 코딩 도구가 아닙니다 이제 당신의 하루 전체를 굴립니다</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">OpenAI에서 코덱스를 책임지는 티보 소티오가 본 6개월 뒤. 티보 소티오는 OpenAI에서 코덱스(Codex)와 API 전체를 책임지는 사람입니다. 우리가 매일 쓰는 ChatGPT 위에서 돌아가는 자동화와 에이전트가 다 그의 팀에서 나와요.</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.29</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.54K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202605/1779955963313787.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.29</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.54K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/2nznqqd4zp5" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">창업가 스토리</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">"기능은 다 베껴가도 됩니다" 10억 유저 앱 CEO가 말하는 생존의 조건</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">"AI 시대, 진짜 해자는 소프트웨어가 아닙니다" snap 에반 스피겔 . 인스타그램 이후 등장한 소비자 소셜 앱 중에, 15년간 매달 10억 명 가까이를 모아 살아남은 앱은 사실상 스냅챗 하나입니다. 스토리, AR 렌즈, 얼굴 바꾸기, 길게 눌러 영상 </p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.27</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.91K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202605/1779784264186645.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.27</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>창업가 스토리</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.91K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/wdr9qq7lolx" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">HOW I AI PODCAST</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">AI 시대에 살아남는 디자이너? 토스 출신 디자이너가 알려드려요</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">영어회화 앱 엘스(Else)의 공동창업자 강영화 님 인터뷰. 강영화 님은 전 토스 프로덕트 디자이너이자 영어회화 앱 '엘스(Else)'의 공동창업자예요. 그 전에는 타로·사주 앱 '우주 고양이 보라'로 앱스토어 1위를 찍고 가입자 120만 </p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.22</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.68K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202605/1779279307756336.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.22</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>HOW I AI PODCAST</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.68K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/knrj1pn1rld" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">고객 한 명당 월 5,000달러를 받는 1인 AI 에이전트 사업가</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2"> "AI 에이전트가 아니라 'AI 직원'을 파세요" 닉 바실레스쿠의 세일즈 공식. 닉 바실레스쿠는 고객 한 곳당 월 5,000달러를 받고 AI 에이전트를 만들어 운영해 주는 1인 사업을 굴리고 있어요. 고객은 토큰도, 모델도, 인프라도 만질 일이 없어요. 그저 </p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.20</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.8K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202605/1779120482866932.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.20</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.8K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/2qzp1gkez4x" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">Y콤비네이터 CEO 게리 탄의 역설 "토큰 안 태우는 게 더 비싸요" </p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">13년 만에 키보드 앞에 앉은 게리 탄이 들고 온 토큰 맥싱 패러다임. 게리 탄은 13년 동안 코드를 거의 쓰지 않았어요. 마지막으로 본격적으로 개발했던 게 2013년인데, 올해 다시 키보드 앞에 앉았더니 그때보다 400배 많은 코드를 쓰고 있다고 합</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.15</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.55K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202605/1778764070556132.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.15</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.55K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/92zek3epzep" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">클로드 코드 팀이 세계에서 가장 빠르게 제품을 내놓을 수 있는 이유</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">출시 주기를 6개월에서 1주로 줄인 앤트로픽 PM 캣 우 인터뷰. "모델이 다 알아서 해주는 미래를 상상하면 제품 만드는 건 쉬워요. 텍스트박스 하나만 있으면 되니까." 캣 우는 이걸 'AGI 약을 적당히 먹기'라고 부릅니다. 너무 많이 먹으면 </p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.13</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.16K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202605/1778586567245942.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.13</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.16K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/92zekw7nzep" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">바이브코딩 창시자가 말하는 AI 네이티브 시대의 새로운 생존법</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">"이렇게 뒤처진 느낌은 처음이에요" 안드레 카파시 인터뷰. 안드레 카파시는 현대 AI를 직접 만든 사람 중 한 명이에요. OpenAI 공동창업자였고, 테슬라에서 오토파일럿을 굴러가게 만든 장본인이고, 작년에는 '바이브 코딩(vibe cod</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.08</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.25K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202605/1778156994309152.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.08</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.25K</span></div>
+  </div>
+</a>
+
+        
+              
+<a href="https://maily.so/josh/posts/knrj12e7rld" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">Y콤비네이터가 말하는 'AI 네이티브 컴퍼니를 만드는 가장 확실한 방법'</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">절반의 시간을 들여 10배 결과물을 내는 AI 네이티브 회사들. 다이애나는 Y Combinator 파트너로서 지금 이 순간 가장 빠르게 자라는 AI 스타트업들을 가장 가까이서 보는 사람 중 한 명입니다. 그가 최근 몇 달간 수많은 파운더를 만나</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.06</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.33K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202605/1777986232310643.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.06</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.33K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/e9o0y2mnr8w" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">HOW I AI PODCAST</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">클로드 코드를 팀과 함께 쓰려면 '옵시디언'이 가장 좋은 선택입니다</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">회의록 쌓으면 링크드인 글이 자동으로 나가는 셀피쉬클럽 AAA팀. 미션만 수행하면 링크드인 글이 자동으로 만들어져 나가요. 회의록이 쌓이면 매주 누가 뭘 했는지 분석 리포트가 자동으로 생성되고, 일부는 외부 웹사이트로 공개돼요. 젬마(신주혜)님이</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.05.01</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.97K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1777540864391136.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.05.01</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>HOW I AI PODCAST</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.97K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/32z8d6d1rn4" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">'코딩이 공짜가 된 세상' 개발 25년차 Django 창시자가 본 AI 시대</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">해변에서 핸드폰으로 코딩하는 25년차 엔지니어 이야기. 사이먼 윌리슨은 해변에서 강아지를 산책시키면서 핸드폰으로 코드를 짜요. 코딩 에이전트 2~3개를 동시에 돌리고, 지금 그가 만드는 코드의 95%는 직접 타이핑한 게 아니에요. Dj</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.04.29</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.97K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1777353933455720.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.04.29</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 6.97K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/92zek9mdzep" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">Hermes 에이전트가 오픈클로보다 대세인 이유를 증명한 VC</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">'Hermes Agent 3주 실사용기' 세팅, 비용 관리, 일상 자동화 전부 공개. Imran은 OpenClaw에서 5일에 130달러씩 태우던 토큰 비용을 10달러로 줄였어요. 도구를 바꾼 게 아니라 에이전트 자체를 바꿨거든요. Hermes Agent로 갈아탄 지</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.04.24</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 19.7K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1776939072694075.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.04.24</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 19.7K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/8do72qdergq" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">창업가 스토리</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">"예쁜 UI 말고 CLI를 만드세요" 에이전트 친화 UI로 월 5만달러를 버는 개발자</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">투자 0원, 직원 0명. 레드오션에서 AI 에이전트를 고객으로 만든 방법. 네보 데이비드는 20년 된 레드오션 시장에 후발주자로 뛰어들어 1년 반 만에 월 매출 4만 5천 달러를 찍었어요. 소셜 미디어 예약 도구 Postiz를 만든 이스라엘 개발자인데, </p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.04.22</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.62K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1776762813965969.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.04.22</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>창업가 스토리</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.62K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/5xrx81gqo2v" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">창업가 스토리</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">'24시간에 1.6억' 구독 시대에 '평생 이용권'으로 역주행한 창업가</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">제품이 완성되기 전에 $120K를 선수금으로 받아낸 Floga 앱 런칭 이야기. AI로 누구나 앱을 만들 수 있는 시대가 됐습니다. 바이브 코딩(AI에게 자연어로 지시해 코드를 생성하는 방식)으로 주말 한 번이면 앱 한 개가 나오고, 앱스토어에는 비슷비슷한 제</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.04.17</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.55K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1776329440228140.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.04.17</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>창업가 스토리</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.55K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/10z393pjzlw" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">'직원 0명, 매출 3억' AI 에이전트가 CEO인 회사의 실체</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">Nat Eliason이 AI에게 회사를 넘기고 2개월 만에 배운 것들. 요즘 AI 에이전트 이야기가 쏟아지고 있어요. 대부분은 "AI가 일자리를 대체한다"는 막연한 전망이거나, 데모 영상 수준에 머물러 있죠. 그런데 실제로 AI 에이전트에게 은행 계좌</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.04.15</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 9.04K</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>댓글 1</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1776152245267891.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.04.15</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 9.04K</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>댓글 1</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/mjz6k2jwrwk" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">HOW I AI PODCAST</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">이 개발자는 깃허브에 코드 대신 회사를 올려놓습니다</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">깃허브 레포 하나 위에서 돌아가는 3인 벤처캐피털. 요즘 AI 네이티브 컴퍼니라는 말을 많이 들어요. 그런데 실제로 어떻게 생겼는지 보여주는 팀은 드뭅니다. 대부분 "우리 팀도 AI 쓰고 있어요" 정도에서 멈추거든요. 델타소사이어티</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.04.10</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.53K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1775794208868777.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.04.10</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>HOW I AI PODCAST</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.53K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/w6ovpjwpok5" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">AI가 우리 통제를 벗어나 스스로 개발을 하면 무슨 일이 벌어질까</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">에이전트의, 에이전트에 의한, 에이전트를 위한 도시 . 스티브 예게(Steve Yegge)는 17살에 프로그래밍을 시작해 올해로 40년차인 소프트웨어 엔지니어예요. 아마존과 구글을 거치며 특유의 블로그 열변으로 개발자 사이에서 전설이 </p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.04.08</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.09K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1775547183238342.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.04.08</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 7.09K</span></div>
+  </div>
+</a>
+
+              
+<a href="https://maily.so/josh/posts/wjzdxgq5r3p" data-turbo-frame="_top" class="post-card-list-item not-prose flex flex-col sm:flex-row sm:items-stretch sm:min-h-[100px] lg:min-h-[180px] sm:border border-slate-200 dark:border-slate-700 sm:rounded-md overflow-hidden py-3 sm:py-0 no-underline transition sm:hover:shadow-md" style="text-decoration: none;">
+  <div class="flex sm:contents">
+  <div class="flex-1 min-w-0 flex flex-col sm:p-5">
+      <div class="hidden sm:flex items-center gap-1.5 text-xs mb-2 min-w-0">
+          <span class="text-slate-500 dark:text-slate-400 truncate">비즈니스 인사이트</span>
+      </div>
+    <p class="text-slate-900 dark:text-slate-200 font-bold text-base lg:text-xl whitespace-normal truncate-2-lines truncate mb-2">AI가 사람의 일을 전부 가져간 뒤 인간이 할 일은</p>
+      <p class="text-slate-700 dark:text-slate-300 text-sm truncate-2-lines mb-2">파운데이션 캐피탈이 25개 기업에서 발견한 AI 조직의 새 공식. 지난 2년간 AI에 대한 대화는 대부분 '개인 생산성’에 머물렀어요. 누가 AI를 쓰고 있는지, 얼마나 빨라졌는지, 내 역할은 어떻게 되는 건지. 그런데 그 옆에서 조용히 다른 대</p>
+    <div class="hidden sm:flex flex-1 items-end">
+      <div class="block text-xs text-slate-600 dark:text-slate-300"><div class="flex flex-wrap items-center gap-0.5"><span>2026.04.03</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 8.63K</span></div></div>
+    </div>
+  </div>
+    <div class="shrink-0 self-start relative bg-cover bg-center w-[140px] h-[80px] lg:w-[315px] lg:h-[180px] pb-0 ml-3 sm:ml-0 rounded-none" style="background-image: url('https://cdn.maily.so/du/josh/202604/1775203687823005.png');"></div>
+  </div>
+  <div class="sm:hidden mt-2 text-xs text-slate-600 dark:text-slate-300">
+    <div class="flex flex-wrap items-center gap-0.5"><span>2026.04.03</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>비즈니스 인사이트</span><span class="text-gray-300 dark:text-gray-600 mx-1">·</span><span>조회 8.63K</span></div>
+  </div>
+</a>
+
+        </div>
+
+      </div>
+</turbo-frame>
+
+  </div>
+
+</div>
+
+  <div x-data="{ platformChatOpen: false }" x-init="$watch('platformChatOpen', v => {
+       if (v) $nextTick(() => {
+         const input = document.querySelector('#platform-floating-ai-chat textarea');
+         if (input) input.focus();
+       });
+     })" @open-platform-chat.window="platformChatOpen = true">
+
+
+  <!-- Floating 채팅 패널 -->
+  <div x-show="platformChatOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4" class="fixed right-0 sm:right-4 bottom-0 sm:bottom-4 z-20 w-full sm:w-[400px] h-[min(700px,80vh)] sm:rounded-2xl shadow-2xl bg-white dark:bg-gray-800 flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700" style="display: none;">
+
+    <!-- 헤더 -->
+    <div class="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
+            <img class="w-5 h-5" style="width: 20px; height: 20px;" src="https://cdn.maily.so/public/assets/logo_icon-4b302b58cb10470170e942bfd93bff9d153e43184714b1ce6307432b27cc108e.png">
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">메일리 도우미</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">메일리 사용법에 대해 답변합니다</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="https://maily.so/app/guides" target="_blank" class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">가이드 보기</a>
+          <button @click="platformChatOpen = false" class="p-1.5 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 채팅 콘텐츠 (turbo_frame으로 로드) -->
+    <turbo-frame class="flex-1 flex flex-col overflow-hidden" loading="lazy" id="platform-floating-ai-chat" src="/app/platform_ai_chat/embed">
+      <div class="flex-1 flex items-center justify-center">
+        <div class="flex gap-1">
+          <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+          <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+          <span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+        </div>
+      </div>
+</turbo-frame>  </div>
+</div>
+
+
+
+</div>
+
+
+<div class="w-full mx-auto bg-white dark:bg-stone-900 border-t border-gray-100 dark:border-gray-700">
+  <div class="max-w-6xl w-full mx-auto grid grid-cols-4 gap-4 lg:gap-8 p-5 py-8 lg:py-16">
+    <div class="col-span-4 md:col-span-2">
+        <div class="mb-8 lg:mb-16 space-y-2">
+          <b class="text-base text-black dark:text-white lg:text-xl">© 2026 조쉬의 뉴스레터</b>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">퀄리티 있는 AI, 비즈니스, 프로덕트 이야기를 들려드려요.</p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm space-x-2">
+              <span class="">뉴스레터 문의</span><a class="text-gray-600 dark:text-gray-400" href="mailto:joshproductletter@gmail.com">joshproductletter@gmail.com</a></p>
+          <div class="flex space-x-3 pt-2">
+              <a href="https://www.threads.com/@joshproductletter" target="_blank" rel="noopener noreferrer" class="text-gray-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-200" title="threads.com/@joshproductletter">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M19 7.5c-1.333 -3 -3.667 -4.5 -7 -4.5c-5 0 -8 2.5 -8 9s3.5 9 8 9s7 -3 7 -5s-1 -5 -7 -5c-2.5 0 -3 1.25 -3 2.5c0 1.5 1 2.5 2.5 2.5c2.5 0 3.5 -1.5 3.5 -5s-2 -4 -3 -4s-1.833 .333 -2.5 1"></path>
+</svg>
+
+              </a>
+              <a href="https://www.linkedin.com/in/uxjosh/" target="_blank" rel="noopener noreferrer" class="text-gray-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-200" title="linkedin.com/in/uxjosh">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"></path>
+  <path d="M8 11l0 5"></path>
+  <path d="M8 8l0 .01"></path>
+  <path d="M12 16l0 -5"></path>
+  <path d="M16 16v-3a2 2 0 0 0 -4 0"></path>
+</svg>
+
+              </a>
+            <a href="https://maily.so/josh/feed" target="_blank" rel="noopener noreferrer" class="text-gray-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-200" title="RSS">
+              <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 11a9 9 0 0 1 9 9"></path>
+  <path d="M4 4a16 16 0 0 1 16 16"></path>
+  <circle cx="5" cy="19" r="1"></circle>
+</svg>
+
+            </a>
+          </div>
+        </div>
+      <p class="text-gray-400 text-xs flex">
+        <a href="https://maily.so/">
+          <img alt="메일리 로고" class="inline-block dark:hidden h-7 w-auto" src="https://cdn.maily.so/images/green_logo.png">
+          <img alt="메일리 로고" class="hidden dark:inline-block h-7 w-auto" src="https://cdn.maily.so/images/white_logo.png">
+</a>      </p>
+      <p class="mt-4 text-gray-600 dark:text-gray-400 text-sm space-x-2">
+        <a class="hover:text-green-700 underline cursor-pointer" href="https://maily.so/app/guides">도움말</a>
+        <a target="_blank" class="hover:text-green-700 underline cursor-pointer" href="https://forms.gle/ZhCNiWhTguYF5YZ77">오류 및 기능 관련 제보</a>
+      </p>
+      <p class="mt-2 text-gray-600 dark:text-gray-400 text-sm space-x-2">
+        <span class="">서비스 이용 문의</span><a class="text-gray-600 dark:text-gray-400" href="mailto:admin@team.maily.so">admin@team.maily.so</a>
+        <a href="https://maily.so/josh#" @click.prevent="window.dispatchEvent(new CustomEvent('open-platform-chat'))" class="hover:text-green-700 underline cursor-pointer">채팅으로 문의하기</a>
+      </p>
+      <div class="mt-6 text-gray-600 dark:text-gray-400 text-xs leading-5">
+        <div x-data="{ open: false }" class="mb-1">
+          <p @click="open = !open" class="flex items-center cursor-pointer group">메일리 사업자 정보
+            <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+              <path d="M6 9l6 6l6 -6"></path>
+            </svg>
+            <svg x-show="open" style="display: none;" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 stroke-current" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+              <path d="M6 15l6 -6l6 6"></path>
+            </svg>
+          </p>
+          <p x-show="open" style="display: none;">메일리 (대표자: 이한결) | 사업자번호: 717-47-00705 | 서울특별시 송파구 위례광장로 199, 5층 501-8호</p>
+        </div>
+        <p>
+          <a class="hover:text-green-700 underline cursor-pointer" href="https://maily.so/app/service_policy">이용약관</a>
+          | <a class="hover:text-green-700 underline cursor-pointer" href="https://maily.so/app/privacy_agreement">개인정보처리방침</a>
+          | <a class="hover:text-green-700 underline cursor-pointer" href="https://maily.so/app/auto_pay_agreement">정기결제 이용약관</a>
+          | <a class="hover:text-green-700 underline cursor-pointer" href="https://maily.so/app/license">라이선스</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="background-color: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); box-shadow: rgba(0, 0, 0, 0.2) 2px 2px 3px; position: absolute; transition: visibility linear 0.3s, opacity 0.3s linear; opacity: 0; visibility: hidden; z-index: 2000000000; left: 0px; top: -10000px;"><div style="width: 100%; height: 100%; position: fixed; top: 0px; left: 0px; z-index: 2000000000; background-color: rgb(255, 255, 255); opacity: 0.05;"></div><div class="g-recaptcha-bubble-arrow" style="border: 11px solid transparent; width: 0px; height: 0px; position: absolute; pointer-events: none; margin-top: -11px; z-index: 2000000000;"></div><div class="g-recaptcha-bubble-arrow" style="border: 10px solid transparent; width: 0px; height: 0px; position: absolute; pointer-events: none; margin-top: -10px; z-index: 2000000000;"></div><div style="z-index: 2000000000; position: relative;"><div title="recaptcha challenge expires in two minutes" name="c-i99y1uc8wmzr" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="https://www.recaptcha.net/recaptcha/api2/bframe?hl=en&amp;v=ne1iDVwClkE7nKD3uA9Vqsvl&amp;k=6LcBSkEaAAAAAP3s5SItSz41SJttHWghaybLELpz&amp;bft=0dAFcWeA4Y-rd0FNs2KAiIG7foo5wIMlM7okQXWS5HFQh7u-sk7LDPi2UNjgYaKnXXp9vE9I75ItSwTPBGyAkOYV7MwrzpSuxcoQ" style="width: 100%; height: 100%;" data-original-tag="iframe">
+
+
+<title>reCAPTCHA</title>
+
+<link rel="stylesheet" type="text/css" href="https://www.gstatic.com/recaptcha/releases/ne1iDVwClkE7nKD3uA9Vqsvl/styles__ltr.css">
+
+
+
+<div></div></div></div></div></body></html>

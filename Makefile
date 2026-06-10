@@ -22,8 +22,8 @@ lint:
 -include scripts/tools/tools.mk
 
 list: RECURSIVE_SCRAPE=true
-list: gpt-list gn-list pk-list ab-list ddds-list up-list
-# list: li-list gpt-list gn-list pk-list ab-list ddds-list
+list: mj-list gpt-list gn-list pk-list ab-list ddds-list up-list
+# list: li-list mj-list gpt-list gn-list pk-list ab-list ddds-list
 
 test-%:
 	@$(MAKE) -f scripts/utils/tests.mk $*
@@ -51,6 +51,9 @@ ab-%:
 
 up-%:
 	@$(MAKE) -f scripts/sites/uppity.mk $*
+
+mj-%:
+	@$(MAKE) -f scripts/sites/maily_josh.mk $*
 
 mongo-%:
 	@$(MAKE) -f scripts/utils/mongo.mk $*

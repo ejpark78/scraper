@@ -380,6 +380,10 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
            const bronzeColl = await mongo.getCollection('bronze/dailydose_ds.html');
            const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }] });
            if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
+         } else if (collectionName === 'silver/uppity.contents' && doc.id) {
+           const bronzeColl = await mongo.getCollection('bronze/uppity.html');
+           const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
+           if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
          }
        } catch (stitchErr) {
          console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);

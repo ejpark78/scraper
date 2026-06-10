@@ -15,34 +15,95 @@ interface SiteConfig {
     extractId: (url: string) => string | null;
 }
 
-function extractHtmlUrls(html: string, domain: string, extractId: (url: string) => string | null): string[] {
+interface ExtractionDetail {
+    url: string;
+    stage: 'domain_match' | 'domain_skip' | 'share_extract' | 'tracking_clean' | 'binary_skip' | 'protocol_skip' | 'id_null' | 'discovered';
+}
+
+interface ExtractionSummary {
+    urls: string[];
+    details: ExtractionDetail[];
+    counts: {
+        totalAnchors: number;
+        protocolSkipped: number;
+        domainSkipped: number;
+        domainMatched: number;
+        shareExtracted: number;
+        binarySkipped: number;
+        afterClean: number;
+        idNull: number;
+        discovered: number;
+    };
+}
+
+function extractHtmlUrls(html: string, domain: string, extractId: (url: string) => string | null): ExtractionSummary {
     const $ = cheerio.load(html);
     const discovered = new Map<string, string>();
+    const details: ExtractionDetail[] = [];
+
+    const counts = {
+        totalAnchors: 0,
+        protocolSkipped: 0,
+        domainSkipped: 0,
+        domainMatched: 0,
+        shareExtracted: 0,
+        binarySkipped: 0,
+        afterClean: 0,
+        idNull: 0,
+        discovered: 0,
+    };
 
     $('a[href]').each((_, el) => {
         const href = $(el).attr('href');
         if (!href) return;
+        counts.totalAnchors++;
 
         try {
             let fullUrl = new URL(href, 'https://' + domain).toString();
             const parsed = new URL(fullUrl);
-            if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
-            if (parsed.hostname !== domain && !parsed.hostname.endsWith(`.${domain}`)) {
+            if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+                counts.protocolSkipped++;
+                return;
+            }
+            if (!UrlUtils.isSameDomain(parsed.hostname, domain)) {
                 const extracted = UrlUtils.extractDomainUrl(fullUrl, domain);
-                if (!extracted) return;
+                if (!extracted) {
+                    counts.domainSkipped++;
+                    details.push({ url: fullUrl, stage: 'domain_skip' });
+                    return;
+                }
                 fullUrl = extracted;
+                counts.shareExtracted++;
+                details.push({ url: fullUrl, stage: 'share_extract' });
+            } else {
+                counts.domainMatched++;
             }
             fullUrl = UrlUtils.stripTrackingParams(fullUrl).split('#')[0];
-            if (UrlUtils.isBinaryUrl(fullUrl)) return;
+            if (UrlUtils.isBinaryUrl(fullUrl)) {
+                counts.binarySkipped++;
+                details.push({ url: fullUrl, stage: 'binary_skip' });
+                return;
+            }
+            counts.afterClean++;
             const id = extractId(fullUrl);
-            if (!id) return;
+            if (!id) {
+                counts.idNull++;
+                details.push({ url: fullUrl, stage: 'id_null' });
+                return;
+            }
             if (!discovered.has(id)) {
                 discovered.set(id, fullUrl);
+                counts.discovered++;
+                details.push({ url: fullUrl, stage: 'discovered' });
             }
         } catch { }
     });
 
-    return Array.from(discovered.values());
+    return {
+        urls: Array.from(discovered.values()),
+        details,
+        counts,
+    };
 }
 
 async function discoverCollections(): Promise<SiteConfig[]> {
@@ -117,27 +178,42 @@ async function verifySite(site: SiteConfig): Promise<void> {
     const SHOW_TOP = 5;
     let discoveredUrls = new Set<string>();
     let discoveredIds = new Set<string>();
-    let totalLinks = 0;
-    let sampled: Array<{ url: string; linkCount: number }> = [];
+    let mergedCounts = { totalAnchors: 0, protocolSkipped: 0, domainSkipped: 0, domainMatched: 0, shareExtracted: 0, binarySkipped: 0, afterClean: 0, idNull: 0, discovered: 0 };
+    let sampled: Array<{ url: string; linkCount: number; breakdown: string }> = [];
 
     const htmlDocs = await htmlColl.find({}, { projection: { rawHtml: 1 }, maxTimeMS: 30000 }).toArray();
     for (const doc of htmlDocs) {
         if (!doc?.rawHtml) continue;
-        const links = extractHtmlUrls(doc.rawHtml, site.domain, site.extractId);
-        totalLinks += links.length;
-        for (const url of links) {
+        const result = extractHtmlUrls(doc.rawHtml, site.domain, site.extractId);
+        for (const k of Object.keys(mergedCounts) as (keyof typeof mergedCounts)[]) {
+            mergedCounts[k] += result.counts[k];
+        }
+        const docIds = new Set<string>();
+        for (const url of result.urls) {
             const id = site.extractId(url);
             if (id && !discoveredIds.has(id)) {
                 discoveredIds.add(id);
                 discoveredUrls.add(url);
             }
+            if (id) docIds.add(id);
         }
-        if (sampled.length < SHOW_TOP && links.length > 0) {
-            sampled.push({ url: urlTruncate(doc._id?.toString() || ''), linkCount: links.length });
+        if (sampled.length < SHOW_TOP && result.urls.length > 0) {
+            const sample = result.details.filter(d => d.stage === 'discovered').slice(0, 3);
+            const breakdown = `disc=${result.counts.discovered}/match=${result.counts.domainMatched}/skip=${result.counts.domainSkipped}/bin=${result.counts.binarySkipped}`;
+            sampled.push({ url: urlTruncate(doc._id?.toString() || ''), linkCount: result.urls.length, breakdown });
         }
     }
 
-    console.log(`  Raw links from HTML:  ${totalLinks}`);
+    const c = mergedCounts;
+    console.log(`  Total anchors scanned: ${c.totalAnchors}`);
+    console.log(`    ├─ protocol skip:     ${c.protocolSkipped} (mailto:/javascript:/ftp:)`);
+    console.log(`    ├─ domain skip:       ${c.domainSkipped} (external, no share param)`);
+    console.log(`    ├─ domain match:      ${c.domainMatched} (direct same-domain)`);
+    console.log(`    ├─ share extract:     ${c.shareExtracted} (via ?url= / ?u= param)`);
+    console.log(`    ├─ binary skip:       ${c.binarySkipped} (.pdf/.zip/.jpg/...)`);
+    console.log(`    ├─ after clean:       ${c.afterClean} (tracking stripped + fragment removed)`);
+    console.log(`    ├─ id null skip:      ${c.idNull} (extractId returned null)`);
+    console.log(`    └─ discovered:        ${c.discovered} (raw, including dupes)`);
     console.log(`  Unique (de-ID'd):     ${discoveredUrls.size}`);
 
     const urlsIds = new Set<string>();
@@ -161,7 +237,7 @@ async function verifySite(site: SiteConfig): Promise<void> {
     if (sampled.length > 0) {
         console.log(`\n  ── Top ${sampled.length} HTML docs by discovered links ──`);
         for (const s of sampled) {
-            console.log(`    ${s.url}: ${s.linkCount} links`);
+            console.log(`    ${s.url}: ${s.linkCount} links (${s.breakdown})`);
         }
     }
 
@@ -216,6 +292,9 @@ async function main() {
     }
 
     console.log(`\n🎉 [완료] 모든 사이트 검증 완료!`);
+    const mongo = MongoDatabase.getInstance();
+    await mongo.close();
+    process.exit(0);
 }
 
 main().catch((err) => {

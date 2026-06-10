@@ -107,6 +107,13 @@ export class UrlUtils {
         }
     }
 
+    public static isSameDomain(hostname: string, configuredDomain: string): boolean {
+        if (hostname === configuredDomain) return true;
+        if (hostname.endsWith(`.${configuredDomain}`)) return true;
+        if (hostname.includes('.') && configuredDomain.endsWith(`.${hostname}`)) return true;
+        return false;
+    }
+
     public static extractDomainUrl(href: string, domain: string): string | null {
         try {
             const parsed = new URL(href);
@@ -115,7 +122,7 @@ export class UrlUtils {
                 if (!val) continue;
                 try {
                     const target = new URL(val);
-                    if (target.hostname === domain || target.hostname.endsWith(`.${domain}`)) {
+                    if (UrlUtils.isSameDomain(target.hostname, domain)) {
                         return val;
                     }
                 } catch {}
