@@ -68,9 +68,17 @@ export class BaseRefreshUrls {
             }
 
             const overwrite = process.env.OVERWRITE === 'true';
-            const query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $ne: 'failed' } };
+            const errorReset = process.env.ERROR_RESET === 'true';
+
+            let query: Record<string, any>;
+            if (errorReset) {
+                query = { status: 'failed' };
+                console.log(`🔧 ERROR_RESET mode: fetching only failed URLs...`);
+            } else {
+                query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $ne: 'failed' } };
+            }
             const targets = await urlsColl.find(query, { projection: { id: 1, url: 1 } }).toArray();
-            console.log(`🔍 Found ${targets.length} target items in database${overwrite ? ' (OVERWRITE mode)' : ''}.`);
+            console.log(`🔍 Found ${targets.length} target items in database${overwrite ? ' (OVERWRITE mode)' : ''}${errorReset ? ' (ERROR_RESET mode)' : ''}.`);
 
             const filteredJobs = targets.filter(j => j.url && (overwrite || !existingQueueUrls.has(j.url)));
             console.log(`💡 Filtered out ${targets.length - filteredJobs.length} items already waiting in Redis queue.`);
@@ -141,9 +149,8 @@ export class BaseRefreshUrls {
 
         // Load existing urls set
         const existingIds = new Set<string>();
-        const existingCursor = urlsColl.find({}, { projection: { id: 1 } });
-        while (await existingCursor.hasNext()) {
-            const doc = await existingCursor.next();
+        const existingDocs = await urlsColl.find({}, { projection: { id: 1 }, maxTimeMS: 30000 }).toArray();
+        for (const doc of existingDocs) {
             if (doc?.id) existingIds.add(String(doc.id));
         }
 
@@ -163,12 +170,11 @@ export class BaseRefreshUrls {
             }
         }
 
-        const htmlCursor = htmlColl.find({}, { projection: { rawHtml: 1 } }).batchSize(50);
+        const htmlDocs = await htmlColl.find({}, { projection: { rawHtml: 1 }, maxTimeMS: 30000 }).toArray();
         const newUrls: { id: string; url: string }[] = [];
         let totalLinks = 0;
 
-        while (await htmlCursor.hasNext()) {
-            const doc = await htmlCursor.next();
+        for (const doc of htmlDocs) {
             if (!doc?.rawHtml) continue;
             const $ = cheerio.load(doc.rawHtml);
 

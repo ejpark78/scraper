@@ -8,6 +8,7 @@ PAGE       ?= 1
 SLACK_TIME ?= 2
 PRIORITY   ?= medium
 OVERWRITE  ?= false
+ERROR_RESET ?= false
 RECURSIVE_SCRAPE ?= false
 SECTION    ?=
 
@@ -27,7 +28,7 @@ list:
 	$(COMPOSE) run --rm $(RUN_USER) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SECTION=$(SECTION) clipper npx ts-node src/crawler/sites/uppity/List.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/sites/uppity/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e ERROR_RESET=$(ERROR_RESET) clipper npx ts-node src/crawler/sites/uppity/RefreshUrls.ts
 
 refresh-silver:
 	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/uppity/QueueTransform.ts
