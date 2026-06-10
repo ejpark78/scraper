@@ -5,7 +5,7 @@
 1. **No Arbitrary Bash**: Consent required for logs/ps/mongosh. Compress status checks.
 2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes (except for commands listed in Pre-Approved Commands). CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first.
 
-3. **Minimal File Scope**: No root grep/list_dir. Use view_file only on target files.
+3. **Minimal File Scope**: No root grep/list_dir. Prefer `git ls-files` to map tracked files efficiently. Use step-by-step `list_dir` only for untracked folders (e.g. `data/`) or fallback. Use view_file only on target files.
 4. **Transparent Issues**: Report errors immediately. No silent restores. Do not exceed 2 autonomous troubleshooting retries without user review.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
 6. **Symbolic Links for Artifacts**: Link created/modified artifacts to `.agents/brain/`.
