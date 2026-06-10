@@ -65,7 +65,7 @@ export class BaseRefreshUrls {
             }
 
             const overwrite = process.env.OVERWRITE === 'true';
-            const query = overwrite ? {} : { id: { $nin: completedIds } };
+            const query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $ne: 'failed' } };
             const targets = await urlsColl.find(query, { projection: { id: 1, url: 1 } }).toArray();
             console.log(`🔍 Found ${targets.length} target items in database${overwrite ? ' (OVERWRITE mode)' : ''}.`);
 

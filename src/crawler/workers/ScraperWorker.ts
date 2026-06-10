@@ -239,12 +239,12 @@ class ScraperWorker {
 
     if (payload?.recursive === true) {
       if (desc.domain && config.urlsCollectionName) {
-        await this.discoverRecursiveUrls(site, rawHtml);
+        await this.discoverRecursiveUrls(site, url, rawHtml);
       }
     }
   }
 
-  private async discoverRecursiveUrls(site: string, html: string): Promise<void> {
+  private async discoverRecursiveUrls(site: string, currentUrl: string, html: string): Promise<void> {
     try {
       const desc = getSite(site);
       if (!desc?.scraper) return;
@@ -262,24 +262,26 @@ class ScraperWorker {
         if (!href) continue;
 
         let fullUrl: string;
-        if (href.startsWith('http')) {
-          try {
-            const parsed = new URL(href);
-            if (parsed.hostname !== desc.domain && !parsed.hostname.endsWith(`.${desc.domain}`)) continue;
-          } catch { continue; }
-          fullUrl = href;
-        } else if (href.startsWith('/')) {
-          fullUrl = `https://${desc.domain}${href}`;
-        } else {
-          continue;
-        }
+        try {
+          fullUrl = new URL(href, currentUrl).toString();
+          const parsed = new URL(fullUrl);
+          if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') continue;
+          if (parsed.hostname !== desc.domain && !parsed.hostname.endsWith(`.${desc.domain}`)) {
+            const extracted = extractDomainUrl(fullUrl, desc.domain);
+            if (!extracted) continue;
+            fullUrl = extracted;
+          }
+        } catch { continue; }
+        fullUrl = stripTrackingParams(fullUrl).split('#')[0];
+        if (isBinaryUrl(fullUrl)) continue;
         const id = config.extractId(fullUrl);
 
         const doc = await urlsColl.findOne({ id });
         const isCompleted = doc?.status === 'completed';
+        const isFailed = doc?.status === 'failed';
         const alreadyPushed = doc?.pushedToRedis || false;
 
-        if (!isCompleted && !alreadyPushed) {
+        if (!isCompleted && !isFailed && !alreadyPushed) {
           const redisPayload = JSON.stringify({
             site,
             url: fullUrl,
@@ -337,7 +339,16 @@ class ScraperWorker {
       const deadTask = { site, url, error: scrapeErr.message, failedAt: new Date().toISOString() };
       await this.redis.rpush(DEAD_LETTER_QUEUE, JSON.stringify(deadTask));
       await this.redis.srem(ACTIVE_PROCESSING_SET, url);
-      Logger.error(`[Scraper] Max retry attempts exceeded. Moved ID: ${id} to dead_letter_queue`);
+      const desc = getSite(site);
+      if (desc?.scraper?.urlsCollectionName) {
+        const urlsColl = await this.mongo.getCollection(desc.scraper.urlsCollectionName as `${'bronze' | 'silver'}/${string}`);
+        await urlsColl.updateOne(
+          { id },
+          { $set: { status: 'failed', failedAt: new Date(), error: scrapeErr.message } },
+          { upsert: true }
+        );
+      }
+      Logger.error(`[Scraper] Max retry attempts exceeded. Moved ID: ${id} to dead_letter_queue and marked as failed in urls`);
     }
 
     if (scrapeErr.message && (scrapeErr.message.includes('세션 만료') || scrapeErr.message.includes('Auth Wall'))) {
@@ -345,6 +356,51 @@ class ScraperWorker {
       await this.redis.quit();
       process.exit(1);
     }
+  }
+}
+
+const TRACKING_PARAMS = new Set(['ref', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid']);
+const SHARE_PARAMS = ['url', 'u'];
+const BINARY_EXTENSIONS = /\.(zip|pdf|png|jpe?g|gif|svg|mp[34]|mov|avi|exe|dmg|gz|tar|7z|rar|docx?|xlsx?|pptx?|webp|ico|css|js\.map?)$/i;
+
+function extractDomainUrl(href: string, domain: string): string | null {
+  try {
+    const parsed = new URL(href);
+    for (const param of SHARE_PARAMS) {
+      const val = parsed.searchParams.get(param);
+      if (!val) continue;
+      try {
+        const target = new URL(val);
+        if (target.hostname === domain || target.hostname.endsWith(`.${domain}`)) {
+          return val;
+        }
+      } catch {}
+    }
+  } catch {}
+  return null;
+}
+
+function isBinaryUrl(url: string): boolean {
+  try {
+    const pathname = new URL(url).pathname;
+    return BINARY_EXTENSIONS.test(pathname);
+  } catch {
+    return false;
+  }
+}
+
+function stripTrackingParams(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const clean = new URL(parsed.origin + parsed.pathname);
+    for (const [key, value] of parsed.searchParams.entries()) {
+      if (!TRACKING_PARAMS.has(key)) {
+        clean.searchParams.set(key, value);
+      }
+    }
+    return clean.toString();
+  } catch {
+    return url;
   }
 }
 
