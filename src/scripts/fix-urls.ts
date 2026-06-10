@@ -1,5 +1,5 @@
 /**
- * @module LogoutUrlCleaner
+ * @module UrlFixer
  * @description Cleans up URLs matching TARGET_PATTERN from a configured MongoDB collection and Redis queues.
  * @constraints
  *   - Must use centralized CleanupConfig injection instead of direct process.env access.
@@ -16,9 +16,9 @@ import Redis from 'ioredis';
 // ==============================================================================
 // ⚙️ GLOBAL CLEANUP CONFIGURATION
 // ==============================================================================
-const SITE_KEY = 'uppity';                     // 사이트 식별자 (큐 검사 및 식별용)
-const MONGO_COLLECTION = 'bronze/uppity.urls'; // 대상 몽고디비 컬렉션명 (예: 'bronze/uppity.urls')
-const TARGET_PATTERN: RegExp = /download.cm/i; // 삭제할 URL 정규식 패턴
+const SITE_KEY = 'gpters';                     // 사이트 식별자 (큐 검사 및 식별용)
+const MONGO_COLLECTION = `bronze/${SITE_KEY}.urls`; // 대상 몽고디비 컬렉션명 (예: 'bronze/uppity.urls')
+const TARGET_PATTERN: RegExp = /tinyurl.com/i; // 삭제할 URL 정규식 패턴
 
 // 검사 및 청소할 Redis 큐 키 목록
 const REDIS_QUEUE_KEYS: string[] = [
@@ -55,7 +55,7 @@ export interface IUrlCleaner {
  * Rule 1 & 2: Strict OOP implementation with strong typing.
  * Cleans both MongoDB and Redis queues of matching URLs.
  */
-export class LogoutUrlCleaner implements IUrlCleaner {
+export class UrlFixer implements IUrlCleaner {
     private readonly config: CleanupConfig;
 
     constructor(config: CleanupConfig) {
@@ -63,13 +63,13 @@ export class LogoutUrlCleaner implements IUrlCleaner {
     }
 
     public async clean(): Promise<void> {
-        console.log(`🧼 [LogoutUrlCleaner] Starting cleanup operations for site [${SITE_KEY}]...`);
+        console.log(`🧼 [UrlFixer] Starting cleanup operations for site [${SITE_KEY}]...`);
         console.log(`📋 Target Collection: ${MONGO_COLLECTION}`);
         console.log(`🔍 Target Pattern: ${TARGET_PATTERN}`);
         
         await this.cleanMongo();
         await this.cleanRedis();
-        console.log('✨ [LogoutUrlCleaner] Cleanup operations complete.');
+        console.log('✨ [UrlFixer] Cleanup operations complete.');
     }
 
     /**
@@ -172,7 +172,7 @@ export class LogoutUrlCleaner implements IUrlCleaner {
 
 // Execution Entry Point
 const config = new CleanupConfig();
-const cleaner = new LogoutUrlCleaner(config);
+const cleaner = new UrlFixer(config);
 cleaner.clean().catch((err: unknown) => {
     const error = err instanceof Error ? err : new Error(String(err));
     console.error(`❌ Fatal Error during execution: ${error.message}`, error);
