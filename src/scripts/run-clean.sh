@@ -1,5 +1,15 @@
 #!/bin/bash
+# ==============================================================================
+# @module run-clean.sh
+# @description Runs the logout URL cleanup TypeScript script in a temporary docker container.
+# @constraints
+#   - Must use 'docker compose run --rm' with volume mounting to avoid docker cp.
+#   - Depends on the 'clipper' service from docker compose.
+# @dependencies docker compose, src/scripts/clean-logout-urls.ts
+# @lastUpdated 2026-06-11
+# ==============================================================================
 set -e
+
 
 # 프로젝트 루트 경로 확보
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
