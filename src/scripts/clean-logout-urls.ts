@@ -1,6 +1,6 @@
 /**
  * @module LogoutUrlCleaner
- * @description Cleans up URLs containing 'logout' from MongoDB (bronze/uppity.urls) and Redis queues.
+ * @description Cleans up URLs matching TARGET_PATTERN from MongoDB (bronze/uppity.urls) and Redis queues.
  * @constraints
  *   - Must use centralized CleanupConfig injection instead of direct process.env access.
  *   - Close both MongoDB and Redis connections in finally blocks to prevent connection leaks.
@@ -12,6 +12,8 @@
 import { MongoDatabase } from '../database/mongo';
 import Redis from 'ioredis';
 
+// Global Target Pattern Configuration
+const TARGET_PATTERN: RegExp = /download.cm/i;
 
 /**
  * Rule 4: Centralized Config
@@ -22,7 +24,7 @@ export class CleanupConfig {
     public readonly redisUrl: string;
 
     constructor() {
-        this.mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017';
+        this.mongoUrl = process.env.MONGO_URL || 'mongodb://mongodb:27017';
         this.redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
     }
 }
@@ -37,11 +39,10 @@ export interface IUrlCleaner {
 
 /**
  * Rule 1 & 2: Strict OOP implementation with strong typing.
- * Cleans both MongoDB and Redis queues of matching logout URLs.
+ * Cleans both MongoDB and Redis queues of matching URLs.
  */
 export class LogoutUrlCleaner implements IUrlCleaner {
     private readonly config: CleanupConfig;
-    private readonly targetPattern: RegExp = /logout/i;
     private readonly queueKeys: string[] = [
         'scrape_queue:uppity:high',
         'scrape_queue:uppity:medium',
@@ -54,7 +55,7 @@ export class LogoutUrlCleaner implements IUrlCleaner {
     }
 
     public async clean(): Promise<void> {
-        console.log('🧼 [LogoutUrlCleaner] Starting cleanup operations...');
+        console.log(`🧼 [LogoutUrlCleaner] Starting cleanup operations for pattern: ${TARGET_PATTERN}...`);
         await this.cleanMongo();
         await this.cleanRedis();
         console.log('✨ [LogoutUrlCleaner] Cleanup operations complete.');
@@ -68,7 +69,7 @@ export class LogoutUrlCleaner implements IUrlCleaner {
         try {
             await mongo.connect();
             const urlsColl = await mongo.getCollection('bronze/uppity.urls');
-            const query = { url: { $regex: this.targetPattern } };
+            const query = { url: { $regex: TARGET_PATTERN } };
             const matchCount = await urlsColl.countDocuments(query);
             
             console.log(`🔍 [MongoDB] Found ${matchCount} matching documents in bronze/uppity.urls.`);
@@ -121,16 +122,15 @@ export class LogoutUrlCleaner implements IUrlCleaner {
                     try {
                         const parsed: Record<string, unknown> = JSON.parse(item);
                         const isUppity = key.includes('uppity') || parsed.site === 'uppity';
-                        const hasLogout = typeof parsed.url === 'string' && 
-                                          parsed.url.toLowerCase().includes('logout');
+                        const hasMatch = typeof parsed.url === 'string' && TARGET_PATTERN.test(parsed.url);
 
-                        if (isUppity && hasLogout) {
+                        if (isUppity && hasMatch) {
                             removedCount++;
                         } else {
                             keepItems.push(item);
                         }
                     } catch {
-                        if (item.toLowerCase().includes('logout')) {
+                        if (TARGET_PATTERN.test(item)) {
                             removedCount++;
                         } else {
                             keepItems.push(item);
@@ -139,7 +139,7 @@ export class LogoutUrlCleaner implements IUrlCleaner {
                 }
 
                 if (removedCount > 0) {
-                    console.log(`🗑️ [Redis] Found ${removedCount} logout items in '${key}'. Cleaning...`);
+                    console.log(`🗑️ [Redis] Found ${removedCount} matching items in '${key}'. Cleaning...`);
                     await redis.del(key);
                     if (keepItems.length > 0) {
                         await redis.rpush(key, ...keepItems);
