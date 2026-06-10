@@ -1,5 +1,17 @@
+/**
+ * @module LogoutUrlCleaner
+ * @description Cleans up URLs containing 'logout' from MongoDB (bronze/uppity.urls) and Redis queues.
+ * @constraints
+ *   - Must use centralized CleanupConfig injection instead of direct process.env access.
+ *   - Close both MongoDB and Redis connections in finally blocks to prevent connection leaks.
+ *   - Follow Strict OOP: run operations using the IUrlCleaner interface.
+ * @dependencies MongoDB (bronze/uppity.urls), Redis (scrape_queue*)
+ * @lastUpdated 2026-06-11
+ */
+
 import { MongoDatabase } from '../database/mongo';
 import Redis from 'ioredis';
+
 
 /**
  * Rule 4: Centralized Config

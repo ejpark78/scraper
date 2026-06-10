@@ -21,3 +21,4 @@
 2. **Strict Typing**: Avoid using 'any' type. Declare explicit return types and interfaces for public methods.
 3. **Robust Error Handling**: Never use empty catch blocks. Always log error contexts and close DB/Redis connections in finally blocks.
 4. **Centralized Config**: Access 'process.env' only within dedicated config files. Inject configuration via constructor.
+5. **Agent-Friendly Docstrings**: Start every source file with a JSDoc detailing design context, constraints, and dependencies to prevent agent refactoring loops. Automatically update this header docstring whenever modifying the code's behavior.
