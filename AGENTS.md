@@ -9,7 +9,7 @@
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
 6. **Symbolic Links for Artifacts**: Link created/modified artifacts to `.agents/brain/`.
 7. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
-8. **Docker-Centric Testing**: Test on `docker compose`. For temp files, `docker cp` to container and exec, then delete.
+8. **Docker-Centric Testing**: Test via `docker compose`. Prefer volume mounting (`-v`) with `run --rm` over `docker cp` for executing local scripts.
 
 ## ⚠️ Security Rules
 - **No ENV Access**: DO NOT access `.env` or `.env.*` files. Use `.env.example` for reference.
