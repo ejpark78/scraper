@@ -17,6 +17,11 @@ services:
       - PORT=9211
       - SYNTHETIC_API_KEY=${SYNTHETIC_API_KEY:-}
       - Z_AI_API_KEY=${Z_AI_API_KEY:-}
+      - ANTIGRAVITY_ENABLED=true
+      - ANTIGRAVITY_BASE_URL=${ANTIGRAVITY_BASE_URL:-}
+      - ANTIGRAVITY_CSRF_TOKEN=${ANTIGRAVITY_CSRF_TOKEN:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/onwatch:/data
     restart: unless-stopped

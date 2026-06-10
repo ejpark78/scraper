@@ -1,5 +1,9 @@
 # ==============================================================================
-# 🗄️ Tools & Coding Agents
+# 🗄️ Tools & Coding Agents (scripts/tools/tools.mk)
+# ==============================================================================
+# Design Context: Makefile commands to control developer tools and coding agents.
+# Constraints:    All Web GUI tools route through Traefik proxy on port 80/443.
+# Dependencies:   make, docker-compose, traefik
 # ==============================================================================
 
 .PHONY: *
@@ -44,6 +48,10 @@ up-jupyter:
 up-viewer:
 	$(COMPOSE) --profile tools up -d --build viewer
 	@echo "🚀 Viewer GUI가 실행되었습니다. https://viewer.localhost 에 접속하세요."
+
+up-onwatch:
+	$(COMPOSE) --profile tools up -d onwatch
+	@echo "🚀 onWatch GUI가 실행되었습니다. https://onwatch.localhost 에 접속하세요."
 
 # --- Coding Agents ---
 
