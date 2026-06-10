@@ -12,9 +12,15 @@
 
 AGENTS ?= agy
 
-.PHONY: dump-transcripts dump-context dump-brain prune usage
+.PHONY: dump-transcripts dump-context dump-brain prune usage get-agy-token
 
 AGENTS_FLAG = --agent=$(AGENTS)
+
+get-agy-token:
+	@PORT=$$(echo $${ANTIGRAVITY_LS_ADDRESS} | cut -d':' -f2); \
+	if [ -z "$$PORT" ]; then PORT="46177"; fi; \
+	echo "ANTIGRAVITY_BASE_URL=http://host.docker.internal:$$PORT"; \
+	echo "ANTIGRAVITY_CSRF_TOKEN=$${ANTIGRAVITY_CSRF_TOKEN}"
 
 dump-transcripts:
 	@npx ts-node .agents/scripts/dump_transcript.ts --all $(AGENTS_FLAG)
