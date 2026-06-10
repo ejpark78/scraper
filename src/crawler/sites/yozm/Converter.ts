@@ -15,6 +15,21 @@ export interface YozmMeta {
 
 export class YozmConverter implements IConverter<YozmMeta> {
 
+  private findNewsLd($: cheerio.CheerioAPI): Record<string, any> | null {
+    let result: Record<string, any> | null = null;
+    $('script[type="application/ld+json"]').each((_, el) => {
+      const text = $(el).html();
+      if (!text) return;
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed['@type'] === 'NewsArticle') {
+          result = parsed;
+        }
+      } catch {}
+    });
+    return result;
+  }
+
   public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): YozmMeta {
     const $ = cheerio.load(htmlContent);
 
@@ -25,64 +40,62 @@ export class YozmConverter implements IConverter<YozmMeta> {
     const titleTag = $('title').text().trim();
     const title = (ogTitle || titleTag || 'Unknown Title').replace(/\s*\|\s*요즘IT$/, '');
 
+    const newsLd = this.findNewsLd($);
+
     let publishedAt: string | null = null;
-    const jsonLdScript = $('script[type="application/ld+json"]').first().html();
-    if (jsonLdScript) {
-      try {
-        const parsed = JSON.parse(jsonLdScript);
-        if (parsed.datePublished) {
-          publishedAt = parsed.datePublished;
-        }
-      } catch {
-        // ignore parse errors
-      }
+    if (newsLd?.datePublished) {
+      publishedAt = newsLd.datePublished;
     }
 
     let category: string | null = null;
-    const categoryLink = $('a[data-testid="contentsItem-category-link"]').first();
-    if (categoryLink.length) {
-      category = categoryLink.text().trim();
-    } else {
-      const breadcrumbLinks = $('script[type="application/ld+json"]').last().html();
-      if (breadcrumbLinks) {
-        try {
-          const parsed = JSON.parse(breadcrumbLinks);
-          if (parsed.itemListElement && parsed.itemListElement.length >= 3) {
-            category = parsed.itemListElement[2].name || null;
-          }
-        } catch {
-          // ignore
-        }
+    if (newsLd?.articleSection) {
+      category = newsLd.articleSection;
+    }
+    if (!category) {
+      const categoryLink = $('a[data-testid="contentsItem-category-link"]').first();
+      if (categoryLink.length) {
+        category = categoryLink.text().trim();
       }
     }
 
     let author: string | null = null;
-    if (jsonLdScript) {
-      try {
-        const parsed = JSON.parse(jsonLdScript);
-        if (parsed.author) {
-          author = parsed.author.name || null;
-        }
-      } catch {
-        // ignore
-      }
+    if (newsLd?.author?.name) {
+      author = newsLd.author.name;
     }
-    if (!author) {
+    if (author === '요즘IT') {
       const authorEl = $('a[href*="/magazine/@"], a[href*="/magazine/@"]').first();
       if (authorEl.length) {
-        author = authorEl.text().trim() || null;
+        const realAuthor = authorEl.text().trim();
+        if (realAuthor) author = realAuthor;
       }
     }
 
-    const articleSection = $('#article-detail-wrapper, #article-detail-start').first().parent();
+    const articleSection = $('#article-detail-wrapper').first();
     let contentHtml = '';
     if (articleSection.length) {
       contentHtml = articleSection.html() || '';
-    } else {
-      contentHtml = $('section[id*="article-detail"]').first().html() || '';
     }
+    const domText = articleSection.text().trim();
 
-    const contentMarkdown = this.htmlToMarkdown(contentHtml);
+    let contentMarkdown: string;
+    if (domText.length > 50) {
+      contentMarkdown = this.htmlToMarkdown(contentHtml);
+    } else {
+      console.log(`[Yozm] DOM body empty (RSC page), falling back to JSON-LD articleBody for ${id}`);
+      let bodyText = '';
+      if (newsLd?.articleBody) {
+        bodyText = newsLd.articleBody
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&')
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+      }
+      contentMarkdown = bodyText || '(content extraction failed)';
+    }
 
     let markdown = `# ${title}\n\n`;
     if (category) {

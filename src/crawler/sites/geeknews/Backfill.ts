@@ -53,8 +53,8 @@ export class GeekNewsBackfill {
             
             // 🧹 HTML Minify 및 MongoDB bronze/geeknews.lists 저장 추가
             try {
-                const { GeekNewsHtmlMinifier } = require('./HtmlMinifier');
-                const minifiedHtml = await GeekNewsHtmlMinifier.minify(html);
+                const { HtmlMinifier } = require('../../utils');
+                const minifiedHtml = await HtmlMinifier.minify(html, { preserveJsonLd: true });
                 const dbInstance = MongoDatabase.getInstance();
                 const geeknewsListsColl = await dbInstance.getCollection('bronze/geeknews.lists');
                 

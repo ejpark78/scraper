@@ -73,4 +73,11 @@ export const descriptor: SiteDescriptor = {
       updatedAt: new Date(),
     }),
   },
+
+  refreshSilver: {
+    imageDownload: {
+      enabled: true,
+      removeFavicons: true,
+    },
+  },
 };

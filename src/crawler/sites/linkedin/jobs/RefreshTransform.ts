@@ -1,7 +1,7 @@
 import { MongoDatabase } from '../../../../database/mongo';
 import Redis from 'ioredis';
 
-export class TransformerRefresh {
+export class JobsRefreshTransform {
   public async run(): Promise<void> {
     const mongo = MongoDatabase.getInstance();
     await mongo.connect();
@@ -98,7 +98,7 @@ export class TransformerRefresh {
 }
 
 if (require.main === module) {
-  const backfiller = new TransformerRefresh();
+  const backfiller = new JobsRefreshTransform();
   backfiller.run().catch(err => {
     console.error('💥 [Backfill] Fatal Error:', err);
     process.exit(1);

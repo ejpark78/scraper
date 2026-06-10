@@ -2,7 +2,7 @@
 # 📰 Maily Josh Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh-urls refresh-silver help
+.PHONY: list refresh-urls refresh-silver refresh-silver-rebuild help
 
 PAGE       ?= 1
 SLACK_TIME ?= 2
@@ -26,7 +26,10 @@ list:
 	$(COMPOSE) run --rm $(RUN_USER) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/sites/maily_josh/List.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e ERROR_RESET=$(ERROR_RESET) clipper npx ts-node src/crawler/sites/maily_josh/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e ERROR_RESET=$(ERROR_RESET) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts maily_josh
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/maily_josh/QueueTransform.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts maily_josh
+
+refresh-silver-rebuild:
+	npx ts-node src/crawler/core/cli-refresh-silver.ts maily_josh

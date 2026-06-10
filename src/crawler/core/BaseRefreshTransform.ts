@@ -1,7 +1,7 @@
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
 
-export interface QueueTransformConfig {
+export interface RefreshTransformConfig {
     site: string;
     bronzeCollection: `bronze/${string}`;
     silverCollection?: `silver/${string}`;
@@ -9,8 +9,8 @@ export interface QueueTransformConfig {
     includeUrlInPayload?: boolean;
 }
 
-export class BaseQueueTransform {
-    constructor(protected config: QueueTransformConfig) {}
+export class BaseRefreshTransform {
+    constructor(protected config: RefreshTransformConfig) {}
 
     public async run(): Promise<void> {
         const { site, bronzeCollection, includeUrlInPayload } = this.config;
@@ -19,7 +19,7 @@ export class BaseQueueTransform {
         const TRANSFORM_QUEUE = 'transform_queue';
         const BATCH_SIZE = 500;
 
-        console.log(`🔄 [Queue Transform] Pushing ${site} items from bronze to transform_queue...`);
+        console.log(`🔄 [Refresh Transform] Pushing ${site} items from bronze to transform_queue...`);
         const mongo = MongoDatabase.getInstance();
         await mongo.connect();
 

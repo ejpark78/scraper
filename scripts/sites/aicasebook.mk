@@ -2,7 +2,7 @@
 # 📘 AiCasebook Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh refresh-urls refresh-silver
+.PHONY: list refresh refresh-urls refresh-silver refresh-silver-rebuild
 
 PAGE ?= 1-5
 SLACK_TIME ?= 3
@@ -16,7 +16,10 @@ list:
 	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/sites/aicasebook/List.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/aicasebook/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts aicasebook
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler/sites/aicasebook/QueueTransform.ts
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts aicasebook
+
+refresh-silver-rebuild:
+	npx ts-node src/crawler/core/cli-refresh-silver.ts aicasebook

@@ -1,9 +1,0 @@
-import { BaseQueueTransform } from '../../core/BaseQueueTransform';
-
-const queueTransform = new BaseQueueTransform({
-    site: 'geeknews',
-    bronzeCollection: 'bronze/geeknews.html',
-    idExtract: (doc: any) => doc.topicId || doc.id,
-});
-
-queueTransform.run().catch(console.error);

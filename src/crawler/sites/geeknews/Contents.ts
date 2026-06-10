@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { GeekNewsMeta, GeekNewsConverter } from './Converter';
-import { GeekNewsHtmlMinifier } from './HtmlMinifier';
+import { HtmlMinifier } from '../../utils';
 
 export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
     private readonly converter: GeekNewsConverter;
@@ -39,7 +39,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             throw new Error(`Failed to fetch GeekNews topic details. Status: ${response.status}`);
         }
         const html = await response.text();
-        const minifiedHtml = await GeekNewsHtmlMinifier.minify(html);
+        const minifiedHtml = await HtmlMinifier.minify(html, { preserveJsonLd: true });
         fs.writeFileSync(tempHtmlPath, minifiedHtml, 'utf-8');
     }
 

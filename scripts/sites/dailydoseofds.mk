@@ -2,7 +2,7 @@
 # 📚 Daily Dose of Data Science Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh-urls refresh-silver help
+.PHONY: list refresh-urls refresh-silver refresh-silver-rebuild help
 
 # 📝 환경변수 기본값 설정
 PAGE       ?= 1
@@ -27,7 +27,10 @@ list:
 	$(COMPOSE) run --rm $(RUN_USER) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/sites/dailydoseofds/List.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/sites/dailydoseofds/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts dailydose_ds
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/dailydoseofds/QueueTransform.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts dailydose_ds
+
+refresh-silver-rebuild:
+	npx ts-node src/crawler/core/cli-refresh-silver.ts dailydose_ds

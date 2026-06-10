@@ -2,7 +2,7 @@
 # 📰 Uppity Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh-urls refresh-silver help
+.PHONY: list refresh-urls refresh-silver refresh-silver-rebuild help
 
 PAGE       ?= 1
 SLACK_TIME ?= 2
@@ -28,7 +28,10 @@ list:
 	$(COMPOSE) run --rm $(RUN_USER) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SECTION=$(SECTION) clipper npx ts-node src/crawler/sites/uppity/List.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e ERROR_RESET=$(ERROR_RESET) clipper npx ts-node src/crawler/sites/uppity/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e ERROR_RESET=$(ERROR_RESET) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts uppity
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/uppity/QueueTransform.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts uppity
+
+refresh-silver-rebuild:
+	npx ts-node src/crawler/core/cli-refresh-silver.ts uppity

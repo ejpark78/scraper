@@ -47,7 +47,7 @@ refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) -e GEOS="$(GEOS)" clipper npx ts-node src/crawler/sites/linkedin/jobs/RefreshUrls.ts
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/linkedin/jobs/TransformerRefresh.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/linkedin/jobs/RefreshTransform.ts
 
 status:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler/sites/linkedin/jobs/StatusReport.ts

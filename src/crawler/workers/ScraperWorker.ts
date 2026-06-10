@@ -157,7 +157,7 @@ class ScraperWorker {
       fs.unlinkSync(tempHtmlPath);
 
       this.logHtmlPreview(site, id, rawHtml);
-      await this.saveRawHtmlAndQueueTransform(site, id, url, rawHtml, payload);
+      await this.saveRawHtmlAndQueueTransformTask(site, id, url, rawHtml, payload);
     } catch (scrapeErr: any) {
       await this.handleScrapeFailure(payload, id, scrapeErr);
     }
@@ -195,7 +195,7 @@ class ScraperWorker {
     }
   }
 
-  private async saveRawHtmlAndQueueTransform(
+  private async saveRawHtmlAndQueueTransformTask(
     site: string,
     id: string,
     url: string,

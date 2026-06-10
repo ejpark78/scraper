@@ -39,8 +39,8 @@ class GeekNewsList extends BaseListService {
         const html = await response.text();
 
         try {
-            const { GeekNewsHtmlMinifier } = require('./HtmlMinifier');
-            const minifiedHtml = await GeekNewsHtmlMinifier.minify(html);
+            const { HtmlMinifier } = require('../../utils');
+            const minifiedHtml = await HtmlMinifier.minify(html, { preserveJsonLd: true });
             const dbInstance = MongoDatabase.getInstance();
             const geeknewsListsColl = await dbInstance.getCollection('bronze/geeknews.lists');
 

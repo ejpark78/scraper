@@ -52,4 +52,24 @@ export const descriptor: SiteDescriptor = {
     filterField: 'id',
     buildDocument: buildGptersDocument,
   },
+
+  refreshSilver: {
+    saveJson: true,
+    imageDownload: {
+      enabled: true,
+      htmlSource: 'shortContent',
+    },
+    getSilverFields: (meta) => ({
+      id: meta.id,
+      title: meta.title,
+      url: meta.url,
+      author: meta.author,
+      shortContent: meta.shortContent,
+      publishedAt: meta.publishedAt,
+      reactionsCount: meta.reactionsCount,
+      repliesCount: meta.repliesCount,
+      markdown: meta.rawContent,
+      updatedAt: new Date(),
+    }),
+  },
 };

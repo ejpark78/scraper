@@ -2,7 +2,7 @@
 # 📰 GeekNews Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh refresh-urls refresh-silver
+.PHONY: list refresh refresh-urls refresh-silver refresh-silver-rebuild
 
 PAGE ?= 1-5
 SLACK_TIME ?= 3
@@ -19,7 +19,10 @@ refresh:
 	$(COMPOSE) run --rm $(RUN_USER) -e SLACK_TIME=$(SLACK_TIME) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) clipper npx ts-node src/crawler/sites/geeknews/Backfill.ts $(DAY)
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/sites/geeknews/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts geeknews
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler/sites/geeknews/QueueTransform.ts
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts geeknews
+
+refresh-silver-rebuild:
+	npx ts-node src/crawler/core/cli-refresh-silver.ts geeknews

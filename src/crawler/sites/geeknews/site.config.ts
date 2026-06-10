@@ -44,4 +44,18 @@ export const descriptor: SiteDescriptor = {
       updatedAt: new Date(),
     }),
   },
+
+  refreshSilver: {
+    getSilverFields: (meta) => ({
+      id: meta.id,
+      title: meta.title,
+      url: meta.url,
+      publishedAt: meta.publishedAt,
+      content: meta.content,
+      comments: meta.comments,
+      jsonLdRaw: meta.jsonLdRaw,
+      markdown: meta.rawContent,
+      updatedAt: new Date(),
+    }),
+  },
 };

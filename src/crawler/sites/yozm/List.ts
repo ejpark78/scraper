@@ -1,7 +1,6 @@
-import * as cheerio from 'cheerio';
 import { BaseListService } from '../../core/BaseListService';
 
-const BASE_URL = 'https://yozm.wishket.com/magazine/@yozm_it/';
+const SITEMAP_URL = 'https://yozm.wishket.com/magazine/sitemap-news.xml';
 
 class YozmList extends BaseListService {
   constructor() {
@@ -15,83 +14,46 @@ class YozmList extends BaseListService {
   }
 
   public async run(pageArg?: number): Promise<number> {
-    const sleepSec = parseInt(process.env.SLACK_TIME || '2', 10);
-    const pageStr = process.env.PAGE || '1';
-    const pageRange = pageStr.includes('-')
-      ? pageStr.split('-').map(Number)
-      : [1, parseInt(pageStr, 10)];
-    const startPage = pageArg || pageRange[0];
-    const endPage = pageRange[1] || startPage;
-
     await this.seedCache();
 
     let queuedCount = 0;
     const seenUrls = new Set<string>();
 
-    for (let page = startPage; page <= endPage; page++) {
-      const fetchUrl = `${BASE_URL}?tab=content&page=${page}`;
-      console.log(`🌐 [Yozm List] Fetching page ${page}: ${fetchUrl}`);
+    console.log(`🌐 [Yozm List] Fetching sitemap: ${SITEMAP_URL}`);
 
-      const res = await fetch(fetchUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-      });
+    const res = await fetch(SITEMAP_URL, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    });
 
-      if (!res.ok) {
-        console.log(`⚠️ Page ${page} failed (${res.status}). Stopping.`);
-        break;
-      }
+    if (!res.ok) {
+      console.log(`⚠️ Sitemap fetch failed (${res.status}). Stopping.`);
+      return 0;
+    }
 
-      const html = await res.text();
-      const $ = cheerio.load(html);
+    const xml = await res.text();
 
-      const articleLinks = this.extractArticleLinks($, seenUrls);
+    const urlRegex = /<loc>(https:\/\/yozm\.wishket\.com\/magazine\/detail\/(\d+)\/)<\/loc>/g;
+    let match: RegExpExecArray | null;
+    let totalUrls = 0;
 
-      if (articleLinks.length === 0) {
-        console.log(`🏁 [Yozm List] No articles found on page ${page}. Done.`);
-        break;
-      }
+    while ((match = urlRegex.exec(xml)) !== null) {
+      totalUrls++;
+      const url = match[1];
+      const id = match[2];
 
-      console.log(`🔍 [Yozm List] Found ${articleLinks.length} new articles on page ${page}.`);
+      if (seenUrls.has(url)) continue;
+      seenUrls.add(url);
 
-      for (const { url, title } of articleLinks) {
-        const match = url.match(/\/detail\/(\d+)\//);
-        const id = match ? match[1] : '';
-        if (id && (await this.processItem(id, url, title))) {
-          queuedCount++;
-        }
-      }
-
-      if (page < endPage) {
-        console.log(`💤 Waiting ${sleepSec}s before next page...`);
-        await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
+      if (await this.processItem(id, url, `Article #${id}`)) {
+        queuedCount++;
       }
     }
 
+    console.log(`🔍 [Yozm List] Found ${totalUrls} total URLs in sitemap, queued ${queuedCount} new.`);
     console.log(`🎉 [Yozm List] Successfully queued ${queuedCount} items.`);
     return queuedCount;
-  }
-
-  private extractArticleLinks(
-    $: cheerio.CheerioAPI,
-    seenUrls: Set<string>,
-  ): Array<{ url: string; title: string }> {
-    const results: Array<{ url: string; title: string }> = [];
-
-    $('a[data-testid="contentsItem-item-link"]').each((_, el) => {
-      const href = $(el).attr('href');
-      if (!href || seenUrls.has(href)) return;
-      seenUrls.add(href);
-
-      const titleEl = $(el).find('h3').first();
-      const title = titleEl.text().trim();
-      if (title) {
-        results.push({ url: href, title });
-      }
-    });
-
-    return results;
   }
 }
 

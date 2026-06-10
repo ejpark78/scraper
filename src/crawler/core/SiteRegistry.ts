@@ -31,6 +31,17 @@ export interface SiteDescriptor {
     filterField: string;
     buildDocument: (id: string, meta: any) => Record<string, any>;
   };
+
+  refreshSilver?: {
+    saveJson?: boolean;
+    extractId?: (doc: any) => string;
+    getSilverFields?: (meta: any) => Record<string, any>;
+    imageDownload?: {
+      enabled: boolean;
+      htmlSource?: 'rawContent' | 'shortContent';
+      removeFavicons?: boolean;
+    };
+  };
 }
 
 const registry = new Map<string, SiteDescriptor>();
