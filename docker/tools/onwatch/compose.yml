@@ -12,18 +12,20 @@ services:
     image: ghcr.io/onllm-dev/onwatch:latest
     profiles:
       - tools
+    depends_on:
+      traefik:
+        condition: service_healthy      
     environment:
       - TZ=Asia/Seoul
       - PORT=9211
       - SYNTHETIC_API_KEY=${SYNTHETIC_API_KEY:-}
       - Z_AI_API_KEY=${Z_AI_API_KEY:-}
       - ANTIGRAVITY_ENABLED=true
-      - ANTIGRAVITY_BASE_URL=${ANTIGRAVITY_BASE_URL:-}
+      - ANTIGRAVITY_BASE_URL=${ANTIGRAVITY_BASE_URL:-http://127.0.0.1:46177}
       - ANTIGRAVITY_CSRF_TOKEN=${ANTIGRAVITY_CSRF_TOKEN:-}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: host
     volumes:
-      - ${HOST_PROJECT_PATH:-.}/data/onwatch:/data
+      - ${HOST_PROJECT_PATH:-.}/data/.services/onwatch:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9211/"]
