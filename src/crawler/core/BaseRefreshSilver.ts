@@ -47,12 +47,12 @@ export class BaseRefreshSilver {
       const bronzeColl = await mongo.getCollection(bronzeCollection);
       const silverColl = await mongo.getCollection(silverCollection);
 
-      const docs = await bronzeColl.find({}).toArray();
-      const total = docs.length;
-      console.log(`📥 Loaded ${total} raw documents from ${bronzeCollection}.`);
-
+      const bronzeCursor = bronzeColl.find({});
       let processed = 0;
-      for (const doc of docs) {
+      let total = 0;
+
+      for await (const doc of bronzeCursor) {
+        total++;
         const id = this.config.extractId!(doc);
         const rawContent = this.config.extractRawContent!(doc);
         if (!id || !rawContent) continue;
@@ -76,7 +76,7 @@ export class BaseRefreshSilver {
 
           processed++;
           if (processed % 10 === 0) {
-            console.log(`🔄 [${site}] Processed ${processed}/${total}...`);
+            console.log(`🔄 [${site}] Processed ${processed}...`);
           }
         } catch (err: any) {
           console.error(`❌ [${site}] Error processing ID ${id}: ${err.message}`);

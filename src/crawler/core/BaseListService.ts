@@ -41,14 +41,16 @@ export abstract class BaseListService {
                 console.log(`🔍 [${this.config.displayName} List] Redis cache is empty. Seeding from MongoDB...`);
                 const db = MongoDatabase.getInstance();
                 const bronzeColl = await db.getCollection(this.config.bronzeHtmlCollection);
-                const existing = await bronzeColl.find({}, { projection: { id: 1, _id: 0 } }).toArray();
-                if (existing.length > 0) {
-                    const pipeline = this.redis.pipeline();
-                    existing.forEach((doc: any) => {
-                        if (doc.id) pipeline.sadd(this.config.cacheSetKey, doc.id);
-                    });
-                    await pipeline.exec();
-                    console.log(`📡 [${this.config.displayName} List] Seeded ${existing.length} completed IDs into Redis cache.`);
+                const cursor = bronzeColl.find({}, { projection: { id: 1, _id: 0 } });
+                let seedCount = 0;
+                for await (const doc of cursor) {
+                    if (doc.id) {
+                        await this.redis.sadd(this.config.cacheSetKey, doc.id);
+                        seedCount++;
+                    }
+                }
+                if (seedCount > 0) {
+                    console.log(`📡 [${this.config.displayName} List] Seeded ${seedCount} completed IDs into Redis cache.`);
                 }
             } catch (err: any) {
                 console.warn(`⚠️ MongoDB seed skipped or failed: ${err.message}`);

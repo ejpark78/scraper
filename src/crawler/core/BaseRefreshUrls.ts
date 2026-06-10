@@ -77,7 +77,11 @@ export class BaseRefreshUrls {
             } else {
                 query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $ne: 'failed' } };
             }
-            const targets = await urlsColl.find(query, { projection: { id: 1, url: 1 } }).toArray();
+            let targets: any[] = [];
+            const targetCursor = urlsColl.find(query, { projection: { id: 1, url: 1 } });
+            for await (const doc of targetCursor) {
+                targets.push(doc);
+            }
             console.log(`🔍 Found ${targets.length} target items in database${overwrite ? ' (OVERWRITE mode)' : ''}${errorReset ? ' (ERROR_RESET mode)' : ''}.`);
 
             const filteredJobs = targets.filter(j => j.url && (overwrite || !existingQueueUrls.has(j.url)));
@@ -149,8 +153,8 @@ export class BaseRefreshUrls {
 
         // Load existing urls set
         const existingIds = new Set<string>();
-        const existingDocs = await urlsColl.find({}, { projection: { id: 1 }, maxTimeMS: 30000 }).toArray();
-        for (const doc of existingDocs) {
+        const cursorIds = urlsColl.find({}, { projection: { id: 1 }, maxTimeMS: 30000 });
+        for await (const doc of cursorIds) {
             if (doc?.id) existingIds.add(String(doc.id));
         }
 
@@ -170,11 +174,11 @@ export class BaseRefreshUrls {
             }
         }
 
-        const htmlDocs = await htmlColl.find({}, { projection: { rawHtml: 1 }, maxTimeMS: 30000 }).toArray();
+        const htmlCursor = htmlColl.find({}, { projection: { rawHtml: 1 }, maxTimeMS: 30000 });
         const newUrls: { id: string; url: string }[] = [];
         const counts = { protocolSkipped: 0, domainSkipped: 0, domainMatched: 0, shareExtracted: 0, binarySkipped: 0, afterClean: 0, idNull: 0, dedupSkipped: 0, totalAnchors: 0 };
 
-        for (const doc of htmlDocs) {
+        for await (const doc of htmlCursor) {
             if (!doc?.rawHtml) continue;
             const $ = cheerio.load(doc.rawHtml);
 

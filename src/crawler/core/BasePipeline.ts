@@ -224,10 +224,10 @@ export abstract class BasePipeline<TMeta> {
                 const companyUrlsColl = await dbInstance.getCollection('bronze/linkedin.company_urls');
                 
                 // 아직 완료되지 않았거나 신규 수집 상태의 모든 URL을 로드
-                const newCompanyUrls = await companyUrlsColl.find({ status: { $ne: 'completed' } }).toArray();
-                origCount = newCompanyUrls.length;
-
-                newCompanyUrls.forEach((doc: any) => {
+                const companyUrlsCursor = companyUrlsColl.find({ status: { $ne: 'completed' } });
+                origCount = 0;
+                for await (const doc of companyUrlsCursor) {
+                    origCount++;
                     if (doc.url) {
                         const id = this.extractId(doc.url);
                         if (id && !cacheSet.has(id) && !processedIds.has(id)) {
@@ -235,7 +235,8 @@ export abstract class BasePipeline<TMeta> {
                             processedIds.add(id);
                         }
                     }
-                });
+                }
+
             } catch (err: any) {
                 console.error(`❌ MongoDB에서 회사 수집 대상 URL 로드 실패: ${err.message}`);
                 process.exit(1);

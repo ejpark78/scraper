@@ -224,12 +224,12 @@ export class LinkedInUrlManager implements IUrlManager {
             const { MongoDatabase } = require('../../../../database/mongo');
             const mongo = MongoDatabase.getInstance();
             const bronzeJobs = await mongo.getCollection('bronze/linkedin.jobs');
-            const jobs = await bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } }).toArray();
-            jobs.forEach((job: any) => {
+            const cursorJobs = bronzeJobs.find({}, { projection: { jobId: 1, _id: 0 } });
+            for await (const job of cursorJobs) {
                 if (job.jobId && /^\d+$/.test(job.jobId)) {
                     cacheSet.add(job.jobId);
                 }
-            });
+            }
             console.log(`🔌 [MongoDB] bronze/linkedin.jobs에서 완료된 Job ID ${FormatUtils.formatThousand(cacheSet.size)} 개 로드 완료.`);
         } catch (dbErr: any) {
             console.warn(`⚠️ [MongoDB] 완료된 Job ID 로드 실패 (bronze/linkedin.jobs): ${dbErr.message}. 로컬 HTML 폴더로 폴백합니다.`);
@@ -260,8 +260,8 @@ export class LinkedInUrlManager implements IUrlManager {
             const { MongoDatabase } = require('../../../../database/mongo');
             const mongo = MongoDatabase.getInstance();
             const jobUrlsColl = await mongo.getCollection('bronze/linkedin.job_urls');
-            const existingUrls = await jobUrlsColl.find({}).toArray();
-            existingUrls.forEach((item: any) => {
+            const cursorUrls = jobUrlsColl.find({});
+            for await (const item of cursorUrls) {
                 if (item && item.jobId) {
                     masterJobsMetaMap.set(item.jobId, {
                         jobId: item.jobId,
@@ -274,7 +274,7 @@ export class LinkedInUrlManager implements IUrlManager {
                         geo: item.geo || 'Others'
                     });
                 }
-            });
+            }
             console.log(`🔌 [MongoDB] bronze/linkedin.job_urls에서 ${FormatUtils.formatThousand(masterJobsMetaMap.size)}개의 메타데이터를 캐시로 로드했습니다.`);
         } catch (dbErr: any) {
             console.warn(`⚠️ bronze/linkedin.job_urls 캐시 로드 실패: ${dbErr.message}`);

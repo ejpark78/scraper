@@ -92,7 +92,9 @@ export class UrlUtils {
                     clean.searchParams.set(key, value);
                 }
             }
-            return clean.toString();
+            const result = clean.toString();
+            const splitIdx = result.indexOf('$%');
+            return splitIdx !== -1 ? result.substring(0, splitIdx) : result;
         } catch {
             return url;
         }

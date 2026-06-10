@@ -93,14 +93,16 @@ export class GeekNewsBackfill {
                 try {
                     console.log(`🔍 [GeekNews Backfill] Redis cache is empty. Seeding from MongoDB bronze.geeknews...`);
                     const bronzeGeeknews = await dbInstance.getCollection('bronze/geeknews.html');
-                    const existing = await bronzeGeeknews.find({}, { projection: { id: 1, _id: 0 } }).toArray();
-                    if (existing.length > 0) {
-                        const pipeline = this.redis.pipeline();
-                        existing.forEach((doc: any) => {
-                            if (doc.id) pipeline.sadd(CACHE_SET_KEY, doc.id);
-                        });
-                        await pipeline.exec();
-                        console.log(`📡 [GeekNews Backfill] Seeded ${existing.length} completed IDs into Redis cache.`);
+                    const cursor = bronzeGeeknews.find({}, { projection: { id: 1, _id: 0 } });
+                    let seedCount = 0;
+                    for await (const doc of cursor) {
+                        if (doc.id) {
+                            await this.redis.sadd(CACHE_SET_KEY, doc.id);
+                            seedCount++;
+                        }
+                    }
+                    if (seedCount > 0) {
+                        console.log(`📡 [GeekNews Backfill] Seeded ${seedCount} completed IDs into Redis cache.`);
                     }
                 } catch (err: any) {
                     console.warn(`⚠️ MongoDB seed skipped or failed: ${err.message}`);
