@@ -3,7 +3,7 @@
 ## ⚠️ Critical Constraints
 
 1. **No Arbitrary Bash**: Consent required for ALL shell commands (including read-only diagnostics, git, docker, ls, env, etc.). Present the exact command(s) to the user in the chat and obtain explicit approval before calling the run command tool. Compress multiple diagnostics/status checks into a single combined command execution (e.g. chaining with `&&`, `;`, or using `cat << 'EOF' | bash` with Korean comments for each command) to minimize user confirmation loops.
-2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes (except for commands listed in Pre-Approved Commands). CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first.
+2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes (except for commands listed in Pre-Approved Commands). Before requesting approval, present the target files and planned modifications in a Markdown table (with columns: File Path, Action, and Details) to ensure transparency. CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first.
 
 3. **Minimal File Scope**: No root grep/list_dir. Prefer `git ls-files` to map tracked files efficiently. Use step-by-step `list_dir` only for untracked folders (e.g. `data/`) or fallback. Use view_file only on target files.
 4. **Transparent Issues**: Report errors immediately. No silent restores. Do not exceed 2 autonomous troubleshooting retries without user review.
