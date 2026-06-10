@@ -1,5 +1,16 @@
+/**
+ * @module ScraperWorker
+ * @description Listens to Redis queues, fetches HTML from target pages, and stores raw data in MongoDB.
+ * @constraints
+ *   - Follows robust error handling and handles temporary scraper task retries.
+ *   - Pre-processes scraped HTML anchor links by removing surrounding quotes to avoid relative resolution bugs.
+ * @dependencies Redis, MongoDB, UrlUtils, SiteRegistry
+ * @lastUpdated 2026-06-11
+ */
+
 import * as os from 'os';
 import Redis from 'ioredis';
+
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -259,8 +270,10 @@ class ScraperWorker {
 
       const links = $('a[href]').toArray();
       for (const link of links) {
-        const href = $(link).attr('href');
+        let href = $(link).attr('href');
         if (!href) continue;
+        // Clean leading/trailing quotes and whitespaces to prevent relative URL conversion errors
+        href = href.trim().replace(/^["']|["']$/g, '').trim();
 
         let fullUrl: string;
         try {
