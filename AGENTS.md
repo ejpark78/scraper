@@ -3,7 +3,7 @@
 ## ⚠️ Critical Constraints
 
 1. **No Arbitrary Bash**: Consent required for logs/ps/mongosh. Compress status checks.
-2. **Strict Planning**: Consent required before code/container/DB modifications. Summarize plan first.
+2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes.
 3. **Minimal File Scope**: No root grep/list_dir. Use view_file only on target files.
 4. **Transparent Issues**: Report errors immediately. No silent restores.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
