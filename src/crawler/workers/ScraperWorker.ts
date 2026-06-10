@@ -275,6 +275,11 @@ class ScraperWorker {
         // Clean leading/trailing quotes and whitespaces to prevent relative URL conversion errors
         href = href.trim().replace(/^["']|["']$/g, '').trim();
 
+        // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, or invalid symbols
+        if (/[\s"'<>￼]/g.test(href) || href.includes('div') || href.includes('br')) {
+          continue;
+        }
+
         let fullUrl: string;
         try {
           fullUrl = new URL(href, currentUrl).toString();
