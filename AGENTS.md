@@ -14,3 +14,10 @@
 ## ⚠️ Security Rules
 - **No ENV Access**: DO NOT access `.env` or `.env.*` files. Use `.env.example` for reference.
 - **No Credentials**: Never expose API keys/credentials in command outputs.
+
+## ⚙️ Engineering & Architecture Rules
+
+1. **Strict OOP Patterns**: Use classes, interfaces, and SOLID principles. Avoid loose utility functions for core logic.
+2. **Strict Typing**: Avoid using 'any' type. Declare explicit return types and interfaces for public methods.
+3. **Robust Error Handling**: Never use empty catch blocks. Always log error contexts and close DB/Redis connections in finally blocks.
+4. **Centralized Config**: Access 'process.env' only within dedicated config files. Inject configuration via constructor.
