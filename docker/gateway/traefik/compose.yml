@@ -31,6 +31,8 @@ services:
     environment:
       - TZ=Asia/Seoul
       - DOCKER_API_VERSION=1.40
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro

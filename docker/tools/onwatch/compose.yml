@@ -37,4 +37,4 @@ services:
       - "traefik.http.routers.onwatch.rule=Host(`onwatch.localhost`) || Host(`onwatch.127.0.0.1.nip.io`)"
       - "traefik.http.routers.onwatch.entrypoints=websecure"
       - "traefik.http.routers.onwatch.tls=true"
-      - "traefik.http.services.onwatch.loadbalancer.server.port=9211"
+      - "traefik.http.services.onwatch.loadbalancer.server.url=http://host.docker.internal:9211"
