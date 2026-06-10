@@ -58,6 +58,24 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
     const dbInstance = MongoDatabase.getInstance();
     const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
+    // Download images locally
+    try {
+      const { downloadImages } = await import('../../utils/imageDownloader');
+      const { updatedMarkdown } = await downloadImages({
+        htmlContent: rawHtml,
+        markdown: meta.rawContent,
+        publishedAt: meta.publishedAt || undefined,
+        docId: id,
+        siteDir: 'aicasebook',
+        siteDomain: 'aicasebook.dev',
+        refererUrl: meta.url,
+        removeFavicons: true,
+      });
+      meta.rawContent = updatedMarkdown;
+    } catch (imgErr: any) {
+      console.warn(`⚠️ [AiCasebook Image Processing] Error: ${imgErr.message}`);
+    }
+
     try {
       const bronzeColl = await dbInstance.getCollection('bronze/aicasebook.html');
       await bronzeColl.updateOne(

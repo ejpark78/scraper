@@ -64,6 +64,24 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
         const { year, month } = this.getDatePathParts(meta.publishedAt);
         const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
+        // Download images locally
+        try {
+            const { downloadImages } = await import('../../utils/imageDownloader');
+            const { updatedMarkdown } = await downloadImages({
+                htmlContent: rawHtml,
+                markdown: meta.rawContent,
+                publishedAt: meta.publishedAt || undefined,
+                docId: id,
+                siteDir: 'geeknews',
+                siteDomain: 'news.hada.io',
+                refererUrl: meta.url,
+                removeFavicons: true,
+            });
+            meta.rawContent = updatedMarkdown;
+        } catch (imgErr: any) {
+            console.warn(`⚠️ [GeekNews Image Processing] Error: ${imgErr.message}`);
+        }
+
         // ⚡ [MongoDB 적재] ⚡
         try {
             const { MongoDatabase } = require('../../../database/mongo');

@@ -119,103 +119,18 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             }
             const htmlContent = (fieldsMap.content || parsedJson.shortContent || '').replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
 
-            const projectRoot = path.resolve(__dirname, '..', '..', '..', '..');
-            const imageBaseDir = path.join(projectRoot, 'data', 'sites', 'gpters', year, month, 'images', id);
-            fs.mkdirSync(imageBaseDir, { recursive: true });
-
-            const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-            let match;
-            const processedUrls = new Map<string, string>();
-            const skippedFavicons = new Set<string>();
-
-            while ((match = imgRegex.exec(htmlContent)) !== null) {
-                const originalSrc = match[1];
-                if (processedUrls.has(originalSrc)) continue;
-
-                // Skip data URIs
-                if (originalSrc.startsWith('data:')) {
-                    processedUrls.set(originalSrc, originalSrc);
-                    continue;
-                }
-
-                // Skip favicon images
-                const lowerSrc = originalSrc.toLowerCase();
-                if (lowerSrc.includes('favicon') || lowerSrc.endsWith('.ico')) {
-                    skippedFavicons.add(originalSrc);
-                    continue;
-                }
-
-                // Vercel _next/image — not downloadable server-side, keep original URL for browser
-                if (lowerSrc.includes('_next/image')) {
-                    processedUrls.set(originalSrc, originalSrc);
-                    continue;
-                }
-
-                // Resolve relative URLs
-                let absoluteUrl = originalSrc;
-                if (originalSrc.startsWith('//')) {
-                    absoluteUrl = 'https:' + originalSrc;
-                } else if (originalSrc.startsWith('/')) {
-                    absoluteUrl = 'https://www.gpters.org' + originalSrc;
-                } else if (!/^https?:\/\//i.test(originalSrc)) {
-                    absoluteUrl = 'https://www.gpters.org/' + originalSrc;
-                }
-
-                try {
-                    const response = await fetch(absoluteUrl, {
-                        headers: {
-                            Referer: meta.url,
-                            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                            Accept: 'image/webp,image/avif,image/*,*/*;q=0.8',
-                        }
-                    });
-                    if (!response.ok) {
-                        const respHeaders = Array.from(response.headers.entries()).map(([k, v]) => `${k}: ${v}`).join('\n          ');
-                        console.warn(`⚠️ [GPTers Image] HTTP ${response.status}
-          doc : ${meta.url}
-          img : ${absoluteUrl}
-          headers:
-          ${respHeaders}`);
-                        continue;
-                    }
-                    const arrayBuffer = await response.arrayBuffer();
-                    const buffer = Buffer.from(arrayBuffer);
-
-                    const contentType = response.headers.get('content-type') || '';
-                    const ext = contentType.includes('png') ? '.png'
-                        : contentType.includes('gif') ? '.gif'
-                        : contentType.includes('webp') ? '.webp'
-                        : contentType.includes('svg') ? '.svg'
-                        : '.jpg';
-
-                    const filename = `img_${processedUrls.size}${ext}`;
-                    const filepath = path.join(imageBaseDir, filename);
-                    fs.writeFileSync(filepath, buffer);
-
-                    const localUrl = `/gpters/${year}/${month}/images/${id}/${filename}`;
-                    processedUrls.set(originalSrc, localUrl);
-                    console.log(`✅ [GPTers Image] Saved ${filename} (${buffer.length} bytes) from ${absoluteUrl}`);
-                } catch (err: any) {
-                    console.warn(`⚠️ [GPTers Image] Failed to download
-          doc : ${meta.url}
-          img : ${absoluteUrl}
-          err : ${err.message}`);
-                }
-            }
-
-            // Replace original URLs with local URLs in markdown
-            if (processedUrls.size > 0 || skippedFavicons.size > 0) {
-                for (const [originalSrc, localUrl] of processedUrls) {
-                    if (originalSrc === localUrl) continue;
-                    const escaped = originalSrc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    updatedMarkdown = updatedMarkdown.replace(new RegExp(escaped, 'g'), localUrl);
-                }
-                for (const faviconUrl of skippedFavicons) {
-                    const escaped = faviconUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    updatedMarkdown = updatedMarkdown.replace(new RegExp(`!\\[.*?\\]\\(${escaped}\\)`, 'g'), '');
-                }
-                meta.rawContent = updatedMarkdown;
-            }
+            const { downloadImages } = await import('../../../utils/imageDownloader');
+            const { updatedMarkdown: newMarkdown } = await downloadImages({
+                htmlContent,
+                markdown: meta.rawContent,
+                publishedAt: meta.publishedAt || undefined,
+                docId: id,
+                siteDir: 'gpters',
+                siteDomain: 'gpters.org',
+                refererUrl: meta.url,
+                removeFavicons: true,
+            });
+            meta.rawContent = newMarkdown;
         } catch (imgErr: any) {
             console.warn(`⚠️ [GPTers Image Processing] Error: ${imgErr.message}`);
         }
