@@ -238,15 +238,24 @@ export const descriptor: SiteDescriptor = {
 6. `saveJson: true`면 `json/{id}.json`도 저장
 7. MongoDB 연결 종료 (`finally` 블록에서 `mongo.close()` 보장)
 
-#### afterConvert 훅 패턴 (이미지 다운로드)
-- `processedUrls` Map으로 `<img src>` → 로컬 경로 매핑
-- `fetch()`로 이미지 다운로드 → `data/sites/.../images/{id}/` 저장
-- `meta.rawContent`의 URL을 로컬 경로로 치환하여 반환
-- `favicon`, `_next/image` 등 불필요 이미지 스킵
+#### imageDownload config 패턴 (자동 afterConvert)
 
-#### getSilverFields 패턴 (사용자 정의)
-GPters 등 extra meta 데이터(shortContent, author, reactionsCount, repliesCount)를 silver에 저장해야 하는 경우,
-`getSilverFields` 콜백에서 원하는 필드만 포함한 객체 반환.
+`site.config.ts`에서 `refreshSilver.imageDownload`를 설정하면 `cli-refresh-silver.ts`가 자동으로 `afterConvert` 훅을 생성한다:
+
+- `enabled: true` → 이미지 다운로드 활성화
+- `htmlSource: 'shortContent'` → GPters처럼 HTML 본문이 `meta.shortContent`에 있는 경우
+- `htmlSource` 미설정 (기본) → `rawContent` (bronze raw HTML) 사용, 대부분의 사이트에 해당
+- `removeFavicons: true` → 마크다운에서 favicon 이미지 제거 (PyTorchKR)
+
+내부적으로 `src/crawler/utils/imageDownloader.ts`의 `downloadImages()`를 사용하며,
+`data/sites/{siteDir}/images/{docId}/`에 저장하고 markdown URL을 로컬 경로로 치환한다.
+
+#### getSilverFields config 패턴 (사용자 정의)
+
+`site.config.ts`의 `refreshSilver.getSilverFields`에서 silver 문서에 저장할 필드를 정의한다:
+- GPters: `author`, `shortContent`, `reactionsCount`, `repliesCount` 등 extra 메타데이터 포함
+- GeekNews: `comments`, `jsonLdRaw` 포함
+- 표준 사이트는 설정 불필요 (기본값: id, title, url, publishedAt, content, markdown, updatedAt)
 
 ---
 
@@ -262,15 +271,13 @@ Makefile 타겟 구성:
 | `list` | List.ts 실행 (URL 수집) |
 | `refresh-urls` | `cli-refresh-urls.ts <siteKey>` 실행 (Docker, Redis 큐 복구) |
 | `refresh-silver` | `cli-refresh-transform.ts <siteKey>` 실행 (Docker, bronze→silver 큐 재처리) |
-| `refresh-silver-rebuild` | `cli-refresh-silver.ts <siteKey>` 또는 per-site `RefreshSilver.ts` 실행 (Host, bronze→silver 전수 재변환 + 로컬 파일 저장) |
+| `refresh-silver-rebuild` | `cli-refresh-silver.ts <siteKey>` 실행 (Host, bronze→silver 전수 재변환 + 로컬 파일 저장) |
 
-`refresh-silver` (cli-refresh-transform) vs `refresh-silver-rebuild` (cli-refresh-silver / per-site RefreshSilver):
+`refresh-silver` (cli-refresh-transform) vs `refresh-silver-rebuild` (cli-refresh-silver):
 - `refresh-silver`: Docker 컨테이너 내부에서 실행, TransformerWorker가 Redis 큐를 소비하며 bronze→silver 변환
-- `refresh-silver-rebuild`: Host에서 직접 ts-node 실행, MongoDB bronze→silver 전수 재변환 + 로컬 html/md/json 저장. `afterConvert` 훅으로 이미지 다운로드 가능
+- `refresh-silver-rebuild`: Host에서 직접 ts-node 실행, MongoDB bronze→silver 전수 재변환 + 로컬 html/md/json 저장. `site.config.ts`의 `imageDownload` 설정이 있으면 이미지 다운로드까지 수행
 
 표준 사이트 Makefile 예시: [`scripts/sites/yozm.mk`](scripts/sites/yozm.mk)
-커스텀 사이트(per-site RefreshSilver 유지) 예시: [`scripts/sites/geeknews.mk`](scripts/sites/geeknews.mk)
-GPters(다중 하위사이트) 예시: [`scripts/sites/gpters.mk`](scripts/sites/gpters.mk)
 
 #### `{prefix}` 결정 규칙
 - 사이트 키의 첫 두 글자를 prefix로 사용 (예: `maily_josh` → `mj`, `yozm` → `yz`)
@@ -501,7 +508,7 @@ list: PRIORITY := high   # target-specific override (:= 필수!)
 
 > **Linkedin 주의:** Linkedin은 표준 Clipper 파이프라인(List → ScraperWorker → TransformerWorker)을 따르지 않는 **유일한 사이트**.
 > 자체 Crawler(`src/crawler/sites/linkedin/Crawler.ts`)가 Playwright로 로그인/세션/페이지네이션을 직접 관리하며,
-> `src/crawler/sites/linkedin/jobs/` 디렉토리 아래에 별도 모듈들(`ListScraper.ts`, `ExtractUrls.ts`, `UrlManager.ts`, `TransformerRefresh.ts`)로 구성됨.
+> `src/crawler/sites/linkedin/jobs/` 디렉토리 아래에 별도 모듈들(`ListScraper.ts`, `ExtractUrls.ts`, `UrlManager.ts`, `RefreshTransform.ts`)로 구성됨.
 > 새 사이트 구축 시 Linkedin을 템플릿으로 사용하지 말 것.
 
 | 사이트 | key | prefix | Bronze | Silver | ID 방식 | List 패턴 |
@@ -526,7 +533,7 @@ Agent가 모든 파일을 생성한 후 반드시 확인할 것:
 - [ ] `Converter.ts` - 모든 메타데이터 필드 추출
 - [ ] `List.ts` - 페이지네이션/URL 추출 정확성
 - [ ] `site.config.ts`에 `transformer.completedSetKey`, `transformer.converter`, `scraper.collectionName`, `targetLoader.collectionName` 모두 정의 (CLI에서 동적 로딩)
-- [ ] `scripts/sites/{site}.mk` - 타겟이 `cli-refresh-urls.ts`, `cli-refresh-transform.ts`, `cli-refresh-silver.ts` (표준) 또는 `RefreshSilver.ts` (커스텀)를 올바르게 참조
+- [ ] `scripts/sites/{site}.mk` - 타겟이 `cli-refresh-urls.ts`, `cli-refresh-transform.ts`, `cli-refresh-silver.ts`를 올바르게 참조
 - [ ] `scripts/sites/{site}.mk` - prefix, 경로, 환경변수 일치
 - [ ] `Makefile` - `{prefix}-%` 라우팅, `list:` aggregate
 - [ ] `src/viewer/server.ts` - rawHtml 스티칭 브랜치

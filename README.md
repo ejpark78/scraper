@@ -37,7 +37,7 @@ List (discovery) ──➜ Redis scrape_queue ──➜ ScraperWorker ──➜ 
 ### Layers
 
 - **Bronze Layer**: 원본 raw HTML/JSON을 MongoDB에 영구 보존
-- **Silver Layer**: 정제된 마크다운 + 메타데이터 (제목, 작성자, 날짜 등)
+- **Silver Layer**: 정제된 마크다운 + 메타데이터 (제목, 작성자, 날짜 등). `site.config.ts`의 `refreshSilver` 설정을 통해 전수 재변환 및 이미지 다운로드 제어 가능.
 
 ### Workers
 
@@ -138,15 +138,15 @@ make up-viewer      # https://viewer.localhost
 
 ```text
 ├── src/
-│   ├── core/              # BasePipeline, IConverter 추상화
+│   ├── core/              # BasePipeline, IConverter 추상화, 통합 CLI (`cli-refresh-*.ts`)
 │   ├── database/          # MongoDB singleton + 인덱스 자동 생성
-│   ├── utils/             # Logger, HtmlMinifier, UrlUtils, DateUtils
+│   ├── utils/             # Logger, HtmlMinifier, UrlUtils, DateUtils, imageDownloader
 │   ├── sites/
-│   │   ├── geeknews/      # GeekNews (news.hada.io)
+│   │   ├── geeknews/      # GeekNews (news.sitedescriptor 기반 설정)
 │   │   ├── gpters/        # GPters (gpters.org) — Bettermode GraphQL
 │   │   ├── pytorch_kr/    # PyTorch KR (discuss.pytorch.kr) — Discourse
-│   │   └── linkedin/      # LinkedIn Jobs + Company — Playwright
-│   │       ├── jobs/      # ListScraper, Converter, UrlManager
+│   │   └── linkedin/      # LinkedIn Jobs + Company — Playwright (Custom architecture)
+│   │       ├── jobs/      # ListScraper, Converter, RefreshTransform, UrlManager
 │   │       └── company/   # Company Pipeline, Converter
 │   ├── viewer/            # Express + MCP SSE viewer server
 │   ├── ScraperWorker.ts   # Redis scraper worker (BLPOP scrape_queue)

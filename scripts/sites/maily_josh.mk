@@ -2,14 +2,12 @@
 # 📰 Maily Josh Scraper Commands Module
 # ==============================================================================
 
+include ../environments.mk
+
 .PHONY: list refresh-urls refresh-silver refresh-silver-rebuild help
 
 PAGE       ?= 1
-SLACK_TIME ?= 2
-PRIORITY   ?= medium
-OVERWRITE  ?= false
-ERROR_RESET ?= false
-RECURSIVE_SCRAPE ?= false
+LIST_SLACK ?= 2
 
 help:
 	@echo "========================================================================="
@@ -23,13 +21,13 @@ help:
 
 list: PRIORITY := high
 list:
-	$(COMPOSE) run --rm $(RUN_USER) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/sites/maily_josh/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) clipper npx ts-node src/crawler/sites/maily_josh/List.ts
 
 refresh-urls:
-	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e ERROR_RESET=$(ERROR_RESET) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts maily_josh
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts maily_josh
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) -e OVERWRITE=$(OVERWRITE) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts maily_josh
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts maily_josh
 
 refresh-silver-rebuild:
-	npx ts-node src/crawler/core/cli-refresh-silver.ts maily_josh
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts maily_josh
