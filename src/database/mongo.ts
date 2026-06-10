@@ -87,15 +87,11 @@ export class MongoDatabase {
     /**
      * 빠른 조회를 위한 컬렉션 인덱스 초기화
      */
-    public async close(): Promise<void> {
-        if (this.client) {
-            await this.client.close();
-            this.client = null;
-            this.db = null;
-            console.log(`🔌 [MongoDB] Connection closed.`);
+    public async initIndexes(): Promise<void> {
+        if (!this.db) {
+            await this.connect();
         }
-    }
-        if (!this.db) return;
+        if (!this.client) return;
 
         try {
             // 📁 Unified Active Collections Indices
