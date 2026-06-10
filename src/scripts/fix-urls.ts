@@ -16,9 +16,9 @@ import Redis from 'ioredis';
 // ==============================================================================
 // ⚙️ GLOBAL CLEANUP CONFIGURATION
 // ==============================================================================
-const SITE_KEY = 'gpters';                     // 사이트 식별자 (큐 검사 및 식별용)
+const SITE_KEY = 'geeknews';                     // 사이트 식별자 (큐 검사 및 식별용)
 const MONGO_COLLECTION = `bronze/${SITE_KEY}.urls`; // 대상 몽고디비 컬렉션명 (예: 'bronze/uppity.urls')
-const TARGET_PATTERN: RegExp = /(%22|%3C|%3E|%EF%BF%BC|["<>￼]|tinyurl\.com|naver\.me|arxiv\.org|hada\.io|ayudar\.kr|catgpt\.wvd\.io|kidd\.co\.kr|playgroundai\.com|imagenet|Diffusion)/i; // 삭제할 URL 정규식 패턴
+const TARGET_PATTERN: RegExp = /news.ycombinator.com/i; // 삭제할 URL 정규식 패턴
 
 // 검사 및 청소할 Redis 큐 키 목록
 const REDIS_QUEUE_KEYS: string[] = [

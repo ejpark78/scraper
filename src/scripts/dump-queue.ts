@@ -101,6 +101,14 @@ export class QueueDumper implements IQueueDumper {
             
             fs.writeFileSync(this.config.dumpFilePath, JSON.stringify(payload, null, 2), 'utf-8');
             console.log(`✅ [QueueDumper] Dump completed successfully!`);
+            
+            console.log(`\n📋 [QueueDumper] Summary of dumped queues:`);
+            console.log('==================================================');
+            for (const [key, items] of Object.entries(dumpData)) {
+                console.log(` 📝 Queue: [${key}] ➡️ Length: ${items.length} items`);
+            }
+            console.log('==================================================\n');
+
 
         } catch (err: unknown) {
             const error = err instanceof Error ? err : new Error(String(err));
