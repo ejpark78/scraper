@@ -1,5 +1,8 @@
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
+import * as cheerio from 'cheerio';
+import { getSite } from './SiteRegistry';
+import { UrlUtils } from '../utils/UrlUtils';
 
 export interface RefreshUrlsConfig {
     site: string;
@@ -105,6 +108,10 @@ export class BaseRefreshUrls {
             } else {
                 console.log('💡 No new target items to recover.');
             }
+            const desc = getSite(site);
+            if (desc?.domain && desc?.scraper?.extractId) {
+                await this.scanHtmlForUrls(mongo, redis, site, desc.domain, desc.scraper, completedIds);
+            }
         } catch (err: any) {
             console.error('❌ Error during queue recovery:', err);
         } finally {
@@ -112,5 +119,125 @@ export class BaseRefreshUrls {
             await mongo.close();
             process.exit(0);
         }
+    }
+
+    private async scanHtmlForUrls(
+        mongo: MongoDatabase,
+        redis: Redis,
+        site: string,
+        domain: string,
+        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string },
+        completedIds: string[]
+    ): Promise<void> {
+        const { config } = this;
+        const bronzeHtmlCollection: `bronze/${string}` = `bronze/${site}.html`;
+        const urlsCollection: `bronze/${string}` = `bronze/${site}.urls`;
+        if (!scraper.urlsCollectionName) return;
+
+        const htmlColl = await mongo.getCollection(bronzeHtmlCollection);
+        const urlsColl = await mongo.getCollection(urlsCollection);
+        const priority = process.env.PRIORITY || 'medium';
+        const perSiteQueueKey = `scrape_queue:${site}:${priority}`;
+
+        // Load existing urls set
+        const existingIds = new Set<string>();
+        const existingCursor = urlsColl.find({}, { projection: { id: 1 } });
+        while (await existingCursor.hasNext()) {
+            const doc = await existingCursor.next();
+            if (doc?.id) existingIds.add(String(doc.id));
+        }
+
+        // Load existing queue urls
+        const queuedIds = new Set<string>();
+        const queueLen = await redis.llen(perSiteQueueKey);
+        if (queueLen > 0) {
+            const payloads = await redis.lrange(perSiteQueueKey, 0, -1);
+            for (const p of payloads) {
+                try {
+                    const parsed = JSON.parse(p);
+                    if (parsed.url) {
+                        const id = scraper.extractId(parsed.url);
+                        if (id) queuedIds.add(id);
+                    }
+                } catch {}
+            }
+        }
+
+        const htmlCursor = htmlColl.find({}, { projection: { rawHtml: 1 } }).batchSize(50);
+        const newUrls: { id: string; url: string }[] = [];
+        let totalLinks = 0;
+
+        while (await htmlCursor.hasNext()) {
+            const doc = await htmlCursor.next();
+            if (!doc?.rawHtml) continue;
+            const $ = cheerio.load(doc.rawHtml);
+
+            $('a[href]').each((_, el) => {
+                const href = $(el).attr('href');
+                if (!href) return;
+                totalLinks++;
+
+                try {
+                    let fullUrl = new URL(href, 'https://' + domain).toString();
+                    const parsed = new URL(fullUrl);
+                    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return;
+                    if (parsed.hostname !== domain && !parsed.hostname.endsWith(`.${domain}`)) {
+                        const extracted = UrlUtils.extractDomainUrl(fullUrl, domain);
+                        if (!extracted) return;
+                        fullUrl = extracted;
+                    }
+                    fullUrl = UrlUtils.stripTrackingParams(fullUrl).split('#')[0];
+                    if (UrlUtils.isBinaryUrl(fullUrl)) return;
+                    const id = scraper.extractId(fullUrl);
+                    if (!id) return;
+                    if (existingIds.has(id) || queuedIds.has(id)) return;
+                    if (completedIds.includes(id)) return;
+
+                    newUrls.push({ id, url: fullUrl });
+                    existingIds.add(id);
+                } catch {}
+            });
+        }
+
+        if (newUrls.length === 0) {
+            console.log(`💡 No new URLs found in existing HTML docs.`);
+            return;
+        }
+
+        console.log(`🔍 Scanned ${totalLinks} links, found ${newUrls.length} new URLs.`);
+
+        // Add to urls collection
+        const chunkSize = 1000;
+        for (let i = 0; i < newUrls.length; i += chunkSize) {
+            const chunk = newUrls.slice(i, i + chunkSize);
+            const bulkOps = chunk.map(u => ({
+                updateOne: {
+                    filter: { id: u.id },
+                    update: { $set: { id: u.id, url: u.url, status: 'new', pushedToRedis: false, updatedAt: new Date() } },
+                    upsert: true,
+                }
+            }));
+            await urlsColl.bulkWrite(bulkOps);
+        }
+
+        // Queue them
+        const queuePayloads = newUrls.map(u => JSON.stringify({
+            site,
+            url: u.url,
+            attempt: 1,
+            priority,
+            recursive: process.env.RECURSIVE_SCRAPE === 'true',
+        }));
+        for (let i = 0; i < queuePayloads.length; i += chunkSize) {
+            const chunk = queuePayloads.slice(i, i + chunkSize);
+            await redis.rpush(perSiteQueueKey, ...chunk);
+        }
+
+        await urlsColl.updateMany(
+            { id: { $in: newUrls.map(u => u.id) } },
+            { $set: { pushedToRedis: true } }
+        );
+
+        console.log(`✨ Discovered and queued ${newUrls.length} new URLs from HTML content.`);
     }
 }

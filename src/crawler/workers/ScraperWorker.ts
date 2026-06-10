@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { MongoDatabase } from '../../database/mongo';
 import { UrlUtils, Logger } from '../utils';
+const { stripTrackingParams, isBinaryUrl, extractDomainUrl } = UrlUtils;
 import { getSite, getAllSites } from '../core/SiteRegistry';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
@@ -356,51 +357,6 @@ class ScraperWorker {
       await this.redis.quit();
       process.exit(1);
     }
-  }
-}
-
-const TRACKING_PARAMS = new Set(['ref', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid']);
-const SHARE_PARAMS = ['url', 'u'];
-const BINARY_EXTENSIONS = /\.(zip|pdf|png|jpe?g|gif|svg|mp[34]|mov|avi|exe|dmg|gz|tar|7z|rar|docx?|xlsx?|pptx?|webp|ico|css|js\.map?)$/i;
-
-function extractDomainUrl(href: string, domain: string): string | null {
-  try {
-    const parsed = new URL(href);
-    for (const param of SHARE_PARAMS) {
-      const val = parsed.searchParams.get(param);
-      if (!val) continue;
-      try {
-        const target = new URL(val);
-        if (target.hostname === domain || target.hostname.endsWith(`.${domain}`)) {
-          return val;
-        }
-      } catch {}
-    }
-  } catch {}
-  return null;
-}
-
-function isBinaryUrl(url: string): boolean {
-  try {
-    const pathname = new URL(url).pathname;
-    return BINARY_EXTENSIONS.test(pathname);
-  } catch {
-    return false;
-  }
-}
-
-function stripTrackingParams(url: string): string {
-  try {
-    const parsed = new URL(url);
-    const clean = new URL(parsed.origin + parsed.pathname);
-    for (const [key, value] of parsed.searchParams.entries()) {
-      if (!TRACKING_PARAMS.has(key)) {
-        clean.searchParams.set(key, value);
-      }
-    }
-    return clean.toString();
-  } catch {
-    return url;
   }
 }
 
