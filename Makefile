@@ -8,6 +8,9 @@ export COMPOSE
 RUN_USER := --user $(shell id -u):$(shell id -g)
 export RUN_USER
 
+RECURSIVE_SCRAPE ?= false
+export RECURSIVE_SCRAPE
+
 .PHONY: *
 
 lint:
@@ -18,7 +21,9 @@ lint:
 -include scripts/utils/pipeline.mk
 -include scripts/tools/tools.mk
 
-list: li-list gpt-list gn-list pk-list ab-list
+list: RECURSIVE_SCRAPE=true
+list: gpt-list gn-list pk-list ab-list ddds-list
+# list: li-list gpt-list gn-list pk-list ab-list ddds-list
 
 test-%:
 	@$(MAKE) -f scripts/utils/tests.mk $*
