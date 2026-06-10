@@ -23,6 +23,9 @@ app.use('/gpters_newsletter', express.static(path.join(projectRoot, 'data', 'sit
 app.use('/pytorch_kr', express.static(path.join(projectRoot, 'data', 'sites', 'pytorch_kr')));
 app.use('/aicasebook', express.static(path.join(projectRoot, 'data', 'sites', 'aicasebook')));
 app.use('/dailydose_ds', express.static(path.join(projectRoot, 'data', 'sites', 'dailydose_ds')));
+app.use('/yozm', express.static(path.join(projectRoot, 'data', 'sites', 'yozm')));
+app.use('/maily_josh', express.static(path.join(projectRoot, 'data', 'sites', 'maily_josh')));
+app.use('/uppity', express.static(path.join(projectRoot, 'data', 'sites', 'uppity')));
 
 // Request logging middleware for debugging
 app.use((req: Request, res: Response, next) => {

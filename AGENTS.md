@@ -23,6 +23,10 @@
 6. **Symbolic Links for Artifacts**:
    - Automatically link created/modified artifacts to `.agents/brain/`.
 
+7. **Automatic Git Commits**:
+   - Whenever you modify code or configuration files, you must execute `.agents/scripts/commit-changes.sh` to automatically commit the changes.
+   - Do this as soon as the modifications are validated or before transitioning to the next step to preserve context and reduce token usage.
+
 ## ⚠️ Security Rules
 - **DO NOT** read, write, or access `.env` or `.env.*` files under any circumstances.
 - Never expose API keys or credentials in terminal outputs (e.g., `cat`, `echo`).

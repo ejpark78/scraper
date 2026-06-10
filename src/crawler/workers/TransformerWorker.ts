@@ -1,4 +1,6 @@
 import * as os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
 import Redis from 'ioredis';
 import { MongoDatabase } from '../../database/mongo';
 import { UrlUtils, NamingUtils, Logger } from '../utils';
@@ -75,6 +77,72 @@ async function main() {
               meta = jsonMeta;
               Logger.info(`[Transformer] JSON API fallback succeeded for [${site}] ID: ${id}`);
             }
+          }
+        }
+
+        if (site !== 'linkedin') {
+          try {
+            const { downloadImages } = await import('../utils/imageDownloader');
+            const publishedAt = meta.publishedAt || rawDoc.publishedAt;
+
+            const { processedUrls } = await downloadImages({
+              htmlContent: rawContent,
+              markdown: meta.rawContent || '',
+              publishedAt: publishedAt || undefined,
+              docId: id,
+              siteDir: site,
+              siteDomain: desc.domain || '',
+              refererUrl: rawDoc.url || meta.url || '',
+              removeFavicons: desc.refreshSilver?.imageDownload?.removeFavicons ?? true,
+            });
+
+            // Keep the original markdown unchanged in meta.rawContent
+            let updatedMarkdown = meta.rawContent || '';
+            let updatedContent = meta.content || '';
+
+            // If we have downloaded images, append the mappings to the bottom of the markdown
+            if (processedUrls && Object.keys(processedUrls).length > 0) {
+              let mappingSection = '\n\n---\n### Collected Images\n';
+              for (const [originalSrc, localUrl] of Object.entries(processedUrls)) {
+                mappingSection += `- \`${originalSrc}\` -> \`${localUrl}\`\n`;
+              }
+              updatedMarkdown += mappingSection;
+              updatedContent += mappingSection;
+            }
+
+            meta.rawContent = updatedMarkdown;
+            meta.content = updatedContent;
+
+            let year = 'unknown';
+            let month = 'unknown';
+            if (publishedAt) {
+              const d = new Date(publishedAt);
+              if (!isNaN(d.getTime())) {
+                year = d.getFullYear().toString();
+                month = String(d.getMonth() + 1).padStart(2, '0');
+              }
+            }
+
+            const projectRoot = path.resolve(__dirname, '..', '..', '..');
+            const baseDir = path.join(projectRoot, 'data', 'sites', site, year, month);
+            const htmlDir = path.join(baseDir, 'html');
+            const mdDir = path.join(baseDir, 'markdown');
+
+            fs.mkdirSync(htmlDir, { recursive: true });
+            fs.mkdirSync(mdDir, { recursive: true });
+
+            fs.writeFileSync(path.join(htmlDir, `${id}.html`), rawContent, 'utf-8');
+            await converter.prettifyAndSave(meta.rawContent, path.join(mdDir, `${id}.md`));
+
+            if (desc.refreshSilver?.saveJson) {
+              const jsonDir = path.join(baseDir, 'json');
+              fs.mkdirSync(jsonDir, { recursive: true });
+              fs.writeFileSync(path.join(jsonDir, `${id}.json`), rawContent, 'utf-8');
+            }
+
+            Logger.info(`[Transformer] Processed images and saved local files for [${site}] ID: ${id}`);
+          } catch (imgErr: any) {
+            Logger.warn(`[Transformer] Local file save or image download failed for [${site}] ID: ${id}: ${imgErr.message}`, imgErr);
           }
         }
 

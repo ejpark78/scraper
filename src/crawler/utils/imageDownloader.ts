@@ -17,6 +17,7 @@ export interface DownloadImagesParams {
 export interface DownloadImagesResult {
   updatedMarkdown: string;
   downloadedCount: number;
+  processedUrls?: Record<string, string>;
 }
 
 export async function downloadImages(params: DownloadImagesParams): Promise<DownloadImagesResult> {
@@ -34,13 +35,25 @@ export async function downloadImages(params: DownloadImagesParams): Promise<Down
   const imageBaseDir = path.join(PROJECT_ROOT, 'data', 'sites', siteDir, year, month, 'images', docId);
   fs.mkdirSync(imageBaseDir, { recursive: true });
 
+  const urlsToDownload = new Set<string>();
+
+  // Extract from HTML
   const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
   let match;
+  while ((match = imgRegex.exec(htmlContent)) !== null) {
+    urlsToDownload.add(match[1]);
+  }
+
+  // Extract from Markdown
+  const mdImgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/gi;
+  while ((match = mdImgRegex.exec(markdown)) !== null) {
+    urlsToDownload.add(match[1]);
+  }
+
   const processedUrls = new Map<string, string>();
   const skippedFavicons = new Set<string>();
 
-  while ((match = imgRegex.exec(htmlContent)) !== null) {
-    const originalSrc = match[1];
+  for (const originalSrc of urlsToDownload) {
     if (processedUrls.has(originalSrc)) continue;
     if (originalSrc.startsWith('data:')) {
       processedUrls.set(originalSrc, originalSrc);
@@ -89,7 +102,7 @@ export async function downloadImages(params: DownloadImagesParams): Promise<Down
   }
 
   if (processedUrls.size === 0 && skippedFavicons.size === 0) {
-    return { updatedMarkdown: markdown, downloadedCount: 0 };
+    return { updatedMarkdown: markdown, downloadedCount: 0, processedUrls: {} };
   }
 
   let updatedMarkdown = markdown;
@@ -105,5 +118,9 @@ export async function downloadImages(params: DownloadImagesParams): Promise<Down
     }
   }
 
-  return { updatedMarkdown, downloadedCount: processedUrls.size };
+  return { 
+    updatedMarkdown, 
+    downloadedCount: processedUrls.size, 
+    processedUrls: Object.fromEntries(processedUrls) 
+  };
 }
