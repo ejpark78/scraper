@@ -2,7 +2,7 @@
 
 ## ⚠️ Critical Constraints
 
-1. **No Arbitrary Bash**: Consent required for logs/ps/mongosh. Compress status checks.
+1. **No Arbitrary Bash**: Consent required for ALL shell commands (including read-only diagnostics, git, docker, ls, env, etc.). Never run any command without prior user approval. Compress status checks.
 2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes (except for commands listed in Pre-Approved Commands). CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first.
 
 3. **Minimal File Scope**: No root grep/list_dir. Prefer `git ls-files` to map tracked files efficiently. Use step-by-step `list_dir` only for untracked folders (e.g. `data/`) or fallback. Use view_file only on target files.
