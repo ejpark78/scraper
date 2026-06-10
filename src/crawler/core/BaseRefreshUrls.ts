@@ -153,7 +153,7 @@ export class BaseRefreshUrls {
 
         // Load existing urls set
         const existingIds = new Set<string>();
-        const cursorIds = urlsColl.find({}, { projection: { id: 1 }, maxTimeMS: 30000 });
+        const cursorIds = urlsColl.find({}, { projection: { id: 1 }, maxTimeMS: 60000 });
         for await (const doc of cursorIds) {
             if (doc?.id) existingIds.add(String(doc.id));
         }
@@ -174,7 +174,7 @@ export class BaseRefreshUrls {
             }
         }
 
-        const htmlCursor = htmlColl.find({}, { projection: { rawHtml: 1 }, maxTimeMS: 30000 });
+        const htmlCursor = htmlColl.find({}, { projection: { rawHtml: 1 }, maxTimeMS: 60000 });
         const newUrls: { id: string; url: string }[] = [];
         const counts = { protocolSkipped: 0, domainSkipped: 0, domainMatched: 0, shareExtracted: 0, binarySkipped: 0, afterClean: 0, idNull: 0, dedupSkipped: 0, totalAnchors: 0 };
 

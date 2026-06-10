@@ -33,9 +33,6 @@ export class MongoDatabase {
             this.db = this.client.db(this.dbName);
             console.log(`✅ [MongoDB] Successfully connected to database: ${this.dbName}`);
 
-            // 인덱스 초기화 실행
-            await this.initIndexes();
-
             return this.db;
         } catch (err: any) {
             console.error(`❌ [MongoDB] Connection error: ${err.message}`);
@@ -53,7 +50,29 @@ export class MongoDatabase {
             throw new Error('[MongoDB] Client is not connected');
         }
         const targetDb = this.client.db(dbName);
-        return targetDb.collection<T>(collectionName);
+        const collection = targetDb.collection<T>(collectionName);
+
+        // 🛠️ 패턴 기반 자동 인덱스 생성 (인덱스가 없을 때만 생성됨)
+        try {
+            if (collectionName.endsWith('.urls')) {
+                await collection.createIndex({ status: 1, id: 1 });
+                await collection.createIndex({ id: 1 }, { unique: true });
+            } else if (collectionName.endsWith('.html')) {
+                await collection.createIndex({ id: 1 }, { unique: true });
+            } else if (collectionName.endsWith('.contents')) {
+                await collection.createIndex({ id: 1 }, { unique: true });
+                await collection.createIndex({ publishedAt: -1 });
+            } else if (collectionName === 'linkedin.jobs') {
+                await collection.createIndex({ jobId: 1 }, { unique: true });
+                await collection.createIndex({ collectedAt: -1 });
+            } else if (collectionName === 'linkedin.companies') {
+                await collection.createIndex({ companyId: 1 }, { unique: true });
+            }
+        } catch (e) {
+            // 인덱스 생성 중 발생하는 일시적 오류 무시
+        }
+
+        return collection;
     }
 
     public async close(): Promise<void> {
@@ -68,7 +87,14 @@ export class MongoDatabase {
     /**
      * 빠른 조회를 위한 컬렉션 인덱스 초기화
      */
-    private async initIndexes(): Promise<void> {
+    public async close(): Promise<void> {
+        if (this.client) {
+            await this.client.close();
+            this.client = null;
+            this.db = null;
+            console.log(`🔌 [MongoDB] Connection closed.`);
+        }
+    }
         if (!this.db) return;
 
         try {
@@ -76,20 +102,27 @@ export class MongoDatabase {
             if (this.client) {
                 const bronzeDb = this.client.db('bronze');
                 await bronzeDb.collection('linkedin.jobs').createIndex({ jobId: 1 }, { unique: true });
+                await bronzeDb.collection('linkedin.jobs').createIndex({ collectedAt: -1 });
                 await bronzeDb.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
                 await bronzeDb.collection('linkedin.lists').createIndex({ listId: 1 });
                 await bronzeDb.collection('linkedin.lists').createIndex({ collectedAt: 1 });
                 await bronzeDb.collection('linkedin.job_urls').createIndex({ jobId: 1 });
+                await bronzeDb.collection('linkedin.job_urls').createIndex({ status: 1, jobId: 1 });
                 await bronzeDb.collection('linkedin.company_urls').createIndex({ companyId: 1 });
+                await bronzeDb.collection('linkedin.company_urls').createIndex({ status: 1, companyId: 1 });
                 
                 await bronzeDb.collection('geeknews.html').createIndex({ id: 1 });
+                await bronzeDb.collection('geeknews.urls').createIndex({ status: 1, id: 1 });
                 await bronzeDb.collection('gpters.html').createIndex({ id: 1 }, { unique: true });
+                await bronzeDb.collection('gpters.urls').createIndex({ status: 1, id: 1 });
                 await bronzeDb.collection('pytorch_kr.html').createIndex({ id: 1 });
                 await bronzeDb.collection('pytorch_kr.lists').createIndex({ id: 1 });
                 await bronzeDb.collection('pytorch_kr.lists').createIndex({ collectedAt: 1 });
                 await bronzeDb.collection('pytorch_kr.urls').createIndex({ id: 1 });
+                await bronzeDb.collection('pytorch_kr.urls').createIndex({ status: 1, id: 1 });
                 await bronzeDb.collection('aicasebook.html').createIndex({ id: 1 });
                 await bronzeDb.collection('aicasebook.urls').createIndex({ id: 1 });
+                await bronzeDb.collection('aicasebook.urls').createIndex({ status: 1, id: 1 });
 
                 // 📁 Silver Active Collections Indices
                 const silverDb = this.client.db('silver');
