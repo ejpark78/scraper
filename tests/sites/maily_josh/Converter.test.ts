@@ -15,6 +15,7 @@ const crypto = require('crypto');
 const TEST_URL = 'https://maily.so/josh/posts/d5ryw34jz1w';
 const TEST_ID = crypto.createHash('md5').update(TEST_URL).digest('hex');
 
+(async () => {
 try {
   // ── Pagination List Parsing ─────────────────────────────────────────
   console.log('📋 [Test] Pagination List Parsing (page 1)');
@@ -25,13 +26,18 @@ try {
   const seenUrls = new Set<string>();
   const articleLinks: Array<{ url: string; title: string }> = [];
 
-  $('a.post-card-list-item[href*="/josh/posts/"]').each((_: any, el: any) => {
-    const href = $(el).attr('href');
-    if (!href || seenUrls.has(href)) return;
-    seenUrls.add(href);
-    const title = $(el).find('.font-bold').first().text().trim();
+  $('div[class*="PostCard_card__"], div[class*="PostCard_container__"]').each((_: any, el: any) => {
+    const linkEl = $(el).find('a').first();
+    const href = linkEl.attr('href');
+    if (!href) return;
+    const fullUrl = href.startsWith('http') ? href : `https://maily.so${href}`;
+    
+    if (seenUrls.has(fullUrl)) return;
+    seenUrls.add(fullUrl);
+    
+    const title = $(el).find('h2, [class*="PostCard_title__"]').first().text().trim();
     if (title) {
-      articleLinks.push({ url: href, title });
+      articleLinks.push({ url: fullUrl, title });
     }
   });
 
@@ -49,7 +55,7 @@ try {
   // ── HTML → Markdown 변환 ────────────────────────────────────────────
   console.log('\n📝 [Test] HTML to Markdown Conversion');
   const html = loadFixture('article.html');
-  const result = converter.convertHtmlToMarkdown(html, TEST_ID, TEST_URL);
+  const result = await converter.convertHtmlToMarkdown(html, TEST_ID, TEST_URL);
 
   assert.strictEqual(result.id, TEST_ID, 'ID가 MD5 해시와 일치');
   assert.ok(result.title.includes('코드를 손으로 안 치는 창업자'), '제목 추출');
@@ -78,3 +84,4 @@ try {
   console.error(`\n❌ 테스트 실패: ${e.message}`);
   process.exit(1);
 }
+})();

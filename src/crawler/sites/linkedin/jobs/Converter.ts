@@ -90,7 +90,7 @@ export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
     /**
      * 🌟 HTML 원본 데이터 파싱 및 메타 요약 정보 객체 빌드 함수 (In-memory Core)
      */
-    public convertHtmlToMarkdown(htmlContent: string, id: string, url: string, baseDateInput?: Date): JobMeta {
+    public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string, baseDateInput?: Date): Promise<JobMeta> {
         const $ = cheerio.load(htmlContent);
         let jobId = id;
 
@@ -548,7 +548,7 @@ ${jdText}
                 try {
                     const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
                     const fileStats = fs.statSync(htmlPath);
-                    const meta = this.convertHtmlToMarkdown(htmlContent, jobId, `https://www.linkedin.com/jobs/view/${jobId}`, fileStats.mtime);
+                    const meta = await this.convertHtmlToMarkdown(htmlContent, jobId, `https://www.linkedin.com/jobs/view/${jobId}`, fileStats.mtime);
 
                     const correctMdDir = path.join(mdBaseDir, meta.locationDirName, meta.postedDate);
                     const safeMdFileName = NamingUtils.generateSafeFileName(meta.jobTitle, meta.company);
@@ -585,7 +585,7 @@ ${jdText}
                 const htmlContent = fs.readFileSync(inputHtml, 'utf-8');
                 const fileStats = fs.statSync(inputHtml);
                 const jobId = path.basename(inputHtml, '.html');
-                const meta = this.convertHtmlToMarkdown(htmlContent, jobId, `https://www.linkedin.com/jobs/view/${jobId}`, fileStats.mtime);
+                const meta = await this.convertHtmlToMarkdown(htmlContent, jobId, `https://www.linkedin.com/jobs/view/${jobId}`, fileStats.mtime);
                 
                 await this.prettifyAndSave(meta.rawContent, outputMd);
                 console.log(`✨ 변환 및 프리티어 저장 완료: ${outputMd}`);

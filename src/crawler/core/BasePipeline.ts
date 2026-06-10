@@ -13,7 +13,7 @@ export abstract class BasePipeline<TMeta> {
     protected abstract extractId(url: string): string;
     protected abstract getDomainName(): string; // "채용공고" 또는 "회사정보"
     protected abstract executeScrape(url: string, tempHtmlPath: string): Promise<void>;
-    protected abstract processMetadata(htmlContent: string, id: string, url: string): TMeta;
+    protected abstract processMetadata(htmlContent: string, id: string, url: string): TMeta | Promise<TMeta>;
     protected abstract saveResults(meta: TMeta, id: string, tempHtmlPath: string, redisInstance?: any): Promise<{ targetDirName: string }>;
 
     /**
@@ -35,7 +35,7 @@ export abstract class BasePipeline<TMeta> {
             }
 
             const htmlContent = fs.readFileSync(tempHtmlPath, 'utf-8');
-            const meta = this.processMetadata(htmlContent, id, url);
+            const meta = await this.processMetadata(htmlContent, id, url);
             const result = await this.saveResults(meta, id, tempHtmlPath, redisInstance);
             
             console.log(`✨ [성공] ID: ${id} | 분류: ${result.targetDirName}`);
@@ -315,7 +315,7 @@ export abstract class BasePipeline<TMeta> {
 
                 // 2) 핵심 정보 파싱 및 변환
                 const htmlContent = fs.readFileSync(tempHtmlPath, 'utf-8');
-                const meta = this.processMetadata(htmlContent, id, url);
+                const meta = await this.processMetadata(htmlContent, id, url);
 
                 // 3) 최종 파일 저장
                 const result = await this.saveResults(meta, id, tempHtmlPath);

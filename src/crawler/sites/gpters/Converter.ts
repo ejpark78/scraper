@@ -18,7 +18,7 @@ export interface GptersMeta {
 
 export class GptersConverter implements IConverter<GptersMeta> {
     
-    public convertHtmlToMarkdown(htmlOrJsonContent: string, id: string, url: string): GptersMeta {
+    public async convertHtmlToMarkdown(htmlOrJsonContent: string, id: string, url: string): Promise<GptersMeta> {
         let post: any = {};
         try {
             post = JSON.parse(htmlOrJsonContent);

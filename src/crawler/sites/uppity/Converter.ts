@@ -13,7 +13,7 @@ export interface UppityMeta {
 
 export class UppityConverter implements IConverter<UppityMeta> {
 
-    public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): UppityMeta {
+    public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<UppityMeta> {
         const $ = cheerio.load(htmlContent);
 
         const canonical = $('link[rel="canonical"]').attr('href');

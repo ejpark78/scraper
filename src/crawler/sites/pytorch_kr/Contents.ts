@@ -85,7 +85,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
         }
     }
 
-    protected processMetadata(htmlContent: string, id: string, url: string): PyTorchKRMeta {
+    protected async processMetadata(htmlContent: string, id: string, url: string): Promise<PyTorchKRMeta> {
         return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
     }
 

@@ -15,7 +15,7 @@ export interface MailyJoshMeta {
 
 export class MailyJoshConverter implements IConverter<MailyJoshMeta> {
 
-  public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): MailyJoshMeta {
+  public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<MailyJoshMeta> {
     const $ = cheerio.load(htmlContent);
 
     const canonical = $('link[rel="canonical"]').attr('href');

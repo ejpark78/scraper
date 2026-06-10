@@ -83,7 +83,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
         fs.writeFileSync(tempHtmlPath, JSON.stringify(post), 'utf-8');
     }
 
-    protected processMetadata(htmlContent: string, id: string, url: string): GptersMeta {
+    protected async processMetadata(htmlContent: string, id: string, url: string): Promise<GptersMeta> {
         return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
     }
 

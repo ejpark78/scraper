@@ -13,7 +13,7 @@ export interface PyTorchKRMeta {
 
 export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
     
-    public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): PyTorchKRMeta {
+    public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<PyTorchKRMeta> {
         const $ = cheerio.load(htmlContent, { _useHtmlParser2: true } as any);
         
         // Extract canonical URL if available

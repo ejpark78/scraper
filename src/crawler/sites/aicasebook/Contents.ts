@@ -36,7 +36,7 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
     fs.writeFileSync(tempHtmlPath, html, 'utf-8');
   }
 
-  protected processMetadata(htmlContent: string, id: string, url: string): AiCasebookMeta {
+  protected async processMetadata(htmlContent: string, id: string, url: string): Promise<AiCasebookMeta> {
     return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
   }
 

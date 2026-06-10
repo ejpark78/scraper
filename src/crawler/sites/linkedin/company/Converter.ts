@@ -31,7 +31,7 @@ export class CompanyMarkdownConverter implements IConverter<CompanyMeta> {
     /**
      * HTML 내용을 파싱하여 회사 메타정보와 마크다운 문서를 빌드합니다. (하이브리드 구조: JSON 우선 ➡️ DOM 폴백)
      */
-    public convertHtmlToMarkdown(htmlContent: string, companyId: string, companyUrl: string): CompanyMeta {
+    public async convertHtmlToMarkdown(htmlContent: string, companyId: string, companyUrl: string): Promise<CompanyMeta> {
         let companyName = '';
         let tagline = '';
         let website = '';

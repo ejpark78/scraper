@@ -1,7 +1,6 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
-
 export interface YozmMeta {
   id: string;
   title: string;
@@ -30,23 +29,23 @@ export class YozmConverter implements IConverter<YozmMeta> {
     return result;
   }
 
-  public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): YozmMeta {
+  public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<YozmMeta> {
     const $ = cheerio.load(htmlContent);
-
+ 
     const canonical = $('link[rel="canonical"]').attr('href');
     const finalUrl = canonical || url;
-
+ 
     const ogTitle = $('meta[property="og:title"]').attr('content');
     const titleTag = $('title').text().trim();
     const title = (ogTitle || titleTag || 'Unknown Title').replace(/\s*\|\s*요즘IT$/, '');
-
+ 
     const newsLd = this.findNewsLd($);
-
+ 
     let publishedAt: string | null = null;
     if (newsLd?.datePublished) {
       publishedAt = newsLd.datePublished;
     }
-
+ 
     let category: string | null = null;
     if (newsLd?.articleSection) {
       category = newsLd.articleSection;
@@ -57,7 +56,7 @@ export class YozmConverter implements IConverter<YozmMeta> {
         category = categoryLink.text().trim();
       }
     }
-
+ 
     let author: string | null = null;
     if (newsLd?.author?.name) {
       author = newsLd.author.name;
@@ -69,15 +68,27 @@ export class YozmConverter implements IConverter<YozmMeta> {
         if (realAuthor) author = realAuthor;
       }
     }
+ 
+    let contentMarkdown: string = '';
+    
+    // 요즘IT는 Next.js 스트리밍 방식을 사용하여 본문이 main[data-id="detail-contents"] 내부에 고정되어 있지 않고,
+    // S:3 등 동적으로 생성된 스트리밍 chunk div 내부에 렌더링될 수 있습니다.
+    // 본문 단락(.typo-contents16)의 부모 컨테이너를 찾아 본문 HTML 영역을 확보합니다.
+    let contentContainer = $('main[data-id="detail-contents"]');
+    const typoParagraphs = $('.typo-contents16');
+    if (typoParagraphs.length > 0) {
+      const parent = typoParagraphs.first().parent();
+      if (parent.length > 0) {
+        contentContainer = parent;
+      }
+    }
 
-    const mainContent = $('main[data-id="detail-contents"]').first();
-    let contentMarkdown: string;
-
-    if (mainContent.length) {
-      const html = mainContent.html() || '';
-      contentMarkdown = this.htmlToMarkdown(html);
-    } else {
-      // Fallback to JSON-LD
+    const detailHtml = contentContainer.html();
+    if (detailHtml && detailHtml.trim().length > 50) {
+      contentMarkdown = this.htmlToMarkdown(detailHtml);
+    }
+ 
+    if (!contentMarkdown || contentMarkdown === '(content extraction failed)') {
       let bodyText = '';
       if (newsLd?.articleBody) {
         bodyText = newsLd.articleBody
@@ -92,7 +103,7 @@ export class YozmConverter implements IConverter<YozmMeta> {
       }
       contentMarkdown = bodyText || '(content extraction failed)';
     }
-
+ 
     let markdown = `# ${title}\n\n`;
     if (category) {
       markdown += `* **카테고리:** ${category}\n`;
@@ -105,7 +116,7 @@ export class YozmConverter implements IConverter<YozmMeta> {
     }
     markdown += `* **원본 링크:** [바로가기](${finalUrl})\n\n`;
     markdown += `---\n\n${contentMarkdown}\n`;
-
+ 
     return {
       id,
       title,

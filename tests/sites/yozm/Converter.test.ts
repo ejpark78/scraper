@@ -14,6 +14,7 @@ function loadFixture(name: string): string {
 const TEST_URL = 'https://yozm.wishket.com/magazine/detail/3791/';
 const TEST_ID = '3791';
 
+(async () => {
 try {
   // ── Pagination List Parsing ─────────────────────────────────────────
   console.log('📋 [Test] Pagination List Parsing (page 1)');
@@ -48,7 +49,7 @@ try {
   // ── HTML → Markdown 변환 ────────────────────────────────────────────
   console.log('\n📝 [Test] HTML to Markdown Conversion');
   const html = loadFixture('article.html');
-  const result = converter.convertHtmlToMarkdown(html, TEST_ID, TEST_URL);
+  const result = await converter.convertHtmlToMarkdown(html, TEST_ID, TEST_URL);
 
   assert.strictEqual(result.id, TEST_ID, 'ID가 일치');
   assert.ok(result.title.includes('AI 챗봇을 도입했는데'), '제목 추출');
@@ -76,3 +77,4 @@ try {
   console.error(`\n❌ 테스트 실패: ${e.message}`);
   process.exit(1);
 }
+})();

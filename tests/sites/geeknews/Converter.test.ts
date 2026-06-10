@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { GeekNewsConverter } from '../../src/crawler/sites/geeknews/Converter';
+import { GeekNewsConverter } from '../../../src/crawler/sites/geeknews/Converter';
 
 console.log('🧪 [시작] GeekNews Converter 단위 테스트\n');
 
@@ -11,6 +11,7 @@ function readFixture(name: string): string {
   return fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf-8');
 }
 
+(async () => {
 try {
   // ── cleanContent ──────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ try {
   // 11. #4265 전체 변환
   {
     const html = readFixture('4265.html');
-    const result = converter.convertHtmlToMarkdown(html, '4265', 'https://news.hada.io/topic?id=4265');
+    const result = await converter.convertHtmlToMarkdown(html, '4265', 'https://news.hada.io/topic?id=4265');
     const content = result.content;
     const raw = result.rawContent;
 
@@ -147,7 +148,7 @@ try {
   // 12. #5299 변환 (정답 MD 비교)
   {
     const html = readFixture('5299.html');
-    const result = converter.convertHtmlToMarkdown(html, '5299', 'https://news.hada.io/topic?id=5299');
+    const result = await converter.convertHtmlToMarkdown(html, '5299', 'https://news.hada.io/topic?id=5299');
     const expected = readFixture('5299.expected.md');
     assert.strictEqual(result.rawContent, expected, 'rawContent should match 5299.expected.md');
     
@@ -157,7 +158,7 @@ try {
   // 13. #1069 변환 (정답 MD 비교)
   {
     const html = readFixture('1069.html');
-    const result = converter.convertHtmlToMarkdown(html, '1069', 'https://news.hada.io/topic?id=1069');
+    const result = await converter.convertHtmlToMarkdown(html, '1069', 'https://news.hada.io/topic?id=1069');
     const expected = readFixture('1069.expected.md');
     assert.strictEqual(result.rawContent, expected, 'rawContent should match 1069.expected.md');
     
@@ -167,7 +168,7 @@ try {
   // 14. #2994 변환 (정답 MD 비교)
   {
     const html = readFixture('2994.html');
-    const result = converter.convertHtmlToMarkdown(html, '2994', 'https://news.hada.io/topic?id=2994');
+    const result = await converter.convertHtmlToMarkdown(html, '2994', 'https://news.hada.io/topic?id=2994');
     const expected = readFixture('2994.expected.md');
     assert.strictEqual(result.rawContent, expected, 'rawContent should match 2994.expected.md');
     
@@ -274,3 +275,4 @@ try {
   console.error(error.stack);
   process.exit(1);
 }
+})();

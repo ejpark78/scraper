@@ -33,10 +33,12 @@ const testCases = [
     { file: 'course_6.html', url: 'https://www.dailydoseofds.com/rl-course-part-6/', titleKey: 'Introduction to Deep RL', expectedFile: 'course_6.expected.md' },
 ];
 
-testCases.forEach((tc, idx) => {
+(async () => {
+for (let idx = 0; idx < testCases.length; idx++) {
+    const tc = testCases[idx];
     console.log(`\n── Case ${idx + 1}: ${tc.file} ──`);
     const html = readFixture(tc.file);
-    const result = converter.convertHtmlToMarkdown(html, `test-${idx}`, tc.url);
+    const result = await converter.convertHtmlToMarkdown(html, `test-${idx}`, tc.url);
     const expected = readFixture(tc.expectedFile);
     
     assert.strictEqual(result.rawContent.trim(), expected.trim(), `rawContent should match expected markdown for ${tc.file}`);
@@ -44,6 +46,7 @@ testCases.forEach((tc, idx) => {
     assert.ok(result.content.length > 100, 'Content should be substantial');
     assert.ok(result.rawContent.includes('## 📝 본문 내용'), 'Should contain the content header');
     console.log(`✅ Success: ${result.title} (${result.content.length} chars)`);
-});
+}
 
 console.log('\n🎉 [성공] 모든 DailyDoseDS 테스트가 통과되었습니다!');
+})();

@@ -20,7 +20,7 @@ export interface AiCasebookMeta {
 
 export class AiCasebookConverter implements IConverter<AiCasebookMeta> {
 
-  public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): AiCasebookMeta {
+    public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<AiCasebookMeta> {
     const $ = cheerio.load(htmlContent);
 
     // Extract title from <title>

@@ -13,7 +13,7 @@ export interface DailyDoseDSMeta {
 }
 
 export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
-    public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): DailyDoseDSMeta {
+    public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<DailyDoseDSMeta> {
         const $ = cheerio.load(htmlContent);
         
         // 1. Basic Cleanup: Remove only clearly non-content elements

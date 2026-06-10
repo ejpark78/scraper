@@ -58,7 +58,7 @@ export class BaseRefreshSilver {
         if (!id || !rawContent) continue;
 
         try {
-          let meta = this.config.converter.convertHtmlToMarkdown(
+          let meta = await this.config.converter.convertHtmlToMarkdown(
             rawContent, id, doc.url || '',
           );
 

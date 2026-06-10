@@ -43,7 +43,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
         fs.writeFileSync(tempHtmlPath, minifiedHtml, 'utf-8');
     }
 
-    protected processMetadata(htmlContent: string, id: string, url: string): GeekNewsMeta {
+    protected async processMetadata(htmlContent: string, id: string, url: string): Promise<GeekNewsMeta> {
         return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
     }
 

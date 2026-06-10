@@ -21,7 +21,7 @@ export interface GeekNewsMeta {
 
 export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
     
-    public convertHtmlToMarkdown(htmlContent: string, id: string, url: string): GeekNewsMeta {
+    public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<GeekNewsMeta> {
         const $ = cheerio.load(htmlContent);
         
         // 1. Extract title

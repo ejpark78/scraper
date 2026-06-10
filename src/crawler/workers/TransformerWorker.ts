@@ -65,7 +65,7 @@ async function main() {
         }
 
         const converter = tf.converter;
-        let meta = converter.convertHtmlToMarkdown(rawContent, id, rawDoc.url || '');
+        let meta = await converter.convertHtmlToMarkdown(rawContent, id, rawDoc.url || '');
 
         if (site === 'pytorch_kr' && (!meta.content?.trim() || meta.content === `${meta.title}\n`)) {
           Logger.info(`[Transformer] Content empty for [${site}] ID: ${id}, trying JSON API fallback...`);

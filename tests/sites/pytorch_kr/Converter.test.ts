@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { PyTorchKRConverter } from '../../src/crawler/sites/pytorch_kr/Converter';
+import { PyTorchKRConverter } from '../../../src/crawler/sites/pytorch_kr/Converter';
 
 const converter = new PyTorchKRConverter();
 
@@ -12,11 +12,13 @@ function readFixture(name: string): string {
 console.log('🧪 [시작] PyTorchKR Converter 단위 테스트\n');
 
 // ── raw HTML (Discourse full page) ──────────────────────────────
-console.log('── Discourse full HTML (server-rendered page with post content) ──');
+(async () => {
+try {
+  console.log('── Discourse full HTML (server-rendered page with post content) ──');
 
 {
   const html = readFixture('10483.html');  // Discourse full page
-  const result = converter.convertHtmlToMarkdown(html, '10483', 'https://discuss.pytorch.kr/t/1-260-feat-anthropic/10483');
+  const result = await converter.convertHtmlToMarkdown(html, '10483', 'https://discuss.pytorch.kr/t/1-260-feat-anthropic/10483');
   assert.ok(result.title.startsWith('사회과학 분야'), 'Title should be extracted from <title>');
   assert.ok(result.rawContent.includes('# 📂 [PyTorch KR]'), 'Markdown should contain header');
   // With htmlparser2, cheerio can parse the server-rendered HTML and extract post content
@@ -30,7 +32,7 @@ console.log('\n── publishedAt fallback (meta[property=article:published_time
 {
   // HTML without time[datetime] but with meta tag
   const html = '<html><head><meta property="article:published_time" content="2026-06-04T06:30:39+00:00"></head><body><div class="post" itemprop="text"><p>test</p></div></body></html>';
-  const result = converter.convertHtmlToMarkdown(html, 'test', 'https://example.com');
+  const result = await converter.convertHtmlToMarkdown(html, 'test', 'https://example.com');
   assert.strictEqual(result.publishedAt, '2026-06-04T06:30:39+00:00', 'Should extract from meta tag when time[datetime] missing');
   console.log('✅ meta[article:published_time] fallback: OK');
 }
@@ -38,7 +40,7 @@ console.log('\n── publishedAt fallback (meta[property=article:published_time
 {
   // HTML without any time/meta
   const html = '<html><head></head><body><div class="post" itemprop="text"><p>test</p></div></body></html>';
-  const result = converter.convertHtmlToMarkdown(html, 'test', 'https://example.com');
+  const result = await converter.convertHtmlToMarkdown(html, 'test', 'https://example.com');
   assert.strictEqual(result.publishedAt, null, 'Should be null when no date info');
   console.log('✅ No date info → null: OK');
 }
@@ -54,7 +56,7 @@ const testCases: { id: string; titlePrefix: string; minContentLen: number }[] = 
 
 for (const tc of testCases) {
   const html = readFixture(`${tc.id}.json.html`);
-  const result = converter.convertHtmlToMarkdown(html, tc.id, `https://discuss.pytorch.kr/t/topic/${tc.id}`);
+  const result = await converter.convertHtmlToMarkdown(html, tc.id, `https://discuss.pytorch.kr/t/topic/${tc.id}`);
   const expected = readFixture(`${tc.id}.expected.md`);
 
   assert.ok(result.title.startsWith(tc.titlePrefix), `#${tc.id}: Title should match`);
@@ -68,3 +70,8 @@ for (const tc of testCases) {
 }
 
 console.log('\n🎉 [성공] 모든 PyTorchKR Converter 테스트가 통과되었습니다!');
+} catch (e: any) {
+  console.error(`\n❌ 테스트 실패: ${e.message}`);
+  process.exit(1);
+}
+})();
