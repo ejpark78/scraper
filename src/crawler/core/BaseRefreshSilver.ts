@@ -19,22 +19,22 @@ export interface BaseRefreshSilverConfig {
 export class BaseRefreshSilver {
   private readonly config: BaseRefreshSilverConfig;
 
-  constructor(config: BaseRefreshSilverConfig) {
-    this.config = {
-      extractId: (doc) => doc.topicId || doc.id || '',
-      extractRawContent: (doc) => doc.rawHtml || doc.rawJson || '',
-      getSilverFields: (meta) => ({
-        id: meta.id,
-        title: meta.title,
-        url: meta.url,
-        publishedAt: meta.publishedAt,
-        content: meta.content,
-        markdown: meta.rawContent,
-        updatedAt: new Date(),
-      }),
-      ...config,
-    };
-  }
+    constructor(config: BaseRefreshSilverConfig) {
+      this.config = {
+        ...config,
+        extractId: config.extractId || ((doc) => doc.topicId || doc.id || ''),
+        extractRawContent: config.extractRawContent || ((doc) => doc.rawHtml || doc.rawJson || ''),
+        getSilverFields: config.getSilverFields || ((meta) => ({
+          id: meta.id,
+          title: meta.title,
+          url: meta.url,
+          publishedAt: meta.publishedAt,
+          content: meta.content,
+          markdown: meta.rawContent,
+          updatedAt: new Date(),
+        })),
+      };
+    }
 
   public async run(): Promise<void> {
     const { site, bronzeCollection, silverCollection, dataDir } = this.config;

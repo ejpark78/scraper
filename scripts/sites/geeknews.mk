@@ -2,7 +2,7 @@
 # 📰 GeekNews Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh refresh-urls refresh-silver refresh-silver-rebuild
+.PHONY: list refresh refresh-urls refresh-silver
 
 PAGE ?= 1-5
 
@@ -17,7 +17,6 @@ refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts geeknews
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts geeknews
-
-refresh-silver-rebuild:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts geeknews
+
+

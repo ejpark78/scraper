@@ -2,7 +2,7 @@
 # 📚 Daily Dose of Data Science Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh-urls refresh-silver refresh-silver-rebuild help
+.PHONY: list refresh-urls refresh-silver help
 
 PAGE       ?= 1
 
@@ -25,7 +25,6 @@ refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts dailydose_ds
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts dailydose_ds
-
-refresh-silver-rebuild:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts dailydose_ds
+
+

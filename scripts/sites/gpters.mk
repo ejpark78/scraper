@@ -2,7 +2,7 @@
 # 💡 GPTERS Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh refresh-urls refresh-silver refresh-silver-rebuild newsletter-list newsletter-refresh
+.PHONY: list refresh refresh-urls refresh-silver newsletter-list newsletter-refresh
 
 LIMIT ?= 20
 PAGE ?= 5
@@ -18,7 +18,8 @@ refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts gpters
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts gpters
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts gpters
+
 
 newsletter-list: PRIORITY := high
 newsletter-list:

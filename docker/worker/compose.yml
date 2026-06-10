@@ -42,6 +42,7 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -64,6 +65,7 @@ services:
       - SESSION_DIR=/app/data/sessions
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped

@@ -99,7 +99,7 @@ export class MailyJoshConverter implements IConverter<MailyJoshMeta> {
       return turndownService.turndown(html).trim();
     } catch {
       const $ = cheerio.load(html);
-      return $.text().replace(/\s+/g, ' ').trim();
+      return $.text().trim();
     }
   }
 

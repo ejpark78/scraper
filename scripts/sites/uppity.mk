@@ -2,7 +2,7 @@
 # 📰 Uppity Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh-urls refresh-silver refresh-silver-rebuild help
+.PHONY: list refresh-urls refresh-silver help
 
 PAGE       ?= 1
 LIST_SLACK ?= 2
@@ -27,7 +27,6 @@ refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts uppity
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts uppity
-
-refresh-silver-rebuild:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts uppity
+
+

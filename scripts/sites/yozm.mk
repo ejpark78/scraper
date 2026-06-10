@@ -2,7 +2,7 @@
 # 📰 요즘IT (Yozm) Scraper Commands Module
 # ==============================================================================
 
-.PHONY: list refresh-urls refresh-silver refresh-silver-rebuild help
+.PHONY: list refresh-urls refresh-silver help
 
 PAGE       ?= 1
 LIST_SLACK ?= 2
@@ -25,7 +25,6 @@ refresh-urls:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts yozm
 
 refresh-silver:
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-transform.ts yozm
-
-refresh-silver-rebuild:
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts yozm
+
+

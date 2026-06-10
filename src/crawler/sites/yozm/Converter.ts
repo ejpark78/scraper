@@ -70,18 +70,14 @@ export class YozmConverter implements IConverter<YozmMeta> {
       }
     }
 
-    const articleSection = $('#article-detail-wrapper').first();
-    let contentHtml = '';
-    if (articleSection.length) {
-      contentHtml = articleSection.html() || '';
-    }
-    const domText = articleSection.text().trim();
-
+    const mainContent = $('main[data-id="detail-contents"]').first();
     let contentMarkdown: string;
-    if (domText.length > 50) {
-      contentMarkdown = this.htmlToMarkdown(contentHtml);
+
+    if (mainContent.length) {
+      const html = mainContent.html() || '';
+      contentMarkdown = this.htmlToMarkdown(html);
     } else {
-      console.log(`[Yozm] DOM body empty (RSC page), falling back to JSON-LD articleBody for ${id}`);
+      // Fallback to JSON-LD
       let bodyText = '';
       if (newsLd?.articleBody) {
         bodyText = newsLd.articleBody
@@ -132,6 +128,7 @@ export class YozmConverter implements IConverter<YozmMeta> {
         codeBlockStyle: 'fenced',
         emDelimiter: '*',
       });
+
       turndownService.remove('script');
       turndownService.remove('style');
       turndownService.remove('nav');
@@ -141,10 +138,17 @@ export class YozmConverter implements IConverter<YozmMeta> {
       turndownService.remove('select');
       turndownService.remove('textarea');
       turndownService.remove('form');
-      return turndownService.turndown(html).trim();
+      
+      let markdown = turndownService.turndown(html);
+      
+      // HTML 태그 기반의 강제 줄바꿈 보정 (정규식 활용)
+      // P, DIV 등의 블록 요소가 변환된 후 붙어버리는 경우를 대비해 줄바꿈 강화
+      markdown = markdown.replace(/\n\s*\n\s*\n/g, '\n\n');
+      
+      return markdown.trim();
     } catch {
       const $ = cheerio.load(html);
-      return $.text().replace(/\s+/g, ' ').trim();
+      return $.text().trim();
     }
   }
 

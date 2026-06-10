@@ -97,7 +97,7 @@ export class UppityConverter implements IConverter<UppityMeta> {
             return turndownService.turndown(html).trim();
         } catch {
             const $ = cheerio.load(html);
-            return $.text().replace(/\s+/g, ' ').trim();
+            return $.text().trim();
         }
     }
 
