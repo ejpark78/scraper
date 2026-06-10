@@ -9,3 +9,6 @@ urls:
 
 mcp:
 	$(COMPOSE) run --rm $(RUN_USER) viewer npx ts-node tests/mcp_client.ts
+
+recursive:
+	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SITE=$(SITE) clipper npx ts-node tests/recursive/RecursiveScrape.test.ts
