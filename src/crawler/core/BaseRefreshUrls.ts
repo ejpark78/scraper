@@ -86,7 +86,8 @@ export class BaseRefreshUrls {
                     site,
                     url: j.url,
                     attempt: 1,
-                    priority
+                    priority,
+                    recursive: process.env.RECURSIVE_SCRAPE === 'true',
                 }));
 
                 const chunkSize = 1000;
