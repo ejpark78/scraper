@@ -1,19 +1,33 @@
 /**
  * @module LogoutUrlCleaner
- * @description Cleans up URLs matching TARGET_PATTERN from MongoDB (bronze/uppity.urls) and Redis queues.
+ * @description Cleans up URLs matching TARGET_PATTERN from a configured MongoDB collection and Redis queues.
  * @constraints
  *   - Must use centralized CleanupConfig injection instead of direct process.env access.
  *   - Close both MongoDB and Redis connections in finally blocks to prevent connection leaks.
  *   - Follow Strict OOP: run operations using the IUrlCleaner interface.
- * @dependencies MongoDB (bronze/uppity.urls), Redis (scrape_queue*)
+ *   - Configuration parameters (site key, collection, pattern) must be set via top-level global constants.
+ * @dependencies MongoDB, Redis (ioredis)
  * @lastUpdated 2026-06-11
  */
 
 import { MongoDatabase } from '../database/mongo';
 import Redis from 'ioredis';
 
-// Global Target Pattern Configuration
-const TARGET_PATTERN: RegExp = /download.cm/i;
+// ==============================================================================
+// ⚙️ GLOBAL CLEANUP CONFIGURATION
+// ==============================================================================
+const SITE_KEY = 'uppity';                     // 사이트 식별자 (큐 검사 및 식별용)
+const MONGO_COLLECTION = 'bronze/uppity.urls'; // 대상 몽고디비 컬렉션명 (예: 'bronze/uppity.urls')
+const TARGET_PATTERN: RegExp = /download.cm/i; // 삭제할 URL 정규식 패턴
+
+// 검사 및 청소할 Redis 큐 키 목록
+const REDIS_QUEUE_KEYS: string[] = [
+    `scrape_queue:${SITE_KEY}:high`,
+    `scrape_queue:${SITE_KEY}:medium`,
+    `scrape_queue:${SITE_KEY}:low`,
+    'scrape_queue' // 레거시 공용 큐
+];
+// ==============================================================================
 
 /**
  * Rule 4: Centralized Config
@@ -43,19 +57,16 @@ export interface IUrlCleaner {
  */
 export class LogoutUrlCleaner implements IUrlCleaner {
     private readonly config: CleanupConfig;
-    private readonly queueKeys: string[] = [
-        'scrape_queue:uppity:high',
-        'scrape_queue:uppity:medium',
-        'scrape_queue:uppity:low',
-        'scrape_queue' // Legacy common queue
-    ];
 
     constructor(config: CleanupConfig) {
         this.config = config;
     }
 
     public async clean(): Promise<void> {
-        console.log(`🧼 [LogoutUrlCleaner] Starting cleanup operations for pattern: ${TARGET_PATTERN}...`);
+        console.log(`🧼 [LogoutUrlCleaner] Starting cleanup operations for site [${SITE_KEY}]...`);
+        console.log(`📋 Target Collection: ${MONGO_COLLECTION}`);
+        console.log(`🔍 Target Pattern: ${TARGET_PATTERN}`);
+        
         await this.cleanMongo();
         await this.cleanRedis();
         console.log('✨ [LogoutUrlCleaner] Cleanup operations complete.');
@@ -68,11 +79,11 @@ export class LogoutUrlCleaner implements IUrlCleaner {
         const mongo = MongoDatabase.getInstance();
         try {
             await mongo.connect();
-            const urlsColl = await mongo.getCollection('bronze/uppity.urls');
+            const urlsColl = await mongo.getCollection(MONGO_COLLECTION as `${'bronze' | 'silver'}/${string}`);
             const query = { url: { $regex: TARGET_PATTERN } };
             const matchCount = await urlsColl.countDocuments(query);
             
-            console.log(`🔍 [MongoDB] Found ${matchCount} matching documents in bronze/uppity.urls.`);
+            console.log(`🔍 [MongoDB] Found ${matchCount} matching documents in ${MONGO_COLLECTION}.`);
             if (matchCount > 0) {
                 const deleteResult = await urlsColl.deleteMany(query);
                 console.log(`✅ [MongoDB] Successfully deleted ${deleteResult.deletedCount} documents.`);
@@ -95,7 +106,7 @@ export class LogoutUrlCleaner implements IUrlCleaner {
         const redis = new Redis(this.config.redisUrl);
 
         try {
-            for (const key of this.queueKeys) {
+            for (const key of REDIS_QUEUE_KEYS) {
                 const exists = await redis.exists(key);
                 if (!exists) {
                     console.log(`ℹ️ [Redis] Queue '${key}' does not exist.`);
@@ -121,10 +132,10 @@ export class LogoutUrlCleaner implements IUrlCleaner {
                 for (const item of items) {
                     try {
                         const parsed: Record<string, unknown> = JSON.parse(item);
-                        const isUppity = key.includes('uppity') || parsed.site === 'uppity';
+                        const isTargetSite = key.includes(SITE_KEY) || parsed.site === SITE_KEY;
                         const hasMatch = typeof parsed.url === 'string' && TARGET_PATTERN.test(parsed.url);
 
-                        if (isUppity && hasMatch) {
+                        if (isTargetSite && hasMatch) {
                             removedCount++;
                         } else {
                             keepItems.push(item);
