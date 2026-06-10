@@ -1,5 +1,16 @@
+/**
+ * @module UppityList
+ * @description Crawls lists of articles from Uppity categories and extracts detail URLs.
+ * @constraints
+ *   - Excludes category, tag, author, page, login, logout, and download.cm URLs.
+ *   - Uses BaseListService for database storage (bronze/uppity.urls) and Redis queueing.
+ * @dependencies cheerio, BaseListService
+ * @lastUpdated 2026-06-11
+ */
+
 import * as cheerio from 'cheerio';
 import { BaseListService } from '../../core/BaseListService';
+
 
 const SECTIONS = [
     { slug: 'cloumn/어피티-오리지널', name: '어피티 오리지널' },
@@ -112,7 +123,7 @@ class UppityList extends BaseListService {
                 const href = $(el).attr('href');
                 const title = $(el).text().trim();
                 if (href && title && href.startsWith('https://uppity.co.kr/') && !seen.has(href)) {
-                    const skipPatterns = ['/category/', '/tag/', '/author/', '/page/', '#', '?', 'login', 'logout'];
+                    const skipPatterns = ['/category/', '/tag/', '/author/', '/page/', '#', '?', 'login', 'logout', 'download.cm'];
                     if (!skipPatterns.some(p => href.includes(p))) {
                         seen.add(href);
                         results.push({ url: href, title });
