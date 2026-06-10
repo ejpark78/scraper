@@ -26,8 +26,8 @@ show_file_diff() {
   
   echo "  ⎿  +${added} / -${deleted} lines"
   
-  # 바이너리 파일 예외 처리
-  if git diff --cached -- "$file" | grep -q "Binary files"; then
+  # 바이너리 파일 예외 처리 (numstat에서 -로 표시됨)
+  if [ "$added" = "-" ] || [ "$deleted" = "-" ]; then
     echo "       [Binary file]"
     return
   fi
