@@ -19,18 +19,9 @@ lint:
 -include scripts/utils/pipeline.mk
 -include scripts/tools/tools.mk
 
+list: AUTH=true
 list: RECURSIVE_SCRAPE=true
-list: yz-list mj-list gpt-list gn-list pk-list ab-list ddds-list up-list
-# list: li-list mj-list gpt-list gn-list pk-list ab-list ddds-list
-
-test-%:
-	@$(MAKE) -f scripts/utils/tests.mk $*
-
-gm-%:
-	@$(MAKE) -f scripts/tools/gmail.mk $*
-
-li-%:
-	@$(MAKE) -f scripts/sites/linkedin.mk $*
+list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list li-list 
 
 gpt-%:
 	@$(MAKE) -f scripts/sites/gpters.mk $*
@@ -56,5 +47,14 @@ mj-%:
 yz-%:
 	@$(MAKE) -f scripts/sites/yozm.mk $*
 
+li-%:
+	@$(MAKE) -f scripts/sites/linkedin.mk $*
+
+test-%:
+	@$(MAKE) -f scripts/utils/tests.mk $*
+
 mongo-%:
 	@$(MAKE) -f scripts/utils/mongo.mk $*
+
+gm-%:
+	@$(MAKE) -f scripts/tools/gmail.mk $*
