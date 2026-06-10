@@ -19,6 +19,8 @@ interface SiteScraperConfig {
   updateFilterKey: string;
   defaultSlack: number;
   extractId: (url: string) => string;
+  domain?: string;
+  urlsCollectionName?: string;
 }
 
 const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
@@ -40,6 +42,8 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
       }
       return '';
     },
+    domain: 'news.hada.io',
+    urlsCollectionName: 'bronze/geeknews.urls',
   },
   pytorch_kr: {
     collectionName: 'bronze/pytorch_kr.html',
@@ -50,6 +54,8 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
       const match = url.match(/\/(\d+)(?:\?|$)/);
       return match ? match[1] : '';
     },
+    domain: 'discuss.pytorch.kr',
+    urlsCollectionName: 'bronze/pytorch_kr.urls',
   },
   gpters: {
     collectionName: 'bronze/gpters.html',
@@ -60,6 +66,8 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
       const parts = url.split('-');
       return parts[parts.length - 1] || '';
     },
+    domain: 'gpters.org',
+    urlsCollectionName: 'bronze/gpters.urls',
   },
   gpters_newsletter: {
     collectionName: 'bronze/gpters_newsletter.html',
@@ -70,6 +78,8 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
       const parts = url.split('-');
       return parts[parts.length - 1] || '';
     },
+    domain: 'gpters.org',
+    urlsCollectionName: 'bronze/gpters_newsletter.urls',
   },
   aicasebook: {
     collectionName: 'bronze/aicasebook.html',
@@ -80,6 +90,8 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
       const match = url.match(/\/setup\/(\d+)/);
       return match ? match[1] : '';
     },
+    domain: 'aicasebook.dev',
+    urlsCollectionName: 'bronze/aicasebook.urls',
   },
   dailydose_ds: {
     collectionName: 'bronze/dailydose_ds.html',
@@ -87,9 +99,10 @@ const SITE_CONFIGS: Record<string, SiteScraperConfig> = {
     updateFilterKey: 'id',
     defaultSlack: 3,
     extractId: (url) => {
-      // Base64 encoding used in List.ts
       return Buffer.from(url).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
     },
+    domain: 'dailydoseofds.com',
+    urlsCollectionName: 'bronze/dailydose_ds.urls',
   },
 };
 
@@ -99,6 +112,7 @@ interface ScrapePayload {
   attempt: number;
   priority?: 'high' | 'medium' | 'low';
   scraperSlack?: number;
+  recursive?: boolean;
 }
 
 class ScraperDispatcher {
@@ -346,6 +360,20 @@ class ScraperWorker {
       return;
     }
 
+    // Validate URL domain if configured
+    if (config.domain) {
+      try {
+        const parsed = new URL(url);
+        if (parsed.hostname !== config.domain && !parsed.hostname.endsWith(`.${config.domain}`)) {
+          Logger.warn(`[Scraper] Skipping URL outside configured domain for [${site}]: ${url} (hostname: ${parsed.hostname})`);
+          return;
+        }
+      } catch {
+        Logger.error(`[Scraper] Invalid URL for [${site}]: ${url}`);
+        return;
+      }
+    }
+
     const id = config.extractId(url);
     if (!id) {
       Logger.error(`Invalid URL pattern. Cannot extract ID for site: ${site}`, { url });
@@ -366,12 +394,13 @@ class ScraperWorker {
       const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
       fs.unlinkSync(tempHtmlPath);
 
-      this.logHtmlPreview(site, id, rawHtml);
-      await this.saveRawHtmlAndQueueTransform(site, id, url, rawHtml);
+        this.logHtmlPreview(site, id, rawHtml);
+        await this.saveRawHtmlAndQueueTransform(site, id, url, rawHtml, payload);
     } catch (scrapeErr: any) {
-      await this.handleScrapeFailure(payload, id, scrapeErr);
+        await this.handleScrapeFailure(payload, id, scrapeErr);
     }
   }
+
 
   private async checkAndApplyRateLimit(site: string, scraperSlack?: number): Promise<void> {
     const config = SITE_CONFIGS[site];
@@ -406,47 +435,119 @@ class ScraperWorker {
     }
   }
 
-  private async saveRawHtmlAndQueueTransform(
-    site: string,
-    id: string,
-    url: string,
-    rawHtml: string
-  ): Promise<void> {
-    const config = SITE_CONFIGS[site];
-    if (!config) {
-      throw new Error(`Configuration not found for site: ${site}`);
+    private async saveRawHtmlAndQueueTransform(
+        site: string,
+        id: string,
+        url: string,
+        rawHtml: string,
+        payload?: ScrapePayload
+    ): Promise<void> {
+        const config = SITE_CONFIGS[site];
+        if (!config) {
+            throw new Error(`Configuration not found for site: ${site}`);
+        }
+
+        const collection = await this.mongo.getCollection(config.collectionName);
+        const updateFilter = { [config.updateFilterKey]: id };
+        const updatePayload = {
+            ...updateFilter,
+            id,
+            url,
+            rawHtml,
+            scrapedAt: new Date(),
+        };
+
+        const updateResult = await collection.updateOne(
+            updateFilter,
+            { $set: updatePayload },
+            { upsert: true }
+        );
+
+        const dbRefId = updateResult.upsertedId ? updateResult.upsertedId.toString() : id;
+
+        const transformTask = {
+            site,
+            id,
+            bronze_db: 'bronze',
+            bronze_collection: config.targetCollection,
+            bronze_id: dbRefId,
+            timestamp: new Date().toISOString(),
+        };
+
+        await this.redis.rpush(TRANSFORM_QUEUE, JSON.stringify(transformTask));
+        Logger.info(`[Scraper] Successfully saved Raw HTML and published transform event for ID: ${id}`);
+
+        // Recursive discovery based on payload flag
+        if (payload?.recursive === true) {
+            const config = SITE_CONFIGS[site];
+            if (config?.domain && config?.urlsCollectionName) {
+                await this.discoverRecursiveUrls(site, rawHtml);
+            }
+        }
     }
 
-    const collection = await this.mongo.getCollection(config.collectionName);
-    const updateFilter = { [config.updateFilterKey]: id };
-    const updatePayload = {
-      ...updateFilter,
-      id,
-      url,
-      rawHtml,
-      scrapedAt: new Date(),
-    };
+    private async discoverRecursiveUrls(site: string, html: string): Promise<void> {
+        try {
+            const config = SITE_CONFIGS[site];
+            if (!config?.domain || !config?.urlsCollectionName) return;
 
-    const updateResult = await collection.updateOne(
-      updateFilter,
-      { $set: updatePayload },
-      { upsert: true }
-    );
+            const $ = cheerio.load(html);
+            const urlsColl = await this.mongo.getCollection(config.urlsCollectionName as `${'bronze' | 'silver'}/${string}`);
+            let discoveredCount = 0;
+            const priority = process.env.PRIORITY || 'medium';
 
-    const dbRefId = updateResult.upsertedId ? updateResult.upsertedId.toString() : id;
+            const links = $('a[href]').toArray();
+            for (const link of links) {
+                const href = $(link).attr('href');
+                if (!href) continue;
 
-    const transformTask = {
-      site,
-      id,
-      bronze_db: 'bronze',
-      bronze_collection: config.targetCollection,
-      bronze_id: dbRefId,
-      timestamp: new Date().toISOString(),
-    };
+                let fullUrl: string;
+                if (href.startsWith('http')) {
+                    try {
+                        const parsed = new URL(href);
+                        if (parsed.hostname !== config.domain && !parsed.hostname.endsWith(`.${config.domain}`)) continue;
+                    } catch { continue; }
+                    fullUrl = href;
+                } else if (href.startsWith('/')) {
+                    fullUrl = `https://${config.domain}${href}`;
+                } else {
+                    continue;
+                }
+                const id = config.extractId(fullUrl);
 
-    await this.redis.rpush(TRANSFORM_QUEUE, JSON.stringify(transformTask));
-    Logger.info(`[Scraper] Successfully saved Raw HTML and published transform event for ID: ${id}`);
-  }
+                const doc = await urlsColl.findOne({ id });
+                const isCompleted = doc?.status === 'completed';
+                const alreadyPushed = doc?.pushedToRedis || false;
+
+                if (!isCompleted && !alreadyPushed) {
+                    const payload = JSON.stringify({
+                        site,
+                        url: fullUrl,
+                        attempt: 1,
+                        priority: priority
+                    });
+                    
+                    await this.redis.rpush(`scrape_queue:${site}:${priority}`, payload);
+                    await urlsColl.updateOne({ id }, { 
+                        $set: { 
+                            id, 
+                            url: fullUrl, 
+                            status: 'new', 
+                            pushedToRedis: true, 
+                            updatedAt: new Date() 
+                        } 
+                    }, { upsert: true });
+                    discoveredCount++;
+                }
+            }
+            if (discoveredCount > 0) {
+                Logger.info(`[Scraper] [Recursive] Discovered and queued ${discoveredCount} new links from [${site}] content.`);
+            }
+        } catch (err: any) {
+            Logger.error(`[Scraper] Error during recursive discovery for [${site}]: ${err.message}`);
+        }
+    }
+
 
   private async handleScrapeFailure(
     payload: ScrapePayload,

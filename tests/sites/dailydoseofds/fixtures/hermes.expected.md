@@ -1,7 +1,7 @@
 # 📂 [Daily Dose of DS] Hermes Agent Masterclass
 
 * **작성일:** 2026-05-14
-* **원본 링크:** [바로가기](https://www.dailydoseofds.com/p/hermes-agent-masterclass/)
+* **원본 링크:** [바로가기](https://www.dailydoseofds.com/hermes)
 
 ## 📝 본문 내용
 
@@ -27,10 +27,10 @@ Hermes Agent crossed 90,000 GitHub stars in two months. Developers are quietly b
 
 Hermes Agent takes a fundamentally different approach which makes it much more practically useful over OpenClaw. It ships with a learning loop that:
 
-*   Remembers across sessions
-*   Writes its own reusable skills
-*   Prunes them in the background
-*   And validates them offline through an evolutionary engine called GEPA
+-   Remembers across sessions
+-   Writes its own reusable skills
+-   Prunes them in the background
+-   And validates them offline through an evolutionary engine called GEPA
 
 No other open-source agent combines all of them. Not even OpenClaw.
 
@@ -74,9 +74,9 @@ The core loop is ReAct-style and synchronous. Build the system prompt, check if 
 
 A few key details:
 
-*   The agent can run commands in six different places. Local terminal, Docker, SSH, Modal, Daytona, or Singularity. Same code, just a config change. Move execution from your laptop to a cloud GPU server without touching anything else.
-*   It works with almost any model. A translation layer routes any provider through one of three API formats. That’s why you can swap from Claude to GPT to Gemini to local Ollama with one command and nothing breaks.
-*   The agent has a hard cap of 90 turns per task. Without it, an agent stuck in a loop (retrying a failing API, re-reading the same file) would silently burn through your credits. Subagents share the same budget, so a runaway delegation chain can’t sneak past either.
+-   The agent can run commands in six different places. Local terminal, Docker, SSH, Modal, Daytona, or Singularity. Same code, just a config change. Move execution from your laptop to a cloud GPU server without touching anything else.
+-   It works with almost any model. A translation layer routes any provider through one of three API formats. That’s why you can swap from Claude to GPT to Gemini to local Ollama with one command and nothing breaks.
+-   The agent has a hard cap of 90 turns per task. Without it, an agent stuck in a loop (retrying a failing API, re-reading the same file) would silently burn through your credits. Subagents share the same budget, so a runaway delegation chain can’t sneak past either.
 
 #### **Before memory**
 
@@ -112,8 +112,8 @@ Hermes doesn’t have a single “memory.” It has three layers, each designed 
 
 At the core are two files stored on disk:
 
-*   `MEMORY.md` (2,200 chars max) holds the agent’s notes about your environment, project conventions, tool quirks, and lessons learned.
-*   `USER.md` (1,375 chars max) holds your profile: name, communication preferences, skill level, and things to avoid.
+-   `MEMORY.md` (2,200 chars max) holds the agent’s notes about your environment, project conventions, tool quirks, and lessons learned.
+-   `USER.md` (1,375 chars max) holds your profile: name, communication preferences, skill level, and things to avoid.
 
 Both are injected into the system prompt as a frozen snapshot when a session starts. If the agent writes a new memory entry mid-session, that change persists to disk immediately but won’t appear in the system prompt until the next session.
 
@@ -171,18 +171,18 @@ To keep token costs low, skills use progressive disclosure:
 
 ![](https://substackcdn.com/image/fetch/$s_!JXKs!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4e7f0ad4-1502-4d1c-9127-33494c42a18b_680x368.png)
 
-*   Level 0 → The agent sees names + descriptions only (~3k tokens for the full catalog)
-*   Level 1 → It loads the full skill content when it actually needs one
-*   Level 2 → It can drill into specific reference files within a skill
+-   Level 0 → The agent sees names + descriptions only (~3k tokens for the full catalog)
+-   Level 1 → It loads the full skill content when it actually needs one
+-   Level 2 → It can drill into specific reference files within a skill
 
 #### The self-improvement loop
 
 This is the core differentiator. The agent creates its own skills autonomously using the `skill_manage` tool. Skill creation triggers when:
 
-*   The agent completes a complex task (5+ tool calls)
-*   It hits errors or dead ends and finds the working path
-*   The user corrects its approach
-*   It discovers a non-trivial workflow
+-   The agent completes a complex task (5+ tool calls)
+-   It hits errors or dead ends and finds the working path
+-   The user corrects its approach
+-   It discovers a non-trivial workflow
 
 So the loop works like as follows: the agent encounters a problem → solves it through trial and error → saves the successful approach as a `SKILL.md` file → next time it encounters a similar problem, it loads the skill and follows the proven procedure instead of rediscovering the approach from scratch.
 
@@ -207,8 +207,8 @@ It operates in two phases:
 
 Two important constraints:
 
-*   The Curator never touches bundled or hub-installed skills. Only agent-authored ones.
-*   It never auto-deletes. The worst outcome is archival to `~/.hermes/skills/.archive/`, which is recoverable with one command.
+-   The Curator never touches bundled or hub-installed skills. Only agent-authored ones.
+-   It never auto-deletes. The worst outcome is archival to `~/.hermes/skills/.archive/`, which is recoverable with one command.
 
 Before every Curator pass, Hermes takes a tar.gz snapshot of the entire skills directory. Rollback is one command, and rollbacks are themselves reversible.
 
@@ -222,8 +222,8 @@ Here’s where it gets interesting.
 
 The in-agent learning loop (skill creation + Curator) has a known weakness:
 
-*   The agent tends toward self-congratulation. It almost always thinks it performed well, even when it didn’t. Community feedback has confirmed this.
-*   The same system that auto-generates skills can also overwrite manual customizations with worse versions.
+-   The agent tends toward self-congratulation. It almost always thinks it performed well, even when it didn’t. Community feedback has confirmed this.
+-   The same system that auto-generates skills can also overwrite manual customizations with worse versions.
 
 GEPA (Genetic-Pareto Prompt Evolution) solve this.
 
@@ -332,11 +332,11 @@ It’s worth understanding the layout because everything you do with Hermes touc
 
 A few files deserve a closer look.
 
-*   `config.yaml` is the source of truth for everything non-secret. Model choice, terminal backend, tool enablement, MCP servers all live here. Edit with hermes config edit or set values one at a time with hermes config set <key> <value>.
-*   `.env` holds your secrets. API keys, bot tokens, passwords. Hermes routes secret-looking values here automatically.
-*   `SOUL.md` is slot #1 in the system prompt, before everything else. Identity layer, covered earlier.
-*   `skills/` is where the entire learning loop lives. Every skill the agent creates, plus everything you install, lands here.
-*   `state.db` is the SQLite database backing session search.
+-   `config.yaml` is the source of truth for everything non-secret. Model choice, terminal backend, tool enablement, MCP servers all live here. Edit with hermes config edit or set values one at a time with hermes config set <key> <value>.
+-   `.env` holds your secrets. API keys, bot tokens, passwords. Hermes routes secret-looking values here automatically.
+-   `SOUL.md` is slot #1 in the system prompt, before everything else. Identity layer, covered earlier.
+-   `skills/` is where the entire learning loop lives. Every skill the agent creates, plus everything you install, lands here.
+-   `state.db` is the SQLite database backing session search.
 
 You won’t manually edit most of this. But knowing the layout makes everything else click.
 
@@ -346,10 +346,10 @@ Hermes maintains its own official [**Skills Hub**](https://hermes-agent.nousres
 
 ![](https://substackcdn.com/image/fetch/$s_!ed-f!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F62e87b32-dcb0-409a-a6e3-18d75cad68f0_733x433.png)
 
-*   87 built-in skills that ship with the agent
-*   79 optional skills you can enable on demand
-*   16 from Anthropic (frontend-design, pdf, pptx, docx, mcp-builder, etc.)
-*   505 from LobeHub (broader community contributions)
+-   87 built-in skills that ship with the agent
+-   79 optional skills you can enable on demand
+-   16 from Anthropic (frontend-design, pdf, pptx, docx, mcp-builder, etc.)
+-   505 from LobeHub (broader community contributions)
 
 You can also add any GitHub repo as a custom tap:
 
@@ -467,8 +467,8 @@ The programmer will install the `autonomous-ai-agents/claude-code` skill on it
 
 Two things worth knowing:
 
-*   Make sure `claude` is on your PATH before activating. `which claude` command should print a real binary path.
-*   Claude Code has both a print mode (one-shot, fast, no TUI) and an interactive mode (full `tmux` session). The programmer picks based on the task. You don’t need to think about it.
+-   Make sure `claude` is on your PATH before activating. `which claude` command should print a real binary path.
+-   Claude Code has both a print mode (one-shot, fast, no TUI) and an interactive mode (full `tmux` session). The programmer picks based on the task. You don’t need to think about it.
 
 #### **Customizing the designer to teach it your visual style**
 
@@ -553,10 +553,10 @@ You should see the job with its next scheduled run time.
 
 The cron syntax is flexible. A few variations worth knowing:
 
-*   One-shot delays → `/cron add 30m “Remind me to check the build”` runs once in 30 minutes.
-*   Recurring intervals → `/cron add “every 2h” “Check server status”` runs every two hours.
-*   Standard cron expressions → `/cron add “0 9 * * 1-5” “...”` for precise control. Weekdays at 9am, in this case.
-*   Skill attachment → `/cron add “every 1h” “Summarize new feed items” --skill` blogwatcher loads a skill before running the prompt.
+-   One-shot delays → `/cron add 30m “Remind me to check the build”` runs once in 30 minutes.
+-   Recurring intervals → `/cron add “every 2h” “Check server status”` runs every two hours.
+-   Standard cron expressions → `/cron add “0 9 * * 1-5” “...”` for precise control. Weekdays at 9am, in this case.
+-   Skill attachment → `/cron add “every 1h” “Summarize new feed items” --skill` blogwatcher loads a skill before running the prompt.
 
 You can also chain jobs. One cron’s output becomes the next cron’s input via a `context_from` flag. Useful for multi-stage automations where you want a research step to feed a writing step.
 
@@ -567,31 +567,3 @@ Also, if you learn better from video, we’ll drop a full Hermes Agent walkthrou
 👉 Over to you: Have you used Hermes Agent?
 
 Thanks for reading!
-
-Published on May 14, 2026
-
-Comments
-
-Share
-
-Copy link [Share to X](https://x.com/intent/tweet?url=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fhermes-agent-masterclass%2F&text=Hermes%20Agent%20Masterclass) [Share to Facebook](https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fhermes-agent-masterclass%2F) [Share to Linkedin](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fhermes-agent-masterclass%2F)
-
-Copied
-
-[
-
-Previous
-
-Speculative Decoding in LLMs
-
-
-
-](https://www.dailydoseofds.com/p/speculative-decoding-in-llms/)[
-
-Next
-
-Model-Free Learning
-
-
-
-](https://www.dailydoseofds.com/rl-course-part-4/)

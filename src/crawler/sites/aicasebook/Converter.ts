@@ -1,9 +1,22 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
-import { AiCasebookMeta } from './AiCasebookMeta';
 
-export { AiCasebookMeta };
+export interface AiCasebookMeta {
+  id: string;
+  title: string;
+  url: string;
+  summary: string;
+  body: string;
+  author: string;
+  categories: string[];
+  tags: string[];
+  publishedAt: string | null;
+  views: number;
+  sourceLink: string;
+  seriesName: string | null;
+  rawContent: string;
+}
 
 export class AiCasebookConverter implements IConverter<AiCasebookMeta> {
 

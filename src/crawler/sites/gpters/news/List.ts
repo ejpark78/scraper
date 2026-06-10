@@ -1,27 +1,15 @@
-import Redis from 'ioredis';
 import { MongoDatabase } from '../../../../database/mongo';
+import { BaseListService } from '../../../../crawler/core/BaseListService';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
-const QUEUE_KEY = 'gpters_queue';
-const CACHE_SET_KEY = 'completed_news';
-
-export class GptersList {
-    private redis!: Redis;
-
-    public async init(): Promise<void> {
-        this.redis = new Redis(REDIS_URL);
-        console.log(`📡 [GPTERS List] Connected to Redis for queueing.`);
-    }
-
-    public async close(): Promise<void> {
-        if (this.redis) {
-            await this.redis.quit();
-        }
-        try {
-            await MongoDatabase.getInstance().close();
-        } catch (err: any) {
-            console.warn(`⚠️ Error closing MongoDB connection: ${err.message}`);
-        }
+class GptersList extends BaseListService {
+    constructor() {
+        super({
+            site: 'gpters',
+            displayName: 'GPTERS',
+            cacheSetKey: 'completed_news',
+            bronzeHtmlCollection: 'bronze/gpters.html',
+            urlsCollection: 'bronze/gpters.urls',
+        });
     }
 
     private async fetchGuestToken(): Promise<string> {
@@ -64,37 +52,15 @@ export class GptersList {
         }
         `;
 
-        const dbInstance = MongoDatabase.getInstance();
-        const gptersUrlsColl = await dbInstance.getCollection('bronze/gpters.urls');
-
-        // Synchronize Completed cache with MongoDB first if Redis cache is empty
-        const completedCount = await this.redis.scard(CACHE_SET_KEY);
-        if (completedCount === 0) {
-            try {
-                console.log(`🔍 [GPTERS List] Redis cache is empty. Seeding from MongoDB bronze.gpters...`);
-                const bronzeGpters = await dbInstance.getCollection('bronze/gpters.html');
-                const existing = await bronzeGpters.find({}, { projection: { id: 1, _id: 0 } }).toArray();
-                if (existing.length > 0) {
-                    const pipeline = this.redis.pipeline();
-                    existing.forEach((doc: any) => {
-                        if (doc.id) pipeline.sadd(CACHE_SET_KEY, doc.id);
-                    });
-                    await pipeline.exec();
-                    console.log(`📡 [GPTERS List] Seeded ${existing.length} completed IDs into Redis cache.`);
-                }
-            } catch (err: any) {
-                console.warn(`⚠️ MongoDB seed skipped or failed: ${err.message}`);
-            }
-        }
+        await this.seedCache();
 
         let queuedCount = 0;
-        const overwrite = process.env.OVERWRITE === 'true';
         let after: string | null = null;
         let page = 0;
         let hasNextPage = true;
+
         let r: Response;
         let resJson: any;
-        let postData: any;
         let posts: any[];
         let pageInfo: any;
 
@@ -123,7 +89,7 @@ export class GptersList {
             }
 
             resJson = await r.json();
-            postData = resJson.data?.posts;
+            const postData = resJson.data?.posts;
             posts = postData?.nodes || [];
             pageInfo = postData?.pageInfo || {};
             hasNextPage = pageInfo.hasNextPage || false;
@@ -135,70 +101,18 @@ export class GptersList {
             }
 
             for (const post of posts) {
-            const id = post.id;
-            const slug = post.slug;
-            const title = post.title;
+                const id = post.id;
+                const slug = post.slug;
+                const title = post.title;
 
-            if (!id || !slug) continue;
+                if (!id || !slug) continue;
 
-            // GPTERS post URL structure
-            const detailUrl = `https://www.gpters.org/news/post/${slug}-${id}`;
+                const detailUrl = `https://www.gpters.org/news/post/${slug}-${id}`;
 
-            if (overwrite) {
-                await this.redis.srem(CACHE_SET_KEY, id);
-            }
-
-            // Check if already completed
-            const isCompleted = overwrite ? false : await this.redis.sismember(CACHE_SET_KEY, id);
-
-            // Upsert URL metadata to MongoDB
-            const updateDoc: any = {
-                $set: {
-                    id,
-                    url: detailUrl,
-                    title,
-                    status: isCompleted ? 'completed' : 'new',
-                    updatedAt: new Date()
+                if (await this.processItem(id, detailUrl, title)) {
+                    queuedCount++;
                 }
-            };
-
-            if (overwrite) {
-                updateDoc.$set.pushedToRedis = false;
-            } else {
-                updateDoc.$setOnInsert = {
-                    pushedToRedis: isCompleted ? true : false
-                };
             }
-
-            await gptersUrlsColl.updateOne({ id }, updateDoc, { upsert: true });
-
-            if (isCompleted) {
-                console.log(`⏭️ [GPTERS List] Skipping already completed item: [ID: ${id}] ${title}`);
-                continue;
-            }
-
-            // Check if already pushed to Redis
-            const doc = await gptersUrlsColl.findOne({ id });
-            const alreadyPushed = doc?.pushedToRedis || false;
-
-            if (!alreadyPushed) {
-                const priority = process.env.PRIORITY || 'medium';
-                // Push to Redis Queue (Unified scrape_queue with priority format)
-                const payload = JSON.stringify({
-                    site: 'gpters',
-                    url: detailUrl,
-                    attempt: 1,
-                    priority: priority
-                });
-                await this.redis.rpush(`scrape_queue:gpters:${priority}`, payload);
-                await gptersUrlsColl.updateOne(
-                    { id },
-                    { $set: { pushedToRedis: true } }
-                );
-                console.log(`🚀 [GPTERS List] Queued (Force Overwrite: ${overwrite}): [ID: ${id}] ${title} -> ${detailUrl}`);
-                queuedCount++;
-            }
-        }
 
             after = pageInfo.endCursor || null;
             if (queuedCount > 0) {

@@ -1,7 +1,7 @@
 # 📂 [Daily Dose of DS] Speculative Decoding in LLMs
 
 * **작성일:** 2026-05-13
-* **원본 링크:** [바로가기](https://www.dailydoseofds.com/p/speculative-decoding-in-llms/)
+* **원본 링크:** [바로가기](https://www.dailydoseofds.com/speculative)
 
 ## 📝 본문 내용
 
@@ -67,9 +67,9 @@ Here's how the loop runs:
 
 ![](https://substackcdn.com/image/fetch/$s_!IBkn!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fce4e25ca-1b23-4118-a4c7-ecbf8087e961_1166x1166.gif)
 
-*   First, a small model (e.g., Qwen2.5 0.5B) generates 5 candidate tokens autoregressively. Because it's 100x smaller than the target, this costs roughly 1-2% of a single large model forward pass.
-*   Then the large model (e.g., Qwen2.5 7B) processes all 5 draft tokens in a single forward pass, computing its probability distribution at each position. The draft model already produced its own distribution during drafting. Both distributions now exist side by side for comparison.
-*   The verification step walks through draft tokens sequentially. If the large model agrees with tokens 1, 2, and 3, but disagrees at token 4, tokens 1-3 are accepted as-is (the small model got them right), the large model replaces token 4 with its own prediction (which it already computed during the verification pass), and token 5 is discarded without evaluation.
+-   First, a small model (e.g., Qwen2.5 0.5B) generates 5 candidate tokens autoregressively. Because it's 100x smaller than the target, this costs roughly 1-2% of a single large model forward pass.
+-   Then the large model (e.g., Qwen2.5 7B) processes all 5 draft tokens in a single forward pass, computing its probability distribution at each position. The draft model already produced its own distribution during drafting. Both distributions now exist side by side for comparison.
+-   The verification step walks through draft tokens sequentially. If the large model agrees with tokens 1, 2, and 3, but disagrees at token 4, tokens 1-3 are accepted as-is (the small model got them right), the large model replaces token 4 with its own prediction (which it already computed during the verification pass), and token 5 is discarded without evaluation.
 
 ![](https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-24.png)
 
@@ -177,8 +177,8 @@ Behind the scenes, the 125M model drafts ~5 tokens autoregressively, the 6.7B mo
 
 The video below shows this in action:
 
-*   The left side runs standard decoding (one token per forward pass), while the right side runs speculative decoding with the same 6.7B target model.
-*   The speculative run produces tokens in visible bursts as batches of draft tokens get accepted, finishing in roughly half the time with a 1.9x speedup.
+-   The left side runs standard decoding (one token per forward pass), while the right side runs speculative decoding with the same 6.7B target model.
+-   The speculative run produces tokens in visible bursts as batches of draft tokens get accepted, finishing in roughly half the time with a 1.9x speedup.
 
 For production serving, vLLM supports draft models, EAGLE, n-gram, and MTP out of the box:
 
@@ -248,13 +248,13 @@ For instance:
 
 ![](https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/image-32.png)
 
-*   When Llama 3.2 1B was used as the draft model for Llama 3.1 70B, it achieved 2.31x speedup
-*   But when Llama 3.2 8B was used as the draft model, it achieved 2.08x speed up.
+-   When Llama 3.2 1B was used as the draft model for Llama 3.1 70B, it achieved 2.31x speedup
+-   But when Llama 3.2 8B was used as the draft model, it achieved 2.08x speed up.
 
 So despite its higher acceptance rate, the overall setup runs a bit slower.Sampling temperature also affects speedup.
 
-*   At temperature ~0 (greedy decoding), both models tend to agree on the top token, so acceptance rates are highest.
-*   As temperature increases, the probability distributions flatten, the small and large models agree less often, and more draft tokens get rejected. Creative generation tasks at high temperature see noticeably lower speedups than deterministic tasks.
+-   At temperature ~0 (greedy decoding), both models tend to agree on the top token, so acceptance rates are highest.
+-   As temperature increases, the probability distributions flatten, the small and large models agree less often, and more draft tokens get rejected. Creative generation tasks at high temperature see noticeably lower speedups than deterministic tasks.
 
 [**We covered Temperature in LLMs here if you want to learn more →**](https://www.dailydoseofds.com/p/what-is-temperature-in-llms/)
 
@@ -264,8 +264,8 @@ So despite its higher acceptance rate, the overall setup runs a bit slower.Sampl
 
 The two-model setup has two pain points:
 
-*   You need a matched small model from the same family (for better speedups)
-*   Having a small model means extra GPU memory.
+-   You need a matched small model from the same family (for better speedups)
+-   Having a small model means extra GPU memory.
 
 Several variants eliminate one or both of these problems.
 
@@ -277,9 +277,9 @@ EAGLE replaces the separate draft model with a lightweight head (< 1B params) tr
 
 Here's how it works step by step.
 
-*   When the large model generates a token, every layer in the transformer produces a hidden state vector for that token.
-*   EAGLE takes the hidden state from the second-to-last layer (the one just before the final prediction layer) because it contains rich semantic information about what the model "thinks" should come next.
-*   The EAGLE head is a small neural network that takes this hidden state as input and outputs a prediction for the next token, without running the full model again.
+-   When the large model generates a token, every layer in the transformer produces a hidden state vector for that token.
+-   EAGLE takes the hidden state from the second-to-last layer (the one just before the final prediction layer) because it contains rich semantic information about what the model "thinks" should come next.
+-   The EAGLE head is a small neural network that takes this hidden state as input and outputs a prediction for the next token, without running the full model again.
 
 Think of it as a shortcut. Instead of passing through all the layers of a large model to predict the next token, you pass through just the EAGLE head, which is a few layers at most.
 
@@ -301,9 +301,9 @@ Instead of drafting tokens one after another, it predicts multiple future tokens
 
 Under the hood, Medusa attaches several small prediction heads to the large model, each responsible for a different position ahead.
 
-*   Head 1 predicts what the next token will be.
-*   Head 2 predicts what the token two positions ahead will be.
-*   Head 3 predicts three positions ahead, and so on.
+-   Head 1 predicts what the next token will be.
+-   Head 2 predicts what the token two positions ahead will be.
+-   Head 3 predicts three positions ahead, and so on.
 
 All these heads run in parallel during a single forward pass of the large model. So from one pass, you get predictions for the next 5 positions at once, not just one.
 
@@ -404,31 +404,3 @@ As further reading:
 ![](https://storage.ghost.io/c/3f/df/3fdf6ed2-17ac-4b12-a693-8078bd13e748/content/images/2026/06/72-llm-optimization-techniques-visual.png)
 
 Thanks for reading!
-
-Published on May 13, 2026
-
-Comments
-
-Share
-
-Copy link [Share to X](https://x.com/intent/tweet?url=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fspeculative-decoding-in-llms%2F&text=Speculative%20Decoding%20in%20LLMs) [Share to Facebook](https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fspeculative-decoding-in-llms%2F) [Share to Linkedin](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.dailydoseofds.com%2Fp%2Fspeculative-decoding-in-llms%2F)
-
-Copied
-
-[
-
-Previous
-
-Bellman Equations and Dynamic Programming
-
-
-
-](https://www.dailydoseofds.com/rl-course-part-3/)[
-
-Next
-
-Hermes Agent Masterclass
-
-
-
-](https://www.dailydoseofds.com/p/hermes-agent-masterclass/)

@@ -1,33 +1,19 @@
 # 📂 [Daily Dose of DS] Introduction to Deep RL and DQN
 
-* **작성일:** 정보 없음
-* **원본 링크:** [바로가기](https://www.dailydoseofds.com/rl-course-part-6/)
+* **작성일:** Published on May 31, 2026
+* **원본 링크:** [바로가기](https://www.dailydoseofds.com/course_6)
 
 ## 📝 본문 내용
 
 ## Reinforcement Learning Course
 
-*   *   [
-        
-        Foundations of Reinforcement Learning](https://www.dailydoseofds.com/rl-course-part-1/)
-    *   [
-        
-        Markov Decision Processes and Value Functions](https://www.dailydoseofds.com/rl-course-part-2/)
-    *   [
-        
-        Bellman Equations and Dynamic Programming](https://www.dailydoseofds.com/rl-course-part-3/)
-    *   [
-        
-        Model-Free Learning](https://www.dailydoseofds.com/rl-course-part-4/)
-    *   [
-        
-        Function Approximation](https://www.dailydoseofds.com/rl-course-part-5/)
-    *   [
-        
-        Introduction to Deep RL and DQN](https://www.dailydoseofds.com/rl-course-part-6/)
-    *   [
-        
-        Policy Gradients: REINFORCE and Actor-Critic](https://www.dailydoseofds.com/rl-course-part-7/)
+-   -   [Foundations of Reinforcement Learning](https://www.dailydoseofds.com/rl-course-part-1/)
+    -   [Markov Decision Processes and Value Functions](https://www.dailydoseofds.com/rl-course-part-2/)
+    -   [Bellman Equations and Dynamic Programming](https://www.dailydoseofds.com/rl-course-part-3/)
+    -   [Model-Free Learning](https://www.dailydoseofds.com/rl-course-part-4/)
+    -   [Function Approximation](https://www.dailydoseofds.com/rl-course-part-5/)
+    -   [Introduction to Deep RL and DQN](https://www.dailydoseofds.com/rl-course-part-6/)
+    -   [Policy Gradients: REINFORCE and Actor-Critic](https://www.dailydoseofds.com/rl-course-part-7/)
 
 Reinforcement Learning Course
 
@@ -55,7 +41,7 @@ In the previous chapter, we made the transition from tables to parameterized val
 
 ![upload in progress, 0](https://substackcdn.com/image/fetch/$s_!03Wl!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F739afb3b-2d13-40e1-8690-4a71922c26d9_2000x1124.png "upload in progress, 0")
 
-The reasons were structural. Tables do not scale, and they do not generalize. Mountain car has a state space made of two real numbers, so it is impossible to even index into a table for it. And updating one cell of a Q-table tells us nothing about the cell next to it. The fix was to write the value function as a function over states, with a small parameter vector θθ controlling its shape.
+The reasons were structural. Tables do not scale, and they do not generalize. Mountain car has a state space made of two real numbers, so it is impossible to even index into a table for it. And updating one cell of a Q-table tells us nothing about the cell next to it. The fix was to write the value function as a function over states, with a small parameter vector θ θ controlling its shape.
 
 ![upload in progress, 0](https://substackcdn.com/image/fetch/$s_!XKS3!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F58ec7ef8-5c8e-4143-bc0c-c6f93e551bbb_292x75.png "upload in progress, 0")
 
@@ -65,21 +51,21 @@ We laid out the prediction objective, mean square value error. We then worked th
 
 From that foundation, we built two learning algorithms:
 
-*   Gradient Monte Carlo uses the full return as a target, which makes it a true gradient method on a well-defined squared-error objective.
+-   Gradient Monte Carlo uses the full return as a target, which makes it a true gradient method on a well-defined squared-error objective.
 
 ![upload in progress, 0](https://substackcdn.com/image/fetch/$s_!0Km0!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fcd00a76d-a823-4a33-9b4d-c3a3f7a0b2fe_581x170.png "upload in progress, 0")
 
-*   Semi-gradient TD(0) replaces the return with a bootstrapped target, gaining online updates and low variance, but introducing the bias of differentiating only the prediction and not the target.
+-   Semi-gradient TD(0) replaces the return with a bootstrapped target, gaining online updates and low variance, but introducing the bias of differentiating only the prediction and not the target.
 
 ![upload in progress, 0](https://substackcdn.com/image/fetch/$s_!47Cj!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ffc5adfc7-ebc4-49b1-a4eb-bb7ddb4f2657_712x146.png "upload in progress, 0")
 
 We then extended our understanding to control:
 
-*   Semi-gradient SARSA learns the action-value function on-policy and works reliably with linear features.
+-   Semi-gradient SARSA learns the action-value function on-policy and works reliably with linear features.
 
 ![upload in progress, 0](https://substackcdn.com/image/fetch/$s_!_JlP!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ffd2d8e8d-4ca6-4079-8a93-09bb6408498a_983x95.png "upload in progress, 0")
 
-*   Semi-gradient Q-learning uses the max over next actions, making it off-policy. This places it squarely inside what Sutton and Barto call the deadly triad: function approximation, bootstrapping, and off-policy learning combined.
+-   Semi-gradient Q-learning uses the max over next actions, making it off-policy. This places it squarely inside what Sutton and Barto call the deadly triad: function approximation, bootstrapping, and off-policy learning combined.
 
 ![upload in progress, 0](https://substackcdn.com/image/fetch/$s_!mhuh!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8bfe7021-126f-4dc0-9698-348581ceca89_988x100.png "upload in progress, 0")
 
@@ -97,9 +83,7 @@ We also saw the other side of the picture with semi-gradient SARSA on Mountain C
 
 If you have not read Chapter 5, we recommend doing so first:
 
-[
-
-Function Approximation
+[Function Approximation
 
 RL Part 5: From tables to parameterized value functions.
 
@@ -115,9 +99,9 @@ RL Part 5: From tables to parameterized value functions.
 
 The deadly triad demonstration at the end of Chapter 5 made one thing clear. Combining function approximation, bootstrapping, and off-policy learning creates a real risk of divergence, and that combination is exactly what we want for scalable value-based RL:
 
-*   We want function approximation because tables do not scale.
-*   We want bootstrapping because waiting for full returns is slow.
-*   We want off-policy learning because we want to learn about an optimal greedy policy while exploring with a softer one.
+-   We want function approximation because tables do not scale.
+-   We want bootstrapping because waiting for full returns is slow.
+-   We want off-policy learning because we want to learn about an optimal greedy policy while exploring with a softer one.
 
 This chapter is about how the field made that combination work in practice.
 
@@ -143,7 +127,7 @@ The shift is to replace this expression with a more general parameterized functi
 
 ![](https://substackcdn.com/image/fetch/$s_!6UHq!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F10dc0c81-9a85-4127-8cba-62679acde5fb_387x73.png)
 
-where, fθfθ is now any function differentiable in θθ, typically a neural network.
+where, fθ f θ is now any function differentiable in θ θ , typically a neural network.
 
 The structure tells us the key change. With linear FA, the features carried the inductive bias and the weights did the learning. With neural FA, the network does both. Nothing about the underlying RL problem changes.
 
@@ -155,7 +139,7 @@ The reason we want this change is representation learning. Hand-designed feature
 
 👉
 
-The gradient computation also changes. With linear FA, the gradient of ^qq^ with respect to θθ was just ϕ(s,a)ϕ(s,a). With neural FA, the gradient is computed by backpropagation through the network.
+The gradient computation also changes. With linear FA, the gradient of ^q q ^ with respect to θ θ was just ϕ(s,a) ϕ ( s , a ) . With neural FA, the gradient is computed by backpropagation through the network.
 
 The trade-off is theoretical. In Chapter 5, we noted that linear on-policy semi-gradient TD converges to a unique fixed point. That result depends on linearity. With nonlinear function approximation, even on-policy semi-gradient TD can diverge.
 
@@ -179,22 +163,22 @@ The update rule is:
 
 The terms:
 
-*   The bracketed expression is the TD error.
-*   ∇θ^q(St,At,θ)∇θq^(St,At,θ) is the gradient of the predicted Q-value with respect to all network parameters, computed by backpropagation.
-*   αα is the step size.
+-   The bracketed expression is the TD error.
+-   ∇θ^q(St,At,θ) ∇ θ q ^ ( S t , A t , θ ) is the gradient of the predicted Q-value with respect to all network parameters, computed by backpropagation.
+-   α α is the step size.
 
-In structure, this is identical to what we had with linear FA. The only difference is what ^qq^ and its gradient look like under the hood.
+In structure, this is identical to what we had with linear FA. The only difference is what ^q q ^ and its gradient look like under the hood.
 
 Run this loop on a problem like CartPole, and the agent learns nothing. Often, the weights drift, the loss climbs, and the agent's behavior gets worse over time.
 
 There are three reasons, and each one maps back to something we already discussed in Chapter 5:
 
-*   The first problem is sample correlation. In online learning, the data we train on comes from consecutive transitions in the environment. Two consecutive states in CartPole differ by one small physics step. Thus two consecutive samples are not independent, they are tightly correlated. Stochastic gradient descent assumes (or at least works much better with) approximately independent and identically distributed samples. When samples come in a correlated sequence, the network overfits to whatever local region of the state space the agent happens to be in, and forgets about regions it visited earlier.
+-   The first problem is sample correlation. In online learning, the data we train on comes from consecutive transitions in the environment. Two consecutive states in CartPole differ by one small physics step. Thus two consecutive samples are not independent, they are tightly correlated. Stochastic gradient descent assumes (or at least works much better with) approximately independent and identically distributed samples. When samples come in a correlated sequence, the network overfits to whatever local region of the state space the agent happens to be in, and forgets about regions it visited earlier.
 
 ![](https://substackcdn.com/image/fetch/$s_!lijc!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F58b3407c-c109-4970-8347-8e51a5824e88_2000x1038.png)
 
-*   The second problem is non-stationary targets. The TD target Rt+1+γmaxa′^q(St+1,a′,θ)Rt+1+γmaxa′q^(St+1,a′,θ) depends on θθ. Every time we take a gradient step, the target shifts too. We are trying to fit a moving target, and the moving target depends on us. In Chapter 5 we spelled this out as the core of the semi-gradient idea: we differentiate only the prediction, not the target. With linear FA and on-policy sampling, this was tolerable. But with neural FA and off-policy sampling, the same trick stops being tolerable. A small change in θθ propagates through the network and can change the predicted value at many states at once, including the next state we are about to bootstrap from. The target now moves in unpredictable directions every update.
-*   The third problem is the deadly triad in full nonlinear form. We are using function approximation (the network), bootstrapping (the TD target), and off-policy learning (the max over next actions). This is exactly the combination Baird's counterexample showed was unstable, and now we are scaling it up to a much larger function class.
+-   The second problem is non-stationary targets. The TD target Rt+1+γmaxa′^q(St+1,a′,θ) R t + 1 + γ max a ′ q ^ ( S t + 1 , a ′ , θ ) depends on θ θ . Every time we take a gradient step, the target shifts too. We are trying to fit a moving target, and the moving target depends on us. In Chapter 5 we spelled this out as the core of the semi-gradient idea: we differentiate only the prediction, not the target. With linear FA and on-policy sampling, this was tolerable. But with neural FA and off-policy sampling, the same trick stops being tolerable. A small change in θ θ propagates through the network and can change the predicted value at many states at once, including the next state we are about to bootstrap from. The target now moves in unpredictable directions every update.
+-   The third problem is the deadly triad in full nonlinear form. We are using function approximation (the network), bootstrapping (the TD target), and off-policy learning (the max over next actions). This is exactly the combination Baird's counterexample showed was unstable, and now we are scaling it up to a much larger function class.
 
 ![](https://substackcdn.com/image/fetch/$s_!JFKF!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc5c88ce9-ccc8-4e04-9daa-f45f4d45648c_2000x768.png)
 
@@ -207,48 +191,3 @@ The contribution was not the basic idea of combining Q-learning with a neural ne
 ## Experience replay
 
 The first of DQN's two engineering choices is experience replay.
-
-   
-   
- 
-
-## This lesson is for paying subscribers only This post is for paying subscribers only
-
-[Unlock Full Access](https://www.dailydoseofds.com/membership)
-
-Already have an account? Sign in
-
-Published on May 31, 2026
-
-Share
-
-Copy link [Share to X](https://x.com/intent/tweet?url=https%3A%2F%2Fwww.dailydoseofds.com%2Frl-course-part-6%2F&text=Introduction%20to%20Deep%20RL%20and%20DQN) [Share to Facebook](https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.dailydoseofds.com%2Frl-course-part-6%2F) [Share to Linkedin](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.dailydoseofds.com%2Frl-course-part-6%2F)
-
-Copied
-
-[
-
-Previous
-
-Function Approximation
-
-
-
-](https://www.dailydoseofds.com/rl-course-part-5/)[
-
-Next
-
-Policy Gradients: REINFORCE and Actor-Critic
-
-
-
-](https://www.dailydoseofds.com/rl-course-part-7/)
-
-## On this page
-
-1.  [Introduction to Deep RL and DQN](https://www.dailydoseofds.com/rl-course-part-6/#___TOCBOT___)
-    1.  [Recap](https://www.dailydoseofds.com/rl-course-part-6/#recap)
-    2.  [Introduction](https://www.dailydoseofds.com/rl-course-part-6/#introduction)
-    3.  [From linear to neural](https://www.dailydoseofds.com/rl-course-part-6/#from-linear-to-neural)
-    4.  [The naive approach and what breaks](https://www.dailydoseofds.com/rl-course-part-6/#the-naive-approach-and-what-breaks)
-    5.  [Experience replay](https://www.dailydoseofds.com/rl-course-part-6/#experience-replay)

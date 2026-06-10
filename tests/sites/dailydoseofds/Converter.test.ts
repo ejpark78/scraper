@@ -3,32 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
-
-// Define the converter class inline as we haven't implemented it in src yet
-class DailyDoseDSConverter {
-    public convertHtmlToMarkdown(htmlContent: string, id: string, url: string) {
-        const $ = cheerio.load(htmlContent);
-        
-        const title = $('h1').first().text().trim() || $('title').text().split('|')[0].trim() || 'Unknown Title';
-        const publishedAt = $('time').first().attr('datetime') || null;
-        
-        // Content extraction: Ghost sites usually have content in <main> or #main-content
-        const contentEl = $('main').first();
-        const turndownService = new TurndownService({
-            headingStyle: 'atx',
-            codeBlockStyle: 'fenced',
-        });
-        
-        const contentText = turndownService.turndown(contentEl.html() || '').trim();
-        
-        const rawContent = `# 📂 [Daily Dose of DS] ${title}\n\n` +
-                           `* **작성일:** ${publishedAt || '정보 없음'}\n` +
-                           `* **원본 링크:** [바로가기](${url})\n\n` +
-                           `## 📝 본문 내용\n\n${contentText}\n`;
-
-        return { id, title, url, publishedAt, content: contentText, rawContent };
-    }
-}
+import { DailyDoseDSConverter } from '../../../src/crawler/sites/dailydoseofds/Converter';
 
 const converter = new DailyDoseDSConverter();
 

@@ -9,10 +9,11 @@ OVERWRITE ?= false
 PAGE ?= 5
 PRIORITY ?= medium
 SLACK_TIME ?= 3
+RECURSIVE_SCRAPE ?= false
 
 list: PRIORITY := high
 list:
-	$(COMPOSE) run --rm $(RUN_USER) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/crawler/sites/gpters/news/List.ts $(LIMIT)
+	$(COMPOSE) run --rm $(RUN_USER) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/sites/gpters/news/List.ts $(LIMIT)
 
 refresh:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler/sites/gpters/news/Refresh.ts
@@ -25,7 +26,7 @@ refresh-silver:
 
 newsletter-list: PRIORITY := high
 newsletter-list:
-	$(COMPOSE) run --rm $(RUN_USER) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) clipper npx ts-node src/crawler/sites/gpters/newsletter/List.ts $(LIMIT)
+	$(COMPOSE) run --rm $(RUN_USER) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e PAGE=$(PAGE) -e SLACK_TIME=$(SLACK_TIME) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) clipper npx ts-node src/crawler/sites/gpters/newsletter/List.ts $(LIMIT)
 
 newsletter-refresh:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node src/crawler/sites/gpters/newsletter/Refresh.ts
