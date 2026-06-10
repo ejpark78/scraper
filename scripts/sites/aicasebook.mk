@@ -2,8 +2,6 @@
 # 📘 AiCasebook Scraper Commands Module
 # ==============================================================================
 
-include ../environments.mk
-
 .PHONY: list refresh refresh-urls refresh-silver refresh-silver-rebuild
 
 PAGE ?= 1-5

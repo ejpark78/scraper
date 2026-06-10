@@ -2,14 +2,12 @@
 # ⚙️ LinkedIn Scraper Makefile (Command Interface Router)
 # ==============================================================================
 
+include scripts/environments.mk
+
 COMPOSE := docker compose -p linkedin
 export COMPOSE
 
-RUN_USER := --user $(shell id -u):$(shell id -g)
-export RUN_USER
-
-RECURSIVE_SCRAPE ?= false
-export RECURSIVE_SCRAPE
+# RUN_USER and others are now defined in environments.mk
 
 .PHONY: *
 

@@ -2,8 +2,6 @@
 # 💡 GPTERS Scraper Commands Module
 # ==============================================================================
 
-include ../environments.mk
-
 .PHONY: list refresh refresh-urls refresh-silver refresh-silver-rebuild newsletter-list newsletter-refresh
 
 LIMIT ?= 20

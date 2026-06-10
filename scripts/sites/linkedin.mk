@@ -2,8 +2,6 @@
 # 💼 LinkedIn Scraper Commands Module
 # ==============================================================================
 
-include ../environments.mk
-
 .PHONY: list company extract-urls refresh-urls refresh-silver status help
 
 # 📝 환경변수 기본값 설정

@@ -2,8 +2,6 @@
 # 📰 요즘IT (Yozm) Scraper Commands Module
 # ==============================================================================
 
-include ../environments.mk
-
 .PHONY: list refresh-urls refresh-silver refresh-silver-rebuild help
 
 PAGE       ?= 1
