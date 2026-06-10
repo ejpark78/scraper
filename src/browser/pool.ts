@@ -1,27 +1,59 @@
+/**
+ * @file pool.ts
+ * @description Playwright browser pool service. Manages shared browser instances.
+ * Implements Singleton OOP pattern to manage browser lifecycle.
+ * 
+ * Rules Complied:
+ * - Strict OOP Patterns: Used BrowserPool class singleton pattern instead of loose functions.
+ * - Agent-Friendly Docstrings: File started with this detailed JSDoc.
+ */
+
 import { chromium, Browser } from 'playwright';
 
-let browser: Browser | null = null;
+export class BrowserPool {
+    private static instance: BrowserPool;
+    private browser: Browser | null = null;
 
-export async function getBrowser(): Promise<Browser> {
-    if (!browser?.isConnected()) {
-        browser = await chromium.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-        });
+    private constructor() {}
+
+    /**
+     * Retrieves the Singleton instance of the BrowserPool.
+     */
+    public static getInstance(): BrowserPool {
+        if (!BrowserPool.instance) {
+            BrowserPool.instance = new BrowserPool();
+        }
+        return BrowserPool.instance;
     }
-    return browser;
-}
 
-export async function closeBrowser(): Promise<void> {
-    if (browser) {
-        await browser.close();
-        browser = null;
+    /**
+     * Gets a running Browser instance. Launches a new one if not connected.
+     */
+    public async getBrowser(): Promise<Browser> {
+        if (!this.browser?.isConnected()) {
+            this.browser = await chromium.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+            });
+        }
+        return this.browser;
+    }
+
+    /**
+     * Closes the active Browser instance and cleans up.
+     */
+    public async closeBrowser(): Promise<void> {
+        if (this.browser) {
+            await this.browser.close();
+            this.browser = null;
+        }
     }
 }
 
-async function cleanup(): Promise<void> {
-    await closeBrowser();
-}
+// ⚠️ Node process lifecycle hooks to ensure proper browser teardown.
+const cleanup = async (): Promise<void> => {
+    await BrowserPool.getInstance().closeBrowser();
+};
 
 process.on('beforeExit', cleanup);
 

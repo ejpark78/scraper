@@ -1,0 +1,52 @@
+/**
+ * @file AppConfig.ts
+ * @description Centralized configuration loader for the LinkedIn Clipper application.
+ * Defines, validates, and defaults all required environment variables.
+ * 
+ * Dependencies: dotenv
+ */
+
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+export class AppConfig {
+    /**
+     * MongoDB Connection URI
+     */
+    public static readonly MONGO_URL: string = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017';
+
+    /**
+     * Target MongoDB Initial Database Name
+     */
+    public static readonly MONGO_INITDB_DATABASE: string = process.env.MONGO_INITDB_DATABASE || 'linkedin';
+
+    /**
+     * Redis Connection URI
+     */
+    public static readonly REDIS_URL: string = process.env.REDIS_URL || 'redis://redis:6379';
+
+    /**
+     * Session Storage Directory Path
+     */
+    public static readonly SESSION_DIR: string = process.env.SESSION_DIR || 'data/sessions';
+
+    /**
+     * Crawler/Scraper Slack Interval (in seconds)
+     */
+    public static readonly SLACK_TIME: number = parseInt(process.env.SLACK_TIME || '3', 10);
+
+    /**
+     * Scraper Worker Slack Interval (in seconds)
+     */
+    public static readonly SCRAPER_SLACK: number = parseInt(process.env.SCRAPER_SLACK || '0', 10);
+
+    /**
+     * Scrape Task Priority Level
+     */
+    public static readonly PRIORITY: string = (process.env.PRIORITY || 'medium').toLowerCase().trim();
+
+    /**
+     * Port for the Viewer UI Server
+     */
+    public static readonly PORT: number = parseInt(process.env.PORT || '3000', 10);
+}

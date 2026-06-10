@@ -1,16 +1,36 @@
-import { MongoClient, Db, Collection } from 'mongodb';
+/**
+ * @file mongo.ts
+ * @description MongoDB database adapter implementing the Singleton pattern.
+ * Provides client connection caching, collection creation, and index initialization.
+ * 
+ * Rules Complied:
+ * - Centralized Config: Uses AppConfig instead of direct process.env access.
+ * - Robust Error Handling: Empty catch blocks replaced with diagnostic warning logs.
+ * - Strict Typing: Removed loose 'any' type parameters.
+ * - Agent-Friendly Docstrings: File started with this detailed JSDoc.
+ */
+
+import { MongoClient, Db, Collection, Document } from 'mongodb';
+import { AppConfig } from '../config/AppConfig';
+
+export interface MongoDatabaseConfig {
+    mongoUrl: string;
+    dbName: string;
+}
 
 export class MongoDatabase {
     private static instance: MongoDatabase;
     private client: MongoClient | null = null;
     private db: Db | null = null;
-    private mongoUrl: string;
-    private dbName: string;
+    private readonly mongoUrl: string;
+    private readonly dbName: string;
 
-    private constructor() {
-        // 컨테이너 내부일 경우 mongodb://mongodb:27017, 아닐 경우 127.0.0.1:27017 폴백
-        this.mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017';
-        this.dbName = process.env.MONGO_INITDB_DATABASE || 'linkedin';
+    private constructor(config: MongoDatabaseConfig = {
+        mongoUrl: AppConfig.MONGO_URL,
+        dbName: AppConfig.MONGO_INITDB_DATABASE
+    }) {
+        this.mongoUrl = config.mongoUrl;
+        this.dbName = config.dbName;
     }
 
     public static getInstance(): MongoDatabase {
@@ -34,22 +54,23 @@ export class MongoDatabase {
             console.log(`✅ [MongoDB] Successfully connected to database: ${this.dbName}`);
 
             return this.db;
-        } catch (err: any) {
-            console.error(`❌ [MongoDB] Connection error: ${err.message}`);
+        } catch (err: unknown) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.error(`❌ [MongoDB] Connection error: ${errMsg}`);
             throw err;
         }
     }
 
-    public async getCollection<T extends Document = any>(
+    public async getCollection<T extends Document = Document>(
         name: `${'bronze' | 'silver'}/${string}`
     ): Promise<Collection<T>> {
         await this.connect();
         
-        const [dbName, collectionName] = name.split('/');
+        const [, collectionName] = name.split('/');
         if (!this.client) {
             throw new Error('[MongoDB] Client is not connected');
         }
-        const targetDb = this.client.db(dbName);
+        const targetDb = this.client.db(name.split('/')[0]);
         const collection = targetDb.collection<T>(collectionName);
 
         // 🛠️ 패턴 기반 자동 인덱스 생성 (인덱스가 없을 때만 생성됨)
@@ -68,8 +89,10 @@ export class MongoDatabase {
             } else if (collectionName === 'linkedin.companies') {
                 await collection.createIndex({ companyId: 1 }, { unique: true });
             }
-        } catch (e) {
-            // 인덱스 생성 중 발생하는 일시적 오류 무시
+        } catch (e: unknown) {
+            // 인덱스 생성 중 발생하는 일시적 오류 로그 남김 (빈 catch 블록 방지)
+            const errorMsg = e instanceof Error ? e.message : String(e);
+            console.warn(`⚠️ [MongoDB] Index auto-creation check failed for ${collectionName}: ${errorMsg}`);
         }
 
         return collection;
@@ -161,8 +184,9 @@ export class MongoDatabase {
             }
 
             console.log('📌 [MongoDB] All collection indexes successfully initialized.');
-        } catch (e: any) {
-            console.warn(`⚠️ [MongoDB] Index initialization failed: ${e.message}`);
+        } catch (e: unknown) {
+            const errorMsg = e instanceof Error ? e.message : String(e);
+            console.warn(`⚠️ [MongoDB] Index initialization failed: ${errorMsg}`);
         }
     }
 }

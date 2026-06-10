@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { PyTorchKRMeta, PyTorchKRConverter } from './Converter';
-import { getBrowser, closeBrowser } from '../../../browser/pool';
+import { BrowserPool } from '../../../browser/pool';
 
 export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
     private readonly converter: PyTorchKRConverter;
@@ -29,7 +29,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
 
     protected async executeScrape(url: string, tempHtmlPath: string): Promise<void> {
         console.log(`🌐 [PyTorch KR Fetch] Loading page with Playwright: ${url} ...`);
-        const browser = await getBrowser();
+        const browser = await BrowserPool.getInstance().getBrowser();
         const context = await browser.newContext({
             userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             viewport: { width: 1280, height: 800 },
