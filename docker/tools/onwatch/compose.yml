@@ -1,0 +1,33 @@
+# ==============================================================================
+# 📊 onWatch API Quota Monitor Dashboard (profile: tools)
+# ==============================================================================
+# Design Context: Real-time tracking of AI API limits and quotas for Gemini, Claude, etc.
+# Constraints:    Routes via Traefik reverse proxy. No direct host ports exposed.
+#                 Data persistence mounted to data/onwatch.
+# Dependencies:   traefik, ghcr.io/onllm-dev/onwatch
+# ==============================================================================
+
+services:
+  onwatch:
+    image: ghcr.io/onllm-dev/onwatch:latest
+    profiles:
+      - tools
+    environment:
+      - TZ=Asia/Seoul
+      - PORT=9211
+      - SYNTHETIC_API_KEY=${SYNTHETIC_API_KEY:-}
+      - Z_AI_API_KEY=${Z_AI_API_KEY:-}
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/onwatch:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9211/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.onwatch.rule=Host(`onwatch.localhost`) || Host(`onwatch.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.onwatch.entrypoints=websecure"
+      - "traefik.http.routers.onwatch.tls=true"
+      - "traefik.http.services.onwatch.loadbalancer.server.port=9211"

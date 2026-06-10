@@ -19,8 +19,8 @@
 services:
   clipper:
     build:
-      context: ../../
-      dockerfile: docker/worker/Dockerfile
+      context: ../../../
+      dockerfile: docker/runtime/worker/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
@@ -48,8 +48,8 @@ services:
 
   clipper-scraper:
     build:
-      context: ../../
-      dockerfile: docker/worker/Dockerfile
+      context: ../../../
+      dockerfile: docker/runtime/worker/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
@@ -79,8 +79,8 @@ services:
 
   clipper-transformer:
     build:
-      context: ../../
-      dockerfile: docker/worker/Dockerfile
+      context: ../../../
+      dockerfile: docker/runtime/worker/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF

@@ -9,8 +9,8 @@
 services:
   gmail:
     build:
-      context: ../../
-      dockerfile: docker/gmail/Dockerfile
+      context: ../../../
+      dockerfile: docker/tools/gmail/Dockerfile
     image: linkedin/gmail:latest
     profiles:
       - tools

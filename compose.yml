@@ -35,15 +35,17 @@
 # ==============================================================================
 
 include:
-  - docker/worker/compose.yml
-  - docker/gmail/compose.yml
-  - docker/cronicle/compose.yml
-  - docker/dozzle/compose.yml
-  - docker/jupyter/compose.yml
-  - docker/kasm/compose.yml
-  - docker/mongodb/compose.yml
-  - docker/opencode/compose.yml
-  - docker/redis/compose.yml
-  - docker/traefik/compose.yml
-  - docker/viewer/compose.yml
-  - docker/yacht/compose.yml
+  - docker/runtime/worker/compose.yml
+  - docker/runtime/viewer/compose.yml
+  - docker/tools/gmail/compose.yml
+  - docker/tools/cronicle/compose.yml
+  - docker/tools/dozzle/compose.yml
+  - docker/tools/jupyter/compose.yml
+  - docker/tools/kasm/compose.yml
+  - docker/tools/opencode/compose.yml
+  - docker/tools/yacht/compose.yml
+  - docker/tools/onwatch/compose.yml
+  - docker/infra/mongodb/compose.yml
+  - docker/infra/redis/compose.yml
+  - docker/infra/postgresql/compose.yml
+  - docker/gateway/traefik/compose.yml
