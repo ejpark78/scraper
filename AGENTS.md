@@ -2,37 +2,15 @@
 
 ## ⚠️ Critical Constraints
 
-1. **No Arbitrary Bash**:
-   - Don't run observation commands (`ps`, `logs`, `mongosh` etc.) without user consent.
-   - Compress multiple status checks into a single script.
-
-2. **Strict Planning Mode**:
-   - Don't modify code/containers without a plan and explicit approval.
-   - **NEVER run destructive DB commands (Drop, Delete, overwrite, reset) without prior explicit consent.**
-   - Summarize analysis and changes first; obtain user confirmation.
-
-3. **Minimal File Scope**:
-   - Avoid generic `grep` or `list_dir` on root. Perform `view_file` only on target files.
-
-4. **Transparent Issues**:
-   - Report unexpected errors/data loss immediately. Do NOT perform silent recovery/restore without approval.
-
-5. **Relative Links**:
-   - Use relative paths for markdown links (e.g. `[Worker](src/Worker.ts)`). No absolute `file://`.
-
-6. **Symbolic Links for Artifacts**:
-   - Automatically link created/modified artifacts to `.agents/brain/`.
-
-7. **Automatic Git Commits**:
-   - Whenever you modify code or configuration files, you must execute `.agents/scripts/commit-changes.sh` to automatically commit the changes.
-   - Do this as soon as the modifications are validated or before transitioning to the next step to preserve context and reduce token usage.
-
-8. **Docker-Centric Testing & Code Injection**:
-   - Do not perform testing or temporary script executions by mounting host directories excessively or polluting the source mount.
-   - All tests and execution validations must be run on the active `docker compose` environments.
-   - For temporary script execution or debugging, write the scratch file in the host workspace and use `docker cp <file> <container>:/app/src/` to inject it, then run it inside the container via `docker exec`. Delete the temporary files from the host and container afterwards.
+1. **No Arbitrary Bash**: Consent required for logs/ps/mongosh. Compress status checks.
+2. **Strict Planning**: Consent required before code/container/DB modifications. Summarize plan first.
+3. **Minimal File Scope**: No root grep/list_dir. Use view_file only on target files.
+4. **Transparent Issues**: Report errors immediately. No silent restores.
+5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
+6. **Symbolic Links for Artifacts**: Link created/modified artifacts to `.agents/brain/`.
+7. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
+8. **Docker-Centric Testing**: Test on `docker compose`. For temp files, `docker cp` to container and exec, then delete.
 
 ## ⚠️ Security Rules
-- **DO NOT** read, write, or access `.env` or `.env.*` files under any circumstances.
-- Never expose API keys or credentials in terminal outputs (e.g., `cat`, `echo`).
-- Use `.env.example` to reference env structure. Instruct users to update `.env` manually.
+- **No ENV Access**: DO NOT access `.env` or `.env.*` files. Use `.env.example` for reference.
+- **No Credentials**: Never expose API keys/credentials in command outputs.
