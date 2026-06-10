@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# ==============================================================================
+# 🤖 commit-changes.sh
+# ==============================================================================
+# Design Context: Automatically stage and commit all modified/untracked files.
+#                 Outputs structured, color-coded visual diffs with line numbers.
+# Constraints:    Detects binary files via git --numstat (avoids self-referential 
+#                 grep loops). Runs automatically after valid edits.
+# Dependencies:   git, awk, bash (v4+)
+# ==============================================================================
+
 # staged 파일의 상세 diff를 파싱하여 출력하는 헬퍼 함수
 show_file_diff() {
   local file="$1"
