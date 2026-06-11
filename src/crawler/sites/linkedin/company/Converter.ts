@@ -13,28 +13,7 @@ import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../../core/IConverter';
 
-export interface CompanyMeta {
-    companyId: string;
-    companyName: string;
-    tagline: string;
-    website: string;
-    industry: string;
-    companySize: string;
-    employeeCount: string;
-    hqCountry: string;
-    hqGeographicArea: string;
-    hqCity: string;
-    hqPostalCode: string;
-    hqLine1: string;
-    hqLine2: string;
-    hqDescription: string;
-    founded: string;
-    specialties: string;
-    linkedinUrl: string;
-    phone: string;
-    parentCompany: string;
-    rawContent: string;
-}
+import { CompanyMeta } from './site.config';
 
 export class CompanyMarkdownConverter implements IConverter<CompanyMeta> {
     /**

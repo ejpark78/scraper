@@ -18,6 +18,29 @@ async function scrapeLinkedinCompany(url: string, tempPath: string): Promise<voi
   await crawler.scrapeCompanyAbout(url, tempPath);
 }
 
+export interface CompanyMeta {
+    companyId: string;
+    companyName: string;
+    tagline: string;
+    website: string;
+    industry: string;
+    companySize: string;
+    employeeCount: string;
+    hqCountry: string;
+    hqGeographicArea: string;
+    hqCity: string;
+    hqPostalCode: string;
+    hqLine1: string;
+    hqLine2: string;
+    hqDescription: string;
+    founded: string;
+    specialties: string;
+    linkedinUrl: string;
+    phone: string;
+    parentCompany: string;
+    rawContent: string;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'linkedin_company',
   name: 'LinkedIn Company',
@@ -25,6 +48,7 @@ export const descriptor: SiteDescriptor = {
 
   indexes: [
     { collection: 'bronze/linkedin.companies', fields: { companyId: 1 }, options: { unique: true } },
+    { collection: 'bronze/linkedin.companies', fields: { collectedAt: -1 } },
     { collection: 'bronze/linkedin.company_urls', fields: { companyId: 1 } },
     { collection: 'bronze/linkedin.company_urls', fields: { status: 1, companyId: 1 } },
     { collection: 'silver/linkedin.companies', fields: { companyId: 1 }, options: { unique: true } },
@@ -34,14 +58,13 @@ export const descriptor: SiteDescriptor = {
     collectionName: 'bronze/linkedin.companies',
     targetCollection: 'linkedin.companies',
     updateFilterKey: 'companyId',
-    defaultSlack: 3,
+    defaultSlack: 0,
     extractId: (url) => {
-      const match = url.match(/linkedin\.com\/company\/([^\/]+)/);
-      return match ? match[1] : '';
+      const parts = url.replace(/\/$/, '').split('/');
+      return parts[parts.length - 1] || '';
     },
     excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     scrape: scrapeLinkedinCompany,
-    htmlSourcesToScan: ['bronze/linkedin.jobs'],
   },
 
   transformer: {
@@ -54,7 +77,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/linkedin.companies',
     filterField: 'companyId',
-    buildDocument: (id, meta) => ({
+    buildDocument: (id, meta: CompanyMeta) => ({
       companyId: id,
       companyName: meta.companyName || 'Unknown Company',
       tagline: meta.tagline || null,

@@ -10,7 +10,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../../core/BasePipeline';
-import { CompanyMeta, CompanyMarkdownConverter } from './Converter';
+import { CompanyMarkdownConverter } from './Converter';
+import { CompanyMeta } from './site.config';
 import { LinkedInCrawler } from '../Crawler';
 
 export class LinkedInCompanyContents extends BasePipeline<CompanyMeta> {
