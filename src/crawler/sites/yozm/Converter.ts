@@ -10,16 +10,7 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
-export interface YozmMeta {
-  id: string;
-  title: string;
-  url: string;
-  publishedAt: string | null;
-  category: string | null;
-  author: string | null;
-  content: string;
-  rawContent: string;
-}
+import { YozmMeta } from './site.config';
 
 export class YozmConverter implements IConverter<YozmMeta> {
 

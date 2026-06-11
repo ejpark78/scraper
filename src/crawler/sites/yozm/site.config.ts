@@ -13,6 +13,17 @@ import { scrapeHttpFetch } from '../../utils/scraper';
 
 export const SITEMAP_URL = 'https://yozm.wishket.com/magazine/sitemap-news.xml';
 
+export interface YozmMeta {
+  id: string;
+  title: string;
+  url: string;
+  publishedAt: string | null;
+  category: string | null;
+  author: string | null;
+  content: string;
+  rawContent: string;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'yozm',
   name: '요즘IT',
@@ -60,7 +71,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/yozm.contents',
     filterField: 'id',
-    buildDocument: (id, meta) => ({
+    buildDocument: (id, meta: YozmMeta) => ({
       id,
       title: meta.title || 'Untitled',
       url: meta.url || null,
