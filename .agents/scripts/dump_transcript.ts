@@ -5,6 +5,7 @@
  *   - Gracefully skips sessions with missing or corrupt transcript log files.
  *   - Places formatted Markdown documents into the designated reports directory.
  *   - Copies all session logs, scratch scripts, and artifacts to the destination session folder.
+ *   - Includes relative markdown links to session folders and raw command output log files.
  * @dependencies Node fs/path, agent_adapter
  * @lastUpdated 2026-06-11
  */
@@ -28,9 +29,23 @@ function truncateOutput(text: string, maxLines = 150, keepHead = 50, keepTail = 
   ].join('\n');
 }
 
-function buildTranscript(sessionId: string, rawTitle: string, messages: { role: string; content: string; toolCalls: AgentToolCall[]; stepIndex: number }[]): string {
+function buildTranscript(
+  sessionId: string,
+  rawTitle: string,
+  messages: { role: string; content: string; toolCalls: AgentToolCall[]; stepIndex: number }[],
+  tag: string,
+  taskLogs?: { id: string; localPath: string }[]
+): string {
   const title = rawTitle !== sessionId ? rawTitle : `Session ${sessionId}`;
-  let md = `# 📝 Transcript: ${title}\n- **Session ID**: ${sessionId}\n\n`;
+  let md = `# 📝 Transcript: ${title}\n- **Session ID**: ${sessionId}\n`;
+  md += `- **Session Assets**: [Browse Folder](./${tag}/)\n`;
+  if (taskLogs && taskLogs.length > 0) {
+    md += `- **Command Logs**:\n`;
+    for (const log of taskLogs) {
+      md += `  - [${log.id}.log](./${tag}/tasks/${log.id}.log)\n`;
+    }
+  }
+  md += `\n`;
 
   for (const msg of messages) {
     if (msg.role === 'user') {
@@ -52,6 +67,11 @@ function buildTranscript(sessionId: string, rawTitle: string, messages: { role: 
             if (tool.result) {
               const truncatedResult = truncateOutput(tool.result);
               md += `  * **Output**:\n    \`\`\`bash\n    ${truncatedResult.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
+              const taskMatch = tool.result.match(/task-\d+/);
+              if (taskMatch) {
+                const taskId = taskMatch[0];
+                md += `  * **Raw Log File**: [${taskId}.log](./${tag}/tasks/${taskId}.log)\n`;
+              }
             }
           } else {
             md += `* **🛠️ Tool**: \`${tool.name}\`\n`;
@@ -90,7 +110,23 @@ function run() {
 
         try {
           const detail = adapter.getSessionDetail(s.id);
-          const md = buildTranscript(s.id, s.title || s.id, detail.messages);
+
+          // Find task logs selectively from baseBrainDir to provide as parameter to buildTranscript
+          const taskLogs: { id: string; localPath: string }[] = [];
+          if (adapter.baseBrainDir) {
+            const srcTasksDir = path.join(adapter.baseBrainDir, s.id, '.system_generated', 'tasks');
+            if (fs.existsSync(srcTasksDir)) {
+              const files = fs.readdirSync(srcTasksDir);
+              for (const file of files) {
+                if (file.endsWith('.log')) {
+                  const taskId = file.replace('.log', '');
+                  taskLogs.push({ id: taskId, localPath: path.join(srcTasksDir, file) });
+                }
+              }
+            }
+          }
+
+          const md = buildTranscript(s.id, s.title || s.id, detail.messages, info.tag, taskLogs);
 
           const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir);
           const destSessionDir = path.join(outDir, info.tag);
