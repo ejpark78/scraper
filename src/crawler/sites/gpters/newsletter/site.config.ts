@@ -31,6 +31,39 @@ function buildGptersNewsletterDocument(id: string, meta: any): Record<string, an
   return doc;
 }
 
+export const NEWSLETTER_QUERY = `
+query GetPosts($after: String, $before: String, $filterBy: [PostListFilterByInput!], $limit: Int!, $orderByString: String, $postTypeIds: [String!], $reverse: Boolean, $spaceIds: [ID!]) {
+  posts(after: $after, before: $before, filterBy: $filterBy, limit: $limit, orderByString: $orderByString, postTypeIds: $postTypeIds, reverse: $reverse, spaceIds: $spaceIds) {
+    nodes {
+      id
+      title
+      slug
+      createdAt
+      publishedAt
+      createdBy { member { name } }
+      reactionsCount
+      repliesCount
+      shortContent
+      fields { key value }
+      space { id name slug }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+`;
+
+export const NEWSLETTER_VARS = {
+  filterBy: [],
+  limit: 20,
+  orderByString: 'publishedAt',
+  postTypeIds: ['KLxSodedLeDUiTj'],
+  reverse: true,
+  spaceIds: ['J9vvyRmbEsRs']
+};
+
 export const descriptor: SiteDescriptor = {
   key: 'gpters_newsletter',
   name: 'GPTers Newsletter',

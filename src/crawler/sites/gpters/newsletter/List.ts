@@ -9,40 +9,7 @@
 
 import { MongoDatabase } from '../../../../database/mongo';
 import { BaseListService } from '../../../../crawler/core/BaseListService';
-import { descriptor } from './site.config';
-
-const NEWSLETTER_QUERY = `
-query GetPosts($after: String, $before: String, $filterBy: [PostListFilterByInput!], $limit: Int!, $orderByString: String, $postTypeIds: [String!], $reverse: Boolean, $spaceIds: [ID!]) {
-  posts(after: $after, before: $before, filterBy: $filterBy, limit: $limit, orderByString: $orderByString, postTypeIds: $postTypeIds, reverse: $reverse, spaceIds: $spaceIds) {
-    nodes {
-      id
-      title
-      slug
-      createdAt
-      publishedAt
-      createdBy { member { name } }
-      reactionsCount
-      repliesCount
-      shortContent
-      fields { key value }
-      space { id name slug }
-    }
-    pageInfo {
-      hasNextPage
-      endCursor
-    }
-  }
-}
-`;
-
-const NEWSLETTER_VARS = {
-  filterBy: [],
-  limit: 20,
-  orderByString: 'publishedAt',
-  postTypeIds: ['KLxSodedLeDUiTj'],
-  reverse: true,
-  spaceIds: ['J9vvyRmbEsRs']
-};
+import { descriptor, NEWSLETTER_QUERY, NEWSLETTER_VARS } from './site.config';
 
 class GptersNewsletterList extends BaseListService {
     constructor() {
