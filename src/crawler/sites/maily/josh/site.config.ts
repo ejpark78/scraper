@@ -8,9 +8,9 @@
  * @lastUpdated 2026-06-11
  */
 
-import type { SiteDescriptor } from '../../core/SiteRegistry';
+import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { MailyJoshConverter } from './Converter';
-import { scrapeHttpFetch } from '../../utils/scraper';
+import { scrapeHttpFetch } from '../../../utils/scraper';
 
 export const descriptor: SiteDescriptor = {
   key: 'maily_josh',

@@ -22,7 +22,7 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [Maily Josh] Starting list scraping (PAGE: $(PAGE))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) clipper npx ts-node src/crawler/sites/maily_josh/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) clipper npx ts-node src/crawler/sites/maily/josh/List.ts
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"

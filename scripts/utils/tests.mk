@@ -16,6 +16,6 @@ recursive:
 sites:
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node tests/sites/dailydoseofds/Converter.test.ts
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node tests/sites/geeknews/Converter.test.ts
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node tests/sites/maily_josh/Converter.test.ts
+	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node tests/sites/maily/josh/Converter.test.ts
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node tests/sites/pytorch_kr/Converter.test.ts
 	$(COMPOSE) run --rm $(RUN_USER) clipper npx ts-node tests/sites/yozm/Converter.test.ts

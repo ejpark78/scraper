@@ -66,13 +66,13 @@ make mj-refresh-urls
 make mj-refresh-silver
 
 # 테스트 실행
-npx ts-node tests/sites/maily_josh/Converter.test.ts
+npx ts-node tests/sites/maily/josh/Converter.test.ts
 ```
 
 ## 📄 파일 구조
 
 ```
-src/crawler/sites/maily_josh/
+src/crawler/sites/maily/josh/
 ├── site.config.ts         # SiteDescriptor 설정
 ├── Converter.ts           # HTML → Markdown 변환
 ├── List.ts                # RSS 기반 URL 수집
@@ -80,7 +80,7 @@ src/crawler/sites/maily_josh/
 ├── RefreshUrls.ts         # URL 큐 복구
 ├── README.md              # 이 파일
 
-tests/sites/maily_josh/
+tests/sites/maily/josh/
 ├── Converter.test.ts      # 유닛 테스트
 └── fixtures/
     ├── article.html       # 테스트용 HTML 데이터

@@ -10,7 +10,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MailyJoshConverter } from '../../../src/crawler/sites/maily_josh/Converter';
+import { MailyJoshConverter } from '../../../../src/crawler/sites/maily/josh/Converter';
 
 console.log('🧪 [시작] MailyJosh Converter 단위 테스트\n');
 
@@ -35,16 +35,16 @@ try {
   const seenUrls = new Set<string>();
   const articleLinks: Array<{ url: string; title: string }> = [];
 
-  $('div[class*="PostCard_card__"], div[class*="PostCard_container__"]').each((_: any, el: any) => {
-    const linkEl = $(el).find('a').first();
-    const href = linkEl.attr('href');
+  $('a.post-card-list-item[href*="/josh/posts/"]').each((_: any, el: any) => {
+    const href = $(el).attr('href');
     if (!href) return;
     const fullUrl = href.startsWith('http') ? href : `https://maily.so${href}`;
     
     if (seenUrls.has(fullUrl)) return;
     seenUrls.add(fullUrl);
     
-    const title = $(el).find('h2, [class*="PostCard_title__"]').first().text().trim();
+    const titleEl = $(el).find('.font-bold').first();
+    const title = titleEl.text().trim();
     if (title) {
       articleLinks.push({ url: fullUrl, title });
     }

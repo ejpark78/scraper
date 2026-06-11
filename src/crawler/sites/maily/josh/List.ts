@@ -8,7 +8,7 @@
  */
 
 import * as cheerio from 'cheerio';
-import { BaseListService } from '../../core/BaseListService';
+import { BaseListService } from '../../../core/BaseListService';
 
 const BASE_URL = 'https://maily.so/josh';
 const PAGE_PARAMS = 'controller=spaces%2Fpages&action=home&space_url=josh';
