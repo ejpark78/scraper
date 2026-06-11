@@ -4,6 +4,7 @@
  * @constraints
  *   - Follows robust error handling and handles temporary scraper task retries.
  *   - Skips retry attempts for permanent HTTP errors (such as 404 Not Found) to avoid redundant requests.
+ *   - Sanitizes and corrects protocol-less external links during recursive discovery to avoid invalid relative resolution.
  *   - Pre-processes scraped HTML anchor links by removing surrounding quotes to avoid relative resolution bugs.
  * @dependencies Redis, MongoDB, UrlUtils, SiteRegistry
  * @lastUpdated 2026-06-11
@@ -273,12 +274,21 @@ class ScraperWorker {
       for (const link of links) {
         let href = $(link).attr('href');
         if (!href) continue;
-        // Clean leading/trailing quotes and whitespaces to prevent relative URL conversion errors
-        href = href.trim().replace(/^["']|["']$/g, '').trim();
+        // Clean leading/trailing quotes, backslashes, URL-encoded quotes, and whitespaces
+        href = href.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
+        href = href.replace(/%22/g, '').replace(/\\"/g, '');
 
         // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, or invalid symbols
         if (/[\s"'<>￼]/g.test(href) || href.includes('div') || href.includes('br')) {
           continue;
+        }
+
+        // Handle protocol-less absolute URLs (e.g. docs.deepseek.com/... instead of /... or https://...)
+        if (!/^(https?:)?\/\//i.test(href) && !/^[./]/.test(href)) {
+          const firstSegment = href.split('/')[0];
+          if (firstSegment.includes('.') && !firstSegment.includes('=')) {
+            href = `https://${href}`;
+          }
         }
 
         let fullUrl: string;
