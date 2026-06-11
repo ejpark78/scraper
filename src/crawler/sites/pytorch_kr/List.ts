@@ -7,24 +7,18 @@
  * @lastUpdated 2026-06-11
  */
 
-import { Document } from 'mongodb';
 import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
-import { descriptor } from './site.config';
-
-interface PyTorchListDocument extends Document {
-    _id: string;
-    collectedAt: Date;
-}
+import { descriptor, PyTorchListDocument } from './site.config';
 
 class PyTorchKRList extends BaseListService {
     constructor() {
         super({
-            site: 'pytorch_kr',
-            displayName: 'PyTorch KR',
-            cacheSetKey: 'completed_news',
-            bronzeHtmlCollection: 'bronze/pytorch_kr.html',
-            urlsCollection: 'bronze/pytorch_kr.urls',
+            site: descriptor.key,
+            displayName: descriptor.name,
+            cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+            bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+            urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
         });
     }
 
@@ -73,7 +67,8 @@ class PyTorchKRList extends BaseListService {
             if (!id || !slug) continue;
 
             try {
-                const pytorchListsColl = await dbInstance.getCollection<PyTorchListDocument>('bronze/pytorch_kr.lists');
+                const listCollName = descriptor.listsCollectionName || 'bronze/pytorch_kr.lists';
+                const pytorchListsColl = await dbInstance.getCollection<PyTorchListDocument>(listCollName as any);
                 const cleanTopic = { ...topic };
                 delete (cleanTopic as any)._id;
                 await pytorchListsColl.updateOne(

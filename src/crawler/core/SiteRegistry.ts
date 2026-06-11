@@ -56,6 +56,9 @@ export interface SiteDescriptor {
     buildDocument: (id: string, meta: any) => Record<string, any>;
   };
 
+  listsCollectionName?: `bronze/${string}`;
+  companyUrlsCollectionName?: `bronze/${string}`;
+
   refreshSilver?: {
     saveJson?: boolean;
     extractId?: (doc: any) => string;

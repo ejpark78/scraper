@@ -43,16 +43,21 @@ async function scrapePytorchKr(url: string, tempPath: string): Promise<void> {
   fs.writeFileSync(tempPath, html, 'utf-8');
 }
 
+import { Document } from 'mongodb';
+
+export interface PyTorchListDocument extends Document {
+    _id: string;
+    collectedAt: Date;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'pytorch_kr',
   name: 'PyTorch KR',
   domain: 'discuss.pytorch.kr',
-  favicon: 'https://discuss.pytorch.kr/favicon.ico',
+  favicon: 'https://discuss.pytorch.kr/uploads/default/optimized/1X/a15555c82ffc1409ffc05e1adbe5f9cf8e1cc385_2_32x32.png',
 
   indexes: [
     { collection: 'bronze/pytorch_kr.html', fields: { id: 1 }, options: { unique: true } },
-    { collection: 'bronze/pytorch_kr.lists', fields: { id: 1 } },
-    { collection: 'bronze/pytorch_kr.lists', fields: { collectedAt: 1 } },
     { collection: 'bronze/pytorch_kr.urls', fields: { id: 1 }, options: { unique: true } },
     { collection: 'bronze/pytorch_kr.urls', fields: { status: 1, id: 1 } },
     { collection: 'silver/pytorch_kr.contents', fields: { id: 1 }, options: { unique: true } },
@@ -66,6 +71,8 @@ export const descriptor: SiteDescriptor = {
       },
     },
   ],
+
+  listsCollectionName: 'bronze/pytorch_kr.lists',
 
   scraper: {
     collectionName: 'bronze/pytorch_kr.html',

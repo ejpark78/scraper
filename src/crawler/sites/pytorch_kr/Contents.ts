@@ -12,6 +12,7 @@ import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { PyTorchKRMeta, PyTorchKRConverter } from './Converter';
 import { BrowserPool } from '../../../browser/pool';
+import { descriptor } from './site.config';
 
 export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
     private readonly converter: PyTorchKRConverter;
@@ -33,7 +34,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
     }
 
     protected getDomainName(): string {
-        return '파이토치KR';
+        return descriptor.domain || 'discuss.pytorch.kr';
     }
 
     protected async executeScrape(url: string, tempHtmlPath: string): Promise<void> {
@@ -124,8 +125,8 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
                 markdown: meta.rawContent,
                 publishedAt: meta.publishedAt || undefined,
                 docId: id,
-                siteDir: 'pytorch_kr',
-                siteDomain: 'discuss.pytorch.kr',
+                siteDir: descriptor.key,
+                siteDomain: descriptor.domain || 'discuss.pytorch.kr',
                 refererUrl: meta.url,
                 removeFavicons: true,
             });
@@ -139,7 +140,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw HTML) 저장
-            const bronzePytorch = await dbInstance.getCollection('bronze/pytorch_kr.html');
+            const bronzePytorch = await dbInstance.getCollection(descriptor.scraper?.collectionName || 'bronze/pytorch_kr.html');
             await bronzePytorch.updateOne(
                 { id: id },
                 {
@@ -154,7 +155,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             );
 
             // 2. Silver Layer (Cleansed Metadata & Markdown) 저장
-            const silverPytorch = await dbInstance.getCollection('silver/pytorch_kr.contents');
+            const silverPytorch = await dbInstance.getCollection(descriptor.targetLoader?.collectionName || 'silver/pytorch_kr.contents');
             await silverPytorch.updateOne(
                 { id: id },
                 {
@@ -172,7 +173,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
             );
 
             // 3. Update status in bronze.pytorch_kr_urls
-            const pytorchUrlsColl = await dbInstance.getCollection('bronze/pytorch_kr.urls');
+            const pytorchUrlsColl = await dbInstance.getCollection(descriptor.scraper?.urlsCollectionName || 'bronze/pytorch_kr.urls');
             await pytorchUrlsColl.updateOne(
                 { id },
                 { $set: { status: 'completed', updatedAt: new Date() } }
@@ -182,7 +183,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
 
             // 4. Local File System Backup
             const projectRoot = path.resolve(__dirname, '..', '..', '..');
-            const baseDir = path.join(projectRoot, 'data', 'sites', 'pytorch_kr', year, month);
+            const baseDir = path.join(projectRoot, 'data', 'sites', descriptor.key, year, month);
             const htmlPath = path.join(baseDir, 'html', `${id}.html`);
             const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
 
