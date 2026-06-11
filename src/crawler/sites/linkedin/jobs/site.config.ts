@@ -191,6 +191,16 @@ async function scrapeLinkedinJob(url: string, tempPath: string): Promise<void> {
   await crawler.scrapeJob(url, tempPath);
 }
 
+export interface JobMeta {
+    jobId: string;
+    company: string;
+    jobTitle: string;
+    rawLocation: string;
+    locationDirName: string;
+    postedDate: string;
+    rawContent: string;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'linkedin',
   name: 'LinkedIn Jobs',
@@ -242,7 +252,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/linkedin.jobs',
     filterField: 'jobId',
-    buildDocument: (id, meta) => {
+    buildDocument: (id, meta: JobMeta) => {
       const stdLoc = UrlUtils.standardizeLocation(meta.rawLocation);
       const companyId = meta.company ? NamingUtils.generateSafeFileName(meta.company, '') : null;
       return {

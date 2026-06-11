@@ -14,15 +14,7 @@ import * as prettier from 'prettier';
 import { DateUtils, UrlUtils, NamingUtils } from '../../../utils';
 import { IConverter } from '../../../core/IConverter';
 
-export interface JobMeta {
-    jobId: string;
-    company: string;
-    jobTitle: string;
-    rawLocation: string;
-    locationDirName: string;
-    postedDate: string; // YYYY-MM-DD 포맷
-    rawContent: string;
-}
+import { JobMeta } from './site.config';
 
 export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
     /**
