@@ -5,14 +5,14 @@ This document defines the schema, rules, and triggers for dumping the agent's cu
 ---
 
 ### 1. Save Target and Location
-* File Path: **`./.agents/transcripts/{ConversationID}/context_memory.md`**
+* File Path: **`./data/agents/{ConversationID}/context_memory.md`**
 * Update Policy: Whenever a major structural change occurs or at the explicit request of the user, overwrite this file with the latest state snapshot.
 * **Language Requirement**: The generated memory file (`context_memory.md`) must be written in natural, detailed Korean, avoiding unnatural translated phrasing.
 
 ---
 
 ### 2. Context Memory Template
-The `./.agents/transcripts/{ConversationID}/context_memory.md` file must adhere to the following markdown structure:
+The `./data/agents/{ConversationID}/context_memory.md` file must adhere to the following markdown structure:
 
 ```markdown
 # 🧠 Workspace Context Memory Snapshot

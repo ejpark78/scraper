@@ -5,14 +5,14 @@ This document defines the schema, contents, and triggers for dumping the agent's
 ---
 
 ### 1. Save Target and Location
-* File Path: **`./.agents/transcripts/{ConversationID}/brain_dump.md`**
+* File Path: **`./data/agents/{ConversationID}/brain_dump.md`**
 * Update Policy: When `dump-brain` is executed, analyze the session's execution history (`transcript_full.jsonl`) and generate or overwrite the file.
 * **Language Requirement**: Summaries and descriptions within the brain dump should be descriptive and readable, focusing on exact tool metrics.
 
 ---
 
 ### 2. Brain Dump Content Structure
-The `./.agents/transcripts/{ConversationID}/brain_dump.md` file must adhere to the following structure:
+The `./data/agents/{ConversationID}/brain_dump.md` file must adhere to the following structure:
 
 ```markdown
 # 🧠 Brain Dump (Session: {{CONVERSATION_ID}})

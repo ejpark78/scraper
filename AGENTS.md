@@ -8,10 +8,9 @@
 3. **Minimal File Scope**: No root grep/list_dir. Prefer `git ls-files` to map tracked files efficiently. Use step-by-step `list_dir` only for untracked folders (e.g. `data/`) or fallback. Use view_file only on target files.
 4. **Transparent Issues**: Report errors immediately. No silent restores. Do not exceed 2 autonomous troubleshooting retries without user review.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
-6. **Symbolic Links for Artifacts**: Link created/modified artifacts to `.agents/brain/`.
-7. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
-8. **Docker-Centric Testing**: Test via `docker compose`. Prefer volume mounting (`-v`) with `run --rm` over `docker cp` for executing local scripts.
-9. **Transcripts Export on Start**: At the very beginning of a session (the first turn of a new or resumed session) only, the agent must run `make -f .agents/Makefile dump-all AGENTS=agy` to dump and validate all transcripts and context summaries. It is not required to run this when finalizing or exiting.
+6. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
+7. **Docker-Centric Testing**: Test via `docker compose`. Prefer volume mounting (`-v`) with `run --rm` over `docker cp` for executing local scripts.
+8. **Transcripts Export on Start**: At the very beginning of a session (the first turn of a new or resumed session) only, the agent must run `make -f .agents/Makefile dump-all AGENTS=agy` to dump and validate all transcripts and context summaries. It is not required to run this when finalizing or exiting.
 
 ## ⚠️ Security Rules
 - **No ENV Access**: DO NOT access `.env` or `.env.*` files. Use `.env.example` for reference.

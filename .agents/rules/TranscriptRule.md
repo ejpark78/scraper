@@ -4,7 +4,7 @@ To maximize reliability, reproducibility, and knowledge accumulation for the LLM
 
 1. **Target and Location for Unified Recording**:
    * The agent must record the user's raw request, the agent's exact final response (do not summarize or truncate), and all executed CLI commands without omission.
-   * Save the entire session's transcript into a single file named after the Conversation ID: **`./.agents/transcripts/{ConversationID}.md`** (e.g., `11b49df4-0bde-4273-bb19-0fa2c8546755.md`).
+   * Save the entire session's transcript into a single file named after the Conversation ID: **`./data/agents/{ConversationID}.md`** (e.g., `11b49df4-0bde-4273-bb19-0fa2c8546755.md`).
    * When a new turn occurs, append the turn log to the end of this file, separating each turn with a clear markdown horizontal divider: `---`.
    * **No Omission of Previous Turns**: Do not delete, truncate, or summarize previous turns when appending a new one. The file must act as a complete, chronological log of all turns in the session.
 
