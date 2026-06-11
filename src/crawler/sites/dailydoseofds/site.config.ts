@@ -17,6 +17,7 @@ export const descriptor: SiteDescriptor = {
   key: 'dailydose_ds',
   name: 'Daily Dose of DS',
   domain: 'dailydoseofds.com',
+  favicon: 'https://www.dailydoseofds.com/favicon.ico',
 
   indexes: [
     { collection: 'bronze/dailydose_ds.html', fields: { id: 1 }, options: { unique: true } },
@@ -61,7 +62,11 @@ export const descriptor: SiteDescriptor = {
       '/signup/',
       '/passwordReset/',
       'dailydoseofds.com/dailydoseofds.com',
-      'dailydoseofds.com/a-crash-course-on-building-rag-systems'
+      'dailydoseofds.com/a-crash-course-on-building-rag-systems',
+      'favicon',
+      'login',
+      'logout',
+      'signup'
     ],
     extractId: (url) => {
       return Buffer.from(url).toString('base64').replace(/[^a-zA-Z0-9]/g, '');

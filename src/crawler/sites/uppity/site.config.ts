@@ -15,6 +15,7 @@ export const descriptor: SiteDescriptor = {
   key: 'uppity',
   name: 'Uppity',
   domain: 'uppity.co.kr',
+  favicon: 'https://uppity.co.kr/favicon.ico',
 
   indexes: [
     { collection: 'bronze/uppity.html', fields: { id: 1 }, options: { unique: true } },
@@ -41,7 +42,7 @@ export const descriptor: SiteDescriptor = {
       const crypto = require('crypto');
       return crypto.createHash('md5').update(url).digest('hex');
     },
-    excludePatterns: ['logout.cm', 'login', 'join', 'signup'],
+    excludePatterns: ['logout.cm', 'login', 'join', 'signup', 'favicon', 'logout'],
     urlsCollectionName: 'bronze/uppity.urls',
     scrape: scrapeHttpFetch,
   },

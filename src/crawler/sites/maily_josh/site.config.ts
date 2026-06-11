@@ -16,6 +16,7 @@ export const descriptor: SiteDescriptor = {
   key: 'maily_josh',
   name: '조쉬의 뉴스레터 (Maily)',
   domain: 'maily.so',
+  favicon: 'https://maily.so/favicon.ico',
 
   indexes: [
     { collection: 'bronze/maily_josh.html', fields: { id: 1 }, options: { unique: true } },
@@ -42,7 +43,11 @@ export const descriptor: SiteDescriptor = {
       '/users/sign_in',
       '/users/sign_up',
       'redirect_path=',
-      '/auth/'
+      '/auth/',
+      'favicon',
+      'login',
+      'logout',
+      'signup'
     ],
     extractId: (url) => {
       const crypto = require('crypto');

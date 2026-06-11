@@ -35,6 +35,7 @@ export const descriptor: SiteDescriptor = {
   key: 'gpters',
   name: 'GPTers News',
   domain: 'gpters.org',
+  favicon: 'https://gpters.org/favicon.ico',
 
   indexes: [
     { collection: 'bronze/gpters.html', fields: { id: 1 }, options: { unique: true } },
@@ -62,6 +63,7 @@ export const descriptor: SiteDescriptor = {
       const id = parts[parts.length - 1] || '';
       return /^[a-zA-Z0-9]{15}$/.test(id) ? id : '';
     },
+    excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     urlsCollectionName: 'bronze/gpters.urls',
     scrape: scrapeGptersGraphQL,
   },

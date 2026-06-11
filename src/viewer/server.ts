@@ -52,7 +52,12 @@ app.get('/api/collections', async (req: Request, res: Response) => {
     const collections: any[] = [];
     
     // Special case for LinkedIn Jobs (Merged)
-    collections.push({ id: 'linkedin.jobs', name: 'LinkedIn Jobs' });
+    const linkedinSite = sites.find(s => s.key === 'linkedin');
+    collections.push({
+      id: 'linkedin.jobs',
+      name: 'LinkedIn Jobs',
+      favicon: linkedinSite?.favicon || '',
+    });
 
     // Dynamic fetch from Silver DB
     const silverDb = client.db('silver');
@@ -69,14 +74,24 @@ app.get('/api/collections', async (req: Request, res: Response) => {
         .replace(/_/g, ' ')
         .replace(/^\w/, (first: string) => first.toUpperCase());
       
-      collections.push({ id: `silver/${name}`, name: displayName });
+      const site = sites.find(s => s.key === siteName);
+      
+      collections.push({
+        id: `silver/${name}`,
+        name: displayName,
+        favicon: site?.favicon || '',
+      });
     }
-    
     
     // Add LinkedIn Companies if exists in silver
     const hasCompanies = (await silverDb.listCollections({ name: 'linkedin.companies' }).toArray()).length > 0;
     if (hasCompanies) {
-      collections.push({ id: 'silver/linkedin.companies', name: 'LinkedIn Companies' });
+      const companySite = sites.find(s => s.key === 'linkedin_company');
+      collections.push({
+        id: 'silver/linkedin.companies',
+        name: 'LinkedIn Companies',
+        favicon: companySite?.favicon || '',
+      });
     }
 
     collections.sort((a, b) => a.name.localeCompare(b.name));

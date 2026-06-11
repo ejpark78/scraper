@@ -23,6 +23,7 @@ export interface SiteDescriptor {
   name: string;
   domain?: string;
   seedUrls?: string[];
+  favicon?: string;
 
   indexes?: IndexSpec[];
 

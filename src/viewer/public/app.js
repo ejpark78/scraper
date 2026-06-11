@@ -179,8 +179,27 @@ async function loadCollections() {
     collections.forEach((col, idx) => {
       const li = document.createElement('li');
       li.className = 'collection-item';
-      li.textContent = col.name;
       li.setAttribute('data-id', col.id);
+      
+      // Render favicon if present
+      if (col.favicon) {
+        const img = document.createElement('img');
+        img.src = col.favicon;
+        img.className = 'collection-favicon';
+        img.alt = '';
+        img.style.width = '16px';
+        img.style.height = '16px';
+        img.style.marginRight = '8px';
+        img.style.verticalAlign = 'middle';
+        img.style.borderRadius = '3px';
+        img.style.display = 'inline-block';
+        li.appendChild(img);
+      }
+
+      const textSpan = document.createElement('span');
+      textSpan.textContent = col.name;
+      textSpan.style.verticalAlign = 'middle';
+      li.appendChild(textSpan);
       
       li.addEventListener('click', () => {
         document.querySelectorAll('.collection-item').forEach(item => item.classList.remove('active'));

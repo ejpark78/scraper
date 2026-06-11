@@ -15,6 +15,7 @@ export const descriptor: SiteDescriptor = {
   key: 'geeknews',
   name: 'GeekNews',
   domain: 'news.hada.io',
+  favicon: 'https://news.hada.io/favicon.ico',
 
   indexes: [
     { collection: 'bronze/geeknews.html', fields: { id: 1 }, options: { unique: true } },
@@ -41,7 +42,7 @@ export const descriptor: SiteDescriptor = {
       const match = url.match(/[?&]id=(\d+)/);
       return match ? match[1] : '';
     },
-    excludePatterns: ['vote?', '/vote', 'user?', '/user', 'item?'],
+    excludePatterns: ['vote?', '/vote', 'user?', '/user', 'item?', 'favicon', 'login', 'logout', 'signup'],
     urlsCollectionName: 'bronze/geeknews.urls',
     scrape: scrapeHttpFetch,
   },

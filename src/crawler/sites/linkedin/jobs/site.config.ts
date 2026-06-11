@@ -23,6 +23,7 @@ async function scrapeLinkedinJob(url: string, tempPath: string): Promise<void> {
 export const descriptor: SiteDescriptor = {
   key: 'linkedin',
   name: 'LinkedIn Jobs',
+  favicon: 'https://www.linkedin.com/favicon.ico',
 
   indexes: [
     { collection: 'bronze/linkedin.jobs', fields: { jobId: 1 }, options: { unique: true } },
@@ -49,6 +50,7 @@ export const descriptor: SiteDescriptor = {
     updateFilterKey: 'jobId',
     defaultSlack: 0,
     extractId: (url) => UrlUtils.extractJobId(url) || '',
+    excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     scrape: scrapeLinkedinJob,
   },
 

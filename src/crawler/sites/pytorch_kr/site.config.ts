@@ -47,6 +47,7 @@ export const descriptor: SiteDescriptor = {
   key: 'pytorch_kr',
   name: 'PyTorch KR',
   domain: 'discuss.pytorch.kr',
+  favicon: 'https://discuss.pytorch.kr/favicon.ico',
 
   indexes: [
     { collection: 'bronze/pytorch_kr.html', fields: { id: 1 }, options: { unique: true } },
@@ -75,6 +76,7 @@ export const descriptor: SiteDescriptor = {
       const match = url.match(/\/(\d+)(?:\?|$)/);
       return match ? match[1] : '';
     },
+    excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     urlsCollectionName: 'bronze/pytorch_kr.urls',
     scrape: scrapePytorchKr,
   },

@@ -15,6 +15,7 @@ export const descriptor: SiteDescriptor = {
   key: 'aicasebook',
   name: 'AI Casebook',
   domain: 'aicasebook.dev',
+  favicon: 'https://aicasebook.dev/favicon.ico',
 
   indexes: [
     { collection: 'bronze/aicasebook.html', fields: { id: 1 }, options: { unique: true } },
@@ -41,6 +42,7 @@ export const descriptor: SiteDescriptor = {
       const match = url.match(/\/setup\/(\d+)/);
       return match ? match[1] : '';
     },
+    excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     urlsCollectionName: 'bronze/aicasebook.urls',
     scrape: scrapeHttpFetch,
   },

@@ -15,6 +15,7 @@ export const descriptor: SiteDescriptor = {
   key: 'yozm',
   name: '요즘IT',
   domain: 'yozm.wishket.com',
+  favicon: 'https://yozm.wishket.com/favicon.ico',
 
   indexes: [
     { collection: 'bronze/yozm.html', fields: { id: 1 }, options: { unique: true } },
@@ -41,6 +42,7 @@ export const descriptor: SiteDescriptor = {
       const match = url.match(/\/detail\/(\d+)\//);
       return match ? match[1] : '';
     },
+    excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     urlsCollectionName: 'bronze/yozm.urls',
     scrape: scrapeHttpFetch,
   },
