@@ -182,7 +182,7 @@ class ScraperWorker {
       const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
       fs.unlinkSync(tempHtmlPath);
 
-      this.logHtmlPreview(site, id, rawHtml);
+      this.logHtmlPreview(site, id, url, rawHtml);
       await this.saveRawHtmlAndQueueTransformTask(site, id, url, rawHtml, payload);
     } catch (scrapeErr: any) {
       await this.handleScrapeFailure(payload, id, scrapeErr);
@@ -212,11 +212,11 @@ class ScraperWorker {
     await this.redis.set(rateLimitKey, Date.now().toString());
   }
 
-  private logHtmlPreview(site: string, id: string, rawHtml: string): void {
+  private logHtmlPreview(site: string, id: string, url: string, rawHtml: string): void {
     try {
       const $ = cheerio.load(rawHtml);
       const bodyText = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 500);
-      Logger.info(`[Scraper] HTML Content Preview [${site}] ID: ${id} (First 500 chars of body text): "${bodyText}"`);
+      Logger.info(`[Scraper] HTML Content Preview [${site}] ID: ${id} URL: ${url} (First 500 chars of body text): "${bodyText}"`);
     } catch (logErr) {
     }
   }
