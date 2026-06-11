@@ -10,6 +10,8 @@
 #   make -f .agents/Makefile AGENTS=opencode <T>
 #   make -f .agents/Makefile AGENTS=agy,opencode <T>
 
+SHELL := /bin/bash
+
 AGENTS ?= agy
 
 .PHONY: dump-transcripts dump-context dump-brain prune usage get-agy-token
@@ -47,3 +49,6 @@ prune:
 	@npx ts-node .agents/scripts/prune_session.ts
 
 dump-all: dump-sysinfo dump-transcripts dump-context dump-brain compress-rules lint-rules
+
+commit:
+	bash .agents/scripts/commit-changes.sh
