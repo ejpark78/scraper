@@ -10,8 +10,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
-import { AiCasebookMeta, AiCasebookConverter } from './Converter';
-import { descriptor } from './site.config';
+import { AiCasebookConverter } from './Converter';
+import { descriptor, AiCasebookMeta } from './site.config';
 
 export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
   private readonly converter: AiCasebookConverter;

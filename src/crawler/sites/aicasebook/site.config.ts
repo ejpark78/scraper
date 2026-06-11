@@ -11,6 +11,22 @@ import type { SiteDescriptor } from '../../core/SiteRegistry';
 import { AiCasebookConverter } from './Converter';
 import { scrapeHttpFetch } from '../../utils/scraper';
 
+export interface AiCasebookMeta {
+  id: string;
+  title: string;
+  url: string;
+  summary: string;
+  body: string;
+  author: string;
+  categories: string[];
+  tags: string[];
+  publishedAt: string | null;
+  views: number;
+  sourceLink: string;
+  seriesName: string | null;
+  rawContent: string;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'aicasebook',
   name: 'AI Casebook',
@@ -58,7 +74,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/aicasebook.contents',
     filterField: 'id',
-    buildDocument: (id, meta) => ({
+    buildDocument: (id, meta: AiCasebookMeta) => ({
       id,
       title: meta.title || 'Untitled',
       url: meta.url || null,
