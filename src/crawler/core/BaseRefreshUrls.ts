@@ -242,7 +242,7 @@ export class BaseRefreshUrls {
                 href = href.replace(/%22/g, '').replace(/\\"/g, '');
 
                 // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, template placeholders, or download paths
-                if (/[\s"'<>￼]/g.test(href) || href.includes('div') || href.includes('br') || href.includes('$%') || href.includes('$$') || href.includes('download.cm')) {
+                if (/[\s"'<>￼{}]/g.test(href) || href.includes('div') || href.includes('br') || href.includes('$%') || href.includes('$$') || href.includes('download.cm') || href.includes('%7B') || href.includes('%7D')) {
                     return;
                 }
 

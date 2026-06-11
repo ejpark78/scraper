@@ -38,10 +38,8 @@ export const descriptor: SiteDescriptor = {
     updateFilterKey: 'topicId',
     defaultSlack: 3,
     extractId: (url) => {
-      if (url.includes('id=')) {
-        return url.split('id=').pop()!.split('&')[0];
-      }
-      return '';
+      const match = url.match(/[?&]id=(\d+)/);
+      return match ? match[1] : '';
     },
     excludePatterns: ['vote?', '/vote', 'user?', '/user', 'item?'],
     urlsCollectionName: 'bronze/geeknews.urls',
