@@ -11,7 +11,7 @@
 6. **Symbolic Links for Artifacts**: Link created/modified artifacts to `.agents/brain/`.
 7. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
 8. **Docker-Centric Testing**: Test via `docker compose`. Prefer volume mounting (`-v`) with `run --rm` over `docker cp` for executing local scripts.
-9. **Transcripts Export on Exit**: When finalizing a session or concluding a major task before stopping execution, the agent must run `make -f .agents/Makefile dump-all AGENTS=agy` to dump and validate all transcripts and context summaries.
+9. **Transcripts Export on Start/Exit**: At the very beginning of a session (the first turn of a new or resumed session) and when finalizing a session before stopping execution, the agent must run `make -f .agents/Makefile dump-all AGENTS=agy` to dump and validate all transcripts and context summaries.
 
 ## ⚠️ Security Rules
 - **No ENV Access**: DO NOT access `.env` or `.env.*` files. Use `.env.example` for reference.
