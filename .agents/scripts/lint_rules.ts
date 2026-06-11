@@ -18,7 +18,7 @@ interface BadLinkItem {
 }
 
 class RulesLinter {
-  private readonly transcriptsDir = path.join(__dirname, '../transcripts');
+  private readonly transcriptsDir = path.join(__dirname, '../../data/agents');
 
   public run(): void {
     try {

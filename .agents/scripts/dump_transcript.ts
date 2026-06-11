@@ -146,7 +146,7 @@ export class TranscriptDumper {
 
         const md = this.buildTranscript(s.id, s.title || s.id, detail.messages, taskLogs);
 
-        const outDir = path.join(__dirname, '..', 'transcripts', this.agentName, info.dateDir);
+        const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir);
         const destSessionDir = path.join(outDir, info.tag);
         fs.mkdirSync(destSessionDir, { recursive: true });
 

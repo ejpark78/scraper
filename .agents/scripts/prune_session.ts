@@ -19,7 +19,7 @@ class SessionPruner {
 
   constructor() {
     this.baseBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
-    this.transcriptsDir = path.join(__dirname, '../transcripts');
+    this.transcriptsDir = path.join(__dirname, '../../data/agents');
   }
 
   public run(): void {
@@ -52,11 +52,11 @@ class SessionPruner {
       const transcriptFile = path.join(this.transcriptsDir, `${sessionId}.md`);
       if (fs.existsSync(transcriptDir)) {
         fs.rmSync(transcriptDir, { recursive: true, force: true });
-        console.log(`     📄 Also removed: transcripts/${sessionId}/`);
+        console.log(`     📄 Also removed: data/agents/${sessionId}/`);
       }
       if (fs.existsSync(transcriptFile)) {
         fs.rmSync(transcriptFile, { force: true });
-        console.log(`     📄 Also removed: transcripts/${sessionId}.md`);
+        console.log(`     📄 Also removed: data/agents/${sessionId}.md`);
       }
     }
 

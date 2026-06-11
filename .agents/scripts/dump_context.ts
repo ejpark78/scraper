@@ -160,7 +160,7 @@ ${filesSection}
         console.log(`  -> ${info.tag} (${s.title})`);
 
         // Check if brain_dump exists first (same logic as original)
-        const brainDumpPath = path.join(__dirname, '..', 'transcripts', this.agentName, info.dateDir, info.tag, 'brain_dump.md');
+        const brainDumpPath = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag, 'brain_dump.md');
         if (!fs.existsSync(brainDumpPath)) {
           console.log(`  ⏭️  Skip (no brain_dump.md): ${info.tag}`);
           return;
@@ -169,7 +169,7 @@ ${filesSection}
         try {
           const detail = adapter.getSessionDetail(s.id);
           const md = this.buildContextMemory(detail.session, detail.messages);
-          const outDir = path.join(__dirname, '..', 'transcripts', this.agentName, info.dateDir, info.tag);
+          const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
           fs.mkdirSync(outDir, { recursive: true });
           fs.writeFileSync(path.join(outDir, 'context_memory.md'), md, 'utf-8');
           console.log(`  ✨ Saved: ${outDir}/context_memory.md`);
