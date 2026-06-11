@@ -15,11 +15,11 @@ import { descriptor } from './site.config';
 class DailyDoseDSList extends BaseListService {
     constructor() {
         super({
-            site: 'dailydose_ds',
-            displayName: 'Daily Dose DS',
-            cacheSetKey: 'completed_ddds',
-            bronzeHtmlCollection: 'bronze/dailydose_ds.html',
-            urlsCollection: 'bronze/dailydose_ds.urls',
+            site: descriptor.key,
+            displayName: descriptor.name,
+            cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+            bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+            urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
         });
     }
 
