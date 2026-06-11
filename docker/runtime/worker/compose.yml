@@ -20,7 +20,7 @@ services:
   base:
     build:
       context: ../../../
-      dockerfile: docker/runtime/worker/Dockerfile
+      dockerfile: docker/runtime/worker/base/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
@@ -49,11 +49,11 @@ services:
   scraper:
     build:
       context: ../../../
-      dockerfile: docker/runtime/worker/Dockerfile
+      dockerfile: docker/runtime/worker/scraper/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/base:latest
+    image: linkedin/scraper:latest
     command: ["npx", "ts-node", "src/crawler/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
@@ -80,11 +80,11 @@ services:
   converter:
     build:
       context: ../../../
-      dockerfile: docker/runtime/worker/Dockerfile
+      dockerfile: docker/runtime/worker/converter/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/base:latest
+    image: linkedin/converter:latest
     command: ["npx", "ts-node", "src/crawler/workers/TransformerWorker.ts"]
     environment:
       - TZ=Asia/Seoul
