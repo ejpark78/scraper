@@ -280,10 +280,10 @@ class ScraperWorker {
 
       const links = $('a[href]').toArray();
       for (const link of links) {
-        let href = $(link).attr('href');
-        if (!href) continue;
+        const rawHref = $(link).attr('href');
+        if (!rawHref) continue;
         // Clean leading/trailing quotes, backslashes, URL-encoded quotes, and whitespaces
-        href = href.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
+        let href = rawHref.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
         href = href.replace(/%22/g, '').replace(/\\"/g, '');
 
         // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, template placeholders, or download paths
@@ -293,7 +293,7 @@ class ScraperWorker {
 
         // Check site-specific exclude patterns
         if (config.excludePatterns && config.excludePatterns.length > 0) {
-          if (config.excludePatterns.some(pat => href.includes(pat))) {
+          if (config.excludePatterns.some((pat: string) => href.includes(pat))) {
             continue;
           }
         }
