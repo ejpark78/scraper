@@ -5,7 +5,7 @@
 services:
   base:
     build:
-      context: ../../../
+      context: ../../
       dockerfile: docker/worker/base/Dockerfile
       args:
         - BUILD_DATE
@@ -34,7 +34,7 @@ services:
 
   scraper:
     build:
-      context: ../../../
+      context: ../../
       dockerfile: docker/worker/scraper/Dockerfile
       args:
         - BUILD_DATE
@@ -65,7 +65,7 @@ services:
 
   converter:
     build:
-      context: ../../../
+      context: ../../
       dockerfile: docker/worker/converter/Dockerfile
       args:
         - BUILD_DATE
