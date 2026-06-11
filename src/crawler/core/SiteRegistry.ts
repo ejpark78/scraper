@@ -38,6 +38,7 @@ export interface SiteDescriptor {
     excludePatterns?: string[];
     urlFilter?: (url: string) => boolean;
     htmlSourcesToScan?: string[];
+    generateUrls?: (config: any, options?: any) => string[];
   };
 
   transformer?: {

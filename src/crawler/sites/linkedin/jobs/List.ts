@@ -10,7 +10,7 @@
 import { chromium, Browser } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
-import { generateUrls, Config } from './site.config';
+import { descriptor, Config } from './site.config';
 import { HtmlMinifier, DateUtils, UrlUtils, Logger } from '../../../utils';
 import { MongoDatabase } from '../../../../database/mongo';
 import Redis from 'ioredis';
@@ -85,7 +85,9 @@ export class LinkedInList {
 
         if (ext === '.json') {
             const config: Config = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
-            urls = generateUrls(config, { skipDirectUrls: !isLoggedIn });
+            if (descriptor.scraper?.generateUrls) {
+                urls = descriptor.scraper.generateUrls(config, { skipDirectUrls: !isLoggedIn });
+            }
         } else {
             urls = fs.readFileSync(configFilePath, 'utf-8')
                 .split(/\r?\n/)

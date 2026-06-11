@@ -224,6 +224,7 @@ export const descriptor: SiteDescriptor = {
     excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     scrape: scrapeLinkedinJob,
     htmlSourcesToScan: ['bronze/linkedin.lists', 'bronze/linkedin.jobs'],
+    generateUrls: (config: Config, options?: GenerateUrlsOptions) => generateUrls(config, options),
   },
 
   transformer: {
