@@ -1,3 +1,13 @@
+/**
+ * @module agent_adapter
+ * @description Provides unified adapters to fetch and query session information from agy logs and opencode databases.
+ * @constraints
+ *   - Strictly typed, avoiding 'any' except where library-specific types are undefined.
+ *   - Dynamically resolves log paths and queries SQLite databases.
+ * @dependencies Node fs/path/os/sqlite, IConverter
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -24,13 +34,14 @@ export interface AgentMessage {
 
 export interface AgentToolCall {
   name: string;
-  arguments: Record<string, any>;
+  arguments: Record<string, unknown>;
   result?: string;
 }
 
 export interface SessionDetail {
   session: AgentSession;
   messages: AgentMessage[];
+  taskLogs?: { id: string; localPath: string }[];
 }
 
 export interface AgentAdapter {
@@ -38,6 +49,23 @@ export interface AgentAdapter {
   getSessions(all: boolean): AgentSession[];
   getSessionDetail(sessionId: string): SessionDetail;
   baseBrainDir?: string;
+}
+
+interface LogToolCall {
+  name?: string;
+  tool?: string;
+  args?: Record<string, unknown>;
+  arguments?: Record<string, unknown>;
+  input?: Record<string, unknown>;
+  result?: string;
+  output?: string;
+}
+
+interface LogStep {
+  type: string;
+  source?: string;
+  content?: string;
+  tool_calls?: LogToolCall[];
 }
 
 // ─── agy adapter ──────────────────────────────────────────
@@ -99,12 +127,12 @@ class AgyAdapter implements AgentAdapter {
 
     lines.forEach((line) => {
       try {
-        const step = JSON.parse(line);
+        const step = JSON.parse(line) as LogStep;
         if (step.type === 'USER_INPUT') {
           messages.push({ role: 'user', content: step.content || '', toolCalls: [], stepIndex: stepIndex++ });
           lastAssistantMsg = null;
         } else if (step.type === 'PLANNER_RESPONSE') {
-          const toolCalls: AgentToolCall[] = (step.tool_calls || []).map((t: any) => ({
+          const toolCalls: AgentToolCall[] = (step.tool_calls || []).map((t: LogToolCall) => ({
             name: t.name || t.tool || 'unknown',
             arguments: t.args || t.arguments || t.input || {},
           }));
@@ -169,6 +197,37 @@ class AgyAdapter implements AgentAdapter {
 
 // ─── opencode adapter ──────────────────────────────────────
 
+interface SQLiteSessionRow {
+  id: string;
+  title: string | null;
+  time_created: number;
+  time_updated: number;
+  agent: string | null;
+  model: string | null;
+  tokens_input: number | null;
+  tokens_output: number | null;
+  tokens_reasoning: number | null;
+  cost: number | null;
+}
+
+interface SQLiteMessageRow {
+  id: string;
+  data: string;
+  time_created: number;
+}
+
+interface SQLitePartRow {
+  data: string;
+}
+
+interface SQLiteDatabase {
+  prepare(sql: string): {
+    all(...args: unknown[]): unknown[];
+    get(...args: unknown[]): unknown;
+  };
+  close(): void;
+}
+
 class OpencodeAdapter implements AgentAdapter {
   private dbPath: string;
 
@@ -178,9 +237,11 @@ class OpencodeAdapter implements AgentAdapter {
 
   getName(): string { return 'opencode'; }
 
-  private getDb(): any {
-    const { DatabaseSync } = require('node:sqlite') as any;
-    return new DatabaseSync(this.dbPath);
+  private getDb(): SQLiteDatabase {
+    // DatabaseSync is imported dynamically because it is only available in node standard library in specific runtimes.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const sqlite = require('node:sqlite');
+    return new sqlite.DatabaseSync(this.dbPath) as SQLiteDatabase;
   }
 
   getSessions(all: boolean): AgentSession[] {
@@ -194,11 +255,11 @@ class OpencodeAdapter implements AgentAdapter {
               tokens_input, tokens_output, tokens_reasoning, cost
        FROM session
        ORDER BY time_updated DESC`
-    ).all();
+    ).all() as SQLiteSessionRow[];
 
     db.close();
 
-    const sessions: AgentSession[] = rows.map((r: any) => ({
+    const sessions: AgentSession[] = rows.map((r) => ({
       id: r.id,
       title: r.title || r.id,
       agent: r.agent,
@@ -222,7 +283,7 @@ class OpencodeAdapter implements AgentAdapter {
       `SELECT id, title, time_created, time_updated, agent, model,
               tokens_input, tokens_output, tokens_reasoning, cost
        FROM session WHERE id = ?`
-    ).get(sessionId);
+    ).get(sessionId) as SQLiteSessionRow | undefined;
 
     if (!sessionRow) {
       db.close();
@@ -246,36 +307,56 @@ class OpencodeAdapter implements AgentAdapter {
     // Messages
     const msgRows = db.prepare(
       `SELECT id, data, time_created FROM message WHERE session_id = ? ORDER BY time_created ASC`
-    ).all(sessionId);
+    ).all(sessionId) as SQLiteMessageRow[];
 
     const messages: AgentMessage[] = [];
     let stepIndex = 0;
 
-    msgRows.forEach((msgRow: any) => {
-      const msgData = JSON.parse(msgRow.data || '{}');
+    msgRows.forEach((msgRow) => {
+      interface MessageData {
+        role?: string;
+        content?: string;
+      }
+      const msgData = JSON.parse(msgRow.data || '{}') as MessageData;
       const role = msgData.role;
 
       if (role === 'user') {
-        // Get the user prompt from message content or parts
         const parts = db.prepare(
           `SELECT data FROM part WHERE session_id = ? AND message_id = ? ORDER BY time_created ASC`
-        ).all(sessionId, msgRow.id);
+        ).all(sessionId, msgRow.id) as SQLitePartRow[];
 
-        const texts = parts.map((p: any) => { try { const pd = JSON.parse(p.data); return pd.text || ''; } catch { return ''; } }).filter(Boolean);
+        const texts = parts.map((p) => {
+          try {
+            interface PartData {
+              text?: string;
+            }
+            const pd = JSON.parse(p.data) as PartData;
+            return pd.text || '';
+          } catch { return ''; }
+        }).filter(Boolean);
         messages.push({ role: 'user', content: texts.join('\n') || msgData.content || '', toolCalls: [], stepIndex: stepIndex++ });
       }
 
       if (role === 'assistant') {
         const parts = db.prepare(
           `SELECT data FROM part WHERE session_id = ? AND message_id = ? ORDER BY time_created ASC`
-        ).all(sessionId, msgRow.id);
+        ).all(sessionId, msgRow.id) as SQLitePartRow[];
 
         const toolCalls: AgentToolCall[] = [];
-        let contentParts: string[] = [];
+        const contentParts: string[] = [];
 
-        parts.forEach((p: any) => {
+        parts.forEach((p) => {
           try {
-            const pd = JSON.parse(p.data);
+            interface PartData {
+              type?: string;
+              text?: string;
+              tool?: string;
+              state?: {
+                input?: Record<string, unknown>;
+                output?: string;
+              };
+            }
+            const pd = JSON.parse(p.data) as PartData;
             if (pd.type === 'reasoning' || pd.type === 'text') {
               if (pd.text) contentParts.push(pd.text);
             }
