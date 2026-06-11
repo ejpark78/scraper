@@ -11,6 +11,11 @@ import { Document } from 'mongodb';
 import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
 
+interface PyTorchListDocument extends Document {
+    _id: string;
+    collectedAt: Date;
+}
+
 class PyTorchKRList extends BaseListService {
     constructor() {
         super({
@@ -61,7 +66,7 @@ class PyTorchKRList extends BaseListService {
             if (!id || !slug) continue;
 
             try {
-                const pytorchListsColl = await dbInstance.getCollection<{ _id: string } & Document>('bronze/pytorch_kr.lists');
+                const pytorchListsColl = await dbInstance.getCollection<PyTorchListDocument>('bronze/pytorch_kr.lists');
                 const cleanTopic = { ...topic };
                 delete (cleanTopic as any)._id;
                 await pytorchListsColl.updateOne(
