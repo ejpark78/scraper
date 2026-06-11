@@ -9,6 +9,7 @@
 
 import { MongoDatabase } from '../../../../database/mongo';
 import { BaseListService } from '../../../../crawler/core/BaseListService';
+import { descriptor } from './site.config';
 
 const NEWSLETTER_QUERY = `
 query GetPosts($after: String, $before: String, $filterBy: [PostListFilterByInput!], $limit: Int!, $orderByString: String, $postTypeIds: [String!], $reverse: Boolean, $spaceIds: [ID!]) {
@@ -46,11 +47,11 @@ const NEWSLETTER_VARS = {
 class GptersNewsletterList extends BaseListService {
     constructor() {
         super({
-            site: 'gpters_newsletter',
-            displayName: 'GPTERS Newsletter',
-            cacheSetKey: 'completed_gpters_newsletter',
-            bronzeHtmlCollection: 'bronze/gpters_newsletter.html',
-            urlsCollection: 'bronze/gpters_newsletter.urls',
+            site: descriptor.key,
+            displayName: descriptor.name,
+            cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+            bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+            urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
         });
     }
 

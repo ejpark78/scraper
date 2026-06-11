@@ -11,9 +11,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../../core/BasePipeline';
 import { GptersMeta, GptersConverter } from '../Converter';
+import { descriptor } from './site.config';
 
-const COLLECTION_PREFIX = 'gpters_newsletter';
-const SITE_DIR = 'gpters_newsletter';
+const COLLECTION_PREFIX = descriptor.key;
+const SITE_DIR = descriptor.key;
 
 export class GptersNewsletterContents extends BasePipeline<GptersMeta> {
     private readonly converter: GptersConverter;
@@ -133,8 +134,8 @@ export class GptersNewsletterContents extends BasePipeline<GptersMeta> {
                 markdown: meta.rawContent,
                 publishedAt: meta.publishedAt || undefined,
                 docId: id,
-                siteDir: SITE_DIR,
-                siteDomain: 'gpters.org',
+                siteDir: descriptor.key,
+                siteDomain: descriptor.domain || 'gpters.org',
                 refererUrl: meta.url,
                 removeFavicons: true,
             });
