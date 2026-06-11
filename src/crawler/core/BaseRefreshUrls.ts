@@ -37,6 +37,7 @@ export class BaseRefreshUrls {
         const redis = new Redis(redisUrl);
 
         try {
+            const desc = getSite(site);
             const bronzeHtml = await mongo.getCollection(bronzeHtmlCollection);
             const urlsColl = await mongo.getCollection(urlsCollection);
 
@@ -81,7 +82,6 @@ export class BaseRefreshUrls {
             const errorReset = process.env.ERROR_RESET === 'true';
 
             // Seed URLs registered in site configuration
-            const desc = getSite(site);
             if (desc?.seedUrls && desc.seedUrls.length > 0 && desc.scraper) {
                 console.log(`🌱 [${displayName}] Seeding ${desc.seedUrls.length} configured seed URLs...`);
                 for (const url of desc.seedUrls) {
@@ -163,7 +163,6 @@ export class BaseRefreshUrls {
             } else {
                 console.log('💡 No new target items to recover.');
             }
-            const desc = getSite(site);
             if (desc?.domain && desc?.scraper?.extractId) {
                 await this.scanHtmlForUrls(mongo, redis, site, desc.domain, desc.scraper, completedIds);
             }
