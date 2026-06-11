@@ -4,6 +4,7 @@
  * @constraints
  *   - Gracefully skips sessions with missing or corrupt transcript log files.
  *   - Places formatted Markdown documents into the designated reports directory.
+ *   - Copies all session logs, scratch scripts, and artifacts to the destination session folder.
  * @dependencies Node fs/path, agent_adapter
  * @lastUpdated 2026-06-11
  */
@@ -11,6 +12,21 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { createAdapter, parseAgentsFromArg, assignSessionNumbers, AgentToolCall } from './lib/agent_adapter';
+
+function truncateOutput(text: string, maxLines = 150, keepHead = 50, keepTail = 100): string {
+  const lines = text.split('\n');
+  if (lines.length <= maxLines) {
+    return text;
+  }
+  const head = lines.slice(0, keepHead);
+  const tail = lines.slice(lines.length - keepTail);
+  const truncatedCount = lines.length - keepHead - keepTail;
+  return [
+    ...head,
+    `\n... [Truncated ${truncatedCount} lines of output. Full log copied to session directory] ...\n`,
+    ...tail
+  ].join('\n');
+}
 
 function buildTranscript(sessionId: string, rawTitle: string, messages: { role: string; content: string; toolCalls: AgentToolCall[]; stepIndex: number }[]): string {
   const title = rawTitle !== sessionId ? rawTitle : `Session ${sessionId}`;
@@ -34,13 +50,15 @@ function buildTranscript(sessionId: string, rawTitle: string, messages: { role: 
             const cmd = args.CommandLine || args.command || JSON.stringify(args);
             md += `* **💻 Run Command**: \`${cmd}\`\n`;
             if (tool.result) {
-              md += `  * **Output**:\n    \`\`\`bash\n    ${tool.result.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
+              const truncatedResult = truncateOutput(tool.result);
+              md += `  * **Output**:\n    \`\`\`bash\n    ${truncatedResult.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
             }
           } else {
             md += `* **🛠️ Tool**: \`${tool.name}\`\n`;
             md += `  * **Arguments**: \`${JSON.stringify(args)}\`\n`;
             if (tool.result) {
-              md += `  * **Result**:\n    \`\`\`json\n    ${tool.result.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
+              const truncatedResult = truncateOutput(tool.result);
+              md += `  * **Result**:\n    \`\`\`json\n    ${truncatedResult.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
             }
           }
         }
@@ -75,10 +93,37 @@ function run() {
           const md = buildTranscript(s.id, s.title || s.id, detail.messages);
 
           const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir);
-          fs.mkdirSync(outDir, { recursive: true });
+          const destSessionDir = path.join(outDir, info.tag);
+          fs.mkdirSync(destSessionDir, { recursive: true });
+
+          // Write main transcript file
           const outPath = path.join(outDir, `${info.tag}.md`);
           fs.writeFileSync(outPath, md, 'utf-8');
-          console.log(`  ✨ Saved: ${outPath}`);
+          console.log(`  ✨ Saved transcript: ${outPath}`);
+
+          // Copy raw session assets & logs if baseBrainDir is exposed
+          if (adapter.baseBrainDir) {
+            const srcSessionDir = path.join(adapter.baseBrainDir, s.id);
+            if (fs.existsSync(srcSessionDir)) {
+              // Copy all session files recursively (artifacts, scratch scripts) excluding .system_generated
+              fs.cpSync(srcSessionDir, destSessionDir, {
+                recursive: true,
+                filter: (src) => {
+                  const relative = path.relative(srcSessionDir, src);
+                  return !relative.startsWith('.system_generated');
+                }
+              });
+
+              // Copy task log files selectively
+              const srcTasksDir = path.join(srcSessionDir, '.system_generated', 'tasks');
+              const destTasksDir = path.join(destSessionDir, 'tasks');
+              if (fs.existsSync(srcTasksDir)) {
+                fs.mkdirSync(destTasksDir, { recursive: true });
+                fs.cpSync(srcTasksDir, destTasksDir, { recursive: true });
+              }
+              console.log(`  ✨ Copied all raw session assets and logs to: ${destSessionDir}`);
+            }
+          }
         } catch (detailErr: any) {
           console.warn(`  ⚠️ Skipping session ${s.id} due to error: ${detailErr.message}`);
         }

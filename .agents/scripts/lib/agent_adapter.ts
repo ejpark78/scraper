@@ -37,12 +37,13 @@ export interface AgentAdapter {
   getName(): string;
   getSessions(all: boolean): AgentSession[];
   getSessionDetail(sessionId: string): SessionDetail;
+  baseBrainDir?: string;
 }
 
 // ─── agy adapter ──────────────────────────────────────────
 
 class AgyAdapter implements AgentAdapter {
-  private readonly baseBrainDir: string;
+  public readonly baseBrainDir: string;
 
   constructor() {
     this.baseBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
@@ -117,7 +118,13 @@ class AgyAdapter implements AgentAdapter {
             const taskId = taskMatch[0];
             const resultIdx = content.indexOf('finished with result:');
             if (resultIdx !== -1) {
-              const taskResult = content.substring(resultIdx + 'finished with result:'.length).trim();
+              const logFile = path.join(this.baseBrainDir, sessionId, '.system_generated', 'tasks', `${taskId}.log`);
+              let taskResult = '';
+              if (fs.existsSync(logFile)) {
+                taskResult = fs.readFileSync(logFile, 'utf-8');
+              } else {
+                taskResult = content.substring(resultIdx + 'finished with result:'.length).trim();
+              }
               for (const msg of messages) {
                 if (msg.role === 'assistant' && msg.toolCalls) {
                   const matchingTool = msg.toolCalls.find(tc => 
