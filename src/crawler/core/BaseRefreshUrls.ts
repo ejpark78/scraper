@@ -1,3 +1,13 @@
+/**
+ * @module BaseRefreshUrls
+ * @description Class responsible for precision recovery and seeding of target URLs into Redis queues.
+ * @constraints
+ *   - Synchronizes state between MongoDB urls collection and Redis scraper queues.
+ *   - Scans HTML documents recursively for new links.
+ * @dependencies MongoDatabase, Redis, cheerio, SiteRegistry, UrlUtils
+ * @lastUpdated 2026-06-11
+ */
+
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
 import * as cheerio from 'cheerio';
@@ -69,6 +79,39 @@ export class BaseRefreshUrls {
 
             const overwrite = process.env.OVERWRITE === 'true';
             const errorReset = process.env.ERROR_RESET === 'true';
+
+            // Seed URLs registered in site configuration
+            const desc = getSite(site);
+            if (desc?.seedUrls && desc.seedUrls.length > 0 && desc.scraper) {
+                console.log(`🌱 [${displayName}] Seeding ${desc.seedUrls.length} configured seed URLs...`);
+                for (const url of desc.seedUrls) {
+                    const id = desc.scraper.extractId(url);
+                    if (!id) continue;
+                    const title = url.split('/').filter(Boolean).pop() || 'Seed URL';
+                    const existingDoc = await urlsColl.findOne({ id });
+                    if (!existingDoc) {
+                        await urlsColl.insertOne({
+                            id,
+                            url,
+                            title,
+                            status: 'new',
+                            pushedToRedis: false,
+                            updatedAt: new Date()
+                        });
+                    } else if (overwrite) {
+                        await urlsColl.updateOne(
+                            { id },
+                            {
+                                $set: {
+                                    status: 'new',
+                                    pushedToRedis: false,
+                                    updatedAt: new Date()
+                                }
+                            }
+                        );
+                    }
+                }
+            }
 
             let query: Record<string, any>;
             if (errorReset) {

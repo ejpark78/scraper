@@ -1,3 +1,13 @@
+/**
+ * @module SiteRegistry
+ * @description Automatically discovers and registers site scraping and transforming descriptors.
+ * @constraints
+ *   - Site configurations must define a unique key.
+ *   - Automatically scans direct subdirectories of src/crawler/sites.
+ * @dependencies Node fs/path, IConverter
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import type { IConverter } from './IConverter';
@@ -6,6 +16,7 @@ export interface SiteDescriptor {
   key: string;
   name: string;
   domain?: string;
+  seedUrls?: string[];
 
   scraper?: {
     collectionName: `bronze/${string}`;
