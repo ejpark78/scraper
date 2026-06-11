@@ -57,7 +57,7 @@ flowchart LR
 # 게시글 목록 수집 (페이지네이션)
 make mj-list               # 전체 페이지 수집
 make mj-list PAGE=1-5      # 1-5페이지만 수집
-make mj-list SLACK_TIME=3  # 페이지 간 간격 3초
+make mj-list LIST_SLACK=3  # 페이지 간 간격 3초
 
 # URL 큐 복구
 make mj-refresh-urls

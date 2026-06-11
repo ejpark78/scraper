@@ -259,7 +259,7 @@ export class LinkedInListScraper {
                 }
 
                 if (this.useLogin && parallelLimit === 1 && !isFirst) {
-                    const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
+                    const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
                     if (sleepSec > 0) {
                         console.log(`💤 [대기] 다음 요청까지 ${sleepSec}초 대기 중...`);
                         await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));

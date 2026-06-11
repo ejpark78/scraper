@@ -33,7 +33,7 @@ export class AppConfig {
     /**
      * Crawler/Scraper Slack Interval (in seconds)
      */
-    public static readonly SLACK_TIME: number = parseInt(process.env.SLACK_TIME || '3', 10);
+    public static readonly LIST_SLACK: number = parseInt(process.env.LIST_SLACK || '3', 10);
 
     /**
      * Scraper Worker Slack Interval (in seconds)

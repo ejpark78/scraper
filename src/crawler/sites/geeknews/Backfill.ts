@@ -40,7 +40,7 @@ export class GeekNewsBackfill {
         while (true) {
             const url = `https://news.hada.io/past?day=${day}&page=${page}`;
             
-            const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
+            const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
             if (sleepSec > 0) {
                 console.log(`\n💤 [대기] GeekNews 백필 (${day}, page ${page}) 수집 전 ${sleepSec}초 대기 중...`);
                 await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));

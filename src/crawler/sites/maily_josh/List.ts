@@ -25,7 +25,7 @@ class MailyJoshList extends BaseListService {
   }
 
   public async run(pageArg?: number): Promise<number> {
-    const sleepSec = parseInt(process.env.SLACK_TIME || '2', 10);
+    const sleepSec = parseInt(process.env.LIST_SLACK || '2', 10);
     const pageStr = process.env.PAGE || '1';
     const pageRange = pageStr.includes('-')
       ? pageStr.split('-').map(Number)

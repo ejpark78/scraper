@@ -67,7 +67,7 @@ class GptersNewsletterList extends BaseListService {
     public async run(limit: number = 20): Promise<number> {
         const pageEnv = process.env.PAGE || '0';
         const maxPages = parseInt(pageEnv, 10) || 0;
-        const slackSec = parseInt(process.env.SLACK_TIME || '3', 10);
+        const slackSec = parseInt(process.env.LIST_SLACK || '3', 10);
         console.log(`🌐 [GPTERS Newsletter List] Fetching guest access token...`);
         const token = await this.fetchGuestToken();
 

@@ -34,7 +34,7 @@ class UppityList extends BaseListService {
 
     public async run(pageArg?: number): Promise<number> {
         const pageStr = process.env.PAGE || '1';
-        const sleepSec = parseInt(process.env.SLACK_TIME || '2', 10);
+        const sleepSec = parseInt(process.env.LIST_SLACK || '2', 10);
 
         let sectionsToProcess = SECTIONS;
         const sectionFilter = process.env.SECTION;

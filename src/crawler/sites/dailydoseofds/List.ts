@@ -31,7 +31,7 @@ class DailyDoseDSList extends BaseListService {
         } else {
             maxPage = parseInt(pageStr, 10);
         }
-        const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
+        const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
 
         await this.seedCache();
 

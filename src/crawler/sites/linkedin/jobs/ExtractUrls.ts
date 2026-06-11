@@ -77,7 +77,7 @@ export class JobsExtractUrls {
     const cheerio = require('cheerio');
     const jobOps: any[] = [];
     const redisPushBuffer: string[] = [];
-    const sleepSec = parseInt(process.env.SLACK_TIME || '1', 10);
+    const sleepSec = parseInt(process.env.LIST_SLACK || '1', 10);
     const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '100', 10);
 
     // ==========================================

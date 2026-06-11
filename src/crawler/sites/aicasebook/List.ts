@@ -23,7 +23,7 @@ class AiCasebookList extends BaseListService {
     }
 
     public async run(): Promise<number> {
-        const sleepSec = parseInt(process.env.SLACK_TIME || '3', 10);
+        const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
         if (sleepSec > 0) {
             console.log(`💤 [AiCasebook List] 스크래핑 전 ${sleepSec}초 대기 중...`);
             await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
