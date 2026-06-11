@@ -127,7 +127,15 @@ export class BaseRefreshUrls {
             }
             console.log(`🔍 Found ${targets.length} target items in database${overwrite ? ' (OVERWRITE mode)' : ''}${errorReset ? ' (ERROR_RESET mode)' : ''}.`);
 
-            const filteredJobs = targets.filter(j => j.url && (overwrite || !existingQueueUrls.has(j.url)));
+            const filteredJobs = targets.filter(j => {
+                if (!j.url) return false;
+                if (desc?.scraper?.excludePatterns && desc.scraper.excludePatterns.length > 0) {
+                    if (desc.scraper.excludePatterns.some(pat => j.url.includes(pat))) {
+                        return false;
+                    }
+                }
+                return overwrite || !existingQueueUrls.has(j.url);
+            });
             console.log(`💡 Filtered out ${targets.length - filteredJobs.length} items already waiting in Redis queue.`);
 
             if (filteredJobs.length > 0) {
@@ -233,9 +241,16 @@ export class BaseRefreshUrls {
                 href = href.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
                 href = href.replace(/%22/g, '').replace(/\\"/g, '');
 
-                // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, template placeholders, download paths, or action links
-                if (/[\s"'<>￼]/g.test(href) || href.includes('div') || href.includes('br') || href.includes('$%') || href.includes('$$') || href.includes('download.cm') || href.includes('vote?') || href.includes('/vote')) {
+                // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, template placeholders, or download paths
+                if (/[\s"'<>￼]/g.test(href) || href.includes('div') || href.includes('br') || href.includes('$%') || href.includes('$$') || href.includes('download.cm')) {
                     return;
+                }
+
+                // Check site-specific exclude patterns
+                if (scraper.excludePatterns && scraper.excludePatterns.length > 0) {
+                    if (scraper.excludePatterns.some(pat => href.includes(pat))) {
+                        return;
+                    }
                 }
 
                 try {

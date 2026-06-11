@@ -149,6 +149,14 @@ class ScraperWorker {
       }
     }
 
+    // Check site-specific exclude patterns
+    if (config.excludePatterns && config.excludePatterns.length > 0) {
+      if (config.excludePatterns.some(pat => url.includes(pat))) {
+        Logger.info(`URL matches exclude patterns for [${site}]. Skipping.`, { url });
+        return;
+      }
+    }
+
     const id = config.extractId(url);
     if (!id) {
       Logger.info(`Invalid URL pattern. Cannot extract ID for site: ${site}. Skipping.`, { url });
@@ -278,9 +286,16 @@ class ScraperWorker {
         href = href.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
         href = href.replace(/%22/g, '').replace(/\\"/g, '');
 
-        // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, template placeholders, download paths, or action links
-        if (/[\s"'<>￼]/g.test(href) || href.includes('div') || href.includes('br') || href.includes('$%') || href.includes('$$') || href.includes('download.cm') || href.includes('vote?') || href.includes('/vote')) {
+        // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, template placeholders, or download paths
+        if (/[\s"'<>￼]/g.test(href) || href.includes('div') || href.includes('br') || href.includes('$%') || href.includes('$$') || href.includes('download.cm')) {
           continue;
+        }
+
+        // Check site-specific exclude patterns
+        if (config.excludePatterns && config.excludePatterns.length > 0) {
+          if (config.excludePatterns.some(pat => href.includes(pat))) {
+            continue;
+          }
         }
 
         // Handle protocol-less absolute URLs (e.g. docs.deepseek.com/... instead of /... or https://...)

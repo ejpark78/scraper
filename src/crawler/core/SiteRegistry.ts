@@ -26,6 +26,7 @@ export interface SiteDescriptor {
     extractId: (url: string) => string;
     urlsCollectionName?: `bronze/${string}`;
     scrape: (url: string, tempPath: string) => Promise<void>;
+    excludePatterns?: string[];
   };
 
   transformer?: {
