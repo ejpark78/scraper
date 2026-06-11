@@ -13,6 +13,7 @@
 
 include:
   - docker/worker/compose.yml
+  - docker/tools/viewer/compose.yml
   - docker/tools/gmail/compose.yml
   - docker/tools/cronicle/compose.yml
   - docker/tools/dozzle/compose.yml
