@@ -81,7 +81,10 @@ export class TranscriptDumper {
             }
 
             if (tool.name === 'run_command') {
-              const cmd = args.CommandLine || args.command || JSON.stringify(args);
+              const cmdObj = args as Record<string, unknown>;
+              const cmd = typeof cmdObj.CommandLine === 'string'
+                ? cmdObj.CommandLine
+                : (typeof cmdObj.command === 'string' ? cmdObj.command : JSON.stringify(args));
               const sanitizedCmd = this.sanitizeAbsolutePaths(cmd);
               md += `* **💻 Run Command**: \`${sanitizedCmd}\`\n`;
               if (tool.result) {
