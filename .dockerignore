@@ -5,3 +5,4 @@
 *.zip
 data
 node_modules
+.firecrawl
