@@ -192,7 +192,7 @@ export class BaseRefreshUrls {
         redis: Redis,
         site: string,
         domain: string,
-        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string; excludePatterns?: string[]; urlFilter?: (url: string) => boolean; updateFilterKey?: string; collectionName?: string },
+        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string; excludePatterns?: string[]; urlFilter?: (url: string) => boolean; updateFilterKey?: string; collectionName?: string; htmlSourcesToScan?: string[] },
         completedIds: string[]
     ): Promise<void> {
         const { config } = this;
@@ -201,7 +201,6 @@ export class BaseRefreshUrls {
         const urlsCollection: `bronze/${string}` = scraper.urlsCollectionName as any ?? `bronze/${site}.urls`;
         if (!scraper.urlsCollectionName) return;
 
-        const htmlColl = await mongo.getCollection(bronzeHtmlCollection);
         const urlsColl = await mongo.getCollection(urlsCollection);
         const priority = process.env.PRIORITY || 'medium';
         const perSiteQueueKey = `scrape_queue:${site}:${priority}`;
@@ -230,18 +229,28 @@ export class BaseRefreshUrls {
             }
         }
 
-        const htmlCursor = htmlColl.find({}, { projection: { rawHtml: 1 }, maxTimeMS: 60000 });
+        const collectionsToScan = scraper.htmlSourcesToScan && scraper.htmlSourcesToScan.length > 0
+            ? scraper.htmlSourcesToScan
+            : [bronzeHtmlCollection];
+
         const newUrls: { id: string; url: string }[] = [];
         const counts = { protocolSkipped: 0, domainSkipped: 0, domainMatched: 0, shareExtracted: 0, binarySkipped: 0, afterClean: 0, idNull: 0, dedupSkipped: 0, totalAnchors: 0 };
 
-        for await (const doc of htmlCursor) {
-            if (!doc?.rawHtml) continue;
-            const $ = cheerio.load(doc.rawHtml);
+        for (const sourceCollName of collectionsToScan) {
+            console.log(`🔍 [scanHtmlForUrls] Scanning source HTML collection: ${sourceCollName}`);
+            try {
+                const htmlColl = await mongo.getCollection(sourceCollName as any);
+                const htmlCursor = htmlColl.find({}, { projection: { rawHtml: 1, html: 1 }, maxTimeMS: 60000 });
 
-            $('a[href]').each((_, el) => {
-                const rawHref = $(el).attr('href');
-                if (!rawHref) return;
-                counts.totalAnchors++;
+                for await (const doc of htmlCursor) {
+                    const htmlText = doc?.rawHtml || doc?.html;
+                    if (!htmlText) continue;
+                    const $ = cheerio.load(htmlText);
+
+                    $('a[href]').each((_, el) => {
+                        const rawHref = $(el).attr('href');
+                        if (!rawHref) return;
+                        counts.totalAnchors++;
 
                 // Clean leading/trailing quotes, backslashes, URL-encoded quotes, and whitespaces
                 let href = rawHref.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
@@ -290,7 +299,11 @@ export class BaseRefreshUrls {
                     newUrls.push({ id, url: fullUrl });
                     existingIds.add(id);
                 } catch {}
-            });
+                    });
+                }
+            } catch (scanErr: any) {
+                console.warn(`⚠️ Failed to scan collection ${sourceCollName}: ${scanErr.message}`);
+            }
         }
 
         const c = counts;

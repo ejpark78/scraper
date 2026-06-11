@@ -16,9 +16,6 @@ help:
 	@echo "                        (예: make li-list AUTH=true LIST_SLACK=3)"
 	@echo "  make li-company     - LinkedIn 회사 정보 수집 (Pipeline)을 실행합니다."
 	@echo "                        (예: make li-company AUTH=true LIST_SLACK=3)"
-	@echo "  make li-extract-urls - 기존 HTML 데이터로부터 미수집 Job URL들을 추출하여"
-	@echo "                        Redis 수집 대기열 및 DB에 적재합니다. (Extract)"
-	@echo "                        (예: make li-extract-urls CHUNK_SIZE=500 LIST_SLACK=3)"
 	@echo "  make li-refresh-urls - 타겟 국가 설정에 맞춰 Redis 큐를 복구 및 수정합니다."
 	@echo "                        (예: make li-refresh-urls GEOS=\"South Korea,Japan\")"
 	@echo "  make li-refresh-md  - 실버 레이어 누락 데이터를 Redis 큐에 넣어 재가공(Backfill)합니다."
@@ -41,11 +38,6 @@ company:
 	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/company/Contents.ts
 
-extract-urls:
-	@echo "──────────────────────────────────────────────────"
-	@echo "🔍 [LinkedIn Jobs] Extracting un-scraped Job URLs..."
-	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/ExtractUrls.ts
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"

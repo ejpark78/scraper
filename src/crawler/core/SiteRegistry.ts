@@ -37,6 +37,7 @@ export interface SiteDescriptor {
     scrape: (url: string, tempPath: string) => Promise<void>;
     excludePatterns?: string[];
     urlFilter?: (url: string) => boolean;
+    htmlSourcesToScan?: string[];
   };
 
   transformer?: {

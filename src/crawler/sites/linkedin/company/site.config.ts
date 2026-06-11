@@ -41,6 +41,7 @@ export const descriptor: SiteDescriptor = {
     },
     excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     scrape: scrapeLinkedinCompany,
+    htmlSourcesToScan: ['bronze/linkedin.jobs'],
   },
 
   transformer: {

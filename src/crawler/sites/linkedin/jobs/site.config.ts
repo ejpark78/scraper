@@ -52,6 +52,7 @@ export const descriptor: SiteDescriptor = {
     extractId: (url) => UrlUtils.extractJobId(url) || '',
     excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     scrape: scrapeLinkedinJob,
+    htmlSourcesToScan: ['bronze/linkedin.lists', 'bronze/linkedin.jobs'],
   },
 
   transformer: {
