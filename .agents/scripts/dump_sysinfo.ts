@@ -28,11 +28,7 @@ class SysInfoDumper {
         redis: this.getRedisConnectivity()
       };
 
-      const outPath = path.join(__dirname, '../sysinfo_cache.json');
-      fs.writeFileSync(outPath, JSON.stringify(info, null, 2), 'utf-8');
-      console.log(`✨ System status cached at: ${outPath}`);
-
-      // Copy to data/agents/agy/ as requested
+      // Write to data/agents/agy/
       const transcriptsAgyDir = path.join(__dirname, '../../data/agents/agy');
       fs.mkdirSync(transcriptsAgyDir, { recursive: true });
       const destPath = path.join(transcriptsAgyDir, 'sysinfo_cache.json');

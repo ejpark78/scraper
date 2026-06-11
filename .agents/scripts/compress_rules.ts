@@ -13,7 +13,6 @@ import * as path from 'path';
 
 class RuleCompressor {
   private readonly rulesDir = path.join(__dirname, '../rules');
-  private readonly outputCompactFile = path.join(__dirname, '../rules_compact.txt');
 
   public run(): void {
     try {
@@ -32,10 +31,7 @@ class RuleCompressor {
         compressedText += `\n[File: ${file}]\n${compressed}\n`;
       });
 
-      fs.writeFileSync(this.outputCompactFile, compressedText.trim(), 'utf-8');
-      console.log(`✅ Compressed rules written to: ${this.outputCompactFile}`);
-
-      // Copy to data/agents/agy/ as requested
+      // Write to data/agents/agy/
       const transcriptsAgyDir = path.join(__dirname, '../../data/agents/agy');
       fs.mkdirSync(transcriptsAgyDir, { recursive: true });
       const destPath = path.join(transcriptsAgyDir, 'rules_compact.txt');
