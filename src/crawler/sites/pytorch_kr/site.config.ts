@@ -79,6 +79,10 @@ export const descriptor: SiteDescriptor = {
     excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     urlsCollectionName: 'bronze/pytorch_kr.urls',
     scrape: scrapePytorchKr,
+    generateUrls: (config: { page?: number }): string[] => {
+      const page = config.page || 1;
+      return [`https://discuss.pytorch.kr/latest.json?no_definitions=true&page=${page}`];
+    },
   },
 
   transformer: {

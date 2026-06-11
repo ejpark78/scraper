@@ -81,6 +81,10 @@ export const descriptor: SiteDescriptor = {
       }
       await scrapeHttpFetch(normalizedUrl, tempPath);
     },
+    generateUrls: (config: { page?: number }): string[] => {
+      const page = config.page || 1;
+      return [page === 1 ? `https://www.dailydoseofds.com/archive/` : `https://www.dailydoseofds.com/archive/page/${page}/`];
+    },
   },
 
   transformer: {

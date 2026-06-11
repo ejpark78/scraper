@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
+import { descriptor } from './site.config';
 
 class DailyDoseDSList extends BaseListService {
     constructor() {
@@ -38,7 +39,13 @@ class DailyDoseDSList extends BaseListService {
         let queuedCount = 0;
 
         for (let p = 1; p <= maxPage; p++) {
-            const fetchUrl = p === 1 ? `https://www.dailydoseofds.com/archive/` : `https://www.dailydoseofds.com/archive/page/${p}/`;
+            let fetchUrl = '';
+            if (descriptor.scraper?.generateUrls) {
+                const urls = descriptor.scraper.generateUrls({ page: p });
+                if (urls.length > 0) {
+                    fetchUrl = urls[0];
+                }
+            }
             console.log(`🌐 [Daily Dose DS List] Fetching page ${p}: ${fetchUrl}`);
 
             const res = await fetch(fetchUrl, {

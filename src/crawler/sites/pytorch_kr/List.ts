@@ -10,6 +10,7 @@
 import { Document } from 'mongodb';
 import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
+import { descriptor } from './site.config';
 
 interface PyTorchListDocument extends Document {
     _id: string;
@@ -34,7 +35,13 @@ class PyTorchKRList extends BaseListService {
             await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
         }
 
-        const url = `https://discuss.pytorch.kr/latest.json?no_definitions=true&page=${page}`;
+        let url = '';
+        if (descriptor.scraper?.generateUrls) {
+            const urls = descriptor.scraper.generateUrls({ page });
+            if (urls.length > 0) {
+                url = urls[0];
+            }
+        }
         console.log(`🌐 [PyTorch KR List] Fetching index JSON: ${url}`);
 
         const response = await fetch(url, {

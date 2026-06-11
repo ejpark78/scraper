@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
+import { descriptor } from './site.config';
 
 class GeekNewsList extends BaseListService {
     constructor() {
@@ -24,8 +25,11 @@ class GeekNewsList extends BaseListService {
 
     public async run(page: number = 1): Promise<number> {
         let url = 'https://news.hada.io/';
-        if (page > 1) {
-            url = page <= 5 ? `https://news.hada.io/?page=${page}` : `https://news.hada.io/past?page=${page}`;
+        if (descriptor.scraper?.generateUrls) {
+            const urls = descriptor.scraper.generateUrls({ page });
+            if (urls.length > 0) {
+                url = urls[0];
+            }
         }
 
         const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);

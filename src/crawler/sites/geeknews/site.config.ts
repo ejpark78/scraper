@@ -45,6 +45,13 @@ export const descriptor: SiteDescriptor = {
     excludePatterns: ['vote?', '/vote', 'user?', '/user', 'item?', 'favicon', 'login', 'logout', 'signup'],
     urlsCollectionName: 'bronze/geeknews.urls',
     scrape: scrapeHttpFetch,
+    generateUrls: (config: { page?: number }): string[] => {
+      const page = config.page || 1;
+      if (page > 1) {
+        return [page <= 5 ? `https://news.hada.io/?page=${page}` : `https://news.hada.io/past?page=${page}`];
+      }
+      return ['https://news.hada.io/'];
+    },
   },
 
   transformer: {
