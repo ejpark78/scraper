@@ -188,7 +188,7 @@ export class BaseRefreshUrls {
         redis: Redis,
         site: string,
         domain: string,
-        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string },
+        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string; excludePatterns?: string[] },
         completedIds: string[]
     ): Promise<void> {
         const { config } = this;
@@ -233,12 +233,12 @@ export class BaseRefreshUrls {
             const $ = cheerio.load(doc.rawHtml);
 
             $('a[href]').each((_, el) => {
-                let href = $(el).attr('href');
-                if (!href) return;
+                const rawHref = $(el).attr('href');
+                if (!rawHref) return;
                 counts.totalAnchors++;
 
                 // Clean leading/trailing quotes, backslashes, URL-encoded quotes, and whitespaces
-                href = href.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
+                let href = rawHref.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
                 href = href.replace(/%22/g, '').replace(/\\"/g, '');
 
                 // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, template placeholders, or download paths
@@ -248,7 +248,7 @@ export class BaseRefreshUrls {
 
                 // Check site-specific exclude patterns
                 if (scraper.excludePatterns && scraper.excludePatterns.length > 0) {
-                    if (scraper.excludePatterns.some(pat => href.includes(pat))) {
+                    if (scraper.excludePatterns.some((pat: string) => href.includes(pat))) {
                         return;
                     }
                 }
