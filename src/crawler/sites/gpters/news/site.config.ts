@@ -112,7 +112,7 @@ export const descriptor: SiteDescriptor = {
       publishedAt: meta.publishedAt,
       reactionsCount: meta.reactionsCount,
       repliesCount: meta.repliesCount,
-      markdown: meta.markdown,
+      markdown: meta.rawContent,
       updatedAt: new Date(),
     }),
   },
