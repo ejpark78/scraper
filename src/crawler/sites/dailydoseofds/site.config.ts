@@ -4,6 +4,7 @@
  * @constraints
  *   - Matches domains dailydoseofds.com.
  *   - Extracts base64 encoded IDs from URLs.
+ *   - Excludes binary files, subdomains, non-existent directories, and malformed relative paths.
  * @dependencies DailyDoseDSConverter, scrapeHttpFetch
  * @lastUpdated 2026-06-11
  */
@@ -32,11 +33,23 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'dailydose_ds.html',
     updateFilterKey: 'id',
     defaultSlack: 3,
+    excludePatterns: [
+      'billing.',
+      '.zip',
+      '/content/files/',
+      'NousResearch',
+      '/blogs/',
+      'dailydoseofds.com/dailydoseofds.com',
+      'dailydoseofds.com/a-crash-course-on-building-rag-systems'
+    ],
     extractId: (url) => {
       return Buffer.from(url).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
     },
     urlsCollectionName: 'bronze/dailydose_ds.urls',
-    scrape: scrapeHttpFetch,
+    scrape: async (url, tempPath) => {
+      const normalizedUrl = url.replace('https://dailydoseofds.com/', 'https://www.dailydoseofds.com/');
+      await scrapeHttpFetch(normalizedUrl, tempPath);
+    },
   },
 
   transformer: {
