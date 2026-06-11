@@ -7,7 +7,6 @@
  * @lastUpdated 2026-06-11
  */
 
-export { IOUtils } from './IoUtils';
 export { UrlUtils } from './UrlUtils';
 export { DateUtils } from './DateUtils';
 export { FormatUtils } from './FormatUtils';
