@@ -105,11 +105,33 @@ class AgyAdapter implements AgentAdapter {
         } else if (step.type === 'PLANNER_RESPONSE') {
           const toolCalls: AgentToolCall[] = (step.tool_calls || []).map((t: any) => ({
             name: t.name || t.tool || 'unknown',
-            arguments: t.arguments || t.input || {},
+            arguments: t.args || t.arguments || t.input || {},
           }));
           const newMsg: AgentMessage = { role: 'assistant', content: step.content || '', toolCalls, stepIndex: stepIndex++ };
           messages.push(newMsg);
           lastAssistantMsg = newMsg;
+        } else if (step.type === 'SYSTEM_MESSAGE' || step.source === 'SYSTEM') {
+          const content = step.content || '';
+          const taskMatch = content.match(/task-\d+/);
+          if (taskMatch) {
+            const taskId = taskMatch[0];
+            const resultIdx = content.indexOf('finished with result:');
+            if (resultIdx !== -1) {
+              const taskResult = content.substring(resultIdx + 'finished with result:'.length).trim();
+              for (const msg of messages) {
+                if (msg.role === 'assistant' && msg.toolCalls) {
+                  const matchingTool = msg.toolCalls.find(tc => 
+                    tc.name === 'run_command' && 
+                    tc.result && 
+                    tc.result.includes(taskId)
+                  );
+                  if (matchingTool) {
+                    matchingTool.result = `[Background Task ${taskId} finished]\n${taskResult}`;
+                  }
+                }
+              }
+            }
+          }
         } else {
           if (lastAssistantMsg && lastAssistantMsg.toolCalls.length > 0) {
             const pendingTool = lastAssistantMsg.toolCalls.find(tc => tc.result === undefined);
