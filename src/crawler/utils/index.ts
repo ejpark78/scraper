@@ -13,4 +13,6 @@ export { FormatUtils } from './FormatUtils';
 export { NamingUtils } from './NamingUtils';
 export { HtmlMinifier } from './HtmlMinifier';
 export { Logger, LogLevel } from './Logger';
+export { IOUtils } from './IoUtils';
+
 
