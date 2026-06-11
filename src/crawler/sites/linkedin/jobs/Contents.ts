@@ -13,6 +13,7 @@ import { BasePipeline } from '../../../core/BasePipeline';
 import { JobMeta, LinkedInMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
 import { UrlUtils } from '../../../utils';
+import { descriptor } from './site.config';
 
 export class LinkedInJobsContents extends BasePipeline<JobMeta> {
     private readonly converter: LinkedInMarkdownConverter;
@@ -44,10 +45,9 @@ export class LinkedInJobsContents extends BasePipeline<JobMeta> {
     protected async saveResults(meta: JobMeta, id: string, tempHtmlPath: string, redisInstance?: any): Promise<{ targetDirName: string }> {
         const { MongoDatabase } = require('../../../../database/mongo');
         const mongo = MongoDatabase.getInstance();
-        const config = require('./site.config').descriptor;
 
         // Save to Bronze Collection
-        const bronzeColl = await mongo.getCollection(config.transformer.targetCollection || 'linkedin.jobs', 'bronze');
+        const bronzeColl = await mongo.getCollection(descriptor.scraper?.collectionName || 'bronze/linkedin.jobs', 'bronze');
         await bronzeColl.updateOne(
             { jobId: id },
             {
@@ -61,15 +61,16 @@ export class LinkedInJobsContents extends BasePipeline<JobMeta> {
         );
 
         // Update URL Status
-        const jobUrlsColl = await mongo.getCollection('bronze/linkedin.job_urls');
+        const statusCollName = descriptor.transformer?.statusCollection || 'bronze/linkedin.job_urls';
+        const jobUrlsColl = await mongo.getCollection(statusCollName as any);
         await jobUrlsColl.updateOne(
             { jobId: id },
             { $set: { status: 'completed', updatedAt: new Date() } }
         );
 
         // Save to Silver Collection
-        const doc = config.targetLoader.buildDocument(id, meta);
-        const silverColl = await mongo.getCollection(config.targetLoader.collectionName || 'silver/linkedin.jobs');
+        const doc = descriptor.targetLoader.buildDocument(id, meta);
+        const silverColl = await mongo.getCollection(descriptor.targetLoader.collectionName || 'silver/linkedin.jobs');
         await silverColl.updateOne(
             { jobId: id },
             { $set: doc },
@@ -77,11 +78,11 @@ export class LinkedInJobsContents extends BasePipeline<JobMeta> {
         );
 
         // Mark completed in Redis if needed
-        if (redisInstance && config.transformer.completedSetKey) {
-            await redisInstance.sadd(config.transformer.completedSetKey, id);
+        if (redisInstance && descriptor.transformer?.completedSetKey) {
+            await redisInstance.sadd(descriptor.transformer.completedSetKey, id);
         }
 
-        return { targetDirName: 'linkedin.jobs' };
+        return { targetDirName: descriptor.key };
     }
 }
 

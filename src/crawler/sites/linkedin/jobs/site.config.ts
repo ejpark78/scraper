@@ -215,6 +215,9 @@ export const descriptor: SiteDescriptor = {
     },
   ],
 
+  listsCollectionName: 'bronze/linkedin.lists',
+  companyUrlsCollectionName: 'bronze/linkedin.company_urls',
+
   scraper: {
     collectionName: 'bronze/linkedin.jobs',
     targetCollection: 'linkedin.jobs',
