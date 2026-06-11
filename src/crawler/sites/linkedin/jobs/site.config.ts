@@ -13,6 +13,34 @@ import { LinkedInCrawler } from '../Crawler';
 import { UrlUtils } from '../../../utils';
 import { NamingUtils } from '../../../utils';
 
+export const geoRegistry: Record<string, string | number> = {
+  "South Korea": 105149562,
+  "United Arab Emirates": 100205264,
+  "Japan": 103925994,
+  "Switzerland": 106693272,
+  "Singapore": 102454443,
+  "United Kingdom": 101165590,
+  "Germany": 101282230,
+  "Canada": 101174742,
+  "Australia": 101452733,
+  "Netherlands": 102890719,
+  "United States": 103644278
+};
+
+export const parameterRegistry: Record<string, Record<string, string>> = {
+  "f_TPR": {
+    "past 24 hours": "r86400",
+    "past 1 week": "r604800",
+    "past 1 month": "r2592000",
+    "any time": ""
+  },
+  "sortBy": {
+    "relevant": "R",
+    "recent": "DD"
+  }
+};
+
+
 async function scrapeLinkedinJob(url: string, tempPath: string): Promise<void> {
   const crawler = new LinkedInCrawler({
     login: process.env.LOGIN === 'true' || process.env.AUTH === 'true',

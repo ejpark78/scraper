@@ -8,6 +8,7 @@
  */
 
 import { URLSearchParams } from 'url';
+import { geoRegistry as importedGeoRegistry, parameterRegistry as importedParameterRegistry } from './site.config';
 
 // ⚙️ LinkedIn URL 생성, 검색 조건 빌드 및 중복 필터링 통합 OOP 매니저 (TypeScript)
 
@@ -33,7 +34,7 @@ export interface Config {
     global_settings?: GlobalSettings;
     search_targets?: SearchTarget[];
     direct_urls?: string[];
-    geo_registry?: Record<string, string>;
+    geo_registry?: Record<string, string | number>;
     parameter_registry?: Record<string, Record<string, string>>;
 }
 
@@ -55,8 +56,12 @@ export class LinkedInUrlManager implements IUrlManager {
         const { global_settings, search_targets, direct_urls } = config;
         const globalSettings = global_settings || {};
 
-        const geoRegistry = config.geo_registry || {};
-        const parameterRegistry = config.parameter_registry || {};
+        const geoRegistry = config.geo_registry && Object.keys(config.geo_registry).length > 0
+            ? config.geo_registry
+            : importedGeoRegistry;
+        const parameterRegistry = config.parameter_registry && Object.keys(config.parameter_registry).length > 0
+            ? config.parameter_registry
+            : importedParameterRegistry;
 
         // f_TPR 값을 배열로 표준화 및 레디스트리 파라미터 변환
         const raw_f_TPRs = globalSettings.f_TPR 
@@ -107,7 +112,7 @@ export class LinkedInUrlManager implements IUrlManager {
                                     const resolvedGeoId = target.location ? geoRegistry[target.location] : null;
                                     
                                     if (resolvedGeoId) {
-                                        params.append('geoId', resolvedGeoId);
+                                        params.append('geoId', String(resolvedGeoId));
                                     } else if (target.geoId) {
                                         params.append('geoId', target.geoId);
                                     } else if (target.location) {
