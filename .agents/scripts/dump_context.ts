@@ -1,3 +1,13 @@
+/**
+ * @module dump_context
+ * @description Captures and saves active workspace variables, configs, and Git stats per session.
+ * @constraints
+ *   - Gracefully skips sessions with missing or corrupt transcript log files.
+ *   - Dumps Markdown memory files alongside transcripts.
+ * @dependencies Node fs/path, child_process, agent_adapter
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
@@ -114,7 +124,7 @@ ${filesSection}
 - 파괴적인 MongoDB 명령어 실행 절대 금지.
 - 마크다운 링크 및 코드 심볼 표기 시 상대 경로 규칙 강제 사용.
 - 산출물(Artifact) 생성 시 \`.agents/brain/\` 내에 심볼릭 링크 자동 생성/업데이트.
-`;
+- `;
 }
 
 function run() {
@@ -143,12 +153,16 @@ function run() {
           return;
         }
 
-        const detail = adapter.getSessionDetail(s.id);
-        const md = buildContextMemory(detail.session, detail.messages);
-        const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir, info.tag);
-        fs.mkdirSync(outDir, { recursive: true });
-        fs.writeFileSync(path.join(outDir, 'context_memory.md'), md, 'utf-8');
-        console.log(`  ✨ Saved: ${outDir}/context_memory.md`);
+        try {
+          const detail = adapter.getSessionDetail(s.id);
+          const md = buildContextMemory(detail.session, detail.messages);
+          const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir, info.tag);
+          fs.mkdirSync(outDir, { recursive: true });
+          fs.writeFileSync(path.join(outDir, 'context_memory.md'), md, 'utf-8');
+          console.log(`  ✨ Saved: ${outDir}/context_memory.md`);
+        } catch (detailErr: any) {
+          console.warn(`  ⚠️ Skipping context dump for session ${s.id} due to error: ${detailErr.message}`);
+        }
       });
 
     } catch (err: any) {

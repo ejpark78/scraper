@@ -1,3 +1,13 @@
+/**
+ * @module dump_brain
+ * @description Generates a high-level visual summary and stats report of agent performance per session.
+ * @constraints
+ *   - Gracefully skips sessions with missing or corrupt transcript log files.
+ *   - Places summary files under the designated agent transcripts subdirectory.
+ * @dependencies Node fs/path, agent_adapter
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { createAdapter, parseAgentsFromArg, assignSessionNumbers, AgentSession, AgentMessage } from './lib/agent_adapter';
@@ -69,14 +79,18 @@ function run() {
         if (!info) return;
         console.log(`  -> ${info.tag} (${s.title})`);
 
-        const detail = adapter.getSessionDetail(s.id);
-        const md = buildBrainDump(detail.session, detail.messages);
+        try {
+          const detail = adapter.getSessionDetail(s.id);
+          const md = buildBrainDump(detail.session, detail.messages);
 
-        const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir, info.tag);
-        fs.mkdirSync(outDir, { recursive: true });
-        const outPath = path.join(outDir, 'brain_dump.md');
-        fs.writeFileSync(outPath, md, 'utf-8');
-        console.log(`  ✨ Saved: ${outPath}`);
+          const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir, info.tag);
+          fs.mkdirSync(outDir, { recursive: true });
+          const outPath = path.join(outDir, 'brain_dump.md');
+          fs.writeFileSync(outPath, md, 'utf-8');
+          console.log(`  ✨ Saved: ${outPath}`);
+        } catch (detailErr: any) {
+          console.warn(`  ⚠️ Skipping brain dump for session ${s.id} due to error: ${detailErr.message}`);
+        }
       });
 
     } catch (err: any) {
