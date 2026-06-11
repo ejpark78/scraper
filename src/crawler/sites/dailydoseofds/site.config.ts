@@ -40,6 +40,9 @@ export const descriptor: SiteDescriptor = {
       'NousResearch',
       '/blogs/',
       '/docs/',
+      'sitemap',
+      '/signup/',
+      '/passwordReset/',
       'dailydoseofds.com/dailydoseofds.com',
       'dailydoseofds.com/a-crash-course-on-building-rag-systems'
     ],
