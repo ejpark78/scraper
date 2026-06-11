@@ -10,10 +10,6 @@
 # @dependencies GNU Make, docker compose, scripts/**/*.mk
 # @lastUpdated 2026-06-11
 # ==============================================================================
-#
-# ==============================================================================
-# ⚙️ LinkedIn Scraper Makefile (Command Interface Router)
-# ==============================================================================
 
 include scripts/environments.mk
 

@@ -13,6 +13,7 @@ Playwright/HTTP 기반 다중 사이트 스크래핑, MongoDB Bronze/Silver 2단
 | **GeekNews** | news.hada.io | HTTP fetch | `bronze/geeknews.html` | `silver/geeknews.contents` |
 | **GPters** | gpters.org | Bettermode GraphQL API | `bronze/gpters.html` | `silver/gpters.contents` |
 | **PyTorch KR** | discuss.pytorch.kr | Discourse JSON API | `bronze/pytorch_kr.html` | `silver/pytorch_kr.contents` |
+| **Daily Dose of DS** | dailydoseofds.com | HTTP fetch / Feed | `bronze/dailydose_ds.html`, `bronze/dailydose_ds.urls` | `silver/dailydose_ds.contents` |
 
 ---
 
@@ -62,12 +63,14 @@ make up
 make gn-list        # GeekNews 최신글 수집
 make gpt-list       # GPters 최신글 수집
 make pk-list        # PyTorch KR 최신글 수집
+make ddds-list      # Daily Dose of DS 최신글 수집
 make li-list        # LinkedIn 채용공고 목록 수집
 
 # 기존 Bronze 전부 재변환 (silver 갱신)
 make gn-refresh-md
 make gpt-refresh-md
 make pk-refresh-md
+make ddds-refresh-md
 make li-refresh-md
 
 # Viewer 대시보드
@@ -85,6 +88,7 @@ make up-viewer      # https://viewer.localhost
 | `gn-` | GeekNews | `list`, `refresh-urls`, `refresh-md`, `backfill` |
 | `gpt-` | GPters | `list`, `refresh`, `refresh-urls`, `refresh-md` |
 | `pk-` | PyTorch KR | `list`, `refresh-urls`, `refresh-md` |
+| `ddds-` | Daily Dose of DS | `list`, `refresh-urls`, `refresh-md` |
 | `li-` | LinkedIn | `list`, `company`, `extract-urls`, `refresh-urls`, `refresh-md`, `status` |
 
 ### Infrastructure
@@ -99,7 +103,7 @@ make up-viewer      # https://viewer.localhost
 | `down-tools` | 모든 관리 도구 중지 |
 | `up-viewer` | Viewer / MCP 서버 기동 |
 
-### Utilities
+### Utilities & Agent Management
 
 | Target | Description |
 |--------|-------------|
@@ -110,6 +114,9 @@ make up-viewer      # https://viewer.localhost
 | `restore` | MongoDB 복원 (`BACKUP_DIR=...`) |
 | `test-urls` | URL 매니저 테스트 |
 | `test-mcp` | MCP 클라이언트 테스트 |
+| `make -f .agents/Makefile dump-all AGENTS=agy` | 에이전트 트랜스크립트, 스냅샷, 압축 규칙, 시스템 정보 일괄 덤프 및 검증 |
+| `make -f .agents/Makefile usage` | 에이전트 로컬 세션 정보 및 단계별 사용량 분석 |
+| `make -f .agents/Makefile prune` | 에이전트 빈 세션 데이터 자동 점검 및 제거 |
 
 ---
 

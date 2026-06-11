@@ -10,42 +10,6 @@
 # @dependencies Docker Compose v2.20+, docker/**/*.yml
 # @lastUpdated 2026-06-11
 # ==============================================================================
-#
-#     _     _   _    _     _ _                 ____ _     ___
-#    / \   | \ | |  | |   | | |               / ___| |   |_ _|
-#   / _ \  |  \| |  | |   | | |    _____     | |   | |    | |
-#  / ___ \ | |\  |  | |___| |_|   |_____|    | |___| |___ | |
-# /_/   \_\|_| \_|  |_____|___|               \____|_____|___|
-#
-# ==============================================================================
-# 🐳 LinkedIn Crawler & Infrastructure Multi-Compose Router
-# ==============================================================================
-#
-# 이 파일은 프로젝트의 서브 도커 서비스들의 compose 설정을 하나로 묶어 제공하는 메인 엔트리포인트입니다.
-# 각 모듈은 독립적으로 분리되어 있으며, 아래와 같이 구성되어 있습니다:
-#
-# 1. 🗄️ Core Infrastructure
-#    - mongodb/compose.yml : 수집된 원본(Raw) 및 정제 데이터 적재용 MongoDB와 Mongo Express 어드민
-#    - redis/compose.yml   : 분산 큐 처리를 위한 Redis 메모리 DB 및 RedisInsight 모니터링 뷰어
-#
-# 2. 🌐 Reverse Proxy
-#    - traefik/compose.yml : 각 어드민 툴들을 nip.io 및 localhost HTTPS 도메인으로 변환하는 라우터
-#
-# 3. 🛠️ Developer Tools (profile: tools)
-#    - yacht/compose.yml    : 경량 웹 도커 컨테이너 대시보드
-#    - dozzle/compose.yml   : 실시간 컨테이너 로그 탐색기
-#    - jupyter/compose.yml  : 시장 데이터 통계 분석 및 NER 스택 추출 Notebook 환경
-#    - cronicle/compose.yml : 정기 크롤링 태스크 스케줄 관리자
-#    - kasm/compose.yml     : 브라우저 격리 샌드박스 GUI 개발 환경
-#    - opencode/compose.yml : Opencode Coding Agent 
-#
-# 4. 🏃 Runtime & Pipeline (profile: runtime)
-#    - worker/compose.yml : 목록/상세 수집기 CLI 및 복수 인스턴스 Redis Worker 엔진
-#
-# 5. 📧 Gmail Export Tool
-#    - gmail/compose.yml : IMAP 기반 Gmail 메일 대량 마크다운 내보내기
-#
-# ==============================================================================
 
 include:
   - docker/runtime/worker/compose.yml
