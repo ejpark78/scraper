@@ -1,3 +1,12 @@
+/**
+ * @module app
+ * @description Core functionality or script runner for app.js.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies None
+ * @lastUpdated 2026-06-11
+ */
+
 let currentCollection = '';
 let currentSearch = '';
 let currentCountry = '';

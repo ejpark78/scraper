@@ -1,3 +1,12 @@
+/**
+ * @module NamingUtils
+ * @description Core functionality or script runner for NamingUtils.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs, path
+ * @lastUpdated 2026-06-11
+ */
+
 export class NamingUtils {
     /**
      * 🔤 HTML 특수문자 엔티티 원복 (&amp; -> & 등)

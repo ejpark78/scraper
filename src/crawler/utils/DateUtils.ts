@@ -1,3 +1,12 @@
+/**
+ * @module DateUtils
+ * @description Core functionality or script runner for DateUtils.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies None
+ * @lastUpdated 2026-06-11
+ */
+
 export class DateUtils {
     /**
      * 🕒 상대 시간을 날짜 포맷(YYYY-MM-DD)으로 변환하는 정밀 헬퍼

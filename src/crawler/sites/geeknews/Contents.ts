@@ -1,3 +1,12 @@
+/**
+ * @module Contents
+ * @description Core functionality or script runner for Contents.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs, path, BasePipeline, Converter, utils
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';

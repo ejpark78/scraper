@@ -1,3 +1,12 @@
+/**
+ * @module Crawler
+ * @description Core functionality or script runner for Crawler.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies playwright, fs, path, utils
+ * @lastUpdated 2026-06-11
+ */
+
 import { chromium, Browser, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';

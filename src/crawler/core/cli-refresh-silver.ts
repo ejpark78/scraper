@@ -1,3 +1,12 @@
+/**
+ * @module cli-refresh-silver
+ * @description Core functionality or script runner for cli-refresh-silver.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies SiteRegistry, BaseRefreshTransform
+ * @lastUpdated 2026-06-11
+ */
+
 import { getSite } from './SiteRegistry';
 import { BaseRefreshTransform } from './BaseRefreshTransform';
 

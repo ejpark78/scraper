@@ -1,3 +1,12 @@
+/**
+ * @module ExtractUrls
+ * @description Core functionality or script runner for ExtractUrls.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies mongo, utils, ioredis, fs, path
+ * @lastUpdated 2026-06-11
+ */
+
 import { MongoDatabase } from '../../../../database/mongo';
 import { UrlUtils } from '../../../utils';
 import Redis from 'ioredis';

@@ -1,3 +1,12 @@
+/**
+ * @module parser
+ * @description Core functionality or script runner for parser.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies None
+ * @lastUpdated 2026-06-11
+ */
+
 export class EmailParser {
     static cleanFilename(title: string | undefined): string {
         if (!title) return "Untitled_Mail";

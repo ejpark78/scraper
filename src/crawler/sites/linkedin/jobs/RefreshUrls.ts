@@ -1,3 +1,12 @@
+/**
+ * @module RefreshUrls
+ * @description Core functionality or script runner for RefreshUrls.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies mongo, fs, path, ioredis
+ * @lastUpdated 2026-06-11
+ */
+
 import { MongoDatabase } from '../../../../database/mongo';
 import * as fs from 'fs';
 import * as path from 'path';

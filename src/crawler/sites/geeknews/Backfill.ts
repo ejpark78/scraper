@@ -1,3 +1,12 @@
+/**
+ * @module Backfill
+ * @description Core functionality or script runner for Backfill.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies cheerio, ioredis, mongo, utils
+ * @lastUpdated 2026-06-11
+ */
+
 import * as cheerio from 'cheerio';
 import Redis from 'ioredis';
 import { MongoDatabase } from '../../../database/mongo';

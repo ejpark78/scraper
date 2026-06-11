@@ -1,3 +1,12 @@
+/**
+ * @module List
+ * @description Core functionality or script runner for List.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies playwright, mongo, BaseListService
+ * @lastUpdated 2026-06-11
+ */
+
 import { chromium } from 'playwright';
 import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';

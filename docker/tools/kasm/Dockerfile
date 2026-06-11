@@ -1,3 +1,9 @@
+# ==============================================================================
+# 🐳 Module: Dockerfile (kasm)
+# Description: Docker image build specification
+# Last Updated: 2026-06-11
+# ==============================================================================
+
 FROM kasmweb/core-ubuntu-noble:1.18.0
 
 ARG BUILD_DATE

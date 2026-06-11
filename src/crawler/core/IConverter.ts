@@ -1,3 +1,12 @@
+/**
+ * @module IConverter
+ * @description Core functionality or script runner for IConverter.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies None
+ * @lastUpdated 2026-06-11
+ */
+
 export interface IConverter<T> {
     /**
      * HTML 내용을 파싱하여 특정 메타데이터 오브젝트 T를 생성합니다.

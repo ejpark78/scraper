@@ -1,3 +1,12 @@
+/**
+ * @module scraper
+ * @description Core functionality or script runner for scraper.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 
 export async function scrapeHttpFetch(url: string, tempPath: string): Promise<void> {

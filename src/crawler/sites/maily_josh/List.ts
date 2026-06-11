@@ -1,3 +1,12 @@
+/**
+ * @module List
+ * @description Core functionality or script runner for List.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies cheerio, BaseListService, crypto
+ * @lastUpdated 2026-06-11
+ */
+
 import * as cheerio from 'cheerio';
 import { BaseListService } from '../../core/BaseListService';
 

@@ -1,3 +1,12 @@
+/**
+ * @module cli-refresh-urls
+ * @description Core functionality or script runner for cli-refresh-urls.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies BaseRefreshUrls, SiteRegistry
+ * @lastUpdated 2026-06-11
+ */
+
 import { BaseRefreshUrls } from './BaseRefreshUrls';
 import { getSite } from './SiteRegistry';
 

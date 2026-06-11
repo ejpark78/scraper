@@ -1,3 +1,12 @@
+/**
+ * @module exporter
+ * @description Core functionality or script runner for exporter.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs, path, mailparser, turndown, parser
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { ParsedMail } from 'mailparser';

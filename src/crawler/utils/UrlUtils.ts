@@ -1,3 +1,12 @@
+/**
+ * @module UrlUtils
+ * @description Core functionality or script runner for UrlUtils.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs, path
+ * @lastUpdated 2026-06-11
+ */
+
 const TRACKING_PARAMS = new Set(['ref', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid']);
 const SHARE_PARAMS = ['url', 'u'];
 const BINARY_EXTENSIONS = /\.(zip|pdf|png|jpe?g|gif|svg|mp[34]|mov|avi|exe|dmg|gz|tar|7z|rar|docx?|xlsx?|pptx?|webp|ico|css|js\.map?)$/i;

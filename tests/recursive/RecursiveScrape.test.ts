@@ -1,3 +1,12 @@
+/**
+ * @module RecursiveScrape.test
+ * @description Core functionality or script runner for RecursiveScrape.test.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies assert, cheerio, mongodb, mongo, UrlUtils
+ * @lastUpdated 2026-06-11
+ */
+
 import * as assert from 'assert';
 import * as cheerio from 'cheerio';
 import { MongoClient } from 'mongodb';

@@ -1,3 +1,12 @@
+/**
+ * @module McpClient.test
+ * @description Core functionality or script runner for McpClient.test.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies assert, https, http
+ * @lastUpdated 2026-06-11
+ */
+
 import * as assert from 'assert';
 import https from 'https';
 import http from 'http';

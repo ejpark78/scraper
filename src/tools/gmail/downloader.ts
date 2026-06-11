@@ -1,3 +1,12 @@
+/**
+ * @module downloader
+ * @description Core functionality or script runner for downloader.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies imapflow, mailparser, exporter, parser
+ * @lastUpdated 2026-06-11
+ */
+
 import { ImapFlow } from 'imapflow';
 import { simpleParser, ParsedMail } from 'mailparser';
 import { WikiExporter } from './exporter';

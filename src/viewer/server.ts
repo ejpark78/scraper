@@ -1,3 +1,12 @@
+/**
+ * @module server
+ * @description Core functionality or script runner for server.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies express, path, mongo, mongodb, index.js
+ * @lastUpdated 2026-06-11
+ */
+
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { MongoDatabase } from '../database/mongo';

@@ -1,3 +1,12 @@
+/**
+ * @module scrape
+ * @description Core functionality or script runner for scrape.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 
 function extractIdFromGptersUrl(url: string): string {

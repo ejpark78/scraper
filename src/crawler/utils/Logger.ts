@@ -1,3 +1,12 @@
+/**
+ * @module Logger
+ * @description Core functionality or script runner for Logger.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies os
+ * @lastUpdated 2026-06-11
+ */
+
 import * as os from 'os';
 
 export enum LogLevel {

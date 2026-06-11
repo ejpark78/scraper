@@ -1,3 +1,12 @@
+/**
+ * @module RefreshTransform
+ * @description Core functionality or script runner for RefreshTransform.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies mongo, ioredis
+ * @lastUpdated 2026-06-11
+ */
+
 import { MongoDatabase } from '../../../../database/mongo';
 import Redis from 'ioredis';
 

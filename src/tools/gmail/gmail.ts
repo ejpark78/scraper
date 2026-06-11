@@ -1,3 +1,12 @@
+/**
+ * @module gmail
+ * @description Core functionality or script runner for gmail.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies downloader, exporter, dotenv
+ * @lastUpdated 2026-06-11
+ */
+
 import { GmailBulkDownloader } from './downloader';
 import { WikiExporter } from './exporter';
 import * as dotenv from 'dotenv';

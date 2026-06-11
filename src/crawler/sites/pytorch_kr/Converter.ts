@@ -1,3 +1,12 @@
+/**
+ * @module Converter
+ * @description Core functionality or script runner for Converter.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies cheerio, prettier, IConverter, turndown, fs
+ * @lastUpdated 2026-06-11
+ */
+
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';

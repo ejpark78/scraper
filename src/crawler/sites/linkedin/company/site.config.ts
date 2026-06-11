@@ -1,3 +1,12 @@
+/**
+ * @module site.config
+ * @description Core functionality or script runner for site.config.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies SiteRegistry, Converter
+ * @lastUpdated 2026-06-11
+ */
+
 import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { CompanyMarkdownConverter } from './Converter';
 

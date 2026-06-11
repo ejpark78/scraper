@@ -1,3 +1,12 @@
+/**
+ * @module BaseRefreshSilver
+ * @description Core functionality or script runner for BaseRefreshSilver.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs, path, mongo, IConverter
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { MongoDatabase } from '../../database/mongo';

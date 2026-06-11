@@ -1,3 +1,12 @@
+/**
+ * @module List
+ * @description Core functionality or script runner for List.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies BaseListService
+ * @lastUpdated 2026-06-11
+ */
+
 import { BaseListService } from '../../core/BaseListService';
 
 const SITEMAP_URL = 'https://yozm.wishket.com/magazine/sitemap-news.xml';

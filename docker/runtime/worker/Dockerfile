@@ -1,3 +1,9 @@
+# ==============================================================================
+# 🐳 Module: Dockerfile (worker)
+# Description: Docker image build specification
+# Last Updated: 2026-06-11
+# ==============================================================================
+
 FROM mcr.microsoft.com/playwright:v1.60.0-jammy
 
 ARG BUILD_DATE

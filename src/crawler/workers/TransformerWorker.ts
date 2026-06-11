@@ -1,3 +1,12 @@
+/**
+ * @module TransformerWorker
+ * @description Core functionality or script runner for TransformerWorker.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies os, fs, path, ioredis, mongo
+ * @lastUpdated 2026-06-11
+ */
+
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';

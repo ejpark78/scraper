@@ -1,3 +1,9 @@
+# ==============================================================================
+# 🐳 Module: Dockerfile (gmail)
+# Description: Docker image build specification
+# Last Updated: 2026-06-11
+# ==============================================================================
+
 FROM node:22-bookworm
 
 ARG BUILD_DATE

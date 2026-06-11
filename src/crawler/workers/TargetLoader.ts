@@ -1,3 +1,12 @@
+/**
+ * @module TargetLoader
+ * @description Core functionality or script runner for TargetLoader.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies mongo, SiteRegistry
+ * @lastUpdated 2026-06-11
+ */
+
 import { MongoDatabase } from '../../database/mongo';
 import { getSite } from '../core/SiteRegistry';
 

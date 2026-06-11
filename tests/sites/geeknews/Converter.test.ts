@@ -1,3 +1,12 @@
+/**
+ * @module Converter.test
+ * @description Core functionality or script runner for Converter.test.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies assert, fs, path, Converter
+ * @lastUpdated 2026-06-11
+ */
+
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';

@@ -1,3 +1,12 @@
+/**
+ * @module ListScraper
+ * @description Core functionality or script runner for ListScraper.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies playwright, fs, path, UrlManager, utils
+ * @lastUpdated 2026-06-11
+ */
+
 import { chromium, Browser } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';

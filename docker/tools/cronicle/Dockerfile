@@ -1,3 +1,9 @@
+# ==============================================================================
+# 🐳 Module: Dockerfile (cronicle)
+# Description: Docker image build specification
+# Last Updated: 2026-06-11
+# ==============================================================================
+
 FROM bluet/cronicle-docker:0.9.99
 
 ARG BUILD_DATE

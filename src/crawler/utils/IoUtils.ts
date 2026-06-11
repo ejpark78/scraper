@@ -1,3 +1,12 @@
+/**
+ * @module IoUtils
+ * @description Core functionality or script runner for IoUtils.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs, path
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 

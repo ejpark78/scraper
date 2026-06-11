@@ -1,3 +1,12 @@
+/**
+ * @module BaseListService
+ * @description Core functionality or script runner for BaseListService.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies ioredis, mongo
+ * @lastUpdated 2026-06-11
+ */
+
 import Redis from 'ioredis';
 import { MongoDatabase } from '../../database/mongo';
 

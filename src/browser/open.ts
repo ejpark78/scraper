@@ -1,3 +1,12 @@
+/**
+ * @module open
+ * @description Core functionality or script runner for open.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies playwright, fs, path
+ * @lastUpdated 2026-06-11
+ */
+
 import { chromium } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';

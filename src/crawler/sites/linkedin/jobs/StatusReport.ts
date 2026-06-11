@@ -1,3 +1,12 @@
+/**
+ * @module StatusReport
+ * @description Core functionality or script runner for StatusReport.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies mongo
+ * @lastUpdated 2026-06-11
+ */
+
 import { MongoDatabase } from '../../../../database/mongo';
 
 export class StatusReport {

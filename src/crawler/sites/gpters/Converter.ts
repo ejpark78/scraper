@@ -1,3 +1,12 @@
+/**
+ * @module Converter
+ * @description Core functionality or script runner for Converter.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies prettier, IConverter, fs, path
+ * @lastUpdated 2026-06-11
+ */
+
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
 

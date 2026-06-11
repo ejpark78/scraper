@@ -1,3 +1,12 @@
+/**
+ * @module BasePipeline
+ * @description Core functionality or script runner for BasePipeline.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs, path, os, utils, ioredis
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

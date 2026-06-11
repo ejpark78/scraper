@@ -1,3 +1,9 @@
+# ==============================================================================
+# 🐳 Module: Dockerfile (opencode)
+# Description: Docker image build specification
+# Last Updated: 2026-06-11
+# ==============================================================================
+
 FROM ghcr.io/anomalyco/opencode
 
 ARG BUILD_DATE

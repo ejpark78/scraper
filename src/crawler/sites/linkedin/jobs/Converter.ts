@@ -1,3 +1,12 @@
+/**
+ * @module Converter
+ * @description Core functionality or script runner for Converter.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies fs, path, cheerio, prettier, utils
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';

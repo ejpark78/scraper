@@ -1,3 +1,9 @@
+# ==============================================================================
+# 🐳 Module: Dockerfile (jupyter)
+# Description: Docker image build specification
+# Last Updated: 2026-06-11
+# ==============================================================================
+
 FROM jupyter/minimal-notebook:latest
 
 ARG BUILD_DATE

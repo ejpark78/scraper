@@ -1,3 +1,12 @@
+/**
+ * @module UrlManager.test
+ * @description Core functionality or script runner for UrlManager.test.ts.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error handling.
+ * @dependencies assert, UrlManager
+ * @lastUpdated 2026-06-11
+ */
+
 import * as assert from 'assert';
 import { LinkedInUrlManager, Config } from '../../../src/crawler/sites/linkedin/jobs/UrlManager';
 
