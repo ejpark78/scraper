@@ -48,7 +48,12 @@ export const descriptor: SiteDescriptor = {
     },
     urlsCollectionName: 'bronze/dailydose_ds.urls',
     scrape: async (url, tempPath) => {
-      const normalizedUrl = url.replace('https://dailydoseofds.com/', 'https://www.dailydoseofds.com/');
+      let normalizedUrl = url;
+      if (url.includes('/p/')) {
+        normalizedUrl = url.replace(/https:\/\/(www\.)?dailydoseofds\.com\//, 'https://blog.dailydoseofds.com/');
+      } else {
+        normalizedUrl = url.replace('https://dailydoseofds.com/', 'https://www.dailydoseofds.com/');
+      }
       await scrapeHttpFetch(normalizedUrl, tempPath);
     },
   },
