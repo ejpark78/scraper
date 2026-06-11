@@ -117,69 +117,128 @@ export class MongoDatabase {
         if (!this.client) return;
 
         try {
-            // 📁 Unified Active Collections Indices
+            const createIdx = async (db: Db, col: string, spec: any, opts?: any) => {
+                try {
+                    await db.collection(col).createIndex(spec, opts);
+                } catch (e: unknown) {
+                    const errMsg = e instanceof Error ? e.message : String(e);
+                    console.warn(`⚠️ [MongoDB] Failed to create index on ${db.databaseName}.${col}: ${errMsg}`);
+                }
+            };
+
             if (this.client) {
+                // 📁 Unified Active Collections Indices
                 const bronzeDb = this.client.db('bronze');
-                await bronzeDb.collection('linkedin.jobs').createIndex({ jobId: 1 }, { unique: true });
-                await bronzeDb.collection('linkedin.jobs').createIndex({ collectedAt: -1 });
-                await bronzeDb.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
-                await bronzeDb.collection('linkedin.lists').createIndex({ listId: 1 });
-                await bronzeDb.collection('linkedin.lists').createIndex({ collectedAt: 1 });
-                await bronzeDb.collection('linkedin.job_urls').createIndex({ jobId: 1 });
-                await bronzeDb.collection('linkedin.job_urls').createIndex({ status: 1, jobId: 1 });
-                await bronzeDb.collection('linkedin.company_urls').createIndex({ companyId: 1 });
-                await bronzeDb.collection('linkedin.company_urls').createIndex({ status: 1, companyId: 1 });
+                await createIdx(bronzeDb, 'linkedin.jobs', { jobId: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'linkedin.jobs', { collectedAt: -1 });
+                await createIdx(bronzeDb, 'linkedin.companies', { companyId: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'linkedin.lists', { listId: 1 });
+                await createIdx(bronzeDb, 'linkedin.lists', { collectedAt: 1 });
+                await createIdx(bronzeDb, 'linkedin.job_urls', { jobId: 1 });
+                await createIdx(bronzeDb, 'linkedin.job_urls', { status: 1, jobId: 1 });
+                await createIdx(bronzeDb, 'linkedin.company_urls', { companyId: 1 });
+                await createIdx(bronzeDb, 'linkedin.company_urls', { status: 1, companyId: 1 });
                 
-                await bronzeDb.collection('geeknews.html').createIndex({ id: 1 });
-                await bronzeDb.collection('geeknews.urls').createIndex({ status: 1, id: 1 });
-                await bronzeDb.collection('gpters.html').createIndex({ id: 1 }, { unique: true });
-                await bronzeDb.collection('gpters.urls').createIndex({ status: 1, id: 1 });
-                await bronzeDb.collection('pytorch_kr.html').createIndex({ id: 1 });
-                await bronzeDb.collection('pytorch_kr.lists').createIndex({ id: 1 });
-                await bronzeDb.collection('pytorch_kr.lists').createIndex({ collectedAt: 1 });
-                await bronzeDb.collection('pytorch_kr.urls').createIndex({ id: 1 });
-                await bronzeDb.collection('pytorch_kr.urls').createIndex({ status: 1, id: 1 });
-                await bronzeDb.collection('aicasebook.html').createIndex({ id: 1 });
-                await bronzeDb.collection('aicasebook.urls').createIndex({ id: 1 });
-                await bronzeDb.collection('aicasebook.urls').createIndex({ status: 1, id: 1 });
+                await createIdx(bronzeDb, 'geeknews.html', { id: 1 });
+                await createIdx(bronzeDb, 'geeknews.urls', { status: 1, id: 1 });
+                await createIdx(bronzeDb, 'gpters.html', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'gpters.urls', { status: 1, id: 1 });
+                await createIdx(bronzeDb, 'pytorch_kr.html', { id: 1 });
+                await createIdx(bronzeDb, 'pytorch_kr.lists', { id: 1 });
+                await createIdx(bronzeDb, 'pytorch_kr.lists', { collectedAt: 1 });
+                await createIdx(bronzeDb, 'pytorch_kr.urls', { id: 1 });
+                await createIdx(bronzeDb, 'pytorch_kr.urls', { status: 1, id: 1 });
+                await createIdx(bronzeDb, 'aicasebook.html', { id: 1 });
+                await createIdx(bronzeDb, 'aicasebook.urls', { id: 1 });
+                await createIdx(bronzeDb, 'aicasebook.urls', { status: 1, id: 1 });
+
+                // New collections indexes for bronze (Without unique constraint on HTML raw collections)
+                await createIdx(bronzeDb, 'yozm.html', { id: 1 });
+                await createIdx(bronzeDb, 'yozm.urls', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'yozm.urls', { status: 1, id: 1 });
+                
+                await createIdx(bronzeDb, 'maily_josh.html', { id: 1 });
+                await createIdx(bronzeDb, 'maily_josh.urls', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'maily_josh.urls', { status: 1, id: 1 });
+
+                await createIdx(bronzeDb, 'dailydose_ds.html', { id: 1 });
+                await createIdx(bronzeDb, 'dailydose_ds.urls', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'dailydose_ds.urls', { status: 1, id: 1 });
+
+                await createIdx(bronzeDb, 'uppity.html', { id: 1 });
+                await createIdx(bronzeDb, 'uppity.urls', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'uppity.urls', { status: 1, id: 1 });
+
+                await createIdx(bronzeDb, 'gpters_newsletter.html', { id: 1 });
+                await createIdx(bronzeDb, 'gpters_newsletter.urls', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'gpters_newsletter.urls', { status: 1, id: 1 });
 
                 // 📁 Silver Active Collections Indices
                 const silverDb = this.client.db('silver');
-                await silverDb.collection('linkedin.jobs').createIndex({ jobId: 1 }, { unique: true });
-                await silverDb.collection('linkedin.companies').createIndex({ companyId: 1 }, { unique: true });
-                await silverDb.collection('geeknews.contents').createIndex({ id: 1 });
-                await silverDb.collection('geeknews.contents').createIndex({ publishedAt: -1 });
-                await silverDb.collection('geeknews.contents').createIndex(
+                await createIdx(silverDb, 'linkedin.jobs', { jobId: 1 }, { unique: true });
+                await createIdx(silverDb, 'linkedin.companies', { companyId: 1 }, { unique: true });
+                await createIdx(silverDb, 'geeknews.contents', { id: 1 });
+                await createIdx(silverDb, 'geeknews.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'geeknews.contents', 
                   { title: 'text', content: 'text', markdown: 'text', url: 'text', companyName: 'text' },
                   { weights: { title: 10, content: 5, markdown: 3, url: 1, companyName: 3 }, name: 'text_idx' }
                 );
-                await silverDb.collection('gpters.contents').createIndex({ id: 1 }, { unique: true });
-                await silverDb.collection('gpters.contents').createIndex({ publishedAt: -1 });
-                await silverDb.collection('gpters.contents').createIndex(
+                await createIdx(silverDb, 'gpters.contents', { id: 1 }, { unique: true });
+                await createIdx(silverDb, 'gpters.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'gpters.contents', 
                   { title: 'text', content: 'text', markdown: 'text', url: 'text' },
                   { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
                 );
-                await silverDb.collection('gpters_newsletter.contents').createIndex({ id: 1 }, { unique: true });
-                await silverDb.collection('gpters_newsletter.contents').createIndex({ publishedAt: -1 });
-                await silverDb.collection('gpters_newsletter.contents').createIndex(
+                await createIdx(silverDb, 'gpters_newsletter.contents', { id: 1 }, { unique: true });
+                await createIdx(silverDb, 'gpters_newsletter.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'gpters_newsletter.contents', 
                   { title: 'text', content: 'text', markdown: 'text', url: 'text' },
                   { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
                 );
-                await silverDb.collection('pytorch_kr.contents').createIndex({ id: 1 });
-                await silverDb.collection('pytorch_kr.contents').createIndex({ publishedAt: -1 });
-                await silverDb.collection('pytorch_kr.contents').createIndex(
+                await createIdx(silverDb, 'pytorch_kr.contents', { id: 1 });
+                await createIdx(silverDb, 'pytorch_kr.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'pytorch_kr.contents', 
                   { title: 'text', content: 'text', markdown: 'text', url: 'text' },
                   { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
                 );
-                await silverDb.collection('aicasebook.contents').createIndex({ id: 1 });
-                await silverDb.collection('aicasebook.contents').createIndex({ publishedAt: -1 });
-                await silverDb.collection('aicasebook.contents').createIndex(
+                await createIdx(silverDb, 'aicasebook.contents', { id: 1 });
+                await createIdx(silverDb, 'aicasebook.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'aicasebook.contents', 
                   { title: 'text', summary: 'text', body: 'text', markdown: 'text', tags: 'text' },
                   { weights: { title: 10, summary: 5, body: 3, markdown: 2, tags: 8 }, name: 'text_idx' }
                 );
-                await silverDb.collection('linkedin.jobs').createIndex(
+                await createIdx(silverDb, 'linkedin.jobs', 
                   { title: 'text', companyName: 'text', description: 'text', markdown: 'text' },
                   { weights: { title: 10, companyName: 5, description: 3, markdown: 2 }, name: 'text_idx' }
+                );
+
+                // New collections indexes for silver
+                await createIdx(silverDb, 'yozm.contents', { id: 1 }, { unique: true });
+                await createIdx(silverDb, 'yozm.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'yozm.contents', 
+                  { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+                  { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
+                );
+
+                await createIdx(silverDb, 'maily_josh.contents', { id: 1 }, { unique: true });
+                await createIdx(silverDb, 'maily_josh.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'maily_josh.contents', 
+                  { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+                  { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
+                );
+
+                await createIdx(silverDb, 'dailydose_ds.contents', { id: 1 }, { unique: true });
+                await createIdx(silverDb, 'dailydose_ds.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'dailydose_ds.contents', 
+                  { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+                  { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
+                );
+
+                await createIdx(silverDb, 'uppity.contents', { id: 1 }, { unique: true });
+                await createIdx(silverDb, 'uppity.contents', { publishedAt: -1 });
+                await createIdx(silverDb, 'uppity.contents', 
+                  { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+                  { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
                 );
             }
 

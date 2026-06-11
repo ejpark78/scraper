@@ -547,6 +547,7 @@ app.post('/messages', async (req: Request, res: Response) => {
 async function start() {
   try {
     await mongo.connect();
+    await mongo.initIndexes();
     app.listen(PORT, () => {
       console.log(`🚀 [Server] Hybrid HTTP & MCP Server running at http://localhost:${PORT}`);
     });
