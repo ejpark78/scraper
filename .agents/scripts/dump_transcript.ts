@@ -1,3 +1,13 @@
+/**
+ * @module dump_transcript
+ * @description Extracts and formats agent execution transcripts from raw JSONL log files to Markdown reports.
+ * @constraints
+ *   - Gracefully skips sessions with missing or corrupt transcript log files.
+ *   - Places formatted Markdown documents into the designated reports directory.
+ * @dependencies Node fs/path, agent_adapter
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import { createAdapter, parseAgentsFromArg, assignSessionNumbers, AgentToolCall } from './lib/agent_adapter';
@@ -43,14 +53,18 @@ function run() {
         if (!info) return;
         console.log(`  -> ${info.tag} (${s.title})`);
 
-        const detail = adapter.getSessionDetail(s.id);
-        const md = buildTranscript(s.id, s.title || s.id, detail.messages);
+        try {
+          const detail = adapter.getSessionDetail(s.id);
+          const md = buildTranscript(s.id, s.title || s.id, detail.messages);
 
-        const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir);
-        fs.mkdirSync(outDir, { recursive: true });
-        const outPath = path.join(outDir, `${info.tag}.md`);
-        fs.writeFileSync(outPath, md, 'utf-8');
-        console.log(`  ✨ Saved: ${outPath}`);
+          const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir);
+          fs.mkdirSync(outDir, { recursive: true });
+          const outPath = path.join(outDir, `${info.tag}.md`);
+          fs.writeFileSync(outPath, md, 'utf-8');
+          console.log(`  ✨ Saved: ${outPath}`);
+        } catch (detailErr: any) {
+          console.warn(`  ⚠️ Skipping session ${s.id} due to error: ${detailErr.message}`);
+        }
       });
 
     } catch (err: any) {
