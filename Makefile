@@ -1,4 +1,17 @@
 # ==============================================================================
+# 🤖 Design Context & Constraints (AGENTS.md Compliance)
+# ==============================================================================
+# @module Makefile
+# @description Entrypoint for CLI tasks. Routes site scraper runs, testing, and db utils.
+# @constraints
+#   - Do NOT execute make commands or custom bash scripts without explicit user permission.
+#   - Integrates environment vars from `scripts/environments.mk`.
+#   - Includes site-specific sub-makefiles (gpters, geeknews, dailydoseofds, etc.).
+# @dependencies GNU Make, docker compose, scripts/**/*.mk
+# @lastUpdated 2026-06-11
+# ==============================================================================
+#
+# ==============================================================================
 # ⚙️ LinkedIn Scraper Makefile (Command Interface Router)
 # ==============================================================================
 

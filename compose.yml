@@ -1,3 +1,16 @@
+# ==============================================================================
+# 🤖 Design Context & Constraints (AGENTS.md Compliance)
+# ==============================================================================
+# @module compose.yml
+# @description Orchestrates the entire container infrastructure (traefik, mongodb, redis, workers, viewer, developer tools).
+# @constraints
+#   - Do NOT run arbitrary Docker commands without explicit user permission.
+#   - Respect ports mapping; gateway/traefik serves as reverse proxy on ports 80/443.
+#   - Sub-compose files are linked via the `include` block.
+# @dependencies Docker Compose v2.20+, docker/**/*.yml
+# @lastUpdated 2026-06-11
+# ==============================================================================
+#
 #     _     _   _    _     _ _                 ____ _     ___
 #    / \   | \ | |  | |   | | |               / ___| |   |_ _|
 #   / _ \  |  \| |  | |   | | |    _____     | |   | |    | |
