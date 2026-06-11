@@ -3,6 +3,7 @@
  * @description Core functionality or script runner for site.config.ts.
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
+ *   - Excludes auth, sign-in, sign-up, and redirection URLs.
  * @dependencies SiteRegistry, Converter, scraper, crypto
  * @lastUpdated 2026-06-11
  */
@@ -21,6 +22,12 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'maily_josh.html',
     updateFilterKey: 'id',
     defaultSlack: 3,
+    excludePatterns: [
+      '/users/sign_in',
+      '/users/sign_up',
+      'redirect_path=',
+      '/auth/'
+    ],
     extractId: (url) => {
       const crypto = require('crypto');
       return crypto.createHash('md5').update(url).digest('hex');
