@@ -30,5 +30,4 @@
 The following commands/scripts are pre-approved and exempt from Rule 2's consent loop:
 - `.agents/scripts/commit-changes.sh` (Runs automatically after edits to save progress)
 - `make -f .agents/Makefile dump-all AGENTS=agy` (Runs on exit to generate/export session reports)
-- `make -f .agents/Makefile dump-all` (Default agent report generation)
 
