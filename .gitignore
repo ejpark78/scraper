@@ -1,7 +1,6 @@
 .agents/brain/
 .agents/rules_compact.txt
 .agents/sysinfo_cache.json
-.agents/transcripts/
 .env
 .firecrawl/
 data/
