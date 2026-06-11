@@ -176,6 +176,7 @@ export class MongoDatabase {
                 // 📁 Silver Active Collections Indices
                 const silverDb = this.client.db('silver');
                 await createIdx(silverDb, 'linkedin.jobs', { jobId: 1 }, { unique: true });
+                await createIdx(silverDb, 'linkedin.jobs', { location: 1 });
                 await createIdx(silverDb, 'linkedin.companies', { companyId: 1 }, { unique: true });
                 await createIdx(silverDb, 'geeknews.contents', { id: 1 });
                 await createIdx(silverDb, 'geeknews.contents', { publishedAt: -1 });
