@@ -151,7 +151,7 @@ class ScraperWorker {
 
     const id = config.extractId(url);
     if (!id) {
-      Logger.error(`Invalid URL pattern. Cannot extract ID for site: ${site}`, { url });
+      Logger.info(`Invalid URL pattern. Cannot extract ID for site: ${site}. Skipping.`, { url });
       return;
     }
 

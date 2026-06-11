@@ -44,7 +44,7 @@ export const descriptor: SiteDescriptor = {
     extractId: (url) => {
       const parts = url.split('-');
       const id = parts[parts.length - 1] || '';
-      return /^[a-zA-Z0-9]+$/.test(id) ? id : '';
+      return /^[a-zA-Z0-9]{15}$/.test(id) ? id : '';
     },
     urlsCollectionName: 'bronze/gpters_newsletter.urls',
     scrape: scrapeGptersGraphQL,
