@@ -417,7 +417,6 @@ export class LinkedInList {
             }
 
             let pushedCount = 0;
-            const jobsCollName = descriptor.scraper?.collectionName || 'bronze/linkedin.jobs';
             const newJobsColl = await dbInstance.getCollection(jobsCollName as any);
             for (const job of allDiscovered) {
                 const isCompleted = (await bronzeJobs.findOne({ jobId: job.jobId }, { projection: { _id: 1 } })) !== null ||
