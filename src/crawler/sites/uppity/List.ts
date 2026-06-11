@@ -25,11 +25,11 @@ const SECTIONS = [
 class UppityList extends BaseListService {
     constructor() {
         super({
-            site: 'uppity',
-            displayName: 'Uppity',
-            cacheSetKey: 'completed_uppity',
-            bronzeHtmlCollection: 'bronze/uppity.html',
-            urlsCollection: 'bronze/uppity.urls',
+            site: descriptor.key,
+            displayName: descriptor.name,
+            cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+            bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+            urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
         });
     }
 
