@@ -28,9 +28,8 @@ lint:
 -include scripts/utils/pipeline.mk
 -include scripts/tools/tools.mk
 
-list: AUTH=true
 list: RECURSIVE_SCRAPE=true
-list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list li-list 
+list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list 
 
 gpt-%:
 	@$(MAKE) -f scripts/sites/gpters.mk $*

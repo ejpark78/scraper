@@ -7,6 +7,7 @@
  * @lastUpdated 2026-06-11
  */
 
+import { Document } from 'mongodb';
 import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
 
@@ -60,7 +61,7 @@ class PyTorchKRList extends BaseListService {
             if (!id || !slug) continue;
 
             try {
-                const pytorchListsColl = await dbInstance.getCollection('bronze/pytorch_kr.lists');
+                const pytorchListsColl = await dbInstance.getCollection<{ _id: string } & Document>('bronze/pytorch_kr.lists');
                 const cleanTopic = { ...topic };
                 delete (cleanTopic as any)._id;
                 await pytorchListsColl.updateOne(
