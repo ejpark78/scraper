@@ -6,6 +6,8 @@
 
 FROM mcr.microsoft.com/playwright:v1.60.0-jammy
 
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 ARG BUILD_DATE
 ARG VCS_REF
 
