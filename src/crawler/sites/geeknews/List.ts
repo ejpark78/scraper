@@ -15,11 +15,11 @@ import { descriptor } from './site.config';
 class GeekNewsList extends BaseListService {
     constructor() {
         super({
-            site: 'geeknews',
-            displayName: 'GeekNews',
-            cacheSetKey: 'completed_news',
-            bronzeHtmlCollection: 'bronze/geeknews.html',
-            urlsCollection: 'bronze/geeknews.urls',
+            site: descriptor.key,
+            displayName: descriptor.name,
+            cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+            bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+            urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
         });
     }
 
@@ -55,7 +55,8 @@ class GeekNewsList extends BaseListService {
             const { HtmlMinifier } = require('../../utils');
             const minifiedHtml = await HtmlMinifier.minify(html, { preserveJsonLd: true });
             const dbInstance = MongoDatabase.getInstance();
-            const geeknewsListsColl = await dbInstance.getCollection('bronze/geeknews.lists');
+            const listCollName = descriptor.listsCollectionName || 'bronze/geeknews.lists';
+            const geeknewsListsColl = await dbInstance.getCollection(listCollName as any);
 
             const runDate = new Date();
             const pad = (n: number) => String(n).padStart(2, '0');
@@ -68,7 +69,7 @@ class GeekNewsList extends BaseListService {
                 rawHtml: minifiedHtml,
                 collectedAt: runDate
             });
-            console.log(`💾 [MongoDB Write] Saved minified HTML of page ${page} list to bronze/geeknews.lists`);
+            console.log(`💾 [MongoDB Write] Saved minified HTML of page ${page} list to ${listCollName}`);
         } catch (minifyErr: any) {
             console.error(`⚠️ Failed to minify or save list HTML to MongoDB: ${minifyErr.message}`);
         }

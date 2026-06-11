@@ -12,6 +12,7 @@ import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { GeekNewsMeta, GeekNewsConverter } from './Converter';
 import { HtmlMinifier } from '../../utils';
+import { descriptor } from './site.config';
 
 export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
     private readonly converter: GeekNewsConverter;
@@ -32,7 +33,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
     }
 
     protected getDomainName(): string {
-        return '긱뉴스';
+        return descriptor.domain || 'news.hada.io';
     }
 
     protected async executeScrape(url: string, tempHtmlPath: string): Promise<void> {
@@ -97,7 +98,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw HTML) 저장
-            const bronzeGeeknews = await dbInstance.getCollection('bronze/geeknews.html');
+            const bronzeGeeknews = await dbInstance.getCollection(descriptor.scraper?.collectionName || 'bronze/geeknews.html');
             await bronzeGeeknews.updateOne(
                 { id: id },
                 {
@@ -112,7 +113,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             );
 
             // 2. Silver Layer (Cleansed Metadata & Markdown) 저장
-            const silverGeeknews = await dbInstance.getCollection('silver/geeknews');
+            const silverGeeknews = await dbInstance.getCollection(descriptor.targetLoader?.collectionName || 'silver/geeknews');
             await silverGeeknews.updateOne(
                 { id: id },
                 {
@@ -132,7 +133,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             );
 
             // 3. Update status in bronze.geeknews_urls
-            const geeknewsUrlsColl = await dbInstance.getCollection('bronze/geeknews.urls');
+            const geeknewsUrlsColl = await dbInstance.getCollection(descriptor.scraper?.urlsCollectionName || 'bronze/geeknews.urls');
             await geeknewsUrlsColl.updateOne(
                 { id },
                 { $set: { status: 'completed', updatedAt: new Date() } }
@@ -141,7 +142,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             console.log(`📡 [MongoDB Write] Successfully saved GeekNews ID ${id} and marked url as completed.`);
 
             // 4. Local File System Backup
-            const baseDir = path.join(__dirname, '..', '..', 'data', 'sites', 'geeknews', year, month);
+            const baseDir = path.join(__dirname, '..', '..', 'data', 'sites', descriptor.key, year, month);
             const htmlPath = path.join(baseDir, 'html', `${id}.html`);
             const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
 
