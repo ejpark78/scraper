@@ -1,3 +1,14 @@
+/**
+ * @module prune_session
+ * @description Automatically audits and cleans up empty session directories from the agent local database directory.
+ * @constraints
+ *   - Must verify the existence of `transcript_full.jsonl` log file before deciding to delete.
+ *   - Removes corresponding transcript markdown outputs if deleted from brain database.
+ *   - Follows strict OOP patterns and JSDoc guidelines.
+ * @dependencies Node fs/path/os
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -61,8 +72,9 @@ class SessionPruner {
     try {
       fs.rmSync(dirPath, { recursive: true, force: true });
       console.log(`  🗑️  ${label}`);
-    } catch (err: any) {
-      console.error(`  ❌ Failed to remove ${dirPath}: ${err.message}`);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error(`  ❌ Failed to remove ${dirPath}: ${errMsg}`);
     }
   }
 }

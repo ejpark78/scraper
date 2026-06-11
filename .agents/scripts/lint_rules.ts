@@ -1,5 +1,21 @@
+/**
+ * @module lint_rules
+ * @description Audits relative path compliance in generated markdown transcripts according to AGENTS.md rules.
+ * @constraints
+ *   - Verifies that markdown links do not use absolute schemas (e.g., file://, http://).
+ *   - Follows strict OOP patterns and JSDoc guidelines.
+ * @dependencies Node fs/path
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
+
+interface BadLinkItem {
+  file: string;
+  line: number;
+  text: string;
+}
 
 class RulesLinter {
   private readonly transcriptsDir = path.join(__dirname, '../transcripts');
@@ -12,7 +28,7 @@ class RulesLinter {
         return;
       }
 
-      const badLinks: { file: string; line: number; text: string }[] = [];
+      const badLinks: BadLinkItem[] = [];
       this.checkDirectory(this.transcriptsDir, badLinks);
 
       if (badLinks.length > 0) {
@@ -23,13 +39,14 @@ class RulesLinter {
       } else {
         console.log('✅ Paths validation: ALL OK (All links use clean relative paths).');
       }
-    } catch (err: any) {
-      console.error('❌ Error during relative link validation:', err.message);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error('❌ Error during relative link validation:', errMsg);
       process.exit(1);
     }
   }
 
-  private checkDirectory(dir: string, badLinks: any[]): void {
+  private checkDirectory(dir: string, badLinks: BadLinkItem[]): void {
     const items = fs.readdirSync(dir);
     items.forEach(name => {
       const fullPath = path.join(dir, name);
@@ -42,7 +59,7 @@ class RulesLinter {
     });
   }
 
-  private checkFile(filePath: string, badLinks: any[]): void {
+  private checkFile(filePath: string, badLinks: BadLinkItem[]): void {
     const content = fs.readFileSync(filePath, 'utf-8');
     const lines = content.split('\n');
     

@@ -1,3 +1,13 @@
+/**
+ * @module compress_rules
+ * @description Compresses multi-line markdown system rules to minimize LLM token usage.
+ * @constraints
+ *   - Strips empty lines, block comments, and verbose explanations.
+ *   - Follows strict OOP patterns and JSDoc guidelines.
+ * @dependencies Node fs/path
+ * @lastUpdated 2026-06-11
+ */
+
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -24,8 +34,9 @@ class RuleCompressor {
 
       fs.writeFileSync(this.outputCompactFile, compressedText.trim(), 'utf-8');
       console.log(`✅ Compressed rules written to: ${this.outputCompactFile}`);
-    } catch (err: any) {
-      console.error('❌ Error compressing rules:', err.message);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error('❌ Error compressing rules:', errMsg);
       process.exit(1);
     }
   }
