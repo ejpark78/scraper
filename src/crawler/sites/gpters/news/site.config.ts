@@ -3,6 +3,7 @@
  * @description Core functionality or script runner for site.config.ts.
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
+ *   - Ensures extracted post IDs are strictly alphanumeric Bettermode IDs to prevent malformed queries.
  * @dependencies SiteRegistry, Converter, scrape
  * @lastUpdated 2026-06-11
  */
@@ -42,7 +43,8 @@ export const descriptor: SiteDescriptor = {
     defaultSlack: 3,
     extractId: (url) => {
       const parts = url.split('-');
-      return parts[parts.length - 1] || '';
+      const id = parts[parts.length - 1] || '';
+      return /^[a-zA-Z0-9]+$/.test(id) ? id : '';
     },
     urlsCollectionName: 'bronze/gpters.urls',
     scrape: scrapeGptersGraphQL,
