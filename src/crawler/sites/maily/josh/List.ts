@@ -14,11 +14,11 @@ import { descriptor } from './site.config';
 class MailyJoshList extends BaseListService {
   constructor() {
     super({
-      site: 'maily_josh',
-      displayName: '조쉬의 뉴스레터',
-      cacheSetKey: 'completed_maily_josh',
-      bronzeHtmlCollection: 'bronze/maily_josh.html',
-      urlsCollection: 'bronze/maily_josh.urls',
+      site: descriptor.key,
+      displayName: descriptor.name,
+      cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+      bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+      urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
     });
   }
 
