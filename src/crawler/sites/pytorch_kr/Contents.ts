@@ -10,9 +10,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
-import { PyTorchKRMeta, PyTorchKRConverter } from './Converter';
+import { PyTorchKRConverter } from './Converter';
 import { BrowserPool } from '../../../browser/pool';
-import { descriptor } from './site.config';
+import { descriptor, PyTorchKRMeta } from './site.config';
 
 export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
     private readonly converter: PyTorchKRConverter;

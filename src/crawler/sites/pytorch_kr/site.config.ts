@@ -50,6 +50,15 @@ export interface PyTorchListDocument extends Document {
     collectedAt: Date;
 }
 
+export interface PyTorchKRMeta {
+    id: string;
+    title: string;
+    url: string;
+    publishedAt: string | null;
+    content: string;
+    rawContent: string;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'pytorch_kr',
   name: 'PyTorch KR',
@@ -103,7 +112,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/pytorch_kr.contents',
     filterField: 'id',
-    buildDocument: (id, meta) => ({
+    buildDocument: (id, meta: PyTorchKRMeta) => ({
       id,
       title: meta.title || 'Untitled',
       url: meta.url || null,

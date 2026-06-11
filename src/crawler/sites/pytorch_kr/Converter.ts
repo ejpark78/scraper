@@ -11,14 +11,7 @@ import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
 
-export interface PyTorchKRMeta {
-    id: string;
-    title: string;
-    url: string;
-    publishedAt: string | null;
-    content: string;
-    rawContent: string; // The markdown representation
-}
+import { PyTorchKRMeta } from './site.config';
 
 export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
     
