@@ -132,7 +132,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
             );
 
             // 3. Update status in bronze.geeknews_urls
-            const geeknewsUrlsColl = await dbInstance.getCollection('geeknews.urls');
+            const geeknewsUrlsColl = await dbInstance.getCollection('bronze/geeknews.urls');
             await geeknewsUrlsColl.updateOne(
                 { id },
                 { $set: { status: 'completed', updatedAt: new Date() } }

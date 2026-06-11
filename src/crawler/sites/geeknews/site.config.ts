@@ -27,7 +27,7 @@ export const descriptor: SiteDescriptor = {
       }
       return '';
     },
-    excludePatterns: ['vote?', '/vote', 'user?', '/user'],
+    excludePatterns: ['vote?', '/vote', 'user?', '/user', 'item?'],
     urlsCollectionName: 'bronze/geeknews.urls',
     scrape: scrapeHttpFetch,
   },
