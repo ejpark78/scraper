@@ -2,9 +2,9 @@
 
 ## ⚠️ Critical Constraints
 
-1. **No Arbitrary Bash**: Consent required for ALL shell commands (including read-only diagnostics, git, docker, ls, env, etc.) except for those listed in Pre-Approved Commands. Present the exact command(s) to the user in the chat and obtain explicit approval before calling the run command tool. Compress multiple diagnostics/status checks into a single combined command execution (e.g. chaining with `&&`, `;`, or using `cat << 'EOF' | bash` with Korean comments for each command) to minimize user confirmation loops.
-2. **Strict Planning**: Summarize plan and obtain user consent before any file writes or environment changes (except for commands listed in Pre-Approved Commands). Before requesting approval, present the target files and planned modifications in a Markdown table (with columns: File Path, Action, and Details) to ensure transparency. CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first.
-3. **Minimal File Scope**: No root grep/list_dir. Prefer a single `git ls-files` call to map tracked files efficiently and discover nested paths in one go to minimize API/token consumption, rather than making multiple step-by-step `list_dir` traversals. Use step-by-step `list_dir` only for untracked folders (e.g. `data/`) or fallback. Use view_file only on target files.
+1. **No Arbitrary Bash**: Consent required for ALL shell commands (except Pre-Approved). Present the exact command in chat for explicit approval first. Compress multiple checks into a single chained execution to minimize confirmation loops.
+2. **Strict Planning**: Propose a plan in a Markdown table (Columns: File Path, Action, Details) and obtain consent before file writes or env changes (except Pre-Approved). CRITICAL: Wait for consent before calling any write/modification tools.
+3. **Minimal File Scope**: No root grep/list_dir. Use a single `git ls-files` call to map tracked paths and nested folders in one go to save API/tokens. Use `list_dir` only for untracked paths (e.g. `data/`) or fallback. Use `view_file` only on target files.
 4. **Transparent Issues**: Report errors immediately. No silent restores. Do not exceed 2 autonomous troubleshooting retries without user review.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
 6. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
