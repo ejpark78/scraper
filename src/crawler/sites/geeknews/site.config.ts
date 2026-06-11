@@ -16,6 +16,22 @@ export const descriptor: SiteDescriptor = {
   name: 'GeekNews',
   domain: 'news.hada.io',
 
+  indexes: [
+    { collection: 'bronze/geeknews.html', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/geeknews.urls', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/geeknews.urls', fields: { status: 1, id: 1 } },
+    { collection: 'silver/geeknews.contents', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'silver/geeknews.contents', fields: { publishedAt: -1 } },
+    {
+      collection: 'silver/geeknews.contents',
+      fields: { title: 'text', content: 'text', markdown: 'text', url: 'text', companyName: 'text' },
+      options: {
+        weights: { title: 10, content: 5, markdown: 3, url: 1, companyName: 3 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   scraper: {
     collectionName: 'bronze/geeknews.html',
     targetCollection: 'geeknews.html',

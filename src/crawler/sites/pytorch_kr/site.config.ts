@@ -48,6 +48,24 @@ export const descriptor: SiteDescriptor = {
   name: 'PyTorch KR',
   domain: 'discuss.pytorch.kr',
 
+  indexes: [
+    { collection: 'bronze/pytorch_kr.html', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/pytorch_kr.lists', fields: { id: 1 } },
+    { collection: 'bronze/pytorch_kr.lists', fields: { collectedAt: 1 } },
+    { collection: 'bronze/pytorch_kr.urls', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/pytorch_kr.urls', fields: { status: 1, id: 1 } },
+    { collection: 'silver/pytorch_kr.contents', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'silver/pytorch_kr.contents', fields: { publishedAt: -1 } },
+    {
+      collection: 'silver/pytorch_kr.contents',
+      fields: { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+      options: {
+        weights: { title: 10, content: 5, markdown: 3, url: 1 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   scraper: {
     collectionName: 'bronze/pytorch_kr.html',
     targetCollection: 'pytorch_kr.html',

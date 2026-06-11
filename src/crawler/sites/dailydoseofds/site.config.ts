@@ -17,6 +17,23 @@ export const descriptor: SiteDescriptor = {
   key: 'dailydose_ds',
   name: 'Daily Dose of DS',
   domain: 'dailydoseofds.com',
+
+  indexes: [
+    { collection: 'bronze/dailydose_ds.html', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/dailydose_ds.urls', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/dailydose_ds.urls', fields: { status: 1, id: 1 } },
+    { collection: 'silver/dailydose_ds.contents', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'silver/dailydose_ds.contents', fields: { publishedAt: -1 } },
+    {
+      collection: 'silver/dailydose_ds.contents',
+      fields: { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+      options: {
+        weights: { title: 10, content: 5, markdown: 3, url: 1 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   seedUrls: [
     'https://www.dailydoseofds.com/mlops-crash-course-part-1/',
     'https://www.dailydoseofds.com/rl-course-part-1/',

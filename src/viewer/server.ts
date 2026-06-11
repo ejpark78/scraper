@@ -17,6 +17,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
+import { getAllSites } from '../crawler/core/SiteRegistry';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,15 +27,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve downloaded images from site scrapers
 const projectRoot = path.resolve(__dirname, '..', '..');
-app.use('/geeknews', express.static(path.join(projectRoot, 'data', 'sites', 'geeknews')));
-app.use('/gpters', express.static(path.join(projectRoot, 'data', 'sites', 'gpters')));
-app.use('/gpters_newsletter', express.static(path.join(projectRoot, 'data', 'sites', 'gpters_newsletter')));
-app.use('/pytorch_kr', express.static(path.join(projectRoot, 'data', 'sites', 'pytorch_kr')));
-app.use('/aicasebook', express.static(path.join(projectRoot, 'data', 'sites', 'aicasebook')));
-app.use('/dailydose_ds', express.static(path.join(projectRoot, 'data', 'sites', 'dailydose_ds')));
-app.use('/yozm', express.static(path.join(projectRoot, 'data', 'sites', 'yozm')));
-app.use('/maily_josh', express.static(path.join(projectRoot, 'data', 'sites', 'maily_josh')));
-app.use('/uppity', express.static(path.join(projectRoot, 'data', 'sites', 'uppity')));
+const sites = getAllSites();
+for (const site of sites) {
+  if (site.key) {
+    app.use(`/${site.key}`, express.static(path.join(projectRoot, 'data', 'sites', site.key)));
+  }
+}
 
 // Request logging middleware for debugging
 app.use((req: Request, res: Response, next) => {
@@ -358,56 +356,37 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    // Dynamically stitch rawHtml from Bronze layer for Silver collections
     if (!doc.rawHtml) {
       try {
-        if (collectionName === 'silver/linkedin.jobs' && doc.jobId) {
-          const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
-          const bronzeDoc = await bronzeColl.findOne({ jobId: doc.jobId });
-          if (bronzeDoc && bronzeDoc.rawHtml) {
-            doc.rawHtml = bronzeDoc.rawHtml;
-            doc.scrapedAt = bronzeDoc.scrapedAt;
+        const site = sites.find(s => s.targetLoader?.collectionName === collectionName);
+        if (site && site.scraper?.collectionName) {
+          const bronzeColl = await mongo.getCollection(site.scraper.collectionName);
+          const filterField = site.targetLoader?.filterField || 'id';
+          const updateFilterKey = site.scraper.updateFilterKey || 'id';
+          const idValue = doc[filterField];
+
+          if (idValue) {
+            const query: any = {};
+            if (updateFilterKey !== 'id') {
+              query.$or = [
+                { [updateFilterKey]: idValue },
+                { id: idValue }
+              ];
+            } else {
+              query.id = idValue;
+            }
+            const bronzeDoc = await bronzeColl.findOne(query);
+            if (bronzeDoc && bronzeDoc.rawHtml) {
+              doc.rawHtml = bronzeDoc.rawHtml;
+              if (bronzeDoc.scrapedAt) {
+                doc.scrapedAt = bronzeDoc.scrapedAt;
+              }
+            }
           }
-        } else if (collectionName === 'silver/geeknews.contents' && doc.id) {
-          const bronzeColl = await mongo.getCollection('bronze/geeknews.html');
-          const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }, { topicId: doc.id }] });
-          if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
-        } else if (collectionName === 'silver/gpters.contents' && doc.id) {
-          const bronzeColl = await mongo.getCollection('bronze/gpters.html');
-          const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }, { postId: doc.id }] });
-          if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
-        } else if (collectionName === 'silver/pytorch_kr.contents' && doc.id) {
-          const bronzeColl = await mongo.getCollection('bronze/pytorch_kr.html');
-          const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }, { topicId: doc.id }] });
-          if (bronzeDoc && bronzeDoc.rawHtml) {
-            doc.rawHtml = bronzeDoc.rawHtml;
-          }
-         } else if (collectionName === 'silver/aicasebook.contents' && doc.id) {
-           const bronzeColl = await mongo.getCollection('bronze/aicasebook.html');
-           const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
-           if (bronzeDoc && bronzeDoc.rawHtml) {
-             doc.rawHtml = bronzeDoc.rawHtml;
-           }
-         } else if (collectionName === 'silver/dailydose_ds.contents' && doc.id) {
-           const bronzeColl = await mongo.getCollection('bronze/dailydose_ds.html');
-           const bronzeDoc = await bronzeColl.findOne({ $or: [{ id: doc.id }] });
-           if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
-         } else if (collectionName === 'silver/uppity.contents' && doc.id) {
-            const bronzeColl = await mongo.getCollection('bronze/uppity.html');
-            const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
-            if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
-          } else if (collectionName === 'silver/maily_josh.contents' && doc.id) {
-            const bronzeColl = await mongo.getCollection('bronze/maily_josh.html');
-            const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
-            if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
-          } else if (collectionName === 'silver/yozm.contents' && doc.id) {
-            const bronzeColl = await mongo.getCollection('bronze/yozm.html');
-            const bronzeDoc = await bronzeColl.findOne({ id: doc.id });
-            if (bronzeDoc && bronzeDoc.rawHtml) doc.rawHtml = bronzeDoc.rawHtml;
-          }
-       } catch (stitchErr) {
-         console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);
-       }
+        }
+      } catch (stitchErr) {
+        console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);
+      }
     }
 
     res.json(doc);

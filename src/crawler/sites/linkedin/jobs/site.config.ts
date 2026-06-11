@@ -24,6 +24,25 @@ export const descriptor: SiteDescriptor = {
   key: 'linkedin',
   name: 'LinkedIn Jobs',
 
+  indexes: [
+    { collection: 'bronze/linkedin.jobs', fields: { jobId: 1 }, options: { unique: true } },
+    { collection: 'bronze/linkedin.jobs', fields: { collectedAt: -1 } },
+    { collection: 'bronze/linkedin.lists', fields: { listId: 1 } },
+    { collection: 'bronze/linkedin.lists', fields: { collectedAt: 1 } },
+    { collection: 'bronze/linkedin.job_urls', fields: { jobId: 1 } },
+    { collection: 'bronze/linkedin.job_urls', fields: { status: 1, jobId: 1 } },
+    { collection: 'silver/linkedin.jobs', fields: { jobId: 1 }, options: { unique: true } },
+    { collection: 'silver/linkedin.jobs', fields: { location: 1 } },
+    {
+      collection: 'silver/linkedin.jobs',
+      fields: { title: 'text', companyName: 'text', description: 'text', markdown: 'text' },
+      options: {
+        weights: { title: 10, companyName: 5, description: 3, markdown: 2 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   scraper: {
     collectionName: 'bronze/linkedin.jobs',
     targetCollection: 'linkedin.jobs',

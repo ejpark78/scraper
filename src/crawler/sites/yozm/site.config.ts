@@ -16,6 +16,22 @@ export const descriptor: SiteDescriptor = {
   name: '요즘IT',
   domain: 'yozm.wishket.com',
 
+  indexes: [
+    { collection: 'bronze/yozm.html', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/yozm.urls', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/yozm.urls', fields: { status: 1, id: 1 } },
+    { collection: 'silver/yozm.contents', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'silver/yozm.contents', fields: { publishedAt: -1 } },
+    {
+      collection: 'silver/yozm.contents',
+      fields: { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+      options: {
+        weights: { title: 10, content: 5, markdown: 3, url: 1 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   scraper: {
     collectionName: 'bronze/yozm.html',
     targetCollection: 'yozm.html',

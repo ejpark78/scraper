@@ -16,6 +16,22 @@ export const descriptor: SiteDescriptor = {
   name: 'Uppity',
   domain: 'uppity.co.kr',
 
+  indexes: [
+    { collection: 'bronze/uppity.html', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/uppity.urls', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/uppity.urls', fields: { status: 1, id: 1 } },
+    { collection: 'silver/uppity.contents', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'silver/uppity.contents', fields: { publishedAt: -1 } },
+    {
+      collection: 'silver/uppity.contents',
+      fields: { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+      options: {
+        weights: { title: 10, content: 5, markdown: 3, url: 1 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   scraper: {
     collectionName: 'bronze/uppity.html',
     targetCollection: 'uppity.html',

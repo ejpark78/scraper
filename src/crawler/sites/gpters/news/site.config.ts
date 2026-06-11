@@ -36,6 +36,22 @@ export const descriptor: SiteDescriptor = {
   name: 'GPTers News',
   domain: 'gpters.org',
 
+  indexes: [
+    { collection: 'bronze/gpters.html', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/gpters.urls', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/gpters.urls', fields: { status: 1, id: 1 } },
+    { collection: 'silver/gpters.contents', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'silver/gpters.contents', fields: { publishedAt: -1 } },
+    {
+      collection: 'silver/gpters.contents',
+      fields: { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+      options: {
+        weights: { title: 10, content: 5, markdown: 3, url: 1 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   scraper: {
     collectionName: 'bronze/gpters.html',
     targetCollection: 'gpters.html',

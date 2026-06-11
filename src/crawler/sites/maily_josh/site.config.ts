@@ -17,6 +17,22 @@ export const descriptor: SiteDescriptor = {
   name: '조쉬의 뉴스레터 (Maily)',
   domain: 'maily.so',
 
+  indexes: [
+    { collection: 'bronze/maily_josh.html', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/maily_josh.urls', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/maily_josh.urls', fields: { status: 1, id: 1 } },
+    { collection: 'silver/maily_josh.contents', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'silver/maily_josh.contents', fields: { publishedAt: -1 } },
+    {
+      collection: 'silver/maily_josh.contents',
+      fields: { title: 'text', content: 'text', markdown: 'text', url: 'text' },
+      options: {
+        weights: { title: 10, content: 5, markdown: 3, url: 1 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   scraper: {
     collectionName: 'bronze/maily_josh.html',
     targetCollection: 'maily_josh.html',

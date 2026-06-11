@@ -12,11 +12,19 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { IConverter } from './IConverter';
 
+export interface IndexSpec {
+  collection: `bronze/${string}` | `silver/${string}`;
+  fields: Record<string, any>;
+  options?: any;
+}
+
 export interface SiteDescriptor {
   key: string;
   name: string;
   domain?: string;
   seedUrls?: string[];
+
+  indexes?: IndexSpec[];
 
   scraper?: {
     collectionName: `bronze/${string}`;

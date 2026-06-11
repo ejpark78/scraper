@@ -16,6 +16,22 @@ export const descriptor: SiteDescriptor = {
   name: 'AI Casebook',
   domain: 'aicasebook.dev',
 
+  indexes: [
+    { collection: 'bronze/aicasebook.html', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/aicasebook.urls', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'bronze/aicasebook.urls', fields: { status: 1, id: 1 } },
+    { collection: 'silver/aicasebook.contents', fields: { id: 1 }, options: { unique: true } },
+    { collection: 'silver/aicasebook.contents', fields: { publishedAt: -1 } },
+    {
+      collection: 'silver/aicasebook.contents',
+      fields: { title: 'text', summary: 'text', body: 'text', markdown: 'text', tags: 'text' },
+      options: {
+        weights: { title: 10, summary: 5, body: 3, markdown: 2, tags: 8 },
+        name: 'text_idx',
+      },
+    },
+  ],
+
   scraper: {
     collectionName: 'bronze/aicasebook.html',
     targetCollection: 'aicasebook.html',

@@ -14,6 +14,13 @@ export const descriptor: SiteDescriptor = {
   key: 'linkedin_company',
   name: 'LinkedIn Company',
 
+  indexes: [
+    { collection: 'bronze/linkedin.companies', fields: { companyId: 1 }, options: { unique: true } },
+    { collection: 'bronze/linkedin.company_urls', fields: { companyId: 1 } },
+    { collection: 'bronze/linkedin.company_urls', fields: { status: 1, companyId: 1 } },
+    { collection: 'silver/linkedin.companies', fields: { companyId: 1 }, options: { unique: true } },
+  ],
+
   transformer: {
     converter: new CompanyMarkdownConverter(),
     targetCollection: 'linkedin.companies',
