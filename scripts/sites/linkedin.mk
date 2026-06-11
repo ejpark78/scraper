@@ -49,13 +49,14 @@ extract-urls:
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
-	@echo "🔄 [LinkedIn Jobs] Refreshing target queue URLs (GEOS: $(GEOS))..."
+	@echo "🔄 [LinkedIn Jobs] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) -e GEOS="$(GEOS)" $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/RefreshUrls.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts linkedin
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [LinkedIn Jobs] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/RefreshTransform.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts linkedin
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts linkedin_company
 

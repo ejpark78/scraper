@@ -9,6 +9,7 @@
 
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
+import { getSite } from './SiteRegistry';
 
 export interface RefreshTransformConfig {
     site: string;
@@ -23,7 +24,9 @@ export class BaseRefreshTransform {
 
     public async run(): Promise<void> {
         const { site, bronzeCollection, includeUrlInPayload } = this.config;
-        const silverCollection = this.config.silverCollection ?? `silver/${site}.contents` as `silver/${string}`;
+        const desc = getSite(site);
+        const idField = desc?.scraper?.updateFilterKey ?? 'id';
+        const silverCollection = this.config.silverCollection ?? desc?.targetLoader?.collectionName ?? `silver/${site}.contents` as `silver/${string}`;
         const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
         const TRANSFORM_QUEUE = 'transform_queue';
         const BATCH_SIZE = 500;
@@ -39,9 +42,9 @@ export class BaseRefreshTransform {
             const completedIds = new Set<string>();
             if (!overwrite) {
                 const silverColl = await mongo.getCollection(silverCollection);
-                const completed = await silverColl.distinct('id');
+                const completed = await silverColl.distinct(idField);
                 completed.forEach(id => completedIds.add(String(id)));
-                console.log(`📥 Loaded ${completedIds.size} already completed ${site} IDs from Silver Layer.`);
+                console.log(`📥 Loaded ${completedIds.size} already completed ${site} IDs from Silver Layer using ID field '${idField}'.`);
             } else {
                 console.log('⚠️ OVERWRITE=true — skipping Silver Layer check.');
             }
@@ -58,7 +61,7 @@ export class BaseRefreshTransform {
                 while (await cursor.hasNext() && batch.length < BATCH_SIZE) {
                     const doc = await cursor.next();
                     if (!doc) continue;
-                    const id = this.config.idExtract ? this.config.idExtract(doc) : (doc.id || null);
+                    const id = this.config.idExtract ? this.config.idExtract(doc) : (doc[idField] || doc.id || null);
                     if (!id) continue;
 
                     if (!overwrite && completedIds.has(String(id))) continue;

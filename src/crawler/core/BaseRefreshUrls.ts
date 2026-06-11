@@ -26,22 +26,23 @@ export class BaseRefreshUrls {
 
     public async run(): Promise<void> {
         const { site, displayName, cacheSetKey, legacyQueue } = this.config;
-        const bronzeHtmlCollection: `bronze/${string}` = `bronze/${site}.html`;
-        const urlsCollection: `bronze/${string}` = `bronze/${site}.urls`;
+        const desc = getSite(site);
+        const idField = desc?.scraper?.updateFilterKey ?? 'id';
+        const bronzeHtmlCollection: `bronze/${string}` = desc?.scraper?.collectionName ?? `bronze/${site}.html` as `bronze/${string}`;
+        const urlsCollection: `bronze/${string}` = desc?.scraper?.urlsCollectionName ?? `bronze/${site}.urls` as `bronze/${string}`;
 
-        console.log(`🔄 [${displayName} Refresh Urls] Starting precision recovery of uncollected targets...`);
+        console.log(`🔄 [${displayName} Refresh Urls] Starting precision recovery of uncollected targets using ID field '${idField}'...`);
         const mongo = MongoDatabase.getInstance();
         await mongo.connect();
 
         const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
         const redis = new Redis(redisUrl);
 
-        try {
             const desc = getSite(site);
             const bronzeHtml = await mongo.getCollection(bronzeHtmlCollection);
             const urlsColl = await mongo.getCollection(urlsCollection);
 
-            const completedIds = await bronzeHtml.distinct('id');
+            const completedIds = await bronzeHtml.distinct(idField);
             console.log(`📥 Loaded ${completedIds.length} already completed ${displayName} IDs.`);
 
             const priority = process.env.PRIORITY || 'medium';
@@ -118,12 +119,12 @@ export class BaseRefreshUrls {
                 query = { status: 'failed' };
                 console.log(`🔧 ERROR_RESET mode: fetching only failed URLs...`);
             } else {
-                query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $ne: 'failed' } };
+                query = { ...(overwrite ? {} : { [idField]: { $nin: completedIds } }), status: { $ne: 'failed' } };
             }
             let targets: any[] = [];
-            const targetCursor = urlsColl.find(query, { projection: { id: 1, url: 1 } });
+            const targetCursor = urlsColl.find(query, { projection: { [idField]: 1, url: 1 } });
             for await (const doc of targetCursor) {
-                targets.push(doc);
+                targets.push({ id: doc[idField] || doc.id, url: doc.url });
             }
             console.log(`🔍 Found ${targets.length} target items in database${overwrite ? ' (OVERWRITE mode)' : ''}${errorReset ? ' (ERROR_RESET mode)' : ''}.`);
 
@@ -166,7 +167,7 @@ export class BaseRefreshUrls {
                 }
 
                 const result = await urlsColl.updateMany(
-                    { id: { $in: idsToUpdate } },
+                    { [idField]: { $in: idsToUpdate } },
                     { $set: { pushedToRedis: true, status: 'new', updatedAt: new Date() } }
                 );
 
@@ -191,12 +192,13 @@ export class BaseRefreshUrls {
         redis: Redis,
         site: string,
         domain: string,
-        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string; excludePatterns?: string[]; urlFilter?: (url: string) => boolean },
+        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string; excludePatterns?: string[]; urlFilter?: (url: string) => boolean; updateFilterKey?: string; collectionName?: string },
         completedIds: string[]
     ): Promise<void> {
         const { config } = this;
-        const bronzeHtmlCollection: `bronze/${string}` = `bronze/${site}.html`;
-        const urlsCollection: `bronze/${string}` = `bronze/${site}.urls`;
+        const idField = scraper.updateFilterKey ?? 'id';
+        const bronzeHtmlCollection: `bronze/${string}` = scraper.collectionName as any ?? `bronze/${site}.html`;
+        const urlsCollection: `bronze/${string}` = scraper.urlsCollectionName as any ?? `bronze/${site}.urls`;
         if (!scraper.urlsCollectionName) return;
 
         const htmlColl = await mongo.getCollection(bronzeHtmlCollection);
@@ -206,9 +208,10 @@ export class BaseRefreshUrls {
 
         // Load existing urls set
         const existingIds = new Set<string>();
-        const cursorIds = urlsColl.find({}, { projection: { id: 1 }, maxTimeMS: 60000 });
+        const cursorIds = urlsColl.find({}, { projection: { [idField]: 1 }, maxTimeMS: 60000 });
         for await (const doc of cursorIds) {
-            if (doc?.id) existingIds.add(String(doc.id));
+            const idVal = doc[idField] || doc.id;
+            if (idVal) existingIds.add(String(idVal));
         }
 
         // Load existing queue urls
@@ -312,8 +315,8 @@ export class BaseRefreshUrls {
             const chunk = newUrls.slice(i, i + chunkSize);
             const bulkOps = chunk.map(u => ({
                 updateOne: {
-                    filter: { id: u.id },
-                    update: { $set: { id: u.id, url: u.url, status: 'new', pushedToRedis: false, updatedAt: new Date() } },
+                    filter: { [idField]: u.id },
+                    update: { $set: { [idField]: u.id, url: u.url, status: 'new', pushedToRedis: false, updatedAt: new Date() } },
                     upsert: true,
                 }
             }));
@@ -334,7 +337,7 @@ export class BaseRefreshUrls {
         }
 
         await urlsColl.updateMany(
-            { id: { $in: newUrls.map(u => u.id) } },
+            { [idField]: { $in: newUrls.map(u => u.id) } },
             { $set: { pushedToRedis: true } }
         );
 
