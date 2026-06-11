@@ -12,9 +12,6 @@ services:
     image: ghcr.io/onllm-dev/onwatch:latest
     profiles:
       - tools
-    depends_on:
-      traefik:
-        condition: service_healthy      
     environment:
       - TZ=Asia/Seoul
       - PORT=9211
@@ -23,6 +20,8 @@ services:
       - ANTIGRAVITY_ENABLED=true
       - ANTIGRAVITY_BASE_URL=${ANTIGRAVITY_BASE_URL:-http://127.0.0.1:46177}
       - ANTIGRAVITY_CSRF_TOKEN=${ANTIGRAVITY_CSRF_TOKEN:-}
+      - ONWATCH_ADMIN_USER=${ONWATCH_ADMIN_USER:-admin}
+      - ONWATCH_ADMIN_PASS=${ONWATCH_ADMIN_PASS:-changeme}
     network_mode: host
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/onwatch:/data
@@ -32,9 +31,3 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.onwatch.rule=Host(`onwatch.localhost`) || Host(`onwatch.127.0.0.1.nip.io`)"
-      - "traefik.http.routers.onwatch.entrypoints=websecure"
-      - "traefik.http.routers.onwatch.tls=true"
-      - "traefik.http.services.onwatch.loadbalancer.server.url=http://host.docker.internal:9211"
