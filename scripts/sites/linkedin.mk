@@ -23,7 +23,6 @@ help:
 	@echo "                        (예: make li-refresh-urls GEOS=\"South Korea,Japan\")"
 	@echo "  make li-refresh-md  - 실버 레이어 누락 데이터를 Redis 큐에 넣어 재가공(Backfill)합니다."
 	@echo "                        (예: make li-refresh-md OVERWRITE=true)"
-	@echo "  make li-status      - Bronze 레이어와 Silver 레이어 적재 통계 비교 보고서를 출력합니다."
 	@echo "  make li-restart     - 크롤러 및 트랜스포머 워커 서비스를 재빌드 및 재시작합니다."
 	@echo "========================================================================="
 
@@ -59,10 +58,4 @@ refresh-silver:
 	@echo "✨ [LinkedIn Jobs] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
 	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/RefreshTransform.ts
-
-status:
-	@echo "──────────────────────────────────────────────────"
-	@echo "📊 [LinkedIn Jobs] Showing status report comparison..."
-	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/StatusReport.ts
 
