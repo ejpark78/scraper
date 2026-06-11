@@ -56,6 +56,11 @@ export const descriptor: SiteDescriptor = {
     },
     urlsCollectionName: 'bronze/maily_josh.urls',
     scrape: scrapeHttpFetch,
+    generateUrls: (config: { page?: number }): string[] => {
+      const page = config.page || 1;
+      const PAGE_PARAMS = 'controller=spaces%2Fpages&action=home&space_url=josh';
+      return [`https://maily.so/josh?page=${page}&${PAGE_PARAMS}`];
+    },
   },
 
   transformer: {

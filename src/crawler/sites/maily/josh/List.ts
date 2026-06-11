@@ -9,9 +9,7 @@
 
 import * as cheerio from 'cheerio';
 import { BaseListService } from '../../../core/BaseListService';
-
-const BASE_URL = 'https://maily.so/josh';
-const PAGE_PARAMS = 'controller=spaces%2Fpages&action=home&space_url=josh';
+import { descriptor } from './site.config';
 
 class MailyJoshList extends BaseListService {
   constructor() {
@@ -39,7 +37,13 @@ class MailyJoshList extends BaseListService {
     const seenUrls = new Set<string>();
 
     for (let page = startPage; page <= endPage; page++) {
-      const fetchUrl = `${BASE_URL}?page=${page}&${PAGE_PARAMS}`;
+      let fetchUrl = '';
+      if (descriptor.scraper?.generateUrls) {
+        const urls = descriptor.scraper.generateUrls({ page });
+        if (urls.length > 0) {
+          fetchUrl = urls[0];
+        }
+      }
       console.log(`🌐 [MailyJosh List] Fetching page ${page}: ${fetchUrl}`);
 
       const res = await fetch(fetchUrl, {

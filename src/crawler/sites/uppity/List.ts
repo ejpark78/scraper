@@ -10,6 +10,7 @@
 
 import * as cheerio from 'cheerio';
 import { BaseListService } from '../../core/BaseListService';
+import { descriptor } from './site.config';
 
 
 const SECTIONS = [
@@ -55,9 +56,13 @@ class UppityList extends BaseListService {
             const endPage = pageRange[1] || startPage;
 
             for (let p = startPage; p <= endPage; p++) {
-                const fetchUrl = p === 1
-                    ? `https://uppity.co.kr/category/${section.slug}/`
-                    : `https://uppity.co.kr/category/${section.slug}/page/${p}/`;
+                let fetchUrl = '';
+                if (descriptor.scraper?.generateUrls) {
+                    const urls = descriptor.scraper.generateUrls({ page: p, section: section.slug });
+                    if (urls.length > 0) {
+                        fetchUrl = urls[0];
+                    }
+                }
 
                 console.log(`🌐 [Uppity List] [${section.name}] Fetching page ${p}: ${fetchUrl}`);
 

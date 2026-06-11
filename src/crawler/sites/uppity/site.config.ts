@@ -45,6 +45,13 @@ export const descriptor: SiteDescriptor = {
     excludePatterns: ['logout.cm', 'login', 'join', 'signup', 'favicon', 'logout'],
     urlsCollectionName: 'bronze/uppity.urls',
     scrape: scrapeHttpFetch,
+    generateUrls: (config: { page?: number, section?: string }): string[] => {
+      const page = config.page || 1;
+      const section = config.section || 'news';
+      return [page === 1
+          ? `https://uppity.co.kr/category/${section}/`
+          : `https://uppity.co.kr/category/${section}/page/${page}/`];
+    },
   },
 
   transformer: {
