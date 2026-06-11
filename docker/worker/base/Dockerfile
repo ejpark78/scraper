@@ -1,0 +1,39 @@
+# ==============================================================================
+# 🐳 Module: Dockerfile (base)
+# Description: Docker image build specification for base runner
+# Last Updated: 2026-06-11
+# ==============================================================================
+
+FROM mcr.microsoft.com/playwright:v1.60.0-jammy
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+ARG BUILD_DATE
+ARG VCS_REF
+
+LABEL org.opencontainers.image.title="LinkedIn Clipper Base"
+LABEL org.opencontainers.image.description="Playwright-based CLI runner for LinkedIn jobs and tech news scraping"
+LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# Install Korean fonts and build tools
+RUN apt-get update && apt-get install -y \
+    fonts-nanum \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install dependencies using cache layers
+COPY package*.json ./
+RUN npm ci && npm cache clean --force
+
+# Copy source files
+COPY . .
+
+# Precreate data and config directories
+RUN mkdir -p data config
+
+CMD ["tail", "-f", "/dev/null"]

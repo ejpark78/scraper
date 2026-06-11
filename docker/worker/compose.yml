@@ -1,0 +1,131 @@
+# ==============================================================================
+# 🏃 LinkedIn Crawler CLI & Distributed Workers (profile: runtime)
+# ==============================================================================
+
+services:
+  base:
+    build:
+      context: ../../../
+      dockerfile: docker/worker/base/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
+    image: linkedin/base:latest
+    profiles:
+      - runtime
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379
+      - AUTH=${AUTH:-}
+
+      - LIST_SLACK=${LIST_SLACK:-}
+      - CHUNK_SIZE=${CHUNK_SIZE:-}
+      - SESSION_DIR=/app/data/sessions
+      - LISTS=${LISTS:-}
+      - URLS=${URLS:-}
+      - HTML=${HTML:-}
+      - MD=${MD:-}
+      - TZ=Asia/Seoul
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  scraper:
+    build:
+      context: ../../../
+      dockerfile: docker/worker/scraper/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
+    image: linkedin/scraper:latest
+    command: ["npx", "ts-node", "src/crawler/workers/ScraperWorker.ts"]
+    environment:
+      - TZ=Asia/Seoul
+      - JSON_LOG=true
+      - LIST_SLACK=0
+
+      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=mongodb://mongodb:27017
+      - SESSION_DIR=/app/data/sessions
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
+      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "ScraperWorker.ts"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      replicas: ${SCALE:-2}
+
+  converter:
+    build:
+      context: ../../../
+      dockerfile: docker/worker/converter/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
+    image: linkedin/converter:latest
+    command: ["npx", "ts-node", "src/crawler/workers/TransformerWorker.ts"]
+    environment:
+      - TZ=Asia/Seoul
+      - AUTH=${AUTH:-}
+      - JSON_LOG=true
+      - LIST_SLACK=0
+
+      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=mongodb://mongodb:27017
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "TransformerWorker.ts"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      replicas: 1
+
+  viewer:
+    build:
+      context: ../../../
+      dockerfile: docker/worker/viewer/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
+    image: linkedin/clipper-viewer:latest
+    command: ["npx", "ts-node", "src/viewer/server.ts"]
+    profiles:
+      - tools
+    environment:
+      - TZ=Asia/Seoul
+      - MONGO_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    depends_on:
+      traefik:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/api/collections', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.viewer.rule=Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`) || Host(`mcp.localhost`)"
+      - "traefik.http.routers.viewer.entrypoints=websecure"
+      - "traefik.http.routers.viewer.tls=true"
+      - "traefik.http.services.viewer.loadbalancer.server.port=3000"

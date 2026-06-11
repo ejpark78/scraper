@@ -12,8 +12,7 @@
 # ==============================================================================
 
 include:
-  - docker/runtime/worker/compose.yml
-  - docker/runtime/viewer/compose.yml
+  - docker/worker/compose.yml
   - docker/tools/gmail/compose.yml
   - docker/tools/cronicle/compose.yml
   - docker/tools/dozzle/compose.yml
