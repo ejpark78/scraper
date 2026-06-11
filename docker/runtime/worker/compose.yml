@@ -53,7 +53,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/clipper:latest
+    image: linkedin/scraper:latest
     command: ["npx", "ts-node", "src/crawler/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
@@ -84,7 +84,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/clipper:latest
+    image: linkedin/transformer:latest
     command: ["npx", "ts-node", "src/crawler/workers/TransformerWorker.ts"]
     environment:
       - TZ=Asia/Seoul
