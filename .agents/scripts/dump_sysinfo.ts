@@ -31,6 +31,13 @@ class SysInfoDumper {
       const outPath = path.join(__dirname, '../sysinfo_cache.json');
       fs.writeFileSync(outPath, JSON.stringify(info, null, 2), 'utf-8');
       console.log(`✨ System status cached at: ${outPath}`);
+
+      // Copy to transcripts/agy/ as requested
+      const transcriptsAgyDir = path.join(__dirname, '../transcripts/agy');
+      fs.mkdirSync(transcriptsAgyDir, { recursive: true });
+      const destPath = path.join(transcriptsAgyDir, 'sysinfo_cache.json');
+      fs.writeFileSync(destPath, JSON.stringify(info, null, 2), 'utf-8');
+      console.log(`✨ System status cached at transcripts/agy: ${destPath}`);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       console.error('❌ Error dumping sysinfo:', errMsg);

@@ -34,6 +34,13 @@ class RuleCompressor {
 
       fs.writeFileSync(this.outputCompactFile, compressedText.trim(), 'utf-8');
       console.log(`✅ Compressed rules written to: ${this.outputCompactFile}`);
+
+      // Copy to transcripts/agy/ as requested
+      const transcriptsAgyDir = path.join(__dirname, '../transcripts/agy');
+      fs.mkdirSync(transcriptsAgyDir, { recursive: true });
+      const destPath = path.join(transcriptsAgyDir, 'rules_compact.txt');
+      fs.writeFileSync(destPath, compressedText.trim(), 'utf-8');
+      console.log(`✅ Compressed rules written to transcripts/agy: ${destPath}`);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       console.error('❌ Error compressing rules:', errMsg);
