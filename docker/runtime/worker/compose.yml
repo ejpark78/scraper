@@ -31,7 +31,7 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
       - REDIS_URL=redis://redis:6379
       - AUTH=${AUTH:-}
-      - PARALLEL=${PARALLEL:-}
+
       - LIST_SLACK=${LIST_SLACK:-}
       - CHUNK_SIZE=${CHUNK_SIZE:-}
       - SESSION_DIR=/app/data/sessions
@@ -59,7 +59,7 @@ services:
       - TZ=Asia/Seoul
       - JSON_LOG=true
       - LIST_SLACK=0
-      - PARALLEL=1
+
       - REDIS_URL=redis://redis:6379
       - MONGO_URL=mongodb://mongodb:27017
       - SESSION_DIR=/app/data/sessions
@@ -91,7 +91,7 @@ services:
       - AUTH=${AUTH:-}
       - JSON_LOG=true
       - LIST_SLACK=0
-      - PARALLEL=1
+
       - REDIS_URL=redis://redis:6379
       - MONGO_URL=mongodb://mongodb:27017
     volumes:

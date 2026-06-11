@@ -107,8 +107,7 @@ export class LinkedInListScraper {
 
         console.log(`📋 총 ${urls.length} 개의 목록 URL이 감지되었습니다.`);
 
-        const parallelLimit = parseInt(process.env.PARALLEL || '1', 10);
-        console.log(`⚙️  동시 작업 스레드(Playwright) 제한 설정: ${parallelLimit}개`);
+
 
         const isHeadless = process.env.HEADLESS !== 'false';
         const browser: Browser = await chromium.launch({
@@ -246,7 +245,6 @@ export class LinkedInListScraper {
                 }
             };
 
-            const executing = new Set<Promise<void>>();
             let authFailed = false;
 
             let isFirst = true;
@@ -258,7 +256,7 @@ export class LinkedInListScraper {
                     continue;
                 }
 
-                if (this.useLogin && parallelLimit === 1 && !isFirst) {
+                if (this.useLogin && !isFirst) {
                     const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
                     if (sleepSec > 0) {
                         console.log(`💤 [대기] 다음 요청까지 ${sleepSec}초 대기 중...`);
@@ -267,22 +265,16 @@ export class LinkedInListScraper {
                 }
                 isFirst = false;
 
-                const p = worker(url).catch((err) => {
+                try {
+                    await worker(url);
+                } catch (err: any) {
                     if (err.message === 'AUTH_FAIL') {
                         authFailed = true;
                     } else {
                         console.error(`⚠️ URL 수집 실패 (${url}): ${err.message}`);
                     }
-                }).then(() => {
-                    executing.delete(p);
-                });
-                executing.add(p);
-                
-                if (executing.size >= parallelLimit) {
-                    await Promise.race(executing);
                 }
             }
-            await Promise.all(executing);
 
             if (authFailed) {
                 console.log('\n🛑 로그인 세션 또는 인증 오류로 인해 작업을 중단했습니다.');

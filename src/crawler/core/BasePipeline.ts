@@ -261,9 +261,7 @@ export abstract class BasePipeline<TMeta> {
             process.exit(0);
         }
 
-        // 3. 동시성 워커 설정 파싱
-        const parallelLimit = parseInt(process.env.PARALLEL || '1', 10);
-        console.log(`⚙️  동시 작업 스레드(Playwright) 제한 설정: ${parallelLimit}개`);
+
 
         const startTime = Date.now();
         let currentIndex = 0;
@@ -362,19 +360,9 @@ export abstract class BasePipeline<TMeta> {
             }
         };
 
-        // 비동기 실행 풀
-        const executing = new Set<Promise<void>>();
         for (const url of filteredUrls) {
-            const p = worker(url).then(() => {
-                executing.delete(p);
-            });
-            executing.add(p);
-            
-            if (executing.size >= parallelLimit) {
-                await Promise.race(executing);
-            }
+            await worker(url);
         }
-        await Promise.all(executing);
 
         // 🔌 MongoDB 및 Redis 연결 종료 처리
         try {
