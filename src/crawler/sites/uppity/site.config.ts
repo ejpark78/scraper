@@ -12,12 +12,21 @@ import { UppityConverter } from './Converter';
 import { scrapeHttpFetch } from '../../utils/scraper';
 
 export const SECTIONS = [
-    { slug: 'cloumn/어피티-오리지널', name: '어피티 오리지널' },
-    { slug: 'cloumn/전문가-기고', name: '전문가 기고' },
-    { slug: 'cloumn/moneylog', name: '머니로그' },
-    { slug: 'news', name: '뉴스' },
-    { slug: 'newsletter', name: '뉴스레터' },
-    { slug: '2030-리서치', name: '2030 리서치' },
+    { slug: 'economy-news', name: '머니뉴스' },
+    { slug: 'column-before/uppity-original', name: '어피티 오리지널' },
+    { slug: 'column-before/expert-contribution', name: '전문가 기고' },
+    { slug: 'column-before/moneylog', name: '머니로그' },
+    { slug: 'economy-dictionary', name: '머니사전' },
+    { slug: 'newsletter/money-letter', name: '머니레터' },
+    { slug: 'newsletter/jalsseul-letter', name: '잘쓸레터' },
+    { slug: 'newsletter/career-letter', name: '커리어레터' },
+    // Legacy sections prefixed with category path for compatibility
+    { slug: 'category/cloumn/어피티-오리지널', name: '레거시 오리지널' },
+    { slug: 'category/cloumn/전문가-기고', name: '레거시 전문가 기고' },
+    { slug: 'category/cloumn/moneylog', name: '레거시 머니로그' },
+    { slug: 'category/news', name: '레거시 뉴스' },
+    { slug: 'category/newsletter', name: '레거시 뉴스레터' },
+    { slug: 'category/2030-리서치', name: '2030 리서치' },
 ];
 
 export interface UppityMeta {
@@ -65,10 +74,10 @@ export const descriptor: SiteDescriptor = {
     scrape: scrapeHttpFetch,
     generateUrls: (config: { page?: number, section?: string }): string[] => {
       const page = config.page || 1;
-      const section = config.section || 'news';
+      const section = config.section || 'economy-news';
       return [page === 1
-          ? `https://uppity.co.kr/category/${section}/`
-          : `https://uppity.co.kr/category/${section}/page/${page}/`];
+          ? `https://uppity.co.kr/${section}/`
+          : `https://uppity.co.kr/${section}/page/${page}/`];
     },
   },
 
