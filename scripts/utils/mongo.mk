@@ -2,7 +2,7 @@
 # 🗄️ MongoDB Backup & Restore Commands
 # ==============================================================================
 
-.PHONY: dump restore
+.PHONY: dump restore index
 
 DB ?= bronze,silver
 DUMP_DIR ?= data/mongodb_backup_$(shell date +%Y%m%d_%H%M%S)
@@ -31,3 +31,7 @@ restore:
 	$(COMPOSE) exec -T mongodb mongorestore --gzip /tmp/mongodb_restore
 	$(COMPOSE) exec -T mongodb rm -rf /tmp/mongodb_restore
 	@echo "💾 DB 복구 완료."
+
+index:
+	./src/scripts/sync-indexes.sh
+

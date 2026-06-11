@@ -73,28 +73,6 @@ export class MongoDatabase {
         const targetDb = this.client.db(name.split('/')[0]);
         const collection = targetDb.collection<T>(collectionName);
 
-        // 🛠️ 패턴 기반 자동 인덱스 생성 (인덱스가 없을 때만 생성됨)
-        try {
-            if (collectionName.endsWith('.urls')) {
-                await collection.createIndex({ status: 1, id: 1 });
-                await collection.createIndex({ id: 1 }, { unique: true });
-            } else if (collectionName.endsWith('.html')) {
-                await collection.createIndex({ id: 1 }, { unique: true });
-            } else if (collectionName.endsWith('.contents')) {
-                await collection.createIndex({ id: 1 }, { unique: true });
-                await collection.createIndex({ publishedAt: -1 });
-            } else if (collectionName === 'linkedin.jobs') {
-                await collection.createIndex({ jobId: 1 }, { unique: true });
-                await collection.createIndex({ collectedAt: -1 });
-            } else if (collectionName === 'linkedin.companies') {
-                await collection.createIndex({ companyId: 1 }, { unique: true });
-            }
-        } catch (e: unknown) {
-            // 인덱스 생성 중 발생하는 일시적 오류 로그 남김 (빈 catch 블록 방지)
-            const errorMsg = e instanceof Error ? e.message : String(e);
-            console.warn(`⚠️ [MongoDB] Index auto-creation check failed for ${collectionName}: ${errorMsg}`);
-        }
-
         return collection;
     }
 
@@ -139,37 +117,39 @@ export class MongoDatabase {
                 await createIdx(bronzeDb, 'linkedin.company_urls', { companyId: 1 });
                 await createIdx(bronzeDb, 'linkedin.company_urls', { status: 1, companyId: 1 });
                 
-                await createIdx(bronzeDb, 'geeknews.html', { id: 1 });
+                await createIdx(bronzeDb, 'geeknews.html', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'geeknews.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'geeknews.urls', { status: 1, id: 1 });
                 await createIdx(bronzeDb, 'gpters.html', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'gpters.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'gpters.urls', { status: 1, id: 1 });
-                await createIdx(bronzeDb, 'pytorch_kr.html', { id: 1 });
+                await createIdx(bronzeDb, 'pytorch_kr.html', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'pytorch_kr.lists', { id: 1 });
                 await createIdx(bronzeDb, 'pytorch_kr.lists', { collectedAt: 1 });
-                await createIdx(bronzeDb, 'pytorch_kr.urls', { id: 1 });
+                await createIdx(bronzeDb, 'pytorch_kr.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'pytorch_kr.urls', { status: 1, id: 1 });
-                await createIdx(bronzeDb, 'aicasebook.html', { id: 1 });
-                await createIdx(bronzeDb, 'aicasebook.urls', { id: 1 });
+                await createIdx(bronzeDb, 'aicasebook.html', { id: 1 }, { unique: true });
+                await createIdx(bronzeDb, 'aicasebook.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'aicasebook.urls', { status: 1, id: 1 });
 
-                // New collections indexes for bronze (Without unique constraint on HTML raw collections)
-                await createIdx(bronzeDb, 'yozm.html', { id: 1 });
+                // New collections indexes for bronze
+                await createIdx(bronzeDb, 'yozm.html', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'yozm.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'yozm.urls', { status: 1, id: 1 });
                 
-                await createIdx(bronzeDb, 'maily_josh.html', { id: 1 });
+                await createIdx(bronzeDb, 'maily_josh.html', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'maily_josh.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'maily_josh.urls', { status: 1, id: 1 });
 
-                await createIdx(bronzeDb, 'dailydose_ds.html', { id: 1 });
+                await createIdx(bronzeDb, 'dailydose_ds.html', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'dailydose_ds.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'dailydose_ds.urls', { status: 1, id: 1 });
 
-                await createIdx(bronzeDb, 'uppity.html', { id: 1 });
+                await createIdx(bronzeDb, 'uppity.html', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'uppity.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'uppity.urls', { status: 1, id: 1 });
 
-                await createIdx(bronzeDb, 'gpters_newsletter.html', { id: 1 });
+                await createIdx(bronzeDb, 'gpters_newsletter.html', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'gpters_newsletter.urls', { id: 1 }, { unique: true });
                 await createIdx(bronzeDb, 'gpters_newsletter.urls', { status: 1, id: 1 });
 
@@ -178,7 +158,7 @@ export class MongoDatabase {
                 await createIdx(silverDb, 'linkedin.jobs', { jobId: 1 }, { unique: true });
                 await createIdx(silverDb, 'linkedin.jobs', { location: 1 });
                 await createIdx(silverDb, 'linkedin.companies', { companyId: 1 }, { unique: true });
-                await createIdx(silverDb, 'geeknews.contents', { id: 1 });
+                await createIdx(silverDb, 'geeknews.contents', { id: 1 }, { unique: true });
                 await createIdx(silverDb, 'geeknews.contents', { publishedAt: -1 });
                 await createIdx(silverDb, 'geeknews.contents', 
                   { title: 'text', content: 'text', markdown: 'text', url: 'text', companyName: 'text' },
@@ -196,13 +176,13 @@ export class MongoDatabase {
                   { title: 'text', content: 'text', markdown: 'text', url: 'text' },
                   { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
                 );
-                await createIdx(silverDb, 'pytorch_kr.contents', { id: 1 });
+                await createIdx(silverDb, 'pytorch_kr.contents', { id: 1 }, { unique: true });
                 await createIdx(silverDb, 'pytorch_kr.contents', { publishedAt: -1 });
                 await createIdx(silverDb, 'pytorch_kr.contents', 
                   { title: 'text', content: 'text', markdown: 'text', url: 'text' },
                   { weights: { title: 10, content: 5, markdown: 3, url: 1 }, name: 'text_idx' }
                 );
-                await createIdx(silverDb, 'aicasebook.contents', { id: 1 });
+                await createIdx(silverDb, 'aicasebook.contents', { id: 1 }, { unique: true });
                 await createIdx(silverDb, 'aicasebook.contents', { publishedAt: -1 });
                 await createIdx(silverDb, 'aicasebook.contents', 
                   { title: 'text', summary: 'text', body: 'text', markdown: 'text', tags: 'text' },
