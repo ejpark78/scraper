@@ -10,8 +10,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../../core/BasePipeline';
-import { GptersMeta, GptersConverter } from '../Converter';
-import { descriptor } from './site.config';
+import { GptersConverter } from '../Converter';
+import { descriptor, GptersMeta } from './site.config';
 
 const COLLECTION_PREFIX = descriptor.key;
 const SITE_DIR = descriptor.key;

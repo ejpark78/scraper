@@ -11,8 +11,9 @@
 import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { GptersConverter } from '../Converter';
 import { scrapeGptersGraphQL } from '../scrape';
+export { GptersMeta } from '../news/site.config';
 
-function buildGptersNewsletterDocument(id: string, meta: any): Record<string, any> {
+function buildGptersNewsletterDocument(id: string, meta: GptersMeta): Record<string, any> {
   const doc: Record<string, any> = {
     id,
     title: meta.title || 'Untitled',

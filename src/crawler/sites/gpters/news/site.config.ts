@@ -12,7 +12,22 @@ import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { GptersConverter } from '../Converter';
 import { scrapeGptersGraphQL } from '../scrape';
 
-function buildGptersDocument(id: string, meta: any): Record<string, any> {
+export interface GptersMeta {
+    id: string;
+    title: string;
+    url: string;
+    author: string | null;
+    shortContent: string | null;
+    publishedAt: string | null;
+    reactionsCount: number;
+    repliesCount: number;
+    rawContent: string;
+    spaceId: string | null;
+    spaceName: string | null;
+    spaceSlug: string | null;
+}
+
+function buildGptersDocument(id: string, meta: GptersMeta): Record<string, any> {
   const doc: Record<string, any> = {
     id,
     title: meta.title || 'Untitled',
@@ -79,7 +94,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/gpters.contents',
     filterField: 'id',
-    buildDocument: buildGptersDocument,
+    buildDocument: (id, meta: GptersMeta) => buildGptersDocument(id, meta),
   },
 
   refreshSilver: {
@@ -88,7 +103,7 @@ export const descriptor: SiteDescriptor = {
       enabled: true,
       htmlSource: 'shortContent',
     },
-    getSilverFields: (meta) => ({
+    getSilverFields: (meta: GptersMeta) => ({
       id: meta.id,
       title: meta.title,
       url: meta.url,
@@ -97,7 +112,7 @@ export const descriptor: SiteDescriptor = {
       publishedAt: meta.publishedAt,
       reactionsCount: meta.reactionsCount,
       repliesCount: meta.repliesCount,
-      markdown: meta.rawContent,
+      markdown: meta.markdown,
       updatedAt: new Date(),
     }),
   },

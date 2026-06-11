@@ -10,20 +10,7 @@
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
 
-export interface GptersMeta {
-    id: string;
-    title: string;
-    url: string;
-    author: string | null;
-    shortContent: string | null;
-    publishedAt: string | null;
-    reactionsCount: number;
-    repliesCount: number;
-    rawContent: string; // The markdown representation
-    spaceId: string | null;
-    spaceName: string | null;
-    spaceSlug: string | null;
-}
+import { GptersMeta } from './news/site.config';
 
 export class GptersConverter implements IConverter<GptersMeta> {
     
