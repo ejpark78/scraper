@@ -11,6 +11,8 @@ import type { SiteDescriptor } from '../../core/SiteRegistry';
 import { YozmConverter } from './Converter';
 import { scrapeHttpFetch } from '../../utils/scraper';
 
+export const SITEMAP_URL = 'https://yozm.wishket.com/magazine/sitemap-news.xml';
+
 export const descriptor: SiteDescriptor = {
   key: 'yozm',
   name: '요즘IT',

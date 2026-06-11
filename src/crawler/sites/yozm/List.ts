@@ -8,9 +8,7 @@
  */
 
 import { BaseListService } from '../../core/BaseListService';
-import { descriptor } from './site.config';
-
-const SITEMAP_URL = 'https://yozm.wishket.com/magazine/sitemap-news.xml';
+import { descriptor, SITEMAP_URL } from './site.config';
 
 class YozmList extends BaseListService {
   constructor() {
