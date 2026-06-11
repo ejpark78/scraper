@@ -12,6 +12,17 @@ import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { MailyJoshConverter } from './Converter';
 import { scrapeHttpFetch } from '../../../utils/scraper';
 
+export interface MailyJoshMeta {
+  id: string;
+  title: string;
+  url: string;
+  publishedAt: string | null;
+  category: string | null;
+  viewCount: string | null;
+  content: string;
+  rawContent: string;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'maily_josh',
   name: '조쉬의 뉴스레터 (Maily)',
@@ -74,7 +85,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/maily_josh.contents',
     filterField: 'id',
-    buildDocument: (id, meta) => ({
+    buildDocument: (id, meta: MailyJoshMeta) => ({
       id,
       title: meta.title || 'Untitled',
       url: meta.url || null,
