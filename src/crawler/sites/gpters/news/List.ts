@@ -9,15 +9,16 @@
 
 import { MongoDatabase } from '../../../../database/mongo';
 import { BaseListService } from '../../../../crawler/core/BaseListService';
+import { descriptor } from './site.config';
 
 class GptersList extends BaseListService {
     constructor() {
         super({
-            site: 'gpters',
-            displayName: 'GPTERS',
-            cacheSetKey: 'completed_news',
-            bronzeHtmlCollection: 'bronze/gpters.html',
-            urlsCollection: 'bronze/gpters.urls',
+            site: descriptor.key,
+            displayName: descriptor.name,
+            cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+            bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+            urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
         });
     }
 

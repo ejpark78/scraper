@@ -11,6 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../../core/BasePipeline';
 import { GptersMeta, GptersConverter } from '../Converter';
+import { descriptor } from './site.config';
 
 export class GptersContents extends BasePipeline<GptersMeta> {
     private readonly converter: GptersConverter;
@@ -134,8 +135,8 @@ export class GptersContents extends BasePipeline<GptersMeta> {
                 markdown: meta.rawContent,
                 publishedAt: meta.publishedAt || undefined,
                 docId: id,
-                siteDir: 'gpters',
-                siteDomain: 'gpters.org',
+                siteDir: descriptor.key,
+                siteDomain: descriptor.domain || 'gpters.org',
                 refererUrl: meta.url,
                 removeFavicons: true,
             });
@@ -149,7 +150,8 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw JSON) 저장
-            const bronzeGpters = await dbInstance.getCollection('gpters.html');
+            const targetCollName = descriptor.scraper?.collectionName || 'gpters.html';
+            const bronzeGpters = await dbInstance.getCollection(targetCollName as any);
             await bronzeGpters.updateOne(
                 { id: id },
                 {
@@ -164,7 +166,8 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             );
 
             // 2. Silver Layer (Cleansed Metadata & Markdown) 저장
-            const silverGpters = await dbInstance.getCollection('silver.gpters');
+            const silverCollName = descriptor.targetLoader?.collectionName || 'silver.gpters';
+            const silverGpters = await dbInstance.getCollection(silverCollName as any);
             await silverGpters.updateOne(
                 { id: id },
                 {
@@ -185,7 +188,8 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             );
 
             // 3. Update status in bronze.gpters_urls
-            const gptersUrlsColl = await dbInstance.getCollection('gpters.urls');
+            const urlsCollName = descriptor.scraper?.urlsCollectionName || 'gpters.urls';
+            const gptersUrlsColl = await dbInstance.getCollection(urlsCollName as any);
             await gptersUrlsColl.updateOne(
                 { id },
                 { $set: { status: 'completed', updatedAt: new Date() } }
@@ -195,7 +199,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
 
             // 4. Local File System Backup
             const projectRoot = path.resolve(__dirname, '..', '..', '..', '..');
-            const baseDir = path.join(projectRoot, 'data', 'sites', 'gpters', year, month);
+            const baseDir = path.join(projectRoot, 'data', 'sites', descriptor.key, year, month);
             const jsonPath = path.join(baseDir, 'json', `${id}.json`);
             const mdPath = path.join(baseDir, 'markdown', `${id}.md`);
 
