@@ -225,11 +225,28 @@ export class BaseRefreshUrls {
             const $ = cheerio.load(doc.rawHtml);
 
             $('a[href]').each((_, el) => {
-                const href = $(el).attr('href');
+                let href = $(el).attr('href');
                 if (!href) return;
                 counts.totalAnchors++;
 
+                // Clean leading/trailing quotes, backslashes, URL-encoded quotes, and whitespaces
+                href = href.trim().replace(/^\\?["']|\\?["']$/g, '').trim();
+                href = href.replace(/%22/g, '').replace(/\\"/g, '');
+
+                // 🚫 Skip malformed URLs containing spaces, quotes, HTML tags, template placeholders, or download paths
+                if (/[\s"'<>￼]/g.test(href) || href.includes('div') || href.includes('br') || href.includes('$%') || href.includes('$$') || href.includes('download.cm')) {
+                    return;
+                }
+
                 try {
+                    // Handle protocol-less absolute URLs
+                    if (!/^(https?:)?\/\//i.test(href) && !/^[./]/.test(href)) {
+                        const firstSegment = href.split('/')[0];
+                        if (firstSegment.includes('.') && !firstSegment.includes('=')) {
+                            href = `https://${href}`;
+                        }
+                    }
+
                     let fullUrl = new URL(href, 'https://' + domain).toString();
                     const parsed = new URL(fullUrl);
                     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') { counts.protocolSkipped++; return; }
