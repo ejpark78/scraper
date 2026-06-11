@@ -33,7 +33,7 @@ function truncateOutput(text: string, maxLines = 150, keepHead = 50, keepTail = 
   const truncatedCount = lines.length - keepHead - keepTail;
   return [
     ...head,
-    `\n... [Truncated ${truncatedCount} lines of output. Full log copied to session directory] ...\n`,
+    `\n... [Truncated ${truncatedCount} lines of output. Full log copied to tasks/ directory] ...\n`,
     ...tail
   ].join('\n');
 }
@@ -42,16 +42,15 @@ function buildTranscript(
   sessionId: string,
   rawTitle: string,
   messages: { role: string; content: string; toolCalls: AgentToolCall[]; stepIndex: number }[],
-  tag: string,
   taskLogs?: { id: string; localPath: string }[]
 ): string {
   const title = rawTitle !== sessionId ? rawTitle : `Session ${sessionId}`;
   let md = `# 📝 Transcript: ${title}\n- **Session ID**: ${sessionId}\n`;
-  md += `- **Session Assets**: [Browse Folder](./${tag}/)\n`;
+  md += `- **Related Reports**: [Brain Dump](./brain_dump.md) | [Context Snapshot](./context_memory.md) | [Raw Logs](./logs/)\n`;
   if (taskLogs && taskLogs.length > 0) {
     md += `- **Command Logs**:\n`;
     for (const log of taskLogs) {
-      md += `  - [${log.id}.log](./${tag}/tasks/${log.id}.log)\n`;
+      md += `  - [${log.id}.log](./tasks/${log.id}.log)\n`;
     }
   }
   md += `\n`;
@@ -81,7 +80,7 @@ function buildTranscript(
               const taskMatch = tool.result.match(/task-\d+/);
               if (taskMatch) {
                 const taskId = taskMatch[0];
-                md += `  * **Raw Log File**: [${taskId}.log](./${tag}/tasks/${taskId}.log)\n`;
+                md += `  * **Raw Log File**: [${taskId}.log](./tasks/${taskId}.log)\n`;
               }
             }
           } else {
@@ -139,14 +138,14 @@ function run() {
             }
           }
 
-          const md = buildTranscript(s.id, s.title || s.id, detail.messages, info.tag, taskLogs);
+          const md = buildTranscript(s.id, s.title || s.id, detail.messages, taskLogs);
 
           const outDir = path.join(__dirname, '..', 'transcripts', agentName, info.dateDir);
           const destSessionDir = path.join(outDir, info.tag);
           fs.mkdirSync(destSessionDir, { recursive: true });
 
-          // Write main transcript file
-          const outPath = path.join(outDir, `${info.tag}.md`);
+          // Write main transcript file inside the session folder as transcript.md
+          const outPath = path.join(destSessionDir, `transcript.md`);
           fs.writeFileSync(outPath, md, 'utf-8');
           console.log(`  ✨ Saved transcript: ${outPath}`);
 
@@ -170,6 +169,15 @@ function run() {
                 fs.mkdirSync(destTasksDir, { recursive: true });
                 fs.cpSync(srcTasksDir, destTasksDir, { recursive: true });
               }
+
+              // Copy raw conversation JSONL logs selectively
+              const srcLogsDir = path.join(srcSessionDir, '.system_generated', 'logs');
+              const destLogsDir = path.join(destSessionDir, 'logs');
+              if (fs.existsSync(srcLogsDir)) {
+                fs.mkdirSync(destLogsDir, { recursive: true });
+                fs.cpSync(srcLogsDir, destLogsDir, { recursive: true });
+              }
+
               console.log(`  ✨ Copied all raw session assets and logs to: ${destSessionDir}`);
             }
           }
