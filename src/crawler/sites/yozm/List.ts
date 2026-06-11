@@ -8,17 +8,18 @@
  */
 
 import { BaseListService } from '../../core/BaseListService';
+import { descriptor } from './site.config';
 
 const SITEMAP_URL = 'https://yozm.wishket.com/magazine/sitemap-news.xml';
 
 class YozmList extends BaseListService {
   constructor() {
     super({
-      site: 'yozm',
-      displayName: '요즘IT',
-      cacheSetKey: 'completed_yozm',
-      bronzeHtmlCollection: 'bronze/yozm.html',
-      urlsCollection: 'bronze/yozm.urls',
+      site: descriptor.key,
+      displayName: descriptor.name,
+      cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+      bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+      urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
     });
   }
 
