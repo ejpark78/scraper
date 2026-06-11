@@ -149,6 +149,11 @@ class ScraperWorker {
       }
     }
 
+    if (config.urlFilter && !config.urlFilter(url)) {
+      Logger.warn(`[Scraper] Skipping URL outside custom filter for [${site}]: ${url}`);
+      return;
+    }
+
     // Check site-specific exclude patterns
     if (config.excludePatterns && config.excludePatterns.length > 0) {
       if (config.excludePatterns.some(pat => url.includes(pat))) {
@@ -319,6 +324,7 @@ class ScraperWorker {
         } catch { continue; }
         fullUrl = stripTrackingParams(fullUrl).split('#')[0];
         if (isBinaryUrl(fullUrl)) continue;
+        if (config.urlFilter && !config.urlFilter(fullUrl)) continue;
         const id = config.extractId(fullUrl);
 
         const doc = await urlsColl.findOne({ id });

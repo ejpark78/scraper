@@ -129,6 +129,9 @@ export class BaseRefreshUrls {
 
             const filteredJobs = targets.filter(j => {
                 if (!j.url) return false;
+                if (desc?.scraper?.urlFilter && !desc.scraper.urlFilter(j.url)) {
+                    return false;
+                }
                 if (desc?.scraper?.excludePatterns && desc.scraper.excludePatterns.length > 0) {
                     if (desc.scraper.excludePatterns.some(pat => j.url.includes(pat))) {
                         return false;
@@ -188,7 +191,7 @@ export class BaseRefreshUrls {
         redis: Redis,
         site: string,
         domain: string,
-        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string; excludePatterns?: string[] },
+        scraper: { extractId: (url: string) => string | null; urlsCollectionName?: string; excludePatterns?: string[]; urlFilter?: (url: string) => boolean },
         completedIds: string[]
     ): Promise<void> {
         const { config } = this;
@@ -275,6 +278,7 @@ export class BaseRefreshUrls {
                     }
                     fullUrl = UrlUtils.stripTrackingParams(fullUrl).split('#')[0];
                     if (UrlUtils.isBinaryUrl(fullUrl)) { counts.binarySkipped++; return; }
+                    if (scraper.urlFilter && !scraper.urlFilter(fullUrl)) { return; }
                     counts.afterClean++;
                     const id = scraper.extractId(fullUrl);
                     if (!id) { counts.idNull++; return; }
