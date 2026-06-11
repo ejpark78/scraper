@@ -94,20 +94,29 @@ class AgyAdapter implements AgentAdapter {
     const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
     const messages: AgentMessage[] = [];
     let stepIndex = 0;
+    let lastAssistantMsg: AgentMessage | null = null;
 
     lines.forEach((line) => {
       try {
         const step = JSON.parse(line);
         if (step.type === 'USER_INPUT') {
           messages.push({ role: 'user', content: step.content || '', toolCalls: [], stepIndex: stepIndex++ });
-        }
-        if (step.type === 'PLANNER_RESPONSE') {
+          lastAssistantMsg = null;
+        } else if (step.type === 'PLANNER_RESPONSE') {
           const toolCalls: AgentToolCall[] = (step.tool_calls || []).map((t: any) => ({
             name: t.name || t.tool || 'unknown',
             arguments: t.arguments || t.input || {},
-            result: t.result || t.output,
           }));
-          messages.push({ role: 'assistant', content: step.content || '', toolCalls, stepIndex: stepIndex++ });
+          const newMsg: AgentMessage = { role: 'assistant', content: step.content || '', toolCalls, stepIndex: stepIndex++ };
+          messages.push(newMsg);
+          lastAssistantMsg = newMsg;
+        } else {
+          if (lastAssistantMsg && lastAssistantMsg.toolCalls.length > 0) {
+            const pendingTool = lastAssistantMsg.toolCalls.find(tc => tc.result === undefined);
+            if (pendingTool) {
+              pendingTool.result = step.content || '';
+            }
+          }
         }
       } catch { /* skip malformed lines */ }
     });

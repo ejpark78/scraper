@@ -21,11 +21,28 @@ function buildTranscript(sessionId: string, rawTitle: string, messages: { role: 
       md += `---\n# 📌 Turn ${msg.stepIndex}\n## 🗣️ User Request\n> ${msg.content}\n`;
     }
     if (msg.role === 'assistant') {
-      md += `\n## 🤖 Agent Answer\n> ${msg.content}\n`;
+      md += `\n## 🤖 Agent Answer\n\n${msg.content}\n`;
       if (msg.toolCalls.length > 0) {
         md += `\n### 💻 Tool Calls\n`;
         for (const tool of msg.toolCalls) {
-          md += `- **${tool.name}**: \`${JSON.stringify(tool.arguments)}\`\n`;
+          let args = tool.arguments;
+          if (typeof args === 'string') {
+            try { args = JSON.parse(args); } catch {}
+          }
+
+          if (tool.name === 'run_command') {
+            const cmd = args.CommandLine || args.command || JSON.stringify(args);
+            md += `* **💻 Run Command**: \`${cmd}\`\n`;
+            if (tool.result) {
+              md += `  * **Output**:\n    \`\`\`bash\n    ${tool.result.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
+            }
+          } else {
+            md += `* **🛠️ Tool**: \`${tool.name}\`\n`;
+            md += `  * **Arguments**: \`${JSON.stringify(args)}\`\n`;
+            if (tool.result) {
+              md += `  * **Result**:\n    \`\`\`json\n    ${tool.result.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
+            }
+          }
         }
       }
     }
