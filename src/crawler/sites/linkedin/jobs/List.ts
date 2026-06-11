@@ -1,6 +1,6 @@
 /**
- * @module ListScraper
- * @description Core functionality or script runner for ListScraper.ts.
+ * @module List
+ * @description Core functionality or script runner for List.ts.
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
  * @dependencies playwright, fs, path, UrlManager, utils
@@ -15,7 +15,7 @@ import { HtmlMinifier, DateUtils, UrlUtils, Logger } from '../../../utils';
 import { MongoDatabase } from '../../../../database/mongo';
 import Redis from 'ioredis';
 
-export class LinkedInListScraper {
+export class LinkedInList {
     private readonly sessionPath: string = path.join(process.env.SESSION_DIR || path.resolve(process.cwd(), 'data/sessions'), 'linkedin.json');
     private readonly useLogin: boolean;
 
@@ -473,7 +473,7 @@ export class LinkedInListScraper {
 
 if (require.main === module) {
     const configFile = process.argv[2] || 'config/config.json';
-    const scraper = new LinkedInListScraper();
+    const scraper = new LinkedInList();
     
     const mongo = MongoDatabase.getInstance();
     mongo.connect().then(() => {

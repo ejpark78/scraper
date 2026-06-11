@@ -9,6 +9,14 @@
 
 import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { CompanyMarkdownConverter } from './Converter';
+import { LinkedInCrawler } from '../Crawler';
+
+async function scrapeLinkedinCompany(url: string, tempPath: string): Promise<void> {
+  const crawler = new LinkedInCrawler({
+    login: process.env.LOGIN === 'true' || process.env.AUTH === 'true',
+  });
+  await crawler.scrapeCompanyAbout(url, tempPath);
+}
 
 export const descriptor: SiteDescriptor = {
   key: 'linkedin_company',
@@ -21,6 +29,19 @@ export const descriptor: SiteDescriptor = {
     { collection: 'bronze/linkedin.company_urls', fields: { status: 1, companyId: 1 } },
     { collection: 'silver/linkedin.companies', fields: { companyId: 1 }, options: { unique: true } },
   ],
+
+  scraper: {
+    collectionName: 'bronze/linkedin.companies',
+    targetCollection: 'linkedin.companies',
+    updateFilterKey: 'companyId',
+    defaultSlack: 3,
+    extractId: (url) => {
+      const match = url.match(/linkedin\.com\/company\/([^\/]+)/);
+      return match ? match[1] : '';
+    },
+    excludePatterns: ['favicon', 'login', 'logout', 'signup'],
+    scrape: scrapeLinkedinCompany,
+  },
 
   transformer: {
     converter: new CompanyMarkdownConverter(),

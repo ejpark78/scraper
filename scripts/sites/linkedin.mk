@@ -12,7 +12,7 @@ help:
 	@echo "💼 LinkedIn Scraper Module Commands Help"
 	@echo "========================================================================="
 	@echo "사용 가능한 명령어 목록:"
-	@echo "  make li-list        - LinkedIn 채용공고 목록 수집 (ListScraper)을 실행합니다."
+	@echo "  make li-list        - LinkedIn 채용공고 목록 수집 (List)을 실행합니다."
 	@echo "                        (예: make li-list AUTH=true LIST_SLACK=3)"
 	@echo "  make li-company     - LinkedIn 회사 정보 수집 (Pipeline)을 실행합니다."
 	@echo "                        (예: make li-company AUTH=true LIST_SLACK=3)"
@@ -33,14 +33,14 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [LinkedIn Jobs] Starting job list scraping..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/ListScraper.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/List.ts
 
 company: PRIORITY := high
 company:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [LinkedIn Company] Starting company scraping..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/company/Pipeline.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/company/Contents.ts
 
 extract-urls:
 	@echo "──────────────────────────────────────────────────"
