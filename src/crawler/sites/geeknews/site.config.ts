@@ -22,6 +22,9 @@ export const descriptor: SiteDescriptor = {
     updateFilterKey: 'topicId',
     defaultSlack: 3,
     extractId: (url) => {
+      if (url.includes('vote?') || url.includes('/vote')) {
+        return '';
+      }
       if (url.includes('id=')) {
         return url.split('id=').pop()!.split('&')[0];
       }
