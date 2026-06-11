@@ -13,7 +13,7 @@ services:
     build:
       context: ../../../
       dockerfile: docker/runtime/viewer/Dockerfile
-    image: linkedin/clipper:latest
+    image: linkedin/clipper-viewer:latest
     command: ["npx", "ts-node", "src/viewer/server.ts"]
     profiles:
       - tools
