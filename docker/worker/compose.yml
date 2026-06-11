@@ -3,14 +3,14 @@
 # ==============================================================================
 
 services:
-  base:
+  worker:
     build:
       context: ../../
       dockerfile: docker/worker/base/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/base:latest
+    image: linkedin/worker:latest
     profiles:
       - runtime
     environment:

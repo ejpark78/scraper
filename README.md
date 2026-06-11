@@ -127,7 +127,7 @@ make up-viewer      # https://viewer.localhost
 | `mongodb` | core | MongoDB 7.0 | — |
 | `redis` | core | Redis (Alpine) | — |
 | `traefik` | tools | Reverse proxy + TLS | `route.localhost` |
-| `base` | runtime | CLI one-shot runner | — |
+| `worker` | runtime | CLI one-shot runner | — |
 | `scraper` | runtime | Scraper worker (replicas: 2) | — |
 | `converter` | runtime | Transformer worker (replica: 1) | — |
 | `viewer` | tools | Document viewer + MCP server | `viewer.localhost` |
