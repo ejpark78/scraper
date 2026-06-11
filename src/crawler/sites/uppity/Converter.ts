@@ -10,15 +10,7 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
-
-export interface UppityMeta {
-    id: string;
-    title: string;
-    url: string;
-    publishedAt: string | null;
-    content: string;
-    rawContent: string;
-}
+import { UppityMeta } from './site.config';
 
 export class UppityConverter implements IConverter<UppityMeta> {
 

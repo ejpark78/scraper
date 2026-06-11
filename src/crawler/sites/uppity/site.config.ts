@@ -20,6 +20,15 @@ export const SECTIONS = [
     { slug: '2030-리서치', name: '2030 리서치' },
 ];
 
+export interface UppityMeta {
+    id: string;
+    title: string;
+    url: string;
+    publishedAt: string | null;
+    content: string;
+    rawContent: string;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'uppity',
   name: 'Uppity',
@@ -74,7 +83,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/uppity.contents',
     filterField: 'id',
-    buildDocument: (id, meta) => ({
+    buildDocument: (id, meta: UppityMeta) => ({
       id,
       title: meta.title || 'Untitled',
       url: meta.url || null,
