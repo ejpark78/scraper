@@ -25,6 +25,7 @@ export const descriptor: SiteDescriptor = {
       const crypto = require('crypto');
       return crypto.createHash('md5').update(url).digest('hex');
     },
+    excludePatterns: ['logout.cm', 'login', 'join', 'signup'],
     urlsCollectionName: 'bronze/uppity.urls',
     scrape: scrapeHttpFetch,
   },
