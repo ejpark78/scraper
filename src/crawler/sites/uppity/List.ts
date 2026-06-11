@@ -10,17 +10,8 @@
 
 import * as cheerio from 'cheerio';
 import { BaseListService } from '../../core/BaseListService';
-import { descriptor } from './site.config';
+import { descriptor, SECTIONS } from './site.config';
 
-
-const SECTIONS = [
-    { slug: 'cloumn/어피티-오리지널', name: '어피티 오리지널' },
-    { slug: 'cloumn/전문가-기고', name: '전문가 기고' },
-    { slug: 'cloumn/moneylog', name: '머니로그' },
-    { slug: 'news', name: '뉴스' },
-    { slug: 'newsletter', name: '뉴스레터' },
-    { slug: '2030-리서치', name: '2030 리서치' },
-];
 
 class UppityList extends BaseListService {
     constructor() {
