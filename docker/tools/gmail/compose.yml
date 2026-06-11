@@ -13,7 +13,7 @@ services:
       dockerfile: docker/tools/gmail/Dockerfile
     image: linkedin/gmail:latest
     profiles:
-      - tools
+      - gmail
     environment:
       - TZ=Asia/Seoul
       - EMAIL_USER=${EMAIL_USER:-}

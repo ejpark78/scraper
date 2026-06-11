@@ -25,7 +25,7 @@ services:
     tty: true
     stdin_open: true    
     profiles:
-      - tools
+      - agents
     user: "${USER_UID:-1000}:${USER_GID:-1000}"
     group_add:
       - "${DOCKER_GID:-989}"    

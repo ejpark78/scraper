@@ -23,7 +23,7 @@ services:
       traefik:
         condition: service_healthy
     profiles:
-      - tools
+      - cronicle
     environment:
       - TZ=Asia/Seoul
     volumes:

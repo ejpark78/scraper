@@ -18,7 +18,7 @@ services:
         - VCS_REF
     image: linkedin/jupyter:latest
     profiles:
-      - tools
+      - jupyter
     depends_on:
       traefik:
         condition: service_healthy

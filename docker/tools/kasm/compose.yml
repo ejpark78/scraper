@@ -19,7 +19,7 @@ services:
         - VCS_REF
     image: linkedin/kasm:latest
     profiles:
-      - tools
+      - kasm
     depends_on:
       traefik:
         condition: service_healthy
