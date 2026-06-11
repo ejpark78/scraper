@@ -8,11 +8,9 @@
  */
 
 import * as assert from 'assert';
-import { LinkedInUrlManager, Config } from '../../../src/crawler/sites/linkedin/jobs/UrlManager';
+import { generateUrls, Config } from '../../../src/crawler/sites/linkedin/jobs/site.config';
 
 console.log('🧪 [시작] url_manager.ts 단위 테스트(Unit Test)를 실행합니다.');
-
-const urlManager = new LinkedInUrlManager();
 
 try {
     // Test Case 1: Dynamic geo_registry and parameter_registry mapping
@@ -47,7 +45,7 @@ try {
         ]
     };
 
-    const result1 = urlManager.generateUrls(mockConfig1);
+    const result1 = generateUrls(mockConfig1);
     
     // Assertions for Case 1
     assert.strictEqual(result1.length, 3, '결과 URL 개수는 3개여야 합니다.');
@@ -86,7 +84,7 @@ try {
         ]
     };
 
-    const result2 = urlManager.generateUrls(mockConfig2);
+    const result2 = generateUrls(mockConfig2);
     
     assert.strictEqual(result2.length, 1, '결과 URL 개수는 1개여야 합니다.');
     assert.ok(result2[0].includes('keywords=Backend'), 'URL에 keywords가 포함되어야 합니다.');
@@ -107,7 +105,7 @@ try {
         ]
     };
 
-    const result3 = urlManager.generateUrls(mockConfig3);
+    const result3 = generateUrls(mockConfig3);
     assert.strictEqual(result3.length, 1, '결과 URL 개수는 1개여야 합니다.');
     assert.ok(result3[0].includes('keywords=Frontend'), 'URL에 keywords가 포함되어야 합니다.');
     assert.ok(result3[0].includes('geoId=999999'), '하위 호환성을 위해 target에 직접 지정된 geoId가 적용되어야 합니다.');
@@ -116,7 +114,7 @@ try {
 
     // Test Case 4: Empty settings
     const mockConfig4: Config = {};
-    const result4 = urlManager.generateUrls(mockConfig4);
+    const result4 = generateUrls(mockConfig4);
     assert.strictEqual(result4.length, 0, '빈 설정인 경우 결과는 0개여야 합니다.');
     
     console.log('✅ 테스트 케이스 4 통과 (예외 상황 및 빈 객체 안전 차단 검증 완료)');
@@ -139,7 +137,7 @@ try {
         ]
     };
 
-    const result5 = urlManager.generateUrls(mockConfig5);
+    const result5 = generateUrls(mockConfig5);
     assert.strictEqual(result5.length, 5, '결과 URL 개수는 5개여야 합니다 (Korea 2개 + Japan 3개).');
     
     // Korea targets (max_page: 2)
@@ -160,10 +158,10 @@ try {
         ]
     };
     
-    const result6 = urlManager.generateUrls(mockConfig6, { skipDirectUrls: true });
+    const result6 = generateUrls(mockConfig6, { skipDirectUrls: true });
     assert.strictEqual(result6.length, 0, 'skipDirectUrls 옵션이 true일 때는 direct_urls 수집 목록이 비어있어야 합니다.');
     
-    const result6_include = urlManager.generateUrls(mockConfig6, { skipDirectUrls: false });
+    const result6_include = generateUrls(mockConfig6, { skipDirectUrls: false });
     assert.strictEqual(result6_include.length, 1, 'skipDirectUrls 옵션이 false(기본값)일 때는 direct_urls가 포함되어야 합니다.');
 
     console.log('✅ 테스트 케이스 6 통과 (skipDirectUrls 옵션 활성화 시 direct_urls 배제 동작 검증 완료)');
