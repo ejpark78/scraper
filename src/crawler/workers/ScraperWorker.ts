@@ -3,6 +3,7 @@
  * @description Listens to Redis queues, fetches HTML from target pages, and stores raw data in MongoDB.
  * @constraints
  *   - Follows robust error handling and handles temporary scraper task retries.
+ *   - Skips retry attempts for permanent HTTP errors (such as 404 Not Found) to avoid redundant requests.
  *   - Pre-processes scraped HTML anchor links by removing surrounding quotes to avoid relative resolution bugs.
  * @dependencies Redis, MongoDB, UrlUtils, SiteRegistry
  * @lastUpdated 2026-06-11
@@ -337,7 +338,9 @@ class ScraperWorker {
     const { site, url, attempt, scraperSlack } = payload;
     Logger.error(`[Scraper] Scrape execution failed for [${site}] ID: ${id} on attempt ${attempt}`, scrapeErr);
 
-    if (attempt < 3) {
+    const isPermanentError = scrapeErr && scrapeErr.message && scrapeErr.message.includes('HTTP status 404');
+
+    if (attempt < 3 && !isPermanentError) {
       const priority = payload.priority || 'medium';
       const retryTask: ScrapePayload = {
         site,
