@@ -6,6 +6,7 @@
  *   - Places formatted Markdown documents into the designated reports directory.
  *   - Copies all session logs, scratch scripts, and artifacts to the destination session folder.
  *   - Includes relative markdown links to session folders and raw command output log files.
+ *   - Sanitizes absolute workspace paths to relative paths in tool arguments and outputs.
  * @dependencies Node fs/path, agent_adapter
  * @lastUpdated 2026-06-11
  */
@@ -13,6 +14,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { createAdapter, parseAgentsFromArg, assignSessionNumbers, AgentToolCall } from './lib/agent_adapter';
+
+const workspaceRoot = path.resolve(__dirname, '../..');
+
+function sanitizeAbsolutePaths(text: string): string {
+  const escapedRoot = workspaceRoot.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const regex = new RegExp(escapedRoot + '/?', 'g');
+  return text.replace(regex, './');
+}
 
 function truncateOutput(text: string, maxLines = 150, keepHead = 50, keepTail = 100): string {
   const lines = text.split('\n');
@@ -63,10 +72,12 @@ function buildTranscript(
 
           if (tool.name === 'run_command') {
             const cmd = args.CommandLine || args.command || JSON.stringify(args);
-            md += `* **💻 Run Command**: \`${cmd}\`\n`;
+            const sanitizedCmd = sanitizeAbsolutePaths(cmd);
+            md += `* **💻 Run Command**: \`${sanitizedCmd}\`\n`;
             if (tool.result) {
               const truncatedResult = truncateOutput(tool.result);
-              md += `  * **Output**:\n    \`\`\`bash\n    ${truncatedResult.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
+              const sanitizedResult = sanitizeAbsolutePaths(truncatedResult);
+              md += `  * **Output**:\n    \`\`\`bash\n    ${sanitizedResult.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
               const taskMatch = tool.result.match(/task-\d+/);
               if (taskMatch) {
                 const taskId = taskMatch[0];
@@ -75,10 +86,12 @@ function buildTranscript(
             }
           } else {
             md += `* **🛠️ Tool**: \`${tool.name}\`\n`;
-            md += `  * **Arguments**: \`${JSON.stringify(args)}\`\n`;
+            const argsStr = sanitizeAbsolutePaths(JSON.stringify(args));
+            md += `  * **Arguments**: \`${argsStr}\`\n`;
             if (tool.result) {
               const truncatedResult = truncateOutput(tool.result);
-              md += `  * **Result**:\n    \`\`\`json\n    ${truncatedResult.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
+              const sanitizedResult = sanitizeAbsolutePaths(truncatedResult);
+              md += `  * **Result**:\n    \`\`\`json\n    ${sanitizedResult.trim().replace(/\n/g, '\n    ')}\n    \`\`\`\n`;
             }
           }
         }
