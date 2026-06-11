@@ -21,7 +21,7 @@ export COMPOSE
 .PHONY: *
 
 lint:
-	$(COMPOSE) run --rm $(RUN_USER) clipper npx yaml-lint compose.yml "docker/**/*.yml"
+	$(COMPOSE) run --rm $(RUN_USER) base npx yaml-lint compose.yml "docker/**/*.yml"
 
 -include scripts/utils/browser.mk
 -include scripts/utils/docker.mk

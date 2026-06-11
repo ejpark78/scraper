@@ -42,8 +42,8 @@ List (discovery) ──➜ Redis scrape_queue ──➜ ScraperWorker ──➜ 
 
 ### Workers
 
-- **ScraperWorker** (`clipper-scraper`): Redis `scrape_queue`를 BLPOP으로 소비, 사이트별 스크래핑 로직으로 전달, 결과를 Bronze에 저장하고 `transform_queue`에 발행
-- **TransformerWorker** (`clipper-transformer`): Redis `transform_queue`를 BLPOP으로 소비, Bronze → Silver 변환, TargetLoader를 통해 Silver에 upsert
+- **ScraperWorker** (`scraper`): Redis `scrape_queue`를 BLPOP으로 소비, 사이트별 스크래핑 로직으로 전달, 결과를 Bronze에 저장하고 `transform_queue`에 발행
+- **TransformerWorker** (`converter`): Redis `transform_queue`를 BLPOP으로 소비, Bronze → Silver 변환, TargetLoader를 통해 Silver에 upsert
 
 ---
 
@@ -127,9 +127,9 @@ make up-viewer      # https://viewer.localhost
 | `mongodb` | core | MongoDB 7.0 | — |
 | `redis` | core | Redis (Alpine) | — |
 | `traefik` | tools | Reverse proxy + TLS | `route.localhost` |
-| `clipper` | runtime | CLI one-shot runner | — |
-| `clipper-scraper` | runtime | Scraper worker (replicas: 2) | — |
-| `clipper-transformer` | runtime | Transformer worker (replica: 1) | — |
+| `base` | runtime | CLI one-shot runner | — |
+| `scraper` | runtime | Scraper worker (replicas: 2) | — |
+| `converter` | runtime | Transformer worker (replica: 1) | — |
 | `viewer` | tools | Document viewer + MCP server | `viewer.localhost` |
 | `mongo-express` | tools | MongoDB Web GUI | `me.localhost` |
 | `redisinsight` | tools | Redis GUI | `redis.localhost` |

@@ -17,14 +17,14 @@
 # ==============================================================================
 
 services:
-  clipper:
+  base:
     build:
       context: ../../../
       dockerfile: docker/runtime/worker/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/clipper:latest
+    image: linkedin/base:latest
     profiles:
       - runtime
     environment:
@@ -46,14 +46,14 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
-  clipper-scraper:
+  scraper:
     build:
       context: ../../../
       dockerfile: docker/runtime/worker/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/scraper:latest
+    image: linkedin/base:latest
     command: ["npx", "ts-node", "src/crawler/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
@@ -77,14 +77,14 @@ services:
     deploy:
       replicas: ${SCALE:-2}
 
-  clipper-transformer:
+  converter:
     build:
       context: ../../../
       dockerfile: docker/runtime/worker/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/transformer:latest
+    image: linkedin/base:latest
     command: ["npx", "ts-node", "src/crawler/workers/TransformerWorker.ts"]
     environment:
       - TZ=Asia/Seoul

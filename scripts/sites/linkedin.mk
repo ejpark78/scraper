@@ -29,26 +29,26 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [LinkedIn Jobs] Starting job list scraping..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/jobs/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) base npx ts-node src/crawler/sites/linkedin/jobs/List.ts
 
 company: PRIORITY := high
 company:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [LinkedIn Company] Starting company scraping..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/sites/linkedin/company/Contents.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_USER) $(ENV_COMMON) base npx ts-node src/crawler/sites/linkedin/company/Contents.ts
 
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [LinkedIn Jobs] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts linkedin
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) base npx ts-node src/crawler/core/cli-refresh-urls.ts linkedin
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [LinkedIn Jobs] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts linkedin
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts linkedin_company
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) base npx ts-node src/crawler/core/cli-refresh-silver.ts linkedin
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) base npx ts-node src/crawler/core/cli-refresh-silver.ts linkedin_company
 

@@ -24,18 +24,18 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [Uppity] Starting list scraping (PAGE: $(PAGE), SECTION: $(SECTION))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) -e SECTION=$(SECTION) clipper npx ts-node src/crawler/sites/uppity/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) -e SECTION=$(SECTION) base npx ts-node src/crawler/sites/uppity/List.ts
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [Uppity] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-urls.ts uppity
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) base npx ts-node src/crawler/core/cli-refresh-urls.ts uppity
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [Uppity] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) clipper npx ts-node src/crawler/core/cli-refresh-silver.ts uppity
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) base npx ts-node src/crawler/core/cli-refresh-silver.ts uppity
 
 
