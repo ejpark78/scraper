@@ -11,22 +11,7 @@ import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
 
-export interface GeekNewsComment {
-    commentId: string;
-    author: string;
-    content: string;
-}
-
-export interface GeekNewsMeta {
-    id: string;
-    title: string;
-    url: string;
-    publishedAt: string | null;
-    content: string;
-    comments: GeekNewsComment[];
-    jsonLdRaw: string | null;
-    rawContent: string; // The markdown representation
-}
+import { GeekNewsMeta, GeekNewsComment } from './site.config';
 
 export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
     

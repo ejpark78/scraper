@@ -10,9 +10,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
-import { GeekNewsMeta, GeekNewsConverter } from './Converter';
+import { GeekNewsConverter } from './Converter';
 import { HtmlMinifier } from '../../utils';
-import { descriptor } from './site.config';
+import { descriptor, GeekNewsMeta } from './site.config';
 
 export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
     private readonly converter: GeekNewsConverter;

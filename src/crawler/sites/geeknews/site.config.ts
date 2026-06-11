@@ -11,6 +11,23 @@ import type { SiteDescriptor } from '../../core/SiteRegistry';
 import { GeekNewsConverter } from './Converter';
 import { scrapeHttpFetch } from '../../utils/scraper';
 
+export interface GeekNewsComment {
+    commentId: string;
+    author: string;
+    content: string;
+}
+
+export interface GeekNewsMeta {
+    id: string;
+    title: string;
+    url: string;
+    publishedAt: string | null;
+    content: string;
+    comments: GeekNewsComment[];
+    jsonLdRaw: string | null;
+    rawContent: string;
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'geeknews',
   name: 'GeekNews',
@@ -67,7 +84,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/geeknews.contents',
     filterField: 'id',
-    buildDocument: (id, meta) => ({
+    buildDocument: (id, meta: GeekNewsMeta) => ({
       id,
       title: meta.title || 'Untitled',
       url: meta.url || null,
@@ -80,7 +97,7 @@ export const descriptor: SiteDescriptor = {
   },
 
   refreshSilver: {
-    getSilverFields: (meta) => ({
+    getSilverFields: (meta: GeekNewsMeta) => ({
       id: meta.id,
       title: meta.title,
       url: meta.url,
