@@ -13,6 +13,16 @@ import type { SiteDescriptor } from '../../core/SiteRegistry';
 import { DailyDoseDSConverter } from './Converter';
 import { scrapeHttpFetch } from '../../utils/scraper';
 
+export interface DailyDoseDSMeta {
+    id: string;
+    title: string;
+    url: string;
+    publishedAt: string | null;
+    content: string;
+    rawContent: string;
+    discoveredUrls: string[];
+}
+
 export const descriptor: SiteDescriptor = {
   key: 'dailydose_ds',
   name: 'Daily Dose of DS',
@@ -97,7 +107,7 @@ export const descriptor: SiteDescriptor = {
   targetLoader: {
     collectionName: 'silver/dailydose_ds.contents',
     filterField: 'id',
-    buildDocument: (id, meta) => ({
+    buildDocument: (id, meta: DailyDoseDSMeta) => ({
       id,
       title: meta.title || 'Untitled',
       url: meta.url || null,

@@ -11,15 +11,7 @@ import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 import { IConverter } from '../../core/IConverter';
 
-export interface DailyDoseDSMeta {
-    id: string;
-    title: string;
-    url: string;
-    publishedAt: string | null;
-    content: string;
-    rawContent: string;
-    discoveredUrls: string[];
-}
+import { DailyDoseDSMeta } from './site.config';
 
 export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
     public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<DailyDoseDSMeta> {
