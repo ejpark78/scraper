@@ -32,7 +32,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - AUTH=${AUTH:-}
       - PARALLEL=${PARALLEL:-}
-      - SLACK_TIME=${SLACK_TIME:-}
+      - LIST_SLACK=${LIST_SLACK:-}
       - CHUNK_SIZE=${CHUNK_SIZE:-}
       - SESSION_DIR=/app/data/sessions
       - LISTS=${LISTS:-}
@@ -58,7 +58,7 @@ services:
     environment:
       - TZ=Asia/Seoul
       - JSON_LOG=true
-      - SLACK_TIME=0
+      - LIST_SLACK=0
       - PARALLEL=1
       - REDIS_URL=redis://redis:6379
       - MONGO_URL=mongodb://mongodb:27017
@@ -90,7 +90,7 @@ services:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
       - JSON_LOG=true
-      - SLACK_TIME=0
+      - LIST_SLACK=0
       - PARALLEL=1
       - REDIS_URL=redis://redis:6379
       - MONGO_URL=mongodb://mongodb:27017
