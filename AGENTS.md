@@ -2,13 +2,16 @@
 
 ## ⚠️ Critical Constraints
 
-1. **No Arbitrary Bash**: Consent required for ALL shell commands (except Pre-Approved). Present the exact command in chat for explicit approval first. Compress multiple checks into a single chained execution to minimize confirmation loops.
-2. **Strict Planning**: Propose a plan in a Markdown table (Columns: File Path, Action, Details) and obtain consent before file writes or env changes (except Pre-Approved). CRITICAL: Wait for consent before calling any write/modification tools.
-3. **Minimal File Scope**: No root grep/list_dir. Use a single `git ls-files` call to map tracked paths and nested folders in one go to save API/tokens. Use `list_dir` only for untracked paths (e.g. `data/`) or fallback. Use `view_file` only on target files.
+1. **No Arbitrary Bash**: Consent required for ALL shell commands (including read-only diagnostics, git, docker, ls, env, etc.) except for Pre-Approved Commands. Present the exact command in chat for explicit approval first. Compress multiple diagnostics/status checks into a single chained execution (e.g. chaining with `&&`, `;`, or using `cat << 'EOF' | bash`) to minimize user confirmation loops.
+2. **Strict Planning**: Propose a plan in a Markdown table (Columns: File Path, Action, Details) and obtain consent before file writes or env changes (except Pre-Approved). CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first.
+3. **Minimal File Scope & Coverage**: Do not use root-level grep or recursive list_dir.
+   * To map the project structure without missing nested folders, run a single `git ls-files` call once.
+   * Pinpoint the exact target file path using the map, then use `view_file` to read it directly.
+   * If searching for code symbols across multiple files, use `grep_search` to pinpoint the matching line numbers instead of reading files one-by-one, minimizing API/token consumption while maintaining full coverage.
 4. **Transparent Issues**: Report errors immediately. No silent restores. Max 2 autonomous troubleshooting retries without user review.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
 6. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
-7. **Docker-Centric Testing & Execution**: Test and execute all local scripts via `docker compose` (e.g., `docker compose run --rm`). Prefer volume mounting (`-v`) over `docker cp` for executing local scripts.
+7. **Docker-Centric Testing & Execution**: Test and execute all local scripts via `docker compose` (e.g., `docker compose run --rm`). Use volume mounting (`-v $(pwd):/app`) so that scripts can access MongoDB/Redis within the Docker network context and source files are synchronized. Do not use `docker cp` for local script execution.
 8. **Transcripts Export on Start**: Run `make -f .agents/Makefile dump-all AGENTS=agy` ONLY on the first turn of a new or resumed session (do not run when exiting/finalizing).
 
 ## ⚠️ Security Rules
@@ -23,10 +26,10 @@
 4. **Centralized Config**: Access 'process.env' ONLY within dedicated config files. Inject configuration via constructor.
 5. **Agent-Friendly Docstrings**: Start every source, script, and automation file with a header docstring/comment detailing design context, constraints, and dependencies to prevent refactoring loops. Update it when behavior changes.
 
-
 ## 🔓 Pre-Approved Commands
 The following commands/scripts are pre-approved and exempt from Rule 1's and Rule 2's consent loops:
 - `git ls-files` (Read-only project codebase mapping to minimize token/API usage)
 - `.agents/scripts/commit-changes.sh` (Runs automatically after edits to save progress)
 - `make -f .agents/Makefile dump-all AGENTS=agy` (Runs on session start to generate/export session reports)
+
 
