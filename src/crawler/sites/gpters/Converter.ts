@@ -10,7 +10,7 @@
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
 
-import { GptersMeta } from './news/site.config';
+import { GptersMeta, descriptor } from './news/site.config';
 
 export class GptersConverter implements IConverter<GptersMeta> {
     
@@ -35,7 +35,7 @@ export class GptersConverter implements IConverter<GptersMeta> {
         const publishedAt = post.createdAt || null;
         const reactionsCount = post.reactionsCount || 0;
         const repliesCount = post.repliesCount || 0;
-        const finalUrl = url || `https://www.gpters.org/news/post/${post.slug}-${id}`;
+        const finalUrl = url || `https://www.${descriptor.domain}/news/post/${post.slug}-${id}`;
         const spaceId = post.space?.id || null;
         const spaceName = post.space?.name || null;
         const spaceSlug = post.space?.slug || null;

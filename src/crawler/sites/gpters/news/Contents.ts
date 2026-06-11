@@ -41,7 +41,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
         const id = this.extractId(url);
 
         console.log(`🌐 [GPTERS] Fetching guest access token...`);
-        const tokenRes = await fetch('https://www.gpters.org/news');
+        const tokenRes = await fetch(`https://www.${descriptor.domain}/news`);
         const tokenHtml = await tokenRes.text();
         const tokenMatch = tokenHtml.match(/accessToken":"([^"]+)"/);
         if (!tokenMatch) throw new Error('Failed to extract GPTERS guest access token');

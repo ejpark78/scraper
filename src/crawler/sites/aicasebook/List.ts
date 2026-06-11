@@ -8,7 +8,6 @@
  */
 
 import { chromium } from 'playwright';
-import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
 import { descriptor } from './site.config';
 
@@ -38,7 +37,7 @@ class AiCasebookList extends BaseListService {
         const page = await context.newPage();
 
         try {
-            await page.goto('https://aicasebook.dev/', { waitUntil: 'networkidle', timeout: 30000 });
+            await page.goto(`https://${descriptor.domain}/`, { waitUntil: 'networkidle', timeout: 30000 });
             await page.waitForSelector('a[href^="/setup/"]', { timeout: 10000 });
 
             const items = await page.$$eval('a[href^="/setup/"]', (els) => {

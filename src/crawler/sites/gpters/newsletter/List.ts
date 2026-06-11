@@ -7,7 +7,6 @@
  * @lastUpdated 2026-06-11
  */
 
-import { MongoDatabase } from '../../../../database/mongo';
 import { BaseListService } from '../../../../crawler/core/BaseListService';
 import { descriptor, NEWSLETTER_QUERY, NEWSLETTER_VARS } from './site.config';
 
@@ -23,7 +22,7 @@ class GptersNewsletterList extends BaseListService {
     }
 
     private async fetchGuestToken(): Promise<string> {
-        const res = await fetch('https://www.gpters.org/news');
+        const res = await fetch(`https://www.${descriptor.domain}/news`);
         const html = await res.text();
         const match = html.match(/accessToken":"([^"]+)"/);
         if (!match) {
@@ -97,7 +96,7 @@ class GptersNewsletterList extends BaseListService {
 
                 if (!id || !slug) continue;
 
-                const detailUrl = `https://www.gpters.org/news/post/${slug}-${id}`;
+                const detailUrl = `https://www.${descriptor.domain}/news/post/${slug}-${id}`;
 
                 if (await this.processItem(id, detailUrl, title)) {
                     queuedCount++;

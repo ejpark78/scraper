@@ -42,7 +42,8 @@ class YozmList extends BaseListService {
 
     const xml = await res.text();
 
-    const urlRegex = /<loc>(https:\/\/yozm\.wishket\.com\/magazine\/detail\/(\d+)\/)<\/loc>/g;
+    const escapedDomain = descriptor.domain.replace(/\./g, '\\.');
+    const urlRegex = new RegExp(`<loc>(https:\\/\\/${escapedDomain}\\/magazine\\/detail\\/(\\d+)\\/)<\\/loc>`, 'g');
     let match: RegExpExecArray | null;
     let totalUrls = 0;
 

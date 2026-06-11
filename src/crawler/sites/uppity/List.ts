@@ -118,7 +118,7 @@ class UppityList extends BaseListService {
             $(sel).each((_, el) => {
                 const href = $(el).attr('href');
                 const title = $(el).text().trim();
-                if (href && title && href.startsWith('https://uppity.co.kr/') && !seen.has(href)) {
+                if (href && title && href.startsWith(`https://${descriptor.domain}/`) && !seen.has(href)) {
                     const skipPatterns = ['/category/', '/tag/', '/author/', '/page/', '#', '?', 'login', 'logout', 'download.cm'];
                     if (!skipPatterns.some(p => href.includes(p))) {
                         seen.add(href);

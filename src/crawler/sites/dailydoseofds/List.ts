@@ -8,7 +8,6 @@
  */
 
 import * as cheerio from 'cheerio';
-import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
 import { descriptor } from './site.config';
 

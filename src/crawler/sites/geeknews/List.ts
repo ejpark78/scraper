@@ -8,7 +8,6 @@
  */
 
 import * as cheerio from 'cheerio';
-import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
 import { descriptor } from './site.config';
 
@@ -24,7 +23,7 @@ class GeekNewsList extends BaseListService {
     }
 
     public async run(page: number = 1): Promise<number> {
-        let url = 'https://news.hada.io/';
+        let url = descriptor.domain ? `https://${descriptor.domain}/` : 'https://news.hada.io/';
         if (descriptor.scraper?.generateUrls) {
             const urls = descriptor.scraper.generateUrls({ page });
             if (urls.length > 0) {
@@ -51,28 +50,7 @@ class GeekNewsList extends BaseListService {
 
         const html = await response.text();
 
-        try {
-            const { HtmlMinifier } = require('../../utils');
-            const minifiedHtml = await HtmlMinifier.minify(html, { preserveJsonLd: true });
-            const dbInstance = MongoDatabase.getInstance();
-            const listCollName = descriptor.listsCollectionName || 'bronze/geeknews.lists';
-            const geeknewsListsColl = await dbInstance.getCollection(listCollName as any);
 
-            const runDate = new Date();
-            const pad = (n: number) => String(n).padStart(2, '0');
-            const listId = `${runDate.getFullYear()}${pad(runDate.getMonth() + 1)}${pad(runDate.getDate())}_${pad(runDate.getHours())}${pad(runDate.getMinutes())}${pad(runDate.getSeconds())}_${Math.random().toString(36).substring(2, 6)}`;
-
-            await geeknewsListsColl.insertOne({
-                listId,
-                page,
-                url,
-                rawHtml: minifiedHtml,
-                collectedAt: runDate
-            });
-            console.log(`💾 [MongoDB Write] Saved minified HTML of page ${page} list to ${listCollName}`);
-        } catch (minifyErr: any) {
-            console.error(`⚠️ Failed to minify or save list HTML to MongoDB: ${minifyErr.message}`);
-        }
 
         const $ = cheerio.load(html);
         const topicRows = $('.topic_row');
@@ -101,7 +79,7 @@ class GeekNewsList extends BaseListService {
 
             if (!topicUrl) continue;
 
-            let detailUrl = `https://news.hada.io/${topicUrl.replace(/^\//, '')}`;
+            let detailUrl = `https://${descriptor.domain}/${topicUrl.replace(/^\//, '')}`;
 
             let id = '';
             const match = topicUrl.match(/id=(\d+)/);

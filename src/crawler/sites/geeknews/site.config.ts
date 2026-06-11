@@ -50,8 +50,6 @@ export const descriptor: SiteDescriptor = {
     },
   ],
 
-  listsCollectionName: 'bronze/geeknews.lists',
-
   scraper: {
     collectionName: 'bronze/geeknews.html',
     targetCollection: 'geeknews.html',

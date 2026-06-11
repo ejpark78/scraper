@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import Redis from 'ioredis';
 import { MongoDatabase } from '../../../database/mongo';
+import { descriptor } from './site.config';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const CACHE_SET_KEY = 'completed_news';
@@ -38,7 +39,7 @@ export class GeekNewsBackfill {
         let totalQueuedCount = 0;
         
         while (true) {
-            const url = `https://news.hada.io/past?day=${day}&page=${page}`;
+            const url = `https://${descriptor.domain}/past?day=${day}&page=${page}`;
             
             const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
             if (sleepSec > 0) {
@@ -60,30 +61,7 @@ export class GeekNewsBackfill {
 
             const html = await response.text();
             
-            // 🧹 HTML Minify 및 MongoDB bronze/geeknews.lists 저장 추가
-            try {
-                const { HtmlMinifier } = require('../../utils');
-                const minifiedHtml = await HtmlMinifier.minify(html, { preserveJsonLd: true });
-                const dbInstance = MongoDatabase.getInstance();
-                const geeknewsListsColl = await dbInstance.getCollection('bronze/geeknews.lists');
-                
-                await geeknewsListsColl.updateOne(
-                    { day, page },
-                    {
-                        $set: {
-                            day,
-                            page,
-                            rawHtml: minifiedHtml,
-                            url,
-                            scrapedAt: new Date()
-                        }
-                    },
-                    { upsert: true }
-                );
-                console.log(`💾 [MongoDB Write] Saved minified HTML of ${day} (page ${page}) list to bronze/geeknews.lists`);
-            } catch (minifyErr: any) {
-                console.error(`⚠️ Failed to minify or save list HTML to MongoDB: ${minifyErr.message}`);
-            }
+
 
             const $ = cheerio.load(html);
             const topicRows = $('.topic_row');
@@ -139,7 +117,7 @@ export class GeekNewsBackfill {
 
                 if (!topicUrl) continue;
 
-                let detailUrl = `https://news.hada.io/${topicUrl.replace(/^\//, '')}`;
+                let detailUrl = `https://${descriptor.domain}/${topicUrl.replace(/^\//, '')}`;
 
                 let id = '';
                 const match = topicUrl.match(/id=(\d+)/);

@@ -8,6 +8,7 @@
  */
 
 import * as fs from 'fs';
+import { descriptor } from './news/site.config';
 
 function extractIdFromGptersUrl(url: string): string {
   const parts = url.split('-');
@@ -15,7 +16,7 @@ function extractIdFromGptersUrl(url: string): string {
 }
 
 async function fetchGptersGuestToken(): Promise<string> {
-  const res = await fetch('https://www.gpters.org/news');
+  const res = await fetch(`https://www.${descriptor.domain}/news`);
   const html = await res.text();
   const match = html.match(/accessToken":"([^"]+)"/);
   if (!match) {
