@@ -63,13 +63,13 @@ export interface IConverter<T> {
 
 ### 3.1 `ScraperWorker`
 - **역할**: `scrape_queue:{site}:{priority}` 큐를 감시하며 실제 HTTP 요청을 보내 HTML을 수집합니다.
-- **큐 우선순위**: `high` → `medium` → `low` 순서로 BLPOP을 시도하며, 매 루프마다 큐 목록을 셔플(Shuffle)하여 특정 사이트의 기아 현상(Starvation)을 방지합니다.
+- **큐 우선순위**: `high` → `medium` → `low` 순서로 큐들을 배치하되, 각 등급 내부에서 사이트 큐 순서를 무작위로 섞은(Shuffle) 단일 큐 목록 배열을 생성하여 단 한 번의 `blpop` 멀티 인자 호출로 대기 및 소비합니다. 이를 통해 특정 사이트의 기아 현상(Starvation)을 방지합니다.
 - **에러 핸들링**: 3회 이상 실패 시 에러 로그를 남기고 문서를 `dead_letter_queue`로 이동시킵니다.
 - **인스턴스 확장**: `make restart SCALE=3` 등을 이용해 병렬 컨테이너 실행이 가능하도록 설계되었습니다.
 
 ### 3.2 `TransformerWorker`
 - **역할**: `transform_queue`를 소비하며 HTML을 Markdown으로 파싱 및 변환합니다.
-- **후처리**: `site.config.ts`에 정의된 `refreshSilver.imageDownload.enabled` 옵션에 따라 이미지 로컬 다운로드 및 변환 마크다운 경로 치환을 수행합니다.
+- **후처리**: `linkedin`을 제외한 모든 사이트에 대해 자동으로 `downloadImages()` 유틸을 호출하여 이미지를 로컬(`data/sites/{site}/images/{id}/`)로 다운로드하고 마크다운 경로 치환 및 Collected Images 매핑을 추가합니다. (파비콘 제거 여부는 `refreshSilver.imageDownload.removeFavicons` 옵션을 반영합니다.)
 
 ---
 
