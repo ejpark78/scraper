@@ -11,6 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { AiCasebookMeta, AiCasebookConverter } from './Converter';
+import { descriptor } from './site.config';
 
 export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
   private readonly converter: AiCasebookConverter;
@@ -26,7 +27,7 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
   }
 
   protected getDomainName(): string {
-    return 'aicasebook.dev';
+    return descriptor.domain || 'aicasebook.dev';
   }
 
   protected async executeScrape(url: string, tempHtmlPath: string): Promise<void> {
@@ -75,8 +76,8 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
         markdown: meta.rawContent,
         publishedAt: meta.publishedAt || undefined,
         docId: id,
-        siteDir: 'aicasebook',
-        siteDomain: 'aicasebook.dev',
+        siteDir: descriptor.key,
+        siteDomain: descriptor.domain || 'aicasebook.dev',
         refererUrl: meta.url,
         removeFavicons: true,
       });
@@ -86,7 +87,8 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
     }
 
     try {
-      const bronzeColl = await dbInstance.getCollection('bronze/aicasebook.html');
+      const bronzeCollName = descriptor.scraper?.collectionName || 'bronze/aicasebook.html';
+      const bronzeColl = await dbInstance.getCollection(bronzeCollName as any);
       await bronzeColl.updateOne(
         { id },
         {
@@ -100,7 +102,8 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
         { upsert: true }
       );
 
-      const silverColl = await dbInstance.getCollection('silver/aicasebook.contents');
+      const silverCollName = descriptor.targetLoader?.collectionName || 'silver/aicasebook.contents';
+      const silverColl = await dbInstance.getCollection(silverCollName as any);
       await silverColl.updateOne(
         { id },
         {
@@ -124,7 +127,8 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
         { upsert: true }
       );
 
-      const urlsColl = await dbInstance.getCollection('bronze/aicasebook.urls');
+      const urlsCollName = descriptor.scraper?.urlsCollectionName || 'bronze/aicasebook.urls';
+      const urlsColl = await dbInstance.getCollection(urlsCollName as any);
       await urlsColl.updateOne(
         { id },
         { $set: { status: 'completed', updatedAt: new Date() } }
@@ -152,7 +156,7 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
       }
     }
 
-    return { targetDirName: 'aicasebook' };
+    return { targetDirName: descriptor.key };
   }
 }
 

@@ -10,15 +10,16 @@
 import { chromium } from 'playwright';
 import { MongoDatabase } from '../../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
+import { descriptor } from './site.config';
 
 class AiCasebookList extends BaseListService {
     constructor() {
         super({
-            site: 'aicasebook',
-            displayName: 'AiCasebook',
-            cacheSetKey: 'completed_aicasebook',
-            bronzeHtmlCollection: 'bronze/aicasebook.html',
-            urlsCollection: 'bronze/aicasebook.urls',
+            site: descriptor.key,
+            displayName: descriptor.name,
+            cacheSetKey: descriptor.transformer?.completedSetKey || `completed_${descriptor.key}`,
+            bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
+            urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
         });
     }
 
