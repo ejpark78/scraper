@@ -10,7 +10,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/clipper-viewer:latest
+    image: linkedin/viewer:latest
     command: ["npx", "ts-node", "src/viewer/server.ts"]
     profiles:
       - tools
