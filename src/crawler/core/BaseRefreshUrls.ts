@@ -38,6 +38,7 @@ export class BaseRefreshUrls {
         const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
         const redis = new Redis(redisUrl);
 
+        try {
             const desc = getSite(site);
             const bronzeHtml = await mongo.getCollection(bronzeHtmlCollection);
             const urlsColl = await mongo.getCollection(urlsCollection);
