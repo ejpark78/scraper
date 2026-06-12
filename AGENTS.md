@@ -11,7 +11,9 @@
 4. **Transparent Issues**: Report errors immediately. No silent restores. Max 2 autonomous troubleshooting retries without user review.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
 6. **Automatic Git Commits**: Run `.agents/scripts/commit-changes.sh` immediately after valid edits.
-7. **Docker-Centric Testing & Execution**: Test and execute all local scripts via `docker compose` (e.g., `docker compose -p linkedin run --rm --user $(id -u):$(id -g) -v $(pwd):/app -v /app/node_modules worker npx ts-node src/...`). Use volume mounting to synchronize source files and bypass rebuilding, ensuring scripts can access MongoDB/Redis within the Docker network context. Do not use `docker cp` for local script execution.
+7. **Docker-Centric Testing & Execution**: Test and execute all local scripts via `docker compose`. Distinguish testing/debugging from production verification:
+   * **Debugging/Testing**: Always use volume mounting to synchronize source files in real-time (e.g., `docker compose -p linkedin run --rm --user $(id -u):$(id -g) -v $(pwd):/app -v /app/node_modules worker npx ts-node src/...`). Do not use `docker cp`.
+   * **Production/Verification**: When validating the final built image (production context), run without volume mounts (after rebuilding the image). Ensure scripts can access MongoDB/Redis within the Docker network context.
    * **Local node_modules Mount Troubleshooting**: When mounting the workspace using `-v $(pwd):/app`, the host's `node_modules` will overwrite the container's version. To avoid library/dependency version mismatch (especially for tools like Playwright that require specific browser versions built into the image), add an anonymous volume mount for the node modules directory: `-v /app/node_modules`.
    * **Playwright Browser Mismatch**: If you encounter a `browserType.launch: Executable doesn't exist` error due to mismatching versions:
      - Rebuild the specific service image only to align dependency versions: `docker compose build worker`
