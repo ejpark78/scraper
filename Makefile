@@ -70,6 +70,12 @@ li-%:
 test-%:
 	@$(MAKE) -f scripts/utils/tests.mk $*
 
+extract:
+	@$(MAKE) -f scripts/utils/tests.mk extract SITE=$(SITE) ID=$(ID)
+
+debug:
+	@$(MAKE) -f scripts/utils/tests.mk debug FILE=$(FILE) SITE=$(SITE) ID=$(ID)
+
 # db utils
 mongo-%:
 	@$(MAKE) -f scripts/utils/mongo.mk $*
