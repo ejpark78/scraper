@@ -14,6 +14,11 @@ ERROR_RESET      ?= false
 RUN_USER         := --user $(shell id -u):$(shell id -g)
 export RUN_USER
 
+# Centrally managed Workspace mount paths
+WORKSPACE_DIR    ?= $(shell pwd)
+WORKSPACE_MOUNT  ?= -v $(WORKSPACE_DIR):/app
+export WORKSPACE_DIR WORKSPACE_MOUNT
+
 # Dynamic Environment Variable string construction
 # Note: We use a function-like approach to collect active variables
 # Since Makefile doesn't have easy array/map, we define the common set
