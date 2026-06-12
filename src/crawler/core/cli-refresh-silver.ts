@@ -10,9 +10,19 @@
 import { getSite } from './SiteRegistry';
 import { BaseRefreshTransform } from './BaseRefreshTransform';
 
-const siteKey = process.argv[2];
+let siteKey = '';
+for (let i = 2; i < process.argv.length; i++) {
+  if (process.argv[i] === '--site') {
+    siteKey = process.argv[i + 1] || '';
+    break;
+  }
+}
 if (!siteKey) {
-  console.error('Usage: npx ts-node src/crawler/core/cli-refresh-silver.ts <siteKey>');
+  siteKey = process.argv[2];
+}
+
+if (!siteKey) {
+  console.error('Usage: npx ts-node src/crawler/core/cli-refresh-silver.ts --site <siteKey>');
   process.exit(1);
 }
 

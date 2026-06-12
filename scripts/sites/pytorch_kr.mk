@@ -17,18 +17,18 @@ refresh:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [PyTorch KR] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) worker npx ts-node src/crawler/core/cli-refresh-silver.ts pytorch_kr
+	$(COMPOSE) run --rm $(RUN_USER) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site pytorch_kr
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [PyTorch KR] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts pytorch_kr
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts --site pytorch_kr
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [PyTorch KR] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts pytorch_kr
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site pytorch_kr
 
 

@@ -18,19 +18,19 @@ refresh:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [GPTERS News] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts gpters
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site gpters
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [GPTERS] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts gpters
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts --site gpters
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [GPTERS News] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts gpters
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site gpters
 
 
 newsletter-list: PRIORITY := high
@@ -44,16 +44,16 @@ newsletter-refresh:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [GPTERS Newsletter] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts gpters_newsletter
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site gpters_newsletter
 
 refresh-silver-rebuild:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔨 [GPTERS News] Rebuilding Silver Layer items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts gpters
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site gpters
 
 newsletter-refresh-silver-rebuild:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔨 [GPTERS Newsletter] Rebuilding Silver Layer items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts gpters_newsletter
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site gpters_newsletter
