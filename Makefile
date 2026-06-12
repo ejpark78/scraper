@@ -68,4 +68,4 @@ gm-%:
 	@$(MAKE) -f scripts/tools/gmail.mk $*
 
 agents-%:
-	@$(MAKE) -f scripts/tools/agents.mk $*
+	@$(MAKE) -f scripts/utils/agents.mk $*
