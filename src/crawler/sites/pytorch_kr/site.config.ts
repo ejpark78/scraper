@@ -86,7 +86,7 @@ export const descriptor: SiteDescriptor = {
   scraper: {
     collectionName: 'bronze/pytorch_kr.html',
     targetCollection: 'pytorch_kr.html',
-    updateFilterKey: 'topicId',
+    updateFilterKey: 'id',
     defaultSlack: 3,
     extractId: (url) => {
       const match = url.match(/\/(\d+)(?:\?|$)/);

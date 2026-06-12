@@ -16,7 +16,15 @@ function extractIdFromGptersUrl(url: string): string {
 }
 
 async function fetchGptersGuestToken(): Promise<string> {
-  const res = await fetch(`https://www.${descriptor.domain}/news`);
+  const res = await fetch(`https://www.${descriptor.domain}/news`, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch GPTERS homepage: HTTP status ${res.status}`);
+  }
   const html = await res.text();
   const match = html.match(/accessToken":"([^"]+)"/);
   if (!match) {
