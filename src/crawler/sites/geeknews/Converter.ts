@@ -42,6 +42,23 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
             
             content = this.cleanContent(content);
 
+            let publishedAt: string | null = null;
+            let jsonLdRaw: string | null = null;
+            try {
+                const jsonLdScript = $('script[type="application/ld+json"]');
+                if (jsonLdScript.length > 0) {
+                    jsonLdRaw = jsonLdScript.html();
+                    if (jsonLdRaw) {
+                        const data = JSON.parse(jsonLdRaw);
+                        if (data.datePublished) {
+                            publishedAt = data.datePublished;
+                        }
+                    }
+                }
+            } catch (e: any) {
+                console.error(`⚠️ JSON-LD 파싱 중 에러 발생: ${e.message}`);
+            }
+
             let markdown = `# 📰 ${title}\n\n`;
             if (dateStr) {
                 markdown += `* **기간:** ${dateStr}\n`;
@@ -53,10 +70,10 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
                 id,
                 title,
                 url,
-                publishedAt: null,
+                publishedAt,
                 content,
                 comments: [],
-                jsonLdRaw: null,
+                jsonLdRaw,
                 rawContent: markdown
             };
         }
