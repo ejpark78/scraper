@@ -56,6 +56,10 @@ export const descriptor: SiteDescriptor = {
     updateFilterKey: 'topicId',
     defaultSlack: 3,
     extractId: (url) => {
+      const weeklyMatch = url.match(/\/weekly\/(\d+)$/);
+      if (weeklyMatch) {
+        return `weekly-${weeklyMatch[1]}`;
+      }
       const match = url.match(/[?&]id=(\d+)/);
       return match ? match[1] : '';
     },

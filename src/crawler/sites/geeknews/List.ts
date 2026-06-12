@@ -110,6 +110,16 @@ class GeekNewsList extends BaseListService {
                             const issueHtml = await issueRes.text();
                             const $issue = cheerio.load(issueHtml);
 
+                            const issueMatch = issueUrl.match(/\/weekly\/(\d+)$/);
+                            if (issueMatch) {
+                                const issueNum = issueMatch[1];
+                                const queuedSelf = await this.processItem(`weekly-${issueNum}`, issueUrl, `GeekNews 주간 소식 (${issueNum})`);
+                                if (queuedSelf) {
+                                    queuedCount++;
+                                    console.log(`➕ [GeekNews List] Queued weekly issue self: ${issueUrl}`);
+                                }
+                            }
+
                             let issueTopicsCount = 0;
                             const promises: Promise<void>[] = [];
                             // Extract topics from weekly issue page

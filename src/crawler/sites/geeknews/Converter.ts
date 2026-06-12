@@ -18,6 +18,49 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
     public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<GeekNewsMeta> {
         const $ = cheerio.load(htmlContent);
         
+        // Handle weekly issue pages
+        if (id.startsWith('weekly-') || url.includes('/weekly/')) {
+            const title = $('.weekly-container h2, h2').first().text().trim() || $('title').text().replace(' | GeekNews', '').trim() || '정보 없음';
+            const dateStr = $('.weekly-container .date, .date').first().text().trim();
+            const descEl = $('.weekly-container .desc, .desc').first();
+            let content = '';
+            if (descEl.length > 0) {
+                const html = descEl.html() || '';
+                try {
+                    const TurndownService = require('turndown');
+                    const turndownService = new TurndownService({
+                        headingStyle: 'atx',
+                        hr: '---',
+                        bullet: '-',
+                        codeBlockStyle: 'fenced'
+                    });
+                    content = turndownService.turndown(html).trim();
+                } catch (err) {
+                    content = descEl.text().trim();
+                }
+            }
+            
+            content = this.cleanContent(content);
+
+            let markdown = `# 📰 ${title}\n\n`;
+            if (dateStr) {
+                markdown += `* **기간:** ${dateStr}\n`;
+            }
+            markdown += `* **원문 링크:** [바로가기](${url})\n\n`;
+            markdown += `## 📝 주간 요약 설명\n${content}\n`;
+
+            return {
+                id,
+                title,
+                url,
+                publishedAt: null,
+                content,
+                comments: [],
+                jsonLdRaw: null,
+                rawContent: markdown
+            };
+        }
+
         // 1. Extract title
         const title = $('title').text().replace(' | GeekNews', '').trim() || '정보 없음';
         
