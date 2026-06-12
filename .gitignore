@@ -3,6 +3,7 @@
 .agents/sysinfo_cache.json
 .env
 .firecrawl/
+.vscode/
 data/
 data/sessions/
 node_modules/

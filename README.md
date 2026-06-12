@@ -130,7 +130,7 @@ make up-viewer      # https://viewer.localhost
 | `restore` | MongoDB 복원 (`BACKUP_DIR=...`) |
 | `test-urls` | URL 매니저 테스트 |
 | `test-mcp` | MCP 클라이언트 테스트 |
-| `make -f .agents/Makefile dump-all AGENTS=agy` | 에이전트 트랜스크립트, 스냅샷, 압축 규칙, 시스템 정보 일괄 덤프 및 검증 |
+| `make -f .agents/Makefile dump AGENTS=agy` | 에이전트 트랜스크립트, 스냅샷, 압축 규칙, 시스템 정보 일괄 덤프 및 검증 |
 | `make -f .agents/Makefile usage` | 에이전트 로컬 세션 정보 및 단계별 사용량 분석 |
 | `make -f .agents/Makefile prune` | 에이전트 빈 세션 데이터 자동 점검 및 제거 |
 

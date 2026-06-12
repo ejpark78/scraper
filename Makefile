@@ -27,7 +27,6 @@ lint:
 -include scripts/utils/docker.mk
 -include scripts/utils/worker.mk
 -include scripts/tools/tools.mk
--include scripts/utils/agents.mk
 
 list: RECURSIVE_SCRAPE=true
 list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list 
@@ -67,3 +66,6 @@ mongo-%:
 
 gm-%:
 	@$(MAKE) -f scripts/tools/gmail.mk $*
+
+agents-%:
+	@$(MAKE) -f scripts/tools/agents.mk $*
