@@ -105,6 +105,13 @@ export class WikiExporter {
         cleaned = cleaned.replace(/\[?unsubscribe\]?\(.*?\)/gi, '');
         cleaned = cleaned.replace(/\[?수신거부\]?\(.*?\)/g, '');
         
+        // Collapse newlines and extra spaces inside markdown links to keep them inline
+        cleaned = cleaned.replace(/\[\s*([\s\S]*?)\s*\]\(([^)]+)\)/g, (match, linkText, url) => {
+            const collapsedText = linkText.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!collapsedText) return '';
+            return `[${collapsedText}](${url.trim()})`;
+        });
+        
         return cleaned.trim();
     }
 
