@@ -44,7 +44,7 @@ export class ContextDumper {
     }
 
     try {
-      const mk = path.join(__dirname, '../../scripts/utils/pipeline.mk');
+      const mk = path.join(__dirname, '../../../scripts/utils/pipeline.mk');
       if (fs.existsSync(mk)) {
         const m = fs.readFileSync(mk, 'utf-8').match(/SCALE\s*\?=\s*(\d+)/);
         if (m) scale = m[1];
@@ -54,8 +54,8 @@ export class ContextDumper {
     }
 
     try {
-      gitBranch = execSync('git rev-parse --abbrev-ref HEAD 2>/dev/null', { cwd: path.join(__dirname, '../..'), stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
-      const statusOut = execSync('git status --porcelain 2>/dev/null', { cwd: path.join(__dirname, '../..'), stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      gitBranch = execSync('git rev-parse --abbrev-ref HEAD 2>/dev/null', { cwd: path.join(__dirname, '../../..'), stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
+      const statusOut = execSync('git status --porcelain 2>/dev/null', { cwd: path.join(__dirname, '../../..'), stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       if (statusOut) gitDirty = `(+${statusOut.split('\n').filter(Boolean).length}개 변경)`;
     } catch {
       // Ignore
@@ -160,7 +160,7 @@ ${filesSection}
         console.log(`  -> ${info.tag} (${s.title})`);
 
         // Check if brain_dump exists first (same logic as original)
-        const brainDumpPath = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag, 'brain_dump.md');
+        const brainDumpPath = path.join(__dirname, '..', '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag, 'brain_dump.md');
         if (!fs.existsSync(brainDumpPath)) {
           console.log(`  ⏭️  Skip (no brain_dump.md): ${info.tag}`);
           return;
@@ -169,7 +169,7 @@ ${filesSection}
         try {
           const detail = adapter.getSessionDetail(s.id);
           const md = this.buildContextMemory(detail.session, detail.messages);
-          const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
+          const outDir = path.join(__dirname, '..', '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
           fs.mkdirSync(outDir, { recursive: true });
           fs.writeFileSync(path.join(outDir, 'context_memory.md'), md, 'utf-8');
           console.log(`  ✨ Saved: ${outDir}/context_memory.md`);

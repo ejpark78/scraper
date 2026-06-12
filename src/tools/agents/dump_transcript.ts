@@ -17,7 +17,7 @@ import * as path from 'path';
 import { createAdapter, parseAgentsFromArg, assignSessionNumbers, AgentToolCall, AgentAdapter } from './lib/agent_adapter';
 
 export class TranscriptDumper {
-  private readonly workspaceRoot: string = path.resolve(__dirname, '../..');
+  private readonly workspaceRoot: string = path.resolve(__dirname, '../../..');
   private readonly adapter: AgentAdapter;
   private readonly allMode: boolean;
   private readonly agentName: string;
@@ -146,7 +146,7 @@ export class TranscriptDumper {
 
         const md = this.buildTranscript(s.id, s.title || s.id, detail.messages, taskLogs);
 
-        const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir);
+        const outDir = path.join(__dirname, '..', '..', '..', 'data', 'agents', this.agentName, info.dateDir);
         const destSessionDir = path.join(outDir, info.tag);
         fs.mkdirSync(destSessionDir, { recursive: true });
 

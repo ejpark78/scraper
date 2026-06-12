@@ -86,7 +86,7 @@ export class BrainDumper {
           const detail = adapter.getSessionDetail(s.id);
           const md = this.buildBrainDump(detail.session, detail.messages);
 
-          const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
+          const outDir = path.join(__dirname, '..', '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
           fs.mkdirSync(outDir, { recursive: true });
           const outPath = path.join(outDir, 'brain_dump.md');
           fs.writeFileSync(outPath, md, 'utf-8');

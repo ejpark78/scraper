@@ -18,7 +18,7 @@ interface BadLinkItem {
 }
 
 class RulesLinter {
-  private readonly transcriptsDir = path.join(__dirname, '../../data/agents');
+  private readonly transcriptsDir = path.join(__dirname, '../../../data/agents');
 
   public run(): void {
     try {
@@ -71,7 +71,7 @@ class RulesLinter {
       let match;
       while ((match = absoluteLinkPattern.exec(line)) !== null) {
         badLinks.push({
-          file: path.relative(path.join(__dirname, '../..'), filePath),
+          file: path.relative(path.join(__dirname, '../../..'), filePath),
           line: index + 1,
           text: match[0]
         });

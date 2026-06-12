@@ -1,54 +1,45 @@
 # ==============================================================================
-# 🤖 Agent Infrastructure Management Makefile (.agents/Makefile)
+# 🤖 Agent Infrastructure Compatibility Wrapper (.agents/Makefile)
 # ==============================================================================
-# Design Context: Main router for managing agent transcripts, contexts, and usage diagnostics.
-# Constraints:    Requires execute permissions on all helper scripts in .agents/scripts/.
-# Dependencies:   make, ts-node, bash, usage.ts
+# Design Context: Routes compatibility commands from old paths to root Makefile with prefix.
+# Dependencies:   make, ../Makefile, ../scripts/agents.mk
 # ==============================================================================
-# Usage:
-#   make -f .agents/Makefile <TARGET>             # agy only (default)
-#   make -f .agents/Makefile AGENTS=opencode <T>
-#   make -f .agents/Makefile AGENTS=agy,opencode <T>
 
 SHELL := /bin/bash
 
-AGENTS ?= agy
+REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))..)
 
-.PHONY: dump-transcripts dump-context dump-brain prune usage get-agy-token
-
-AGENTS_FLAG = --agent=$(AGENTS)
+.PHONY: dump-transcripts dump-context dump-brain dump-sysinfo compress-rules lint-rules usage prune dump-all commit get-agy-token
 
 get-agy-token:
-	@PORT=$$(echo $${ANTIGRAVITY_LS_ADDRESS} | cut -d':' -f2); \
-	if [ -z "$$PORT" ]; then PORT="46177"; fi; \
-	echo "ANTIGRAVITY_BASE_URL=http://host.docker.internal:$$PORT"; \
-	echo "ANTIGRAVITY_CSRF_TOKEN=$${ANTIGRAVITY_CSRF_TOKEN}"
+	@$(MAKE) -C $(REPO_ROOT) agents-get-agy-token
 
 dump-transcripts:
-	@npx ts-node .agents/scripts/dump_transcript.ts --all $(AGENTS_FLAG)
+	@$(MAKE) -C $(REPO_ROOT) agents-dump-transcripts
 
 dump-context:
-	@npx ts-node .agents/scripts/dump_context.ts --all $(AGENTS_FLAG)
+	@$(MAKE) -C $(REPO_ROOT) agents-dump-context
 
 dump-brain:
-	@npx ts-node .agents/scripts/dump_brain.ts --all $(AGENTS_FLAG)
+	@$(MAKE) -C $(REPO_ROOT) agents-dump-brain
 
 dump-sysinfo:
-	@npx ts-node .agents/scripts/dump_sysinfo.ts
+	@$(MAKE) -C $(REPO_ROOT) agents-dump-sysinfo
 
 compress-rules:
-	@npx ts-node .agents/scripts/compress_rules.ts
+	@$(MAKE) -C $(REPO_ROOT) agents-compress-rules
 
 lint-rules:
-	@npx ts-node .agents/scripts/lint_rules.ts
+	@$(MAKE) -C $(REPO_ROOT) agents-lint-rules
 
 usage:
-	@npx ts-node .agents/scripts/usage.ts
+	@$(MAKE) -C $(REPO_ROOT) agents-usage
 
 prune:
-	@npx ts-node .agents/scripts/prune_session.ts
+	@$(MAKE) -C $(REPO_ROOT) agents-prune
 
-dump-all: dump-sysinfo dump-transcripts dump-context dump-brain compress-rules lint-rules
+dump-all:
+	@$(MAKE) -C $(REPO_ROOT) agents-dump-all
 
 commit:
-	bash .agents/scripts/commit-changes.sh
+	@$(MAKE) -C $(REPO_ROOT) agents-commit

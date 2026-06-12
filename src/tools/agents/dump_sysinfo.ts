@@ -29,7 +29,7 @@ class SysInfoDumper {
       };
 
       // Write to data/agents/agy/
-      const transcriptsAgyDir = path.join(__dirname, '../../data/agents/agy');
+      const transcriptsAgyDir = path.join(__dirname, '../../../data/agents/agy');
       fs.mkdirSync(transcriptsAgyDir, { recursive: true });
       const destPath = path.join(transcriptsAgyDir, 'sysinfo_cache.json');
       fs.writeFileSync(destPath, JSON.stringify(info, null, 2), 'utf-8');

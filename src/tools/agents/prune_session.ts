@@ -19,7 +19,7 @@ class SessionPruner {
 
   constructor() {
     this.baseBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
-    this.transcriptsDir = path.join(__dirname, '../../data/agents');
+    this.transcriptsDir = path.join(__dirname, '../../../data/agents');
   }
 
   public run(): void {

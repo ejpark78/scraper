@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 class RuleCompressor {
-  private readonly rulesDir = path.join(__dirname, '../rules');
+  private readonly rulesDir = path.join(__dirname, '../../../.agents/rules');
 
   public run(): void {
     try {
@@ -32,7 +32,7 @@ class RuleCompressor {
       });
 
       // Write to data/agents/agy/
-      const transcriptsAgyDir = path.join(__dirname, '../../data/agents/agy');
+      const transcriptsAgyDir = path.join(__dirname, '../../../data/agents/agy');
       fs.mkdirSync(transcriptsAgyDir, { recursive: true });
       const destPath = path.join(transcriptsAgyDir, 'rules_compact.txt');
       fs.writeFileSync(destPath, compressedText.trim(), 'utf-8');
