@@ -18,5 +18,8 @@ down:
 	$(COMPOSE) --profile runtime --profile tools down || true
 	@echo "🛑 모든 서비스가 종료되었습니다."
 
-kasm:
+logs:
+	$(COMPOSE) logs -f scraper converter
+
+shell:
 	$(COMPOSE) exec -it kasm /bin/zsh
