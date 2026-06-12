@@ -17,7 +17,7 @@ refresh:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [GeekNews] Starting backfill refresh (DAY: $(DAY))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/sites/geeknews/Backfill.ts $(DAY)
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/sites/geeknews/List.ts $(DAY)
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
