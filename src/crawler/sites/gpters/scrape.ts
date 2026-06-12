@@ -15,7 +15,15 @@ function extractIdFromGptersUrl(url: string): string {
   return parts[parts.length - 1] || '';
 }
 
+let cachedToken: string | null = null;
+let tokenExpiry = 0;
+
 async function fetchGptersGuestToken(): Promise<string> {
+  const now = Date.now();
+  if (cachedToken && now < tokenExpiry) {
+    return cachedToken;
+  }
+
   const res = await fetch(`https://www.${descriptor.domain}/news`, {
     headers: {
       'User-Agent':
@@ -30,8 +38,27 @@ async function fetchGptersGuestToken(): Promise<string> {
   if (!match) {
     throw new Error('Failed to extract GPTERS guest access token from homepage');
   }
-  return match[1];
+  
+  cachedToken = match[1];
+  try {
+    const payloadPart = cachedToken.split('.')[1];
+    if (payloadPart) {
+      const decoded = JSON.parse(Buffer.from(payloadPart, 'base64').toString('utf-8'));
+      if (decoded && decoded.exp) {
+        tokenExpiry = decoded.exp * 1000 - 300000; // 5 min margin
+      } else {
+        tokenExpiry = now + 3600000;
+      }
+    } else {
+      tokenExpiry = now + 3600000;
+    }
+  } catch {
+    tokenExpiry = now + 3600000;
+  }
+
+  return cachedToken;
 }
+
 
 export async function scrapeGptersGraphQL(url: string, tempPath: string): Promise<void> {
   const id = extractIdFromGptersUrl(url);
