@@ -10,7 +10,7 @@ login:
 	SITE=$(SITE) npx ts-node src/crawler/sites/linkedin/Crawler.ts login
 
 open:
-	SITE=$(SITE) npx ts-node src/browser/open.ts
+	SITE=$(SITE) npx ts-node src/tools/browser/open.ts
 
 logout:
 	rm -f data/sessions/$(SITE).json

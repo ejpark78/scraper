@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { PyTorchKRConverter } from './Converter';
-import { BrowserPool } from '../../../browser/pool';
+import { BrowserPool } from '../../../tools/browser/pool';
 import { descriptor, PyTorchKRMeta } from './site.config';
 
 export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {

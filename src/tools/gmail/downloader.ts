@@ -83,13 +83,17 @@ export class GmailBulkDownloader {
                     const subject = msgMeta.envelope?.subject || "제목 없음";
                     const rawDate = msgMeta.envelope?.date ?? msgMeta.internalDate;
                     const dateObj: Date | undefined = typeof rawDate === 'string' ? new Date(rawDate) : rawDate;
+                    
+                    const senderEmail = EmailParser.getSenderEmail(msgMeta.envelope);
+                    const uniqueId = EmailParser.generateUniqueId(dateObj, senderEmail);
+
                     const [isoDateKst] = EmailParser.convertToKstIso(dateObj);
                     const shortSubject = subject.length > 30 ? subject.substring(0, 30) + "..." : subject;
 
                     // 4. 중복 파일이 이미 로컬 디렉토리에 있다면 본문 패치를 스킵하고 로그 출력
-                    if (exporter.existsByUid(folderAlias, mailIdStr, dateObj)) {
+                    if (exporter.existsByUid(folderAlias, uniqueId, dateObj)) {
                         skipped++;
-                        console.log(`⏭️  [${idx}/${total}] [스킵] ID: ${mailIdStr} | KST: ${isoDateKst} | 제목: ${shortSubject}`);
+                        console.log(`⏭️  [${idx}/${total}] [스킵] ID: ${uniqueId} | KST: ${isoDateKst} | 제목: ${shortSubject}`);
                         continue;
                     }
 
@@ -97,8 +101,8 @@ export class GmailBulkDownloader {
                     const msgContent = await this.client.fetchOne(mailIdStr, { source: true });
                     if (msgContent && msgContent.source) {
                         const parsed = await simpleParser(msgContent.source);
-                        console.log(`📥 [${idx}/${total}] [다운] ID: ${mailIdStr} | KST: ${isoDateKst} | 제목: ${shortSubject}`);
-                        yield [mailIdStr, parsed, msgContent.source];
+                        console.log(`📥 [${idx}/${total}] [다운] ID: ${uniqueId} | KST: ${isoDateKst} | 제목: ${shortSubject}`);
+                        yield [uniqueId, parsed, msgContent.source];
                     }
                 } catch (innerErr) {
                     console.log(`❌ [${idx}/${total}] [단건 에러] ID: ${mailIdStr} 처리 실패: ${innerErr}`);
