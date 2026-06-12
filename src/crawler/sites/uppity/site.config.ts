@@ -26,7 +26,7 @@ export const SECTIONS = [
     { slug: 'category/cloumn/moneylog', name: '레거시 머니로그' },
     { slug: 'category/news', name: '레거시 뉴스' },
     { slug: 'category/newsletter', name: '레거시 뉴스레터' },
-    { slug: 'category/2030-리서치', name: '2030 리서치' },
+    { slug: '2030-research', name: '2030 리서치' },
 ];
 
 export interface UppityMeta {

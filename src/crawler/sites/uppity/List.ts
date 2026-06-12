@@ -118,23 +118,27 @@ class UppityList extends BaseListService {
         const seen = new Set<string>();
 
         const selectors = [
-            'main#content .uc_post_title a',
-            'main#content .ue_p_title a',
-            'main#content .ue_post_grid h2 a',
-            'main#content .ue_post_grid h3 a',
-            'main#content .ue_post_grid h4 a',
-            'main#content .uc_post_grid_style_one_wrap h2 a',
-            'main#content .uc_post_grid_style_one_wrap h3 a',
-            'main#content .uc_post_grid_style_one_wrap h4 a',
-            'main#content h2 a',
-            'main#content h3 a',
-            'main#content h4 a',
-            'main#content .post-title a',
-            'main#content .entry-title a',
+            '.uc_post_title a',
+            '.ue_p_title a',
+            '.ue_post_grid h2 a',
+            '.ue_post_grid h3 a',
+            '.ue_post_grid h4 a',
+            '.uc_post_grid_style_one_wrap h2 a',
+            '.uc_post_grid_style_one_wrap h3 a',
+            '.uc_post_grid_style_one_wrap h4 a',
+            'h2 a',
+            'h3 a',
+            'h4 a',
+            '.post-title a',
+            '.entry-title a',
         ];
 
+        const container = $('main#content, .elementor-location-archive').length > 0
+            ? $('main#content, .elementor-location-archive')
+            : $('body');
+
         for (const sel of selectors) {
-            $(sel).each((_, el) => {
+            container.find(sel).each((_, el) => {
                 const href = $(el).attr('href');
                 const title = $(el).text().trim();
                 if (href && title && href.startsWith(`https://${descriptor.domain}/`) && !seen.has(href)) {
