@@ -19,7 +19,7 @@ dotenv.config({ override: true });
         process.exit(1);
     }
 
-    const exporter = new WikiExporter("data/gmail");
+    const exporter = new WikiExporter("/data");
     const downloader = new GmailBulkDownloader();
     let isConnected = false;
 

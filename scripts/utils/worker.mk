@@ -4,8 +4,7 @@
 
 .PHONY: *
 
-SCALE ?= 1
-
+SCALE         ?= 1
 SCRIPTS_MOUNT ?= -v ./src/scripts:/app/src/scripts
 
 restart:

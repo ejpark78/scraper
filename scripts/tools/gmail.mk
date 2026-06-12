@@ -2,7 +2,9 @@
 # ✉️ Gmail Bulk Export Commands
 # ==============================================================================
 
-.PHONY: run
+.PHONY: dump
 
-run:
-	$(COMPOSE) run --rm $(RUN_USER) gmail npx ts-node src/tools/gmail/gmail.ts
+DATA_MOUNT ?= -v ./data/gmail:/data
+
+dump:
+	$(COMPOSE) run --rm $(RUN_USER) $(DATA_MOUNT) gmail npx ts-node src/tools/gmail/gmail.ts
