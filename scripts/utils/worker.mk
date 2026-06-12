@@ -18,10 +18,18 @@ grep-errors:
 	$(COMPOSE) logs --no-color scraper converter | $(COMPOSE) run --rm -T $(RUN_USER) $(SCRIPTS_MOUNT) worker npx ts-node src/scripts/grep-errors.ts
 
 dump-queue:
-	bash src/scripts/dump-queue.sh
+	@echo "📥 Dumping all active Redis scrape queues to [data/queue_dump.json]..."
+	$(COMPOSE) run --rm $(RUN_USER) $(SCRIPTS_MOUNT) -v $$(pwd)/data:/app/data worker npx ts-node src/scripts/dump-queue.ts
+	@echo "🎉 Done! You can view the dump at: data/queue_dump.json"
 
 fix-urls:
-	bash src/scripts/run-fix-urls.sh
+	@echo "=== 📊 [BEFORE] Redis Queue Status ==="
+	$(COMPOSE) run --rm $(RUN_USER) $(SCRIPTS_MOUNT) worker npx ts-node src/scripts/get-queue-status.ts
+	@echo "🧼 Starting Target URL & Queue Cleanup..."
+	$(COMPOSE) run --rm $(RUN_USER) $(SCRIPTS_MOUNT) worker npx ts-node src/scripts/fix-urls.ts
+	@echo "=== 📊 [AFTER] Redis Queue Status ==="
+	$(COMPOSE) run --rm $(RUN_USER) $(SCRIPTS_MOUNT) worker npx ts-node src/scripts/get-queue-status.ts
+	@echo "🎉 Cleanup process complete!"
 
 get-queue-status:
 	$(COMPOSE) run --rm $(RUN_USER) $(SCRIPTS_MOUNT) worker npx ts-node src/scripts/get-queue-status.ts
