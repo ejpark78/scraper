@@ -13,7 +13,7 @@ services:
   yacht:
     image: selfhostedpro/yacht:latest
     profiles:
-      - tools
+      - yacht
     depends_on:
       traefik:
         condition: service_healthy

@@ -106,10 +106,12 @@ class UppityList extends BaseListService {
         const selectors = [
             '.uc_post_title a',
             '.ue_p_title a',
-            '.elementor-heading-title a',
-            'h2 a',
-            'h3 a',
-            'h4 a',
+            '.ue_post_grid h2 a',
+            '.ue_post_grid h3 a',
+            '.ue_post_grid h4 a',
+            '.uc_post_grid_style_one_wrap h2 a',
+            '.uc_post_grid_style_one_wrap h3 a',
+            '.uc_post_grid_style_one_wrap h4 a',
             '.post-title a',
             '.entry-title a',
         ];

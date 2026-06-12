@@ -11,7 +11,7 @@ services:
   onwatch:
     image: ghcr.io/onllm-dev/onwatch:latest
     profiles:
-      - tools
+      - onwatch
     environment:
       - TZ=Asia/Seoul
       - PORT=9211

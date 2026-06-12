@@ -13,7 +13,7 @@ services:
   dozzle:
     image: amir20/dozzle:latest
     profiles:
-      - tools
+      - dozzle
     depends_on:
       traefik:
         condition: service_healthy
