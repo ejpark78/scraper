@@ -64,21 +64,27 @@ export const descriptor: SiteDescriptor = {
     scrape: scrapeHttpFetch,
     generateUrls: (config: { page?: number }): string[] => {
       const page = config.page || 1;
-      if (page > 1) {
-        return [
-          page <= 5 ? `https://news.hada.io/?page=${page}` : `https://news.hada.io/past?page=${page}`,
+      const urls: string[] = [];
+
+      if (page === 1) {
+        urls.push(
+          'https://news.hada.io/',
+          'https://news.hada.io/new',
+          'https://news.hada.io/weekly',
+          'https://news.hada.io/plus',
+          'https://news.hada.io/show'
+        );
+      } else {
+        if (page <= 5) {
+          urls.push(`https://news.hada.io/?page=${page}`);
+        }
+        urls.push(
           `https://news.hada.io/weekly/page/${page}`,
           `https://news.hada.io/plus?page=${page}`,
-          `https://news.hada.io/show?page=${page}`,
-        ];
+          `https://news.hada.io/show?page=${page}`
+        );
       }
-      return [
-        'https://news.hada.io/',
-        'https://news.hada.io/new',
-        'https://news.hada.io/weekly',
-        'https://news.hada.io/plus',
-        'https://news.hada.io/show',
-      ];
+      return urls;
     },
   },
 
