@@ -4,7 +4,7 @@
 
 .PHONY: *
 
-SCALE ?= 3
+SCALE ?= 1
 
 restart:
 	SCALE=$(SCALE) $(COMPOSE) up -d --build worker scraper converter
