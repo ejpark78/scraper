@@ -65,9 +65,20 @@ export const descriptor: SiteDescriptor = {
     generateUrls: (config: { page?: number }): string[] => {
       const page = config.page || 1;
       if (page > 1) {
-        return [page <= 5 ? `https://news.hada.io/?page=${page}` : `https://news.hada.io/past?page=${page}`];
+        return [
+          page <= 5 ? `https://news.hada.io/?page=${page}` : `https://news.hada.io/past?page=${page}`,
+          `https://news.hada.io/weekly/page/${page}`,
+          `https://news.hada.io/plus?page=${page}`,
+          `https://news.hada.io/show?page=${page}`,
+        ];
       }
-      return ['https://news.hada.io/'];
+      return [
+        'https://news.hada.io/',
+        'https://news.hada.io/new',
+        'https://news.hada.io/weekly',
+        'https://news.hada.io/plus',
+        'https://news.hada.io/show',
+      ];
     },
   },
 

@@ -23,74 +23,75 @@ class GeekNewsList extends BaseListService {
     }
 
     public async run(page: number = 1): Promise<number> {
-        let url = descriptor.domain ? `https://${descriptor.domain}/` : 'https://news.hada.io/';
+        let urls = [descriptor.domain ? `https://${descriptor.domain}/` : 'https://news.hada.io/'];
         if (descriptor.scraper?.generateUrls) {
-            const urls = descriptor.scraper.generateUrls({ page });
-            if (urls.length > 0) {
-                url = urls[0];
-            }
+            urls = descriptor.scraper.generateUrls({ page });
         }
 
         const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
-        if (sleepSec > 0) {
-            console.log(`💤 [대기] GeekNews 목록 수집 전 ${sleepSec}초 대기 중...`);
-            await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
-        }
-
-        console.log(`🌐 [GeekNews List] Fetching index page: ${url}`);
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch GeekNews index. Status: ${response.status}`);
-        }
-
-        const html = await response.text();
-
-
-
-        const $ = cheerio.load(html);
-        const topicRows = $('.topic_row');
-        console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on index page.`);
-
         await this.seedCache();
 
         let queuedCount = 0;
 
-        for (let i = 0; i < topicRows.length; i++) {
-            const row = $(topicRows[i]);
-            const titleEl = row.find('.topictitle a');
-            if (titleEl.length === 0) continue;
-
-            const title = titleEl.text().trim();
-            let relativeUrl = titleEl.attr('href') || '';
-            if (!relativeUrl) continue;
-
-            let topicUrl = '';
-            const commentLinkEl = row.find('a[href^="topic?id="], a[href*="topic?id="]');
-            if (commentLinkEl.length > 0) {
-                topicUrl = commentLinkEl.first().attr('href') || '';
-            } else if (relativeUrl.includes('topic?id=')) {
-                topicUrl = relativeUrl;
+        for (const url of urls) {
+            if (sleepSec > 0) {
+                console.log(`💤 [대기] GeekNews 목록 수집 전 ${sleepSec}초 대기 중...`);
+                await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
             }
 
-            if (!topicUrl) continue;
+            console.log(`🌐 [GeekNews List] Fetching page: ${url}`);
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                    }
+                });
 
-            let detailUrl = `https://${descriptor.domain}/${topicUrl.replace(/^\//, '')}`;
+                if (!response.ok) {
+                    console.error(`❌ Failed to fetch GeekNews page ${url}. Status: ${response.status}`);
+                    continue;
+                }
 
-            let id = '';
-            const match = topicUrl.match(/id=(\d+)/);
-            if (match) {
-                id = match[1];
-            }
+                const html = await response.text();
+                const $ = cheerio.load(html);
+                const topicRows = $('.topic_row');
+                console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on page: ${url}`);
 
-            if (!id) continue;
+                for (let i = 0; i < topicRows.length; i++) {
+                    const row = $(topicRows[i]);
+                    const titleEl = row.find('.topictitle a');
+                    if (titleEl.length === 0) continue;
 
-            if (await this.processItem(id, detailUrl, title)) {
-                queuedCount++;
+                    const title = titleEl.text().trim();
+                    let relativeUrl = titleEl.attr('href') || '';
+                    if (!relativeUrl) continue;
+
+                    let topicUrl = '';
+                    const commentLinkEl = row.find('a[href^="topic?id="], a[href*="topic?id="]');
+                    if (commentLinkEl.length > 0) {
+                        topicUrl = commentLinkEl.first().attr('href') || '';
+                    } else if (relativeUrl.includes('topic?id=')) {
+                        topicUrl = relativeUrl;
+                    }
+
+                    if (!topicUrl) continue;
+
+                    let detailUrl = `https://${descriptor.domain}/${topicUrl.replace(/^\//, '')}`;
+
+                    let id = '';
+                    const match = topicUrl.match(/id=(\d+)/);
+                    if (match) {
+                        id = match[1];
+                    }
+
+                    if (!id) continue;
+
+                    if (await this.processItem(id, detailUrl, title)) {
+                        queuedCount++;
+                    }
+                }
+            } catch (err: any) {
+                console.error(`❌ Error fetching/processing ${url}: ${err.message}`);
             }
         }
 
