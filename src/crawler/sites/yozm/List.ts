@@ -29,14 +29,28 @@ class YozmList extends BaseListService {
 
     console.log(`🌐 [Yozm List] Fetching sitemap: ${SITEMAP_URL}`);
 
-    const res = await fetch(SITEMAP_URL, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-    });
+    let res: Response | null = null;
+    const retries = 3;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        res = await fetch(SITEMAP_URL, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+        });
+        if (res.ok) break;
 
-    if (!res.ok) {
-      console.log(`⚠️ Sitemap fetch failed (${res.status}). Stopping.`);
+        console.warn(`⚠️ [Yozm List] Sitemap fetch failed with status ${res.status} (attempt ${attempt}/${retries}). Waiting ${attempt * 5}s before retry...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 5000));
+      } catch (err: any) {
+        console.warn(`⚠️ [Yozm List] Sitemap fetch network error: ${err.message} (attempt ${attempt}/${retries}). Waiting ${attempt * 5}s before retry...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 5000));
+      }
+    }
+
+    if (!res || !res.ok) {
+      const statusMsg = res ? `HTTP status ${res.status}` : 'Network error';
+      console.error(`❌ [Yozm List] Sitemap fetch failed (${statusMsg}). Stopping.`);
       return 0;
     }
 
