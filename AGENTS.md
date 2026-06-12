@@ -10,7 +10,7 @@
    * If searching for code symbols across multiple files, use `grep_search` to pinpoint the matching line numbers instead of reading files one-by-one, minimizing API/token consumption while maintaining full coverage.
 4. **Transparent Issues**: Report errors immediately. No silent restores. Max 2 autonomous troubleshooting retries without user review.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
-6. **Automatic Git Commits**: Run `scripts/agents/commit-changes.sh` (or via `.agents/scripts/commit-changes.sh` wrapper) immediately after valid edits.
+6. **Automatic Git Commits**: Run `scripts/agents/commit-changes.sh` immediately after valid edits.
 7. **Docker-Centric Testing & Execution**: Test and execute all local scripts via `docker compose`. Distinguish testing/debugging from production verification:
    * **Debugging/Testing**: Always use volume mounting to synchronize source files in real-time (e.g., `docker compose -p linkedin run --rm --user $(id -u):$(id -g) -v $(pwd):/app -v /app/node_modules worker npx ts-node src/...`). Do not use `docker cp`.
    * **Production/Verification**: When validating the final built image (production context), run without volume mounts (after rebuilding the image). Ensure scripts can access MongoDB/Redis within the Docker network context.
@@ -36,8 +36,5 @@
 The following commands/scripts are pre-approved and exempt from Rule 1's and Rule 2's consent loops:
 - `git ls-files` (Read-only project codebase mapping to minimize token/API usage)
 - `scripts/agents/commit-changes.sh` (Runs automatically after edits to save progress)
-- `.agents/scripts/commit-changes.sh` (Compatibility wrapper, runs automatically after edits to save progress)
 - `make agents-dump-all AGENTS=agy` (Runs on session start to generate/export session reports)
 - `make -f .agents/Makefile dump-all AGENTS=agy` (Compatibility wrapper, runs on session start to generate/export session reports)
-
-
