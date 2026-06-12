@@ -37,6 +37,19 @@ class DailyDoseDSList extends BaseListService {
 
         let queuedCount = 0;
 
+        // Seed configured seedUrls
+        if (descriptor.seedUrls && descriptor.seedUrls.length > 0) {
+            console.log(`🌱 [Daily Dose DS List] Processing ${descriptor.seedUrls.length} configured seed URLs...`);
+            for (const url of descriptor.seedUrls) {
+                const id = descriptor.scraper?.extractId ? descriptor.scraper.extractId(url) : Buffer.from(url).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+                if (!id) continue;
+                const title = url.split('/').filter(Boolean).pop() || 'Seed URL';
+                if (await this.processItem(id, url, title)) {
+                    queuedCount++;
+                }
+            }
+        }
+
         for (let p = 1; p <= maxPage; p++) {
             let fetchUrl = '';
             if (descriptor.scraper?.generateUrls) {

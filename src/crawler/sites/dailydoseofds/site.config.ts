@@ -53,7 +53,7 @@ export const descriptor: SiteDescriptor = {
     'https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-1-with-implementations/',
     'https://www.dailydoseofds.com/bi-encoders-and-cross-encoders-for-sentence-pair-similarity-scoring-part-1/',
     'https://www.dailydoseofds.com/where-did-the-assumptions-of-linear-regression-originate-from/',
-    'https://www.dailydoseofds.com/8-fatal-yet-non-obvious-pitfalls-and-cautionary-measures-in-data-science/'
+    'https://www.dailydoseofds.com/1-fatal-yet-non-obvious-pitfalls-and-cautionary-measures-in-data-science/'
   ],
 
   scraper: {
