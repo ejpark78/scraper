@@ -327,13 +327,25 @@ export class BaseRefreshUrls {
         const chunkSize = 1000;
         for (let i = 0; i < newUrls.length; i += chunkSize) {
             const chunk = newUrls.slice(i, i + chunkSize);
-            const bulkOps = chunk.map(u => ({
-                updateOne: {
-                    filter: { [idField]: u.id },
-                    update: { $set: { [idField]: u.id, url: u.url, status: 'new', pushedToRedis: false, updatedAt: new Date() } },
-                    upsert: true,
+            const bulkOps = chunk.map(u => {
+                const updateFields: Record<string, any> = {
+                    [idField]: u.id,
+                    url: u.url,
+                    status: 'new',
+                    pushedToRedis: false,
+                    updatedAt: new Date()
+                };
+                if (idField !== 'id') {
+                    updateFields.id = u.id;
                 }
-            }));
+                return {
+                    updateOne: {
+                        filter: { [idField]: u.id },
+                        update: { $set: updateFields },
+                        upsert: true,
+                    }
+                };
+            });
             await urlsColl.bulkWrite(bulkOps);
         }
 
