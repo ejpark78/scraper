@@ -12,6 +12,8 @@ import { BaseListService } from '../../core/BaseListService';
 import { descriptor } from './site.config';
 
 class GeekNewsList extends BaseListService {
+    private exhaustedSections = new Set<string>();
+
     constructor() {
         super({
             site: descriptor.key,
@@ -20,6 +22,15 @@ class GeekNewsList extends BaseListService {
             bronzeHtmlCollection: descriptor.scraper?.collectionName || `bronze/${descriptor.key}.html` as any,
             urlsCollection: descriptor.scraper?.urlsCollectionName || `bronze/${descriptor.key}.urls` as any,
         });
+    }
+
+    private getBasePath(urlStr: string): string {
+        try {
+            const u = new URL(urlStr);
+            return u.pathname.startsWith('/weekly') ? '/weekly' : u.pathname;
+        } catch {
+            return urlStr;
+        }
     }
 
     public async run(page: number = 1): Promise<number> {
@@ -34,6 +45,12 @@ class GeekNewsList extends BaseListService {
         let queuedCount = 0;
 
         for (const url of urls) {
+            const basePath = this.getBasePath(url);
+            if (this.exhaustedSections.has(basePath)) {
+                console.log(`⏭️ [GeekNews List] Skipping exhausted section URL: ${url}`);
+                continue;
+            }
+
             if (sleepSec > 0) {
                 console.log(`💤 [대기] GeekNews 목록 수집 전 ${sleepSec}초 대기 중...`);
                 await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
@@ -48,7 +65,12 @@ class GeekNewsList extends BaseListService {
                 });
 
                 if (!response.ok) {
-                    console.error(`❌ Failed to fetch GeekNews page ${url}. Status: ${response.status}`);
+                    if (response.status === 404) {
+                        console.warn(`⚠️ [GeekNews List] Status 404 for ${url}. Marking section ${basePath} as exhausted.`);
+                        this.exhaustedSections.add(basePath);
+                    } else {
+                        console.error(`❌ Failed to fetch GeekNews page ${url}. Status: ${response.status}`);
+                    }
                     continue;
                 }
 
@@ -63,6 +85,12 @@ class GeekNewsList extends BaseListService {
                             issueLinks.push(href);
                         }
                     });
+
+                    if (issueLinks.length === 0) {
+                        console.log(`🏁 [GeekNews List] Found 0 weekly issues on archive page: ${url}. Marking section ${basePath} as exhausted.`);
+                        this.exhaustedSections.add(basePath);
+                        continue;
+                    }
 
                     console.log(`🔍 [GeekNews List] Found ${issueLinks.length} weekly issues on archive page.`);
 
@@ -114,6 +142,12 @@ class GeekNewsList extends BaseListService {
                 } else {
                     const topicRows = $('.topic_row');
                     console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on page: ${url}`);
+
+                    if (topicRows.length === 0) {
+                        console.log(`🏁 [GeekNews List] Found 0 topics on page: ${url}. Marking section ${basePath} as exhausted.`);
+                        this.exhaustedSections.add(basePath);
+                        continue;
+                    }
 
                     for (let i = 0; i < topicRows.length; i++) {
                         const row = $(topicRows[i]);
