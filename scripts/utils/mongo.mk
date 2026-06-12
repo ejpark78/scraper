@@ -36,3 +36,7 @@ index:
 	@echo "🐳 Running index synchronization via volume-mounted temporary container..."
 	$(COMPOSE) run --rm -v $$(pwd):/app -T viewer npx ts-node src/scripts/sync-indexes.ts
 
+show-columns:
+	@echo "🔍 Mapping MongoDB Collection Columns..."
+	$(COMPOSE) run --rm $(RUN_USER) -v $$(pwd):/app -v /app/node_modules worker npx ts-node src/scripts/show_collection_columns.ts
+
