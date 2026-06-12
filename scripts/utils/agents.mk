@@ -19,22 +19,24 @@ AGENTS_FLAG = --agent=$(AGENTS)
         prune \
         commit
 
-dump: dump-sysinfo dump-transcripts dump-context dump-brain compress-rules
+dump:
+	@npx ts-node src/tools/agents/dump.ts --all-targets --all $(AGENTS_FLAG)
+	@$(MAKE) -f scripts/utils/agents.mk compress-rules
 
 dump-transcripts:
-	@npx ts-node src/tools/agents/dump_transcript.ts --all $(AGENTS_FLAG)
+	@npx ts-node src/tools/agents/dump.ts --transcript --all $(AGENTS_FLAG)
 
 dump-context:
-	@npx ts-node src/tools/agents/dump_context.ts --all $(AGENTS_FLAG)
+	@npx ts-node src/tools/agents/dump.ts --context --all $(AGENTS_FLAG)
 
 dump-brain:
-	@npx ts-node src/tools/agents/dump_brain.ts --all $(AGENTS_FLAG)
+	@npx ts-node src/tools/agents/dump.ts --brain --all $(AGENTS_FLAG)
 
 dump-sysinfo:
-	@npx ts-node src/tools/agents/dump_sysinfo.ts
+	@npx ts-node src/tools/agents/dump.ts --sysinfo
 
 compress-rules:
-	@npx ts-node src/tools/agents/dump_context.ts --all $(AGENTS_FLAG)
+	@npx ts-node src/tools/agents/dump.ts --context --all $(AGENTS_FLAG)
 	@npx ts-node src/tools/agents/compress_rules.ts
 
 usage:
