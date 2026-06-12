@@ -3,7 +3,7 @@
 # Description: Unified utility script to manage agent sessions (dumping transcripts, context, brain, sysinfo, and pruning empty sessions).
 # Constraints:
 #   - Relies on arguments to choose actions: --sysinfo, --transcript, --context, --brain, --prune, --all-targets.
-# Dependencies: fs, path, os, child_process, ./lib/agent_adapter
+# Dependencies: fs, path, os, child_process, ./agent_adapter
 # ==============================================================================
  */
 
@@ -19,7 +19,7 @@ import {
   AgentAdapter,
   AgentMessage,
   AgentSession
-} from './lib/agent_adapter';
+} from './agent_adapter';
 
 // ==============================================================================
 // 1. SysInfo Dumper
