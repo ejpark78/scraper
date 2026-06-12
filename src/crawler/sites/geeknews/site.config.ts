@@ -70,7 +70,7 @@ export const descriptor: SiteDescriptor = {
         urls.push(
           'https://news.hada.io/',
           'https://news.hada.io/new',
-          'https://news.hada.io/weekly',
+          'https://news.hada.io/weekly/page/1',
           'https://news.hada.io/plus',
           'https://news.hada.io/show'
         );

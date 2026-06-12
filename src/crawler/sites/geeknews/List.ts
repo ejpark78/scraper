@@ -54,40 +54,99 @@ class GeekNewsList extends BaseListService {
 
                 const html = await response.text();
                 const $ = cheerio.load(html);
-                const topicRows = $('.topic_row');
-                console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on page: ${url}`);
 
-                for (let i = 0; i < topicRows.length; i++) {
-                    const row = $(topicRows[i]);
-                    const titleEl = row.find('.topictitle a');
-                    if (titleEl.length === 0) continue;
+                if (url.includes('/weekly')) {
+                    const issueLinks: string[] = [];
+                    $('.weekly a[href*="/weekly/"]').each((_, el) => {
+                        const href = $(el).attr('href');
+                        if (href) {
+                            issueLinks.push(href);
+                        }
+                    });
 
-                    const title = titleEl.text().trim();
-                    let relativeUrl = titleEl.attr('href') || '';
-                    if (!relativeUrl) continue;
+                    console.log(`🔍 [GeekNews List] Found ${issueLinks.length} weekly issues on archive page.`);
 
-                    let topicUrl = '';
-                    const commentLinkEl = row.find('a[href^="topic?id="], a[href*="topic?id="]');
-                    if (commentLinkEl.length > 0) {
-                        topicUrl = commentLinkEl.first().attr('href') || '';
-                    } else if (relativeUrl.includes('topic?id=')) {
-                        topicUrl = relativeUrl;
+                    for (const issueLink of issueLinks) {
+                        const issueUrl = issueLink.startsWith('http') ? issueLink : `https://${descriptor.domain || 'news.hada.io'}/${issueLink.replace(/^\//, '')}`;
+                        console.log(`🌐 [GeekNews List] Fetching weekly issue: ${issueUrl}`);
+                        if (sleepSec > 0) {
+                            await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
+                        }
+                        try {
+                            const issueRes = await fetch(issueUrl, {
+                                headers: {
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                                }
+                            });
+                            if (!issueRes.ok) continue;
+                            const issueHtml = await issueRes.text();
+                            const $issue = cheerio.load(issueHtml);
+
+                            let issueTopicsCount = 0;
+                            const promises: Promise<void>[] = [];
+                            // Extract topics from weekly issue page
+                            $issue('a[href*="topic?id="]').each((_, el) => {
+                                const title = $issue(el).text().trim();
+                                const href = $issue(el).attr('href') || '';
+                                if (!title || !href) return;
+
+                                const match = href.match(/id=(\d+)/);
+                                if (match) {
+                                    const id = match[1];
+                                    const detailUrl = href.startsWith('http') ? href : `https://${descriptor.domain || 'news.hada.io'}/${href.replace(/^\//, '')}`;
+                                    
+                                    promises.push(
+                                        this.processItem(id, detailUrl, title).then(queued => {
+                                            if (queued) {
+                                                queuedCount++;
+                                                issueTopicsCount++;
+                                            }
+                                        }).catch(() => {})
+                                    );
+                                }
+                            });
+                            await Promise.all(promises);
+                            console.log(`🔍 [GeekNews List] Processed weekly issue ${issueUrl}: queued ${issueTopicsCount} new topics.`);
+                        } catch (issueErr: any) {
+                            console.error(`❌ Error parsing weekly issue ${issueUrl}: ${issueErr.message}`);
+                        }
                     }
+                } else {
+                    const topicRows = $('.topic_row');
+                    console.log(`🔍 [GeekNews List] Found ${topicRows.length} topics on page: ${url}`);
 
-                    if (!topicUrl) continue;
+                    for (let i = 0; i < topicRows.length; i++) {
+                        const row = $(topicRows[i]);
+                        const titleEl = row.find('.topictitle a');
+                        if (titleEl.length === 0) continue;
 
-                    let detailUrl = `https://${descriptor.domain}/${topicUrl.replace(/^\//, '')}`;
+                        const title = titleEl.text().trim();
+                        let relativeUrl = titleEl.attr('href') || '';
+                        if (!relativeUrl) continue;
 
-                    let id = '';
-                    const match = topicUrl.match(/id=(\d+)/);
-                    if (match) {
-                        id = match[1];
-                    }
+                        let topicUrl = '';
+                        const commentLinkEl = row.find('a[href^="topic?id="], a[href*="topic?id="]');
+                        if (commentLinkEl.length > 0) {
+                            topicUrl = commentLinkEl.first().attr('href') || '';
+                        } else if (relativeUrl.includes('topic?id=')) {
+                            topicUrl = relativeUrl;
+                        }
 
-                    if (!id) continue;
+                        if (!topicUrl) continue;
 
-                    if (await this.processItem(id, detailUrl, title)) {
-                        queuedCount++;
+                        let detailUrl = `https://${descriptor.domain}/${topicUrl.replace(/^\//, '')}`;
+
+                        let id = '';
+                        const match = topicUrl.match(/id=(\d+)/);
+                        if (match) {
+                            id = match[1];
+                        }
+
+                        if (!id) continue;
+
+                        if (await this.processItem(id, detailUrl, title)) {
+                            queuedCount++;
+                        }
                     }
                 }
             } catch (err: any) {
