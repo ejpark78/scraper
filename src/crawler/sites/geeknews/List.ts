@@ -98,6 +98,115 @@ class GeekNewsList extends BaseListService {
         console.log(`🎉 [GeekNews List] Successfully queued ${queuedCount} items.`);
         return queuedCount;
     }
+
+    public async runBackfill(day: string): Promise<number> {
+        let page = 1;
+        let totalQueuedCount = 0;
+        const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
+        await this.seedCache();
+
+        while (true) {
+            const url = `https://${descriptor.domain || 'news.hada.io'}/past?day=${day}&page=${page}`;
+            if (sleepSec > 0) {
+                console.log(`\n💤 [대기] GeekNews 백필 (${day}, page ${page}) 수집 전 ${sleepSec}초 대기 중...`);
+                await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
+            }
+
+            console.log(`🌐 [GeekNews List Backfill] Fetching page: ${url}`);
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error(`❌ Failed to fetch GeekNews page. Status: ${response.status}`);
+                    break;
+                }
+
+                const html = await response.text();
+                const $ = cheerio.load(html);
+                const topicRows = $('.topic_row');
+                console.log(`🔍 [GeekNews List Backfill] Found ${topicRows.length} topics on page.`);
+
+                if (topicRows.length === 0) {
+                    break;
+                }
+
+                let queuedCount = 0;
+                for (let i = 0; i < topicRows.length; i++) {
+                    const row = $(topicRows[i]);
+                    const titleEl = row.find('.topictitle a');
+                    if (titleEl.length === 0) continue;
+
+                    const title = titleEl.text().trim();
+                    let relativeUrl = titleEl.attr('href') || '';
+                    if (!relativeUrl) continue;
+
+                    let topicUrl = '';
+                    const commentLinkEl = row.find('a[href^="topic?id="], a[href*="topic?id="]');
+                    if (commentLinkEl.length > 0) {
+                        topicUrl = commentLinkEl.first().attr('href') || '';
+                    } else if (relativeUrl.includes('topic?id=')) {
+                        topicUrl = relativeUrl;
+                    }
+
+                    if (!topicUrl) continue;
+
+                    let detailUrl = `https://${descriptor.domain || 'news.hada.io'}/${topicUrl.replace(/^\//, '')}`;
+
+                    let id = '';
+                    const match = topicUrl.match(/id=(\d+)/);
+                    if (match) {
+                        id = match[1];
+                    }
+
+                    if (!id) continue;
+
+                    if (await this.processItem(id, detailUrl, title)) {
+                        queuedCount++;
+                    }
+                }
+
+                totalQueuedCount += queuedCount;
+
+                // Check if next page link exists
+                const nextPage = page + 1;
+                const nextPageEl = $(`a[href*='day=${day}'][href*='page=${nextPage}'], a[href*='day=${day}'][href*='page%3D${nextPage}']`);
+                if (nextPageEl.length > 0) {
+                    page = nextPage;
+                } else {
+                    console.log(`🏁 [GeekNews List Backfill] No more pages for day ${day} (finished at page ${page}).`);
+                    break;
+                }
+            } catch (err: any) {
+                console.error(`❌ Backfill page ${page} failed: ${err.message}`);
+                break;
+            }
+        }
+
+        return totalQueuedCount;
+    }
+}
+
+function getDatesInRange(startStr: string, endStr: string): string[] {
+    const dates: string[] = [];
+    const current = new Date(startStr);
+    const end = new Date(endStr);
+    
+    if (current <= end) {
+        while (current <= end) {
+            dates.push(current.toISOString().split('T')[0]);
+            current.setDate(current.getDate() + 1);
+        }
+    } else {
+        while (current >= end) {
+            dates.push(current.toISOString().split('T')[0]);
+            current.setDate(current.getDate() - 1);
+        }
+    }
+    return dates;
 }
 
 if (require.main === module) {
@@ -107,11 +216,29 @@ if (require.main === module) {
             await list.init();
             const arg = process.argv[2] || '1';
 
-            if (arg.includes('-')) {
+            const isDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+            const isDateRangePattern = /^\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2}$/;
+
+            if (isDatePattern.test(arg) || isDateRangePattern.test(arg)) {
+                let days: string[] = [];
+                if (arg.includes('~')) {
+                    const [start, end] = arg.split('~');
+                    days = getDatesInRange(start.trim(), end.trim());
+                } else {
+                    days = [arg.trim()];
+                }
+
+                console.log(`🚀 [GeekNews List] Backfill Mode. Days to process: ${days.join(', ')}`);
+                for (const day of days) {
+                    console.log(`\n📅 [GeekNews List] Processing day: ${day}`);
+                    const count = await list.runBackfill(day);
+                    console.log(`🎉 [GeekNews List] Day ${day} completed. Queued ${count} items.`);
+                }
+            } else if (arg.includes('-')) {
                 const [startStr, endStr] = arg.split('-');
                 const start = parseInt(startStr, 10) || 1;
                 const end = parseInt(endStr, 10) || start;
-                console.log(`🚀 [GeekNews List] Running page range: ${start} to ${end}`);
+                console.log(`🚀 [GeekNews List] Normal Mode. Running page range: ${start} to ${end}`);
 
                 for (let p = start; p <= end; p++) {
                     console.log(`\n📄 [GeekNews List] Processing page ${p}/${end}...`);
