@@ -22,7 +22,7 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [DailyDoseOfDS] Starting list scraping (PAGE: $(PAGE))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/sites/dailydoseofds/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/core/cli-list.ts --site dailydose_ds --page "$(PAGE)"
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"

@@ -24,7 +24,7 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [Uppity] Starting list scraping (PAGE: $(PAGE), SECTION: $(SECTION))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) -e SECTION=$(SECTION) worker npx ts-node src/crawler/sites/uppity/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) -e SECTION=$(SECTION) worker npx ts-node src/crawler/core/cli-list.ts --site uppity --page "$(PAGE)"
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"

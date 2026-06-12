@@ -22,7 +22,7 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [Yozm] Starting list scraping (PAGE: $(PAGE))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) worker npx ts-node src/crawler/sites/yozm/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) worker npx ts-node src/crawler/core/cli-list.ts --site yozm --page "$(PAGE)"
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"

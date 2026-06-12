@@ -9,15 +9,11 @@ PAGE ?= 1-5
 list: PRIORITY := high
 list:
 	@echo "──────────────────────────────────────────────────"
-	@echo "📡 [GeekNews] Starting list scraping (PAGE: $(PAGE))..."
+	@echo "📡 [GeekNews] Starting list scraping (PAGE: $(PAGE), DAY: $(DAY))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/sites/geeknews/List.ts $(PAGE)
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/core/cli-list.ts --site geeknews --page "$(PAGE)" --day "$(DAY)"
 
-refresh:
-	@echo "──────────────────────────────────────────────────"
-	@echo "🔄 [GeekNews] Starting backfill refresh (DAY: $(DAY))..."
-	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/sites/geeknews/List.ts $(DAY)
+refresh: list
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"

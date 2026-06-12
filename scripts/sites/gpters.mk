@@ -12,7 +12,7 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [GPTERS News] Starting news list scraping (PAGE: $(PAGE), LIMIT: $(LIMIT))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/sites/gpters/news/List.ts $(LIMIT)
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/core/cli-list.ts --site gpters_news --page "$(PAGE)" --limit "$(LIMIT)"
 
 refresh:
 	@echo "──────────────────────────────────────────────────"
@@ -38,7 +38,7 @@ newsletter-list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [GPTERS Newsletter] Starting newsletter list scraping (PAGE: $(PAGE), LIMIT: $(LIMIT))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/sites/gpters/newsletter/List.ts $(LIMIT)
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/core/cli-list.ts --site gpters_newsletter --page "$(PAGE)" --limit "$(LIMIT)"
 
 newsletter-refresh:
 	@echo "──────────────────────────────────────────────────"
