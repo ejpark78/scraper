@@ -104,16 +104,19 @@ class UppityList extends BaseListService {
         const seen = new Set<string>();
 
         const selectors = [
-            '.uc_post_title a',
-            '.ue_p_title a',
-            '.ue_post_grid h2 a',
-            '.ue_post_grid h3 a',
-            '.ue_post_grid h4 a',
-            '.uc_post_grid_style_one_wrap h2 a',
-            '.uc_post_grid_style_one_wrap h3 a',
-            '.uc_post_grid_style_one_wrap h4 a',
-            '.post-title a',
-            '.entry-title a',
+            'main#content .uc_post_title a',
+            'main#content .ue_p_title a',
+            'main#content .ue_post_grid h2 a',
+            'main#content .ue_post_grid h3 a',
+            'main#content .ue_post_grid h4 a',
+            'main#content .uc_post_grid_style_one_wrap h2 a',
+            'main#content .uc_post_grid_style_one_wrap h3 a',
+            'main#content .uc_post_grid_style_one_wrap h4 a',
+            'main#content h2 a',
+            'main#content h3 a',
+            'main#content h4 a',
+            'main#content .post-title a',
+            'main#content .entry-title a',
         ];
 
         for (const sel of selectors) {
