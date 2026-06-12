@@ -33,5 +33,6 @@ restore:
 	@echo "💾 DB 복구 완료."
 
 index:
-	./src/scripts/sync-indexes.sh
+	@echo "🐳 Running index synchronization via volume-mounted temporary container..."
+	$(COMPOSE) run --rm -v $$(pwd):/app -T viewer npx ts-node src/scripts/sync-indexes.ts
 
