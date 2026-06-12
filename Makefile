@@ -31,6 +31,12 @@ lint:
 list: RECURSIVE_SCRAPE=true
 list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list 
 
+refresh-urls: RECURSIVE_SCRAPE=true
+refresh-urls: gpt-refresh-urls gn-refresh-urls ddds-refresh-urls pk-refresh-urls ab-refresh-urls up-refresh-urls mj-refresh-urls yz-refresh-urls 
+
+refresh-silver: RECURSIVE_SCRAPE=true
+refresh-silver: gpt-refresh-silver gn-refresh-silver ddds-refresh-silver pk-refresh-silver ab-refresh-silver up-refresh-silver mj-refresh-silver yz-refresh-silver
+
 gpt-%:
 	@$(MAKE) -f scripts/sites/gpters.mk $*
 
