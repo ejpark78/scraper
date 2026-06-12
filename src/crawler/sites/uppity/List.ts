@@ -57,14 +57,28 @@ class UppityList extends BaseListService {
 
                 console.log(`🌐 [Uppity List] [${section.name}] Fetching page ${p}: ${fetchUrl}`);
 
-                const res = await fetch(fetchUrl, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-                    }
-                });
+                let res: Response | null = null;
+                const retries = 3;
+                for (let attempt = 1; attempt <= retries; attempt++) {
+                    try {
+                        res = await fetch(fetchUrl, {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+                            }
+                        });
+                        if (res.ok) break;
 
-                if (!res.ok) {
-                    console.log(`⚠️ Page ${p} for ${section.name} not found (${res.status}). Stopping this section.`);
+                        console.warn(`⚠️ [Uppity List] Fetch failed with status ${res.status} (attempt ${attempt}/${retries}). Waiting ${attempt * 5}s before retry...`);
+                        await new Promise(resolve => setTimeout(resolve, attempt * 5000));
+                    } catch (err: any) {
+                        console.warn(`⚠️ [Uppity List] Fetch network error: ${err.message} (attempt ${attempt}/${retries}). Waiting ${attempt * 5}s before retry...`);
+                        await new Promise(resolve => setTimeout(resolve, attempt * 5000));
+                    }
+                }
+
+                if (!res || !res.ok) {
+                    const statusMsg = res ? `HTTP status ${res.status}` : 'Network error';
+                    console.error(`❌ [Uppity List] Page ${p} for ${section.name} failed (${statusMsg}). Stopping this section.`);
                     break;
                 }
 
