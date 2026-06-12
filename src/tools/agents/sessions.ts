@@ -1,9 +1,8 @@
 /**
-# 🤖 dump.ts
-# Description: Unified utility script to dump agent session transcripts, context, brain details, and system info.
+# 🤖 sessions.ts
+# Description: Unified utility script to manage agent sessions (dumping transcripts, context, brain, sysinfo, and pruning empty sessions).
 # Constraints:
-#   - Relies on arguments to choose which items to dump: --sysinfo, --transcript, --context, --brain, --all.
-#   - Decouples file writing from business logic by using clean wrapper classes.
+#   - Relies on arguments to choose actions: --sysinfo, --transcript, --context, --brain, --prune, --all-targets.
 # Dependencies: fs, path, os, child_process, ./lib/agent_adapter
 # ==============================================================================
  */
@@ -30,7 +29,7 @@ interface DockerServiceInfo {
   State: string;
 }
 
-export class SysInfoDumper {
+class SysInfoDumper {
   public run(): void {
     try {
       const info = {
@@ -94,7 +93,7 @@ export class SysInfoDumper {
 // ==============================================================================
 // 2. Transcript Dumper
 // ==============================================================================
-export class TranscriptDumper {
+class TranscriptDumper {
   private readonly workspaceRoot: string = path.resolve(__dirname, '../../..');
   private readonly adapter: AgentAdapter;
   private readonly allMode: boolean;
@@ -245,7 +244,7 @@ export class TranscriptDumper {
 // ==============================================================================
 // 3. Context Dumper
 // ==============================================================================
-export class ContextDumper {
+class ContextDumper {
   private readonly agentName: string;
   private readonly allMode: boolean;
 
@@ -323,7 +322,6 @@ export class ContextDumper {
     
     md += `\n## 📋 Active Tasks Stack\n`;
     
-    // Parse logs to extract background tasks
     const tasksMap = new Map<string, { cmd: string; started: string; status: string; log: string }>();
     messages.forEach(msg => {
       msg.toolCalls.forEach(call => {
@@ -345,7 +343,7 @@ export class ContextDumper {
             const log = logMatch ? logMatch[1].trim() : 'N/A';
             tasksMap.set(taskId, {
               cmd,
-              started: this.formatDate(msg.stepIndex * 1000 + session.timeCreated), // estimate
+              started: this.formatDate(msg.stepIndex * 1000 + session.timeCreated),
               status: 'Running',
               log
             });
@@ -419,7 +417,7 @@ export class ContextDumper {
 // ==============================================================================
 // 4. Brain Dumper
 // ==============================================================================
-export class BrainDumper {
+class BrainDumper {
   private readonly agentName: string;
   private readonly allMode: boolean;
 
@@ -496,6 +494,75 @@ export class BrainDumper {
 }
 
 // ==============================================================================
+// 5. Session Pruner
+// ==============================================================================
+class SessionPruner {
+  private readonly baseBrainDir: string;
+  private readonly transcriptsDir: string;
+
+  constructor() {
+    this.baseBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
+    this.transcriptsDir = path.join(__dirname, '../../../data/agents');
+  }
+
+  public run(): void {
+    console.log('🧹 Pruning empty brain sessions...');
+    let removed = 0;
+
+    if (!fs.existsSync(this.baseBrainDir)) {
+      console.log('ℹ️  No brain directory found.');
+      return;
+    }
+
+    const brainSessions = fs.readdirSync(this.baseBrainDir, { withFileTypes: true })
+      .filter(d => d.isDirectory() && d.name !== 'scratch' && d.name !== '.system_generated')
+      .map(d => d.name);
+
+    for (const sessionId of brainSessions) {
+      const brainDir = path.join(this.baseBrainDir, sessionId);
+      const logsDir = path.join(brainDir, '.system_generated/logs');
+      const transcriptPath = path.join(logsDir, 'transcript_full.jsonl');
+
+      if (fs.existsSync(transcriptPath)) {
+        console.log(`  ✅ Keep (has data): ${sessionId}`);
+        continue;
+      }
+
+      this.removeDir(brainDir, `🧠 Empty session removed: ${sessionId}`);
+      removed++;
+
+      const transcriptDir = path.join(this.transcriptsDir, sessionId);
+      const transcriptFile = path.join(this.transcriptsDir, `${sessionId}.md`);
+      if (fs.existsSync(transcriptDir)) {
+        fs.rmSync(transcriptDir, { recursive: true, force: true });
+        console.log(`     📄 Also removed: data/agents/${sessionId}/`);
+      }
+      if (fs.existsSync(transcriptFile)) {
+        fs.rmSync(transcriptFile, { force: true });
+        console.log(`     📄 Also removed: data/agents/${sessionId}.md`);
+      }
+    }
+
+    if (removed === 0) {
+      console.log('✅ Nothing to prune.');
+    } else {
+      console.log(`✨ Pruned ${removed} empty session(s) from brain.`);
+    }
+  }
+
+  private removeDir(dirPath: string, label: string): void {
+    if (!fs.existsSync(dirPath)) return;
+    try {
+      fs.rmSync(dirPath, { recursive: true, force: true });
+      console.log(`  🗑️  ${label}`);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error(`  ❌ Failed to remove ${dirPath}: ${errMsg}`);
+    }
+  }
+}
+
+// ==============================================================================
 // CLI Main Entrypoint
 // ==============================================================================
 if (require.main === module) {
@@ -506,31 +573,32 @@ if (require.main === module) {
   const hasContext = args.includes('--context') || args.includes('-c');
   const hasBrain = args.includes('--brain') || args.includes('-b');
   const hasSysinfo = args.includes('--sysinfo') || args.includes('-s');
+  const hasPrune = args.includes('--prune') || args.includes('-p');
   
-  // Default to running everything if no specific target option is provided
-  const runAll = args.includes('--all-targets') || (!hasTranscript && !hasContext && !hasBrain && !hasSysinfo);
+  // Default to running everything (all dumps) if no specific target option is provided (and --prune is not requested explicitly)
+  const runAllDumps = args.includes('--all-targets') || (!hasTranscript && !hasContext && !hasBrain && !hasSysinfo && !hasPrune);
 
   const agentFlag = args.find(a => a.startsWith('--agent='));
   const agents = agentFlag ? parseAgentsFromArg(agentFlag.split('=')[1]) : ['agy'];
 
-  if (runAll || hasSysinfo) {
+  if (runAllDumps || hasSysinfo) {
     console.log('🤖 Running Sysinfo Dumper...');
     new SysInfoDumper().run();
   }
 
   for (const agentName of agents) {
     try {
-      if (runAll || hasTranscript) {
+      if (runAllDumps || hasTranscript) {
         console.log(`📝 Running Transcript Dumper for ${agentName}...`);
         new TranscriptDumper(agentName, allMode).dumpAll();
       }
       
-      if (runAll || hasBrain) {
+      if (runAllDumps || hasBrain) {
         console.log(`🧠 Running Brain Dumper for ${agentName}...`);
         new BrainDumper(agentName, allMode).dump();
       }
 
-      if (runAll || hasContext) {
+      if (runAllDumps || hasContext) {
         console.log(`🧠 Running Context Dumper for ${agentName}...`);
         new ContextDumper(agentName, allMode).dump();
       }
@@ -538,6 +606,10 @@ if (require.main === module) {
       console.error(`❌ Error during dump execution for ${agentName}:`, err.message);
       if (process.exitCode === undefined) process.exitCode = 1;
     }
+  }
+
+  if (hasPrune) {
+    new SessionPruner().run();
   }
 
   if (process.exitCode !== 1) {
