@@ -14,6 +14,10 @@ Playwright/HTTP 기반 다중 사이트 스크래핑, MongoDB Bronze/Silver 2단
 | **GPters** | gpters.org | Bettermode GraphQL API | `bronze/gpters.html` | `silver/gpters.contents` |
 | **PyTorch KR** | discuss.pytorch.kr | Discourse JSON API | `bronze/pytorch_kr.html` | `silver/pytorch_kr.contents` |
 | **Daily Dose of DS** | dailydoseofds.com | HTTP fetch / Feed | `bronze/dailydose_ds.html`, `bronze/dailydose_ds.urls` | `silver/dailydose_ds.contents` |
+| **AiCasebook** | aicasebook.com | HTTP fetch | `bronze/aicasebook.html`, `bronze/aicasebook.urls` | `silver/aicasebook.contents` |
+| **Maily Josh** | maily.so/josh | HTTP fetch (RSS) | `bronze/maily_josh.html`, `bronze/maily_josh.urls` | `silver/maily_josh.contents` |
+| **Uppity** | uppity.co.kr | HTTP fetch | `bronze/uppity.html`, `bronze/uppity.urls` | `silver/uppity.contents` |
+| **요즘IT (Yozm)** | yozm.wishket.com | HTTP fetch (Sitemap) | `bronze/yozm.html`, `bronze/yozm.urls` | `silver/yozm.contents` |
 
 ---
 
@@ -65,6 +69,10 @@ make gpt-list       # GPters 최신글 수집
 make pk-list        # PyTorch KR 최신글 수집
 make ddds-list      # Daily Dose of DS 최신글 수집
 make li-list        # LinkedIn 채용공고 목록 수집
+make ab-list        # AiCasebook 최신글 수집
+make up-list        # Uppity 최신글 수집
+make mj-list        # Maily Josh 최신글 수집
+make yz-list        # 요즘IT 최신글 수집
 
 # 기존 Bronze 전부 재변환 (silver 갱신)
 make gn-refresh-md
@@ -72,6 +80,10 @@ make gpt-refresh-md
 make pk-refresh-md
 make ddds-refresh-md
 make li-refresh-md
+make ab-refresh-silver
+make up-refresh-silver
+make mj-refresh-silver
+make yz-refresh-silver
 
 # Viewer 대시보드
 make up-viewer      # https://viewer.localhost
@@ -90,6 +102,10 @@ make up-viewer      # https://viewer.localhost
 | `pk-` | PyTorch KR | `list`, `refresh-urls`, `refresh-md` |
 | `ddds-` | Daily Dose of DS | `list`, `refresh-urls`, `refresh-md` |
 | `li-` | LinkedIn | `list`, `company`, `extract-urls`, `refresh-urls`, `refresh-md`, `status` |
+| `ab-` | AiCasebook | `list`, `refresh-urls`, `refresh-silver` |
+| `up-` | Uppity | `list`, `refresh-urls`, `refresh-silver` |
+| `mj-` | Maily Josh | `list`, `refresh-urls`, `refresh-silver` |
+| `yz-` | 요즘IT (Yozm) | `list`, `refresh-urls`, `refresh-silver` |
 
 ### Infrastructure
 
