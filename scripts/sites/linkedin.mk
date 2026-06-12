@@ -43,12 +43,12 @@ refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [LinkedIn Jobs] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts --site linkedin
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-urls.ts --site linkedin
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [LinkedIn Jobs] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site linkedin
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site linkedin_company
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-silver.ts --site linkedin
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-silver.ts --site linkedin_company
 

@@ -22,18 +22,18 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [DailyDoseOfDS] Starting list scraping (PAGE: $(PAGE))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/core/cli-list.ts --site dailydose_ds --page "$(PAGE)"
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/cli-list.ts --site dailydose_ds --page "$(PAGE)"
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [DailyDoseOfDS] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts --site dailydose_ds
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-urls.ts --site dailydose_ds
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [DailyDoseOfDS] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site dailydose_ds
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-silver.ts --site dailydose_ds
 
 

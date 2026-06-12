@@ -11,18 +11,18 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [AiCasebook] Starting list scraping (PAGE: $(PAGE))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/core/cli-list.ts --site aicasebook --page "$(PAGE)"
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/cli-list.ts --site aicasebook --page "$(PAGE)"
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [AiCasebook] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts --site aicasebook
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-urls.ts --site aicasebook
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [AiCasebook] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site aicasebook
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-silver.ts --site aicasebook
 
 

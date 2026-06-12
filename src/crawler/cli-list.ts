@@ -46,7 +46,7 @@ for (let i = 2; i < process.argv.length; i++) {
 }
 
 if (!siteKey) {
-  console.error('Usage: npx ts-node src/crawler/core/cli-list.ts --site <siteKey> [--page <page>] [--day <day>] [--limit <limit>]');
+  console.error('Usage: npx ts-node src/crawler/cli-list.ts --site <siteKey> [--page <page>] [--day <day>] [--limit <limit>]');
   process.exit(1);
 }
 

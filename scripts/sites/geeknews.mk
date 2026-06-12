@@ -11,7 +11,7 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [GeekNews] Starting list scraping (PAGE: $(PAGE), DAY: $(DAY))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/core/cli-list.ts --site geeknews --page "$(PAGE)" --day "$(DAY)"
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) worker npx ts-node src/crawler/cli-list.ts --site geeknews --page "$(PAGE)" --day "$(DAY)"
 
 refresh: list
 
@@ -19,12 +19,12 @@ refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [GeekNews] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts --site geeknews
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-urls.ts --site geeknews
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [GeekNews] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site geeknews
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-silver.ts --site geeknews
 
 

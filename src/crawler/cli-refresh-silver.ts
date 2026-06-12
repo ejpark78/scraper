@@ -4,11 +4,11 @@
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
  * @dependencies SiteRegistry, BaseRefreshTransform
- * @lastUpdated 2026-06-11
+ * @lastUpdated 2026-06-12
  */
 
-import { getSite } from './SiteRegistry';
-import { BaseRefreshTransform } from './BaseRefreshTransform';
+import { getSite } from './core/SiteRegistry';
+import { BaseRefreshTransform } from './core/BaseRefreshTransform';
 
 let siteKey = '';
 for (let i = 2; i < process.argv.length; i++) {
@@ -22,7 +22,7 @@ if (!siteKey) {
 }
 
 if (!siteKey) {
-  console.error('Usage: npx ts-node src/crawler/core/cli-refresh-silver.ts --site <siteKey>');
+  console.error('Usage: npx ts-node src/crawler/cli-refresh-silver.ts --site <siteKey>');
   process.exit(1);
 }
 

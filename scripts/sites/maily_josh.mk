@@ -22,18 +22,18 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [Maily Josh] Starting list scraping (PAGE: $(PAGE))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) worker npx ts-node src/crawler/core/cli-list.ts --site maily_josh --page "$(PAGE)"
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) worker npx ts-node src/crawler/cli-list.ts --site maily_josh --page "$(PAGE)"
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [Maily Josh] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-urls.ts --site maily_josh
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-urls.ts --site maily_josh
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [Maily Josh] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/core/cli-refresh-silver.ts --site maily_josh
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-silver.ts --site maily_josh
 
 

@@ -4,11 +4,11 @@
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
  * @dependencies BaseRefreshUrls, SiteRegistry
- * @lastUpdated 2026-06-11
+ * @lastUpdated 2026-06-12
  */
 
-import { BaseRefreshUrls } from './BaseRefreshUrls';
-import { getSite } from './SiteRegistry';
+import { BaseRefreshUrls } from './core/BaseRefreshUrls';
+import { getSite } from './core/SiteRegistry';
 
 let siteKey = '';
 for (let i = 2; i < process.argv.length; i++) {
@@ -22,7 +22,7 @@ if (!siteKey) {
 }
 
 if (!siteKey) {
-  console.error('Usage: npx ts-node src/crawler/core/cli-refresh-urls.ts --site <siteKey>');
+  console.error('Usage: npx ts-node src/crawler/cli-refresh-urls.ts --site <siteKey>');
   process.exit(1);
 }
 
