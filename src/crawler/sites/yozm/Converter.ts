@@ -77,9 +77,37 @@ export class YozmConverter implements IConverter<YozmMeta> {
     let contentContainer = $('main[data-id="detail-contents"]');
     const typoParagraphs = $('.typo-contents16');
     if (typoParagraphs.length > 0) {
-      const parent = typoParagraphs.first().parent();
-      if (parent.length > 0) {
-        contentContainer = parent;
+      const parentCounts = new Map<any, number>();
+      typoParagraphs.each((_, el) => {
+        let parent = $(el).parent();
+        // blockquote, ul, ol, li, a, span 등 레이아웃/스타일링용 태그는 본문 컨테이너로 삼기 부적절하므로 조상을 탐색합니다.
+        while (parent.length > 0 && ['blockquote', 'ul', 'ol', 'li', 'a', 'span', 'div'].includes((parent[0] as any).name)) {
+          // 단, parent가 div이고 id나 class가 있는 경우는 의미 있는 스트리밍 컨테이너(예: id="S:3")일 수 있으므로 탐색을 멈춥니다.
+          if ((parent[0] as any).name === 'div' && (parent.attr('id') || parent.attr('class'))) {
+            break;
+          }
+          const nextParent = parent.parent();
+          if (nextParent.length === 0 || (nextParent[0] as any).name === 'body' || (nextParent[0] as any).name === 'html') {
+            break;
+          }
+          parent = nextParent;
+        }
+        if (parent.length > 0) {
+          const rawEl = parent[0];
+          parentCounts.set(rawEl, (parentCounts.get(rawEl) || 0) + 1);
+        }
+      });
+
+      let maxParent: any = null;
+      let maxCount = 0;
+      for (const [parent, count] of parentCounts.entries()) {
+        if (count > maxCount) {
+          maxCount = count;
+          maxParent = parent;
+        }
+      }
+      if (maxParent) {
+        contentContainer = $(maxParent);
       }
     }
 
