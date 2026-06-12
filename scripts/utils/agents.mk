@@ -37,7 +37,10 @@ dump-sysinfo:
 
 compress-rules:
 	@npx ts-node src/tools/agents/dump.ts --context --all $(AGENTS_FLAG)
-	@npx ts-node src/tools/agents/compress_rules.ts
+	@npx ts-node src/tools/agents/rules.ts --compress
+
+lint-rules:
+	@npx ts-node src/tools/agents/rules.ts --lint
 
 usage:
 	@npx ts-node src/tools/agents/usage.ts
