@@ -18,7 +18,7 @@
    * **Playwright Browser Mismatch**: If you encounter a `browserType.launch: Executable doesn't exist` error due to mismatching versions:
      - Rebuild the specific service image only to align dependency versions: `docker compose build worker`
      - Or temporarily install matching browsers in the container: `docker compose run --rm worker npx playwright install`
-8. **Transcripts Export on Start**: Run `make agents-dump-all AGENTS=agy` (or via `make -f .agents/Makefile dump-all AGENTS=agy` wrapper) ONLY on the first turn of a new or resumed session (do not run when exiting/finalizing).
+8. **Transcripts Export on Start**: Run `make agents-dump-all AGENTS=agy` ONLY on the first turn of a new or resumed session (do not run when exiting/finalizing).
 
 ## ⚠️ Security Rules
 - **No ENV Access**: DO NOT access `.env` or `.env.*` files. Use `.env.example` for reference.
@@ -37,4 +37,3 @@ The following commands/scripts are pre-approved and exempt from Rule 1's and Rul
 - `git ls-files` (Read-only project codebase mapping to minimize token/API usage)
 - `scripts/agents/commit-changes.sh` (Runs automatically after edits to save progress)
 - `make agents-dump-all AGENTS=agy` (Runs on session start to generate/export session reports)
-- `make -f .agents/Makefile dump-all AGENTS=agy` (Compatibility wrapper, runs on session start to generate/export session reports)
