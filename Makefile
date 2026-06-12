@@ -28,6 +28,7 @@ lint:
 -include scripts/utils/worker.mk
 -include scripts/tools/tools.mk
 
+# sites grouped targets
 list: RECURSIVE_SCRAPE=true
 list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list 
 
@@ -37,6 +38,7 @@ refresh-urls: gpt-refresh-urls gn-refresh-urls ddds-refresh-urls pk-refresh-urls
 refresh-silver: RECURSIVE_SCRAPE=true
 refresh-silver: gpt-refresh-silver gn-refresh-silver ddds-refresh-silver pk-refresh-silver ab-refresh-silver up-refresh-silver mj-refresh-silver yz-refresh-silver
 
+# sites
 gpt-%:
 	@$(MAKE) -f scripts/sites/gpters.mk $*
 
@@ -64,14 +66,18 @@ yz-%:
 li-%:
 	@$(MAKE) -f scripts/sites/linkedin.mk $*
 
+# tests
 test-%:
 	@$(MAKE) -f scripts/utils/tests.mk $*
 
+# db utils
 mongo-%:
 	@$(MAKE) -f scripts/utils/mongo.mk $*
 
+# gmail tools
 gm-%:
 	@$(MAKE) -f scripts/tools/gmail.mk $*
 
+# agent utils
 agents-%:
 	@$(MAKE) -f scripts/utils/agents.mk $*
