@@ -290,14 +290,14 @@ interface QueueInfo {
   name: string;
   type: 'list' | 'set';
   length: number;
-  items: (ScrapeTaskPayload | { raw: string })[] | string[];
+  items: ScrapeTaskPayload[] | string[];
 }
 
 interface QueueStatusPayload {
   queues: QueueInfo[];
   transformQueue: {
     length: number;
-    items: (TransformTaskPayload | { raw: string })[];
+    items: TransformTaskPayload[];
   };
   activeProcessing: {
     length: number;
@@ -305,7 +305,7 @@ interface QueueStatusPayload {
   };
   deadLetter: {
     length: number;
-    items: (DeadLetterPayload | { raw: string })[];
+    items: DeadLetterPayload[];
   };
 }
 
@@ -328,11 +328,11 @@ app.get('/api/queues', async (req: Request, res: Response) => {
       if (type === 'list') {
         const length = await redis.llen(key);
         const rawItems = await redis.lrange(key, 0, 19);
-        const items = rawItems.map((item): ScrapeTaskPayload | { raw: string } => {
+        const items = rawItems.map((item): ScrapeTaskPayload => {
           try {
             return JSON.parse(item) as ScrapeTaskPayload;
           } catch {
-            return { raw: item };
+            return { site: 'Unknown', url: item, attempt: 1, priority: 'medium' };
           }
         });
         queues.push({ name: key, type: 'list', length, items });
@@ -345,11 +345,18 @@ app.get('/api/queues', async (req: Request, res: Response) => {
     
     const transformQueueLength = await redis.llen('transform_queue');
     const rawTransformItems = await redis.lrange('transform_queue', 0, 19);
-    const transformItems = rawTransformItems.map((item): TransformTaskPayload | { raw: string } => {
+    const transformItems = rawTransformItems.map((item): TransformTaskPayload => {
       try {
         return JSON.parse(item) as TransformTaskPayload;
       } catch {
-        return { raw: item };
+        return {
+          site: 'Unknown',
+          id: item,
+          bronze_db: 'bronze',
+          bronze_collection: '',
+          bronze_id: '',
+          timestamp: new Date().toISOString()
+        };
       }
     });
     
@@ -358,11 +365,16 @@ app.get('/api/queues', async (req: Request, res: Response) => {
     
     const deadLetterLength = await redis.llen('dead_letter_queue');
     const rawDeadLetterItems = await redis.lrange('dead_letter_queue', 0, 49); // limit to top 50 failed items
-    const deadLetterItems = rawDeadLetterItems.map((item): DeadLetterPayload | { raw: string } => {
+    const deadLetterItems = rawDeadLetterItems.map((item): DeadLetterPayload => {
       try {
         return JSON.parse(item) as DeadLetterPayload;
       } catch {
-        return { raw: item };
+        return {
+          site: 'Unknown',
+          url: '',
+          error: item,
+          failedAt: new Date().toISOString()
+        };
       }
     });
     

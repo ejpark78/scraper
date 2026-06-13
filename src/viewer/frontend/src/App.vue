@@ -49,14 +49,14 @@ interface QueueInfo {
   name: string;
   type: string;
   length: number;
-  items: (ScrapeTask | { raw: string })[];
+  items: ScrapeTask[];
 }
 
 interface QueueStatusPayload {
   queues: QueueInfo[];
   transformQueue: {
     length: number;
-    items: (TransformTask | { raw: string })[];
+    items: TransformTask[];
   };
   activeProcessing: {
     length: number;
@@ -64,7 +64,7 @@ interface QueueStatusPayload {
   };
   deadLetter: {
     length: number;
-    items: (DeadLetterTask | { raw: string })[];
+    items: DeadLetterTask[];
   };
 }
 
