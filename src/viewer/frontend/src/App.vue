@@ -891,7 +891,7 @@ const iframeSrcDoc = computed(() => {
                   @click="errorFilter = site"
                   style="padding: 4px 10px; font-size: 11px;"
                 >
-                  {{ site }} ({{ site === 'All' ? totalErrorLogs : (errorSiteCounts[site] || 0) }})
+                  {{ site }} ({{ (site === 'All' ? totalErrorLogs : (errorSiteCounts[site] || 0)).toLocaleString('ko-KR') }})
                 </button>
               </div>
             </div>
