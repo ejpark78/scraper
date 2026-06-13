@@ -49,4 +49,14 @@ export class AppConfig {
      * Port for the Viewer UI Server
      */
     public static readonly PORT: number = parseInt(process.env.PORT || '3000', 10);
+
+    /**
+     * Meilisearch Connection URL
+     */
+    public static readonly MEILI_URL: string = process.env.MEILI_URL || 'http://meilisearch:7700';
+
+    /**
+     * Meilisearch Master Key
+     */
+    public static readonly MEILI_MASTER_KEY: string = process.env.MEILI_MASTER_KEY || 'masterKey123';
 }
