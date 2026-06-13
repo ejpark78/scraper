@@ -127,6 +127,7 @@ class ScraperWorker {
     }
 
     const { site, url, scraperSlack } = payload;
+    await Logger.contextStorage.run({ site, url }, async () => {
     const desc = getSite(site);
 
     if (!desc?.scraper) {
@@ -359,6 +360,7 @@ class ScraperWorker {
     } catch (err: any) {
       Logger.error(`[Scraper] Error during recursive discovery for [${site}]: ${err.message}`);
     }
+    });
   }
 
   private async handleScrapeFailure(

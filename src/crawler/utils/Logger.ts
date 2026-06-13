@@ -8,6 +8,7 @@
  */
 
 import * as os from 'os';
+import { AsyncLocalStorage } from 'async_hooks';
 
 export enum LogLevel {
   INFO = 'INFO',
@@ -19,6 +20,7 @@ export enum LogLevel {
 export class Logger {
   private static hostname = os.hostname();
   private static isJson = process.env.JSON_LOG === 'true';
+  public static contextStorage = new AsyncLocalStorage<{ site?: string; url?: string }>();
 
   public static info(message: string, meta?: Record<string, any>) {
     this.log(LogLevel.INFO, message, meta);
@@ -47,10 +49,13 @@ export class Logger {
     const timestamp = new Date().toISOString();
     
     // Strip ANSI colors/escapes for clean log aggregation
-    const cleanMessage = message.replace(/[\u001b\u009b][[()#;?]*(?:[a-zA-Z\d]*(?:;[-a-zA-Z\d]*)*)?/g, '');
+    const cleanMessage = message.replace(/[\u001b\u009b][[()#;?]*(?:[a-zA-d]*(?:;[-a-zA-d]*)*)?/g, '');
 
-    // Extract site from meta or parse it from message brackets [site_name]
-    let site = meta?.site || '';
+    // Extract site/url from AsyncLocalStorage context or meta or message brackets [site_name]
+    const context = this.contextStorage.getStore();
+    let site = meta?.site || context?.site || '';
+    let url = meta?.url || context?.url || '';
+
     if (!site) {
       const match = message.match(/\[([a-zA-Z0-9_-]+)\]/);
       if (match) {
@@ -68,6 +73,7 @@ export class Logger {
         level,
         hostname: this.hostname,
         site: site || undefined,
+        url: url || undefined,
         message: cleanMessage,
         ...meta,
       };
