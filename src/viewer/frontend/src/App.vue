@@ -725,32 +725,34 @@ const iframeSrcDoc = computed(() => {
               </div>
             </div>
 
-            <!-- Active Processing URLs -->
+            <!-- Transform Queue Detailed Status -->
             <div class="queue-section-card">
               <div class="card-header">
-                <h3>⚡ 현재 수집 중 (Active Processing)</h3>
-                <span class="meta-tag">{{ queueData.activeProcessing.length }}</span>
+                <h3>🔄 변환 대기 큐 (Transform Queue)</h3>
+                <span class="meta-tag">{{ queueData.transformQueue.length.toLocaleString('ko-KR') }}</span>
               </div>
               <div class="card-body">
-                <div v-if="queueData.activeProcessing.items.length === 0" class="empty-state" style="height:100px;">
-                  현재 진행 중인 수집 작업이 없습니다.
-                </div>
+                <div v-if="queueData.transformQueue.items.length === 0" class="empty-state" style="height:100px;">현재 대기 중인 변환 작업이 없습니다.</div>
                 <div v-else class="queue-table-container">
                   <table class="dashboard-table">
                     <thead>
                       <tr>
-                        <th>수집 중인 URL</th>
+                        <th style="width:25%;">사이트</th>
+                        <th style="width:40%;">문서 ID</th>
+                        <th style="width:35%;">수집 시각</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="item in queueData.activeProcessing.items" :key="item">
-                        <td style="word-break:break-all;font-family:monospace;font-size:12px;">{{ item }}</td>
+                      <tr v-for="item in queueData.transformQueue.items" :key="item.id">
+                        <td style="font-weight:600;color:#fff;">{{ item.site }}</td>
+                        <td style="word-break:break-all;font-family:monospace;font-size:12px;">{{ item.id }}</td>
+                        <td style="font-size:11px;">{{ formatCollectedDate(item.timestamp) }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 8px; line-height: 1.4;">
-                  💡 Scraper Worker가 실제로 가동되어 링크를 수집/파싱하는 도중에만 수집 대상 URL이 여기에 실시간으로 표시됩니다. 수집기가 유휴(Idle) 상태이면 표시되지 않습니다.
+                  💡 HTML 수집(Scrape) 완료 후, 실시간으로 Markdown/JSON 형태의 Silver 데이터로 변환되기를 기다리고 있는 항목들입니다.
                 </div>
               </div>
             </div>
