@@ -150,31 +150,13 @@ class UppityList extends BaseListService {
                     }
 
                     if (href.startsWith(`https://${descriptor.domain}/`) && !seen.has(href)) {
-                        try {
-                            const parsed = new URL(href);
-                            
-                            // Rule 1: Skip patterns
-                            const skipPatterns = ['/category/', '/tag/', '/author/', '/page/', '#', 'login', 'logout', 'download.cm'];
-                            if (skipPatterns.some(p => parsed.pathname.includes(p))) {
-                                return;
-                            }
+                        const isValid = descriptor.scraper?.urlFilter 
+                            ? descriptor.scraper.urlFilter(href)
+                            : !href.includes('?') && !href.includes('/page/');
 
-                            // Rule 2: query parameter validations
-                            const hasQ = parsed.searchParams.has('q');
-                            const hasPage = parsed.searchParams.has('page') || parsed.pathname.includes('/page/');
-                            if (hasQ || hasPage) {
-                                return;
-                            }
-
-                            // If URL has search query, it MUST be a view page (bmode=view) to be a detail page
-                            if (parsed.search.length > 0 && parsed.searchParams.get('bmode') !== 'view') {
-                                return;
-                            }
-
+                        if (isValid) {
                             seen.add(href);
                             results.push({ url: href, title });
-                        } catch {
-                            // Skip invalid URLs
                         }
                     }
                 }

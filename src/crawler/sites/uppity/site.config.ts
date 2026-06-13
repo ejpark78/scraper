@@ -70,6 +70,35 @@ export const descriptor: SiteDescriptor = {
       return crypto.createHash('md5').update(url).digest('hex');
     },
     excludePatterns: ['logout.cm', 'login', 'join', 'signup', 'favicon', 'logout'],
+    urlFilter: (urlStr: string): boolean => {
+      try {
+        const parsed = new URL(urlStr);
+        // Exclude patterns
+        const exclude = [
+          'logout.cm', 'login', 'join', 'signup', 'favicon', 'logout',
+          '/category/', '/tag/', '/author/', '/page/', '#', 'download.cm'
+        ];
+        if (exclude.some(p => parsed.pathname.includes(p) || parsed.hash.includes(p))) {
+          return false;
+        }
+
+        // Query param validation
+        const hasQ = parsed.searchParams.has('q');
+        const hasPage = parsed.searchParams.has('page') || parsed.pathname.includes('/page/');
+        if (hasQ || hasPage) {
+          return false;
+        }
+
+        // If URL has search query, it MUST be a view page (bmode=view) to be a detail page
+        if (parsed.search.length > 0 && parsed.searchParams.get('bmode') !== 'view') {
+          return false;
+        }
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
     urlsCollectionName: 'bronze/uppity.urls',
     scrape: scrapeHttpFetch,
     generateUrls: (config: { page?: number, section?: string }): string[] => {
