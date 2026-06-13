@@ -14,4 +14,24 @@ export class FormatUtils {
     public static formatThousand(num: number): string {
         return String(num).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
+
+    /**
+     * 🔗 마크다운 링크 청소기
+     * 1) javascript:; 링크 제거
+     * 2) [ \n\n 제목 \n\n ](url) 형태의 불필요한 줄바꿈 제거하여 [제목](url)으로 통합
+     */
+    public static cleanMarkdownLinks(markdown: string): string {
+        if (!markdown) return '';
+        
+        // 1. javascript: 로 시작하는 링크 패턴 전체 제거
+        let cleaned = markdown.replace(/\[\s*[\s\S]*?\s*\]\(javascript\s*:\s*.*?\)/gi, '');
+
+        // 2. [ \n\n title \n\n ](url) 형태 보정
+        cleaned = cleaned.replace(/\[\s*([\s\S]*?)\s*\]\(([^)]+)\)/g, (match, title, url) => {
+            const cleanTitle = title.trim().replace(/\s*\n\s*/g, ' ');
+            return `[${cleanTitle}](${url.trim()})`;
+        });
+
+        return cleaned;
+    }
 }

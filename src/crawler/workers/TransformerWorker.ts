@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Redis from 'ioredis';
 import { MongoDatabase } from '../../database/mongo';
-import { UrlUtils, NamingUtils, Logger } from '../utils';
+import { UrlUtils, NamingUtils, Logger, FormatUtils } from '../utils';
 import { getSite } from '../core/SiteRegistry';
 import { TargetLoader } from './TargetLoader';
 
@@ -77,6 +77,13 @@ async function main() {
 
         const converter = tf.converter;
         let meta = await converter.convertHtmlToMarkdown(rawContent, id, rawDoc.url || '');
+
+        if (meta.rawContent) {
+          meta.rawContent = FormatUtils.cleanMarkdownLinks(meta.rawContent);
+        }
+        if (meta.content) {
+          meta.content = FormatUtils.cleanMarkdownLinks(meta.content);
+        }
 
         if (site === 'pytorch_kr' && (!meta.content?.trim() || meta.content === `${meta.title}\n`)) {
           Logger.info(`[Transformer] Content empty for [${site}] ID: ${id}, trying JSON API fallback...`);
