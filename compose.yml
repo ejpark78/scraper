@@ -23,6 +23,7 @@ include:
   - docker/tools/yacht/compose.yml
   - docker/tools/onwatch/compose.yml
   - docker/infra/mongodb/compose.yml
+  - docker/infra/meilisearch/compose.yml
   - docker/infra/redis/compose.yml
   - docker/infra/postgresql/compose.yml
   - docker/gateway/traefik/compose.yml
