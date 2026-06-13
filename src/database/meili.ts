@@ -79,7 +79,7 @@ export class MeiliSearchDatabase {
     public async isHealthy(): Promise<boolean> {
         try {
             const res = await this.request<{ status: string }>('/health');
-            return res.status === 'ok';
+            return res.status === 'available' || res.status === 'ok';
         } catch {
             return false;
         }
