@@ -1,6 +1,3 @@
-.agents/brain/
-.agents/rules_compact.txt
-.agents/sysinfo_cache.json
 .env
 .firecrawl/
 .vscode/

@@ -129,6 +129,10 @@ const addingUrl = ref<boolean>(false);
 const addUrlSuccess = ref<string>('');
 const addUrlError = ref<string>('');
 
+// Dead Letter & Refresh states
+const deadLetterFilter = ref<string>('All');
+const refreshFeedback = ref<boolean>(false);
+
 // Country badges list for LinkedIn Jobs
 const countries = [
   { name: '🌎 All', value: '' },
@@ -142,6 +146,19 @@ const countries = [
 
 // Computed
 const totalPages = computed(() => Math.max(1, Math.ceil(totalDocuments.value / limit)));
+
+const deadLetterSites = computed(() => {
+  const sites = queueData.value.deadLetter.items.map(item => item.site);
+  const uniqueSites = Array.from(new Set(sites)).filter(Boolean);
+  return ['All', ...uniqueSites];
+});
+
+const filteredDeadLetterItems = computed(() => {
+  if (deadLetterFilter.value === 'All') {
+    return queueData.value.deadLetter.items;
+  }
+  return queueData.value.deadLetter.items.filter(item => item.site === deadLetterFilter.value);
+});
 
 const renderedMarkdownHtml = computed(() => {
   if (!selectedDoc.value) return '';
@@ -305,6 +322,10 @@ function triggerHighlighting() {
 // Helpers
 async function fetchQueues() {
   loadingQueues.value = true;
+  refreshFeedback.value = true;
+  setTimeout(() => {
+    refreshFeedback.value = false;
+  }, 600);
   try {
     const response = await fetch('/api/queues');
     queueData.value = await response.json();
@@ -610,7 +631,8 @@ const iframeSrcDoc = computed(() => {
           </div>
           <div class="dashboard-actions">
             <button @click="fetchQueues" class="btn-secondary" :disabled="loadingQueues">
-              <span>🔄</span> {{ loadingQueues ? '갱신 중...' : '새로고침' }}
+              <span :style="{ display: 'inline-block', transition: 'transform 0.6s ease', transform: refreshFeedback ? 'rotate(360deg)' : 'none' }">🔄</span>
+              {{ loadingQueues ? '갱신 중...' : '새로고침' }}
             </button>
             <button @click="clearQueues" class="btn-danger">
               <span>🧹</span> 큐 전체 비우기
@@ -623,22 +645,24 @@ const iframeSrcDoc = computed(() => {
           <div class="metrics-grid">
             <div class="metric-card">
               <span class="metric-label">수집 대기 중 (Scraping)</span>
-              <span class="metric-value">{{ queueData.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0) }}</span>
+              <span class="metric-value">
+                {{ queueData.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0).toLocaleString('ko-KR') }}
+              </span>
               <span class="metric-sub">scrape_queue:* 합계</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">변환 대기 중 (Transforming)</span>
-              <span class="metric-value">{{ queueData.transformQueue.length }}</span>
+              <span class="metric-value">{{ queueData.transformQueue.length.toLocaleString('ko-KR') }}</span>
               <span class="metric-sub">transform_queue 대기 문서</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">현재 수집 중 (Active)</span>
-              <span class="metric-value">{{ queueData.activeProcessing.length }}</span>
+              <span class="metric-value">{{ queueData.activeProcessing.length.toLocaleString('ko-KR') }}</span>
               <span class="metric-sub">active_processing 활성 세트</span>
             </div>
             <div class="metric-card" style="border-color: rgba(239, 68, 68, 0.2);">
               <span class="metric-label" style="color: #f87171;">수집 실패 (Dead)</span>
-              <span class="metric-value" style="color: #ef4444;">{{ queueData.deadLetter.length }}</span>
+              <span class="metric-value" style="color: #ef4444;">{{ queueData.deadLetter.length.toLocaleString('ko-KR') }}</span>
               <span class="metric-sub">dead_letter_queue 등록 건수</span>
             </div>
           </div>
@@ -692,7 +716,7 @@ const iframeSrcDoc = computed(() => {
                         <td style="font-weight:600;color:#fff;">{{ q.name }}</td>
                         <td>{{ q.type }}</td>
                         <td>
-                          <span :class="['badge-priority', q.name.split(':').pop() || 'low']">{{ q.length }}</span>
+                          <span :class="['badge-priority', q.name.split(':').pop() || 'low']">{{ q.length.toLocaleString('ko-KR') }}</span>
                         </td>
                       </tr>
                     </tbody>
@@ -708,7 +732,9 @@ const iframeSrcDoc = computed(() => {
                 <span class="meta-tag">{{ queueData.activeProcessing.length }}</span>
               </div>
               <div class="card-body">
-                <div v-if="queueData.activeProcessing.items.length === 0" class="empty-state" style="height:100px;">현재 진행 중인 수집 작업이 없습니다.</div>
+                <div v-if="queueData.activeProcessing.items.length === 0" class="empty-state" style="height:100px;">
+                  현재 진행 중인 수집 작업이 없습니다.
+                </div>
                 <div v-else class="queue-table-container">
                   <table class="dashboard-table">
                     <thead>
@@ -723,30 +749,48 @@ const iframeSrcDoc = computed(() => {
                     </tbody>
                   </table>
                 </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 8px; line-height: 1.4;">
+                  💡 Scraper Worker가 실제로 가동되어 링크를 수집/파싱하는 도중에만 수집 대상 URL이 여기에 실시간으로 표시됩니다. 수집기가 유휴(Idle) 상태이면 표시되지 않습니다.
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Dead Letter Queue (Failed Tasks) -->
-          <div class="queue-section-card" style="max-height: 500px;">
-            <div class="card-header" style="border-top: 2px solid #ef4444;">
-              <h3 style="color:#f87171;">⚠️ 최종 수집 실패 목록 (Dead Letter Queue)</h3>
-              <span class="badge-priority high">{{ queueData.deadLetter.length }}</span>
+          <div class="queue-section-card" style="max-height: 600px;">
+            <div class="card-header" style="border-top: 2px solid #ef4444; flex-direction: column; align-items: stretch; gap: 12px; height: auto;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color:#f87171;">⚠️ 최종 수집 실패 목록 (Dead Letter Queue)</h3>
+                <span class="badge-priority high">{{ filteredDeadLetterItems.length.toLocaleString('ko-KR') }}</span>
+              </div>
+              <!-- Site Badges Filters -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                <button 
+                  v-for="site in deadLetterSites" 
+                  :key="site"
+                  class="country-badge" 
+                  :class="{ active: deadLetterFilter === site }"
+                  @click="deadLetterFilter = site"
+                  style="padding: 4px 10px; font-size: 11px;"
+                >
+                  {{ site }}
+                </button>
+              </div>
             </div>
             <div class="card-body">
-              <div v-if="queueData.deadLetter.items.length === 0" class="empty-state" style="height:150px;">실패 데이터가 없습니다. 깨끗합니다! ✨</div>
+              <div v-if="filteredDeadLetterItems.length === 0" class="empty-state" style="height:150px;">선택한 필터의 실패 데이터가 없습니다. 깨끗합니다! ✨</div>
               <div v-else class="queue-table-container">
                 <table class="dashboard-table">
                   <thead>
                     <tr>
-                      <th style="width:10%;">사이트</th>
-                      <th style="width:40%;">실패 URL</th>
+                      <th style="width:12%;">사이트</th>
+                      <th style="width:38%;">실패 URL</th>
                       <th style="width:35%;">실패 사유</th>
                       <th style="width:15%;">실패 시각</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(item, idx) in queueData.deadLetter.items" :key="idx">
+                    <tr v-for="(item, idx) in filteredDeadLetterItems" :key="idx">
                       <td style="font-weight:600;">{{ item.site }}</td>
                       <td style="word-break:break-all;font-family:monospace;font-size:12px;">
                         <a :href="item.url" target="_blank" style="color:var(--primary);text-decoration:none;">{{ item.url }}</a>
