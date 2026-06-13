@@ -59,6 +59,21 @@ const loadingRaw = ref<boolean>(false);
 const sidebarCollapsed = ref<boolean>(false);
 const isDraggingCountry = ref<boolean>(false);
 
+// Dashboard State
+const queueData = ref<any>({
+  queues: [],
+  transformQueue: { length: 0, items: [] },
+  activeProcessing: { length: 0, items: [] },
+  deadLetter: { length: 0, items: [] }
+});
+const loadingQueues = ref<boolean>(false);
+const addUrlSite = ref<string>('linkedin');
+const addUrlVal = ref<string>('');
+const addUrlPriority = ref<string>('medium');
+const addingUrl = ref<boolean>(false);
+const addUrlSuccess = ref<string>('');
+const addUrlError = ref<string>('');
+
 // Country badges list for LinkedIn Jobs
 const countries = [
   { name: '🌎 All', value: '' },
@@ -125,8 +140,10 @@ watch(searchInputVal, (newVal) => {
 
 // Watch for query parameters and load documents
 watch([currentCollection, searchQuery, currentCountry, currentPage], () => {
-  if (currentCollection.value) {
+  if (currentCollection.value && currentCollection.value !== '__dashboard__') {
     fetchDocuments();
+  } else if (currentCollection.value === '__dashboard__') {
+    fetchQueues();
   }
 });
 
@@ -231,6 +248,77 @@ function triggerHighlighting() {
 }
 
 // Helpers
+async function fetchQueues() {
+  loadingQueues.value = true;
+  try {
+    const response = await fetch('/api/queues');
+    queueData.value = await response.json();
+  } catch (error) {
+    console.error('Error loading queues status:', error);
+  } finally {
+    loadingQueues.value = false;
+  }
+}
+
+async function clearQueues() {
+  if (!confirm('Are you sure you want to clear all queues in Redis? This will stop active scraping and transform tasks.')) {
+    return;
+  }
+  try {
+    const response = await fetch('/api/queues/clear', { method: 'POST' });
+    const result = await response.json();
+    if (result.success) {
+      alert(`Queues cleared successfully. Deleted keys count: ${result.deletedCount}`);
+      await fetchQueues();
+    } else {
+      alert(`Failed to clear queues: ${result.error}`);
+    }
+  } catch (error: any) {
+    alert(`Error clearing queues: ${error.message}`);
+  }
+}
+
+async function addUrlQueue() {
+  if (!addUrlVal.value.trim()) {
+    addUrlError.value = 'URL is required';
+    return;
+  }
+  
+  addingUrl.value = true;
+  addUrlSuccess.value = '';
+  addUrlError.value = '';
+  
+  try {
+    const response = await fetch('/api/queues/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        site: addUrlSite.value,
+        url: addUrlVal.value.trim(),
+        priority: addUrlPriority.value
+      })
+    });
+    const result = await response.json();
+    if (result.success) {
+      addUrlSuccess.value = `Successfully queued URL to ${result.queue}`;
+      addUrlVal.value = '';
+      await fetchQueues();
+    } else {
+      addUrlError.value = result.error || 'Failed to add URL to queue';
+    }
+  } catch (error: any) {
+    addUrlError.value = `Error adding URL: ${error.message}`;
+  } finally {
+    addingUrl.value = false;
+  }
+}
+
+function selectDashboard() {
+  currentCollection.value = '__dashboard__';
+}
+
 function selectCollection(id: string) {
   currentCollection.value = id;
   currentPage.value = 1;
@@ -357,7 +445,7 @@ const iframeSrcDoc = computed(() => {
 </script>
 
 <template>
-  <div class="app-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <div class="app-container" :class="{ 'sidebar-collapsed': sidebarCollapsed, 'dashboard-active': currentCollection === '__dashboard__' }">
     <!-- 1. Left Sidebar: Collections -->
     <aside class="sidebar">
       <div class="brand">
@@ -379,6 +467,17 @@ const iframeSrcDoc = computed(() => {
           <span style="vertical-align:middle;">{{ col.name }}</span>
         </li>
       </ul>
+      <div class="section-title" style="margin-top:20px;">Operations</div>
+      <ul class="collection-list" style="flex:none;">
+        <li 
+          class="collection-item"
+          :class="{ active: currentCollection === '__dashboard__' }"
+          @click="selectDashboard"
+        >
+          <span style="vertical-align:middle;margin-right:8px;font-size:16px;">📊</span>
+          <span style="vertical-align:middle;">Queue Dashboard</span>
+        </li>
+      </ul>
       <div class="sidebar-footer">
         <span class="mcp-status">
           <span class="status-dot green"></span>
@@ -388,7 +487,7 @@ const iframeSrcDoc = computed(() => {
     </aside>
 
     <!-- 2. Middle Panel: Document list & Search -->
-    <section class="list-panel">
+    <section v-if="currentCollection !== '__dashboard__'" class="list-panel">
       <div class="search-header">
         <button v-if="sidebarCollapsed" @click="sidebarCollapsed = false" class="sidebar-expand" title="Expand Sidebar">☰</button>
         <div class="search-box">
@@ -442,9 +541,175 @@ const iframeSrcDoc = computed(() => {
       </div>
     </section>
 
-    <!-- 3. Right Panel: Document details (Tabs) -->
-    <main class="detail-panel">
-      <div v-if="!selectedDoc" class="detail-empty">
+    <!-- 3. Right Panel: Document details (Tabs) or Dashboard -->
+    <main class="detail-panel" style="flex:1;">
+      <!-- Queue Dashboard View -->
+      <div v-if="currentCollection === '__dashboard__'" class="dashboard-container">
+        <header class="dashboard-header">
+          <div class="dashboard-title-area">
+            <span class="brand-icon" style="font-size:24px;">📊</span>
+            <div>
+              <h2 style="font-size:18px;font-weight:700;color:#fff;margin:0;">수집 큐 대시보드</h2>
+              <p style="font-size:12px;color:var(--text-secondary);margin:0;">Redis의 작업 대기/진행 큐 현황을 모니터링합니다.</p>
+            </div>
+          </div>
+          <div class="dashboard-actions">
+            <button @click="fetchQueues" class="btn-secondary" :disabled="loadingQueues">
+              <span>🔄</span> {{ loadingQueues ? '갱신 중...' : '새로고침' }}
+            </button>
+            <button @click="clearQueues" class="btn-danger">
+              <span>🧹</span> 큐 전체 비우기
+            </button>
+          </div>
+        </header>
+
+        <div class="dashboard-content">
+          <!-- Summary Metrics Cards -->
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">수집 대기 중 (Scraping)</span>
+              <span class="metric-value">{{ queueData.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0) }}</span>
+              <span class="metric-sub">scrape_queue:* 합계</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">변환 대기 중 (Transforming)</span>
+              <span class="metric-value">{{ queueData.transformQueue.length }}</span>
+              <span class="metric-sub">transform_queue 대기 문서</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">현재 수집 중 (Active)</span>
+              <span class="metric-value">{{ queueData.activeProcessing.length }}</span>
+              <span class="metric-sub">active_processing 활성 세트</span>
+            </div>
+            <div class="metric-card" style="border-color: rgba(239, 68, 68, 0.2);">
+              <span class="metric-label" style="color: #f87171;">수집 실패 (Dead)</span>
+              <span class="metric-value" style="color: #ef4444;">{{ queueData.deadLetter.length }}</span>
+              <span class="metric-sub">dead_letter_queue 등록 건수</span>
+            </div>
+          </div>
+
+          <!-- Quick URL Add Section -->
+          <div class="add-url-panel">
+            <h3 style="font-size:14px;font-weight:600;color:#fff;margin:0;">🚀 수집 큐에 URL 수동 등록</h3>
+            <div class="add-url-form">
+              <select v-model="addUrlSite" class="form-select">
+                <option value="linkedin">LinkedIn Jobs</option>
+                <option value="geeknews">GeekNews</option>
+                <option value="gpters_news">GPters News</option>
+                <option value="pytorch_kr">PyTorch KR</option>
+                <option value="aicasebook">AICasebook</option>
+                <option value="yozm">Yozm IT</option>
+              </select>
+              <select v-model="addUrlPriority" class="form-select">
+                <option value="high">🔥 High</option>
+                <option value="medium">⚡ Medium</option>
+                <option value="low">💤 Low</option>
+              </select>
+              <input type="text" v-model="addUrlVal" placeholder="수집할 URL을 입력하세요 (e.g. https://www.linkedin.com/jobs/view/...)" class="form-input-text">
+              <button @click="addUrlQueue" class="btn-primary" :disabled="addingUrl">
+                {{ addingUrl ? '등록 중...' : '큐에 추가' }}
+              </button>
+            </div>
+            <p v-if="addUrlSuccess" style="color:#10b981;font-size:12px;margin-top:8px;font-weight:500;">{{ addUrlSuccess }}</p>
+            <p v-if="addUrlError" style="color:#ef4444;font-size:12px;margin-top:8px;font-weight:500;">{{ addUrlError }}</p>
+          </div>
+
+          <!-- Queues Tables Grid -->
+          <div class="queues-grid">
+            <!-- Scrape Queues Detailed Status -->
+            <div class="queue-section-card">
+              <div class="card-header">
+                <h3>📥 스크레이퍼 대기 큐 (Scrape Queues)</h3>
+              </div>
+              <div class="card-body">
+                <div v-if="queueData.queues.length === 0" class="empty-state" style="height:100px;">대기 중인 수집 큐가 없습니다.</div>
+                <div v-else class="queue-table-container">
+                  <table class="dashboard-table">
+                    <thead>
+                      <tr>
+                        <th>큐 이름</th>
+                        <th>유형</th>
+                        <th>대기 건수</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="q in queueData.queues" :key="q.name">
+                        <td style="font-weight:600;color:#fff;">{{ q.name }}</td>
+                        <td>{{ q.type }}</td>
+                        <td>
+                          <span :class="['badge-priority', q.name.split(':').pop() || 'low']">{{ q.length }}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Processing URLs -->
+            <div class="queue-section-card">
+              <div class="card-header">
+                <h3>⚡ 현재 수집 중 (Active Processing)</h3>
+                <span class="meta-tag">{{ queueData.activeProcessing.length }}</span>
+              </div>
+              <div class="card-body">
+                <div v-if="queueData.activeProcessing.items.length === 0" class="empty-state" style="height:100px;">현재 진행 중인 수집 작업이 없습니다.</div>
+                <div v-else class="queue-table-container">
+                  <table class="dashboard-table">
+                    <thead>
+                      <tr>
+                        <th>수집 중인 URL</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in queueData.activeProcessing.items" :key="item">
+                        <td style="word-break:break-all;font-family:monospace;font-size:12px;">{{ item }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dead Letter Queue (Failed Tasks) -->
+          <div class="queue-section-card" style="max-height: 500px;">
+            <div class="card-header" style="border-top: 2px solid #ef4444;">
+              <h3 style="color:#f87171;">⚠️ 최종 수집 실패 목록 (Dead Letter Queue)</h3>
+              <span class="badge-priority high">{{ queueData.deadLetter.length }}</span>
+            </div>
+            <div class="card-body">
+              <div v-if="queueData.deadLetter.items.length === 0" class="empty-state" style="height:150px;">실패 데이터가 없습니다. 깨끗합니다! ✨</div>
+              <div v-else class="queue-table-container">
+                <table class="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th style="width:10%;">사이트</th>
+                      <th style="width:40%;">실패 URL</th>
+                      <th style="width:35%;">실패 사유</th>
+                      <th style="width:15%;">실패 시각</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(item, idx) in queueData.deadLetter.items" :key="idx">
+                      <td style="font-weight:600;">{{ item.site }}</td>
+                      <td style="word-break:break-all;font-family:monospace;font-size:12px;">
+                        <a :href="item.url" target="_blank" style="color:var(--primary);text-decoration:none;">{{ item.url }}</a>
+                      </td>
+                      <td class="dead-letter-reason" style="word-break:break-all;">{{ item.error }}</td>
+                      <td style="font-size:11px;">{{ formatCollectedDate(item.failedAt) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Normal Document Empty/Selected View -->
+      <div v-else-if="!selectedDoc" class="detail-empty">
         <div class="empty-art">📬</div>
         <h3>No Document Selected</h3>
         <p>Click a document from the list to view its contents, markdown, and original source HTML.</p>

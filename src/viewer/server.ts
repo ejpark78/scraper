@@ -19,9 +19,13 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { getAllSites } from '../crawler/core/SiteRegistry';
 import { MeiliSearchDatabase } from '../database/meili';
+import Redis from 'ioredis';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
+const redis = new Redis(REDIS_URL);
+redis.on('error', (err) => console.error('[Redis Error]', err));
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
@@ -250,6 +254,157 @@ app.get('/api/documents/:id/raw', async (req: Request, res: Response) => {
     }
 
     res.status(404).json({ error: 'Raw HTML not found' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Queue dashboard API endpoints
+app.get('/api/queues', async (req: Request, res: Response) => {
+  try {
+    const keys = await redis.keys('scrape_queue*');
+    const queues: any[] = [];
+    
+    keys.sort();
+    
+    for (const key of keys) {
+      const type = await redis.type(key);
+      if (type === 'list') {
+        const length = await redis.llen(key);
+        const rawItems = await redis.lrange(key, 0, 19);
+        const items = rawItems.map(item => {
+          try {
+            return JSON.parse(item);
+          } catch {
+            return { raw: item };
+          }
+        });
+        queues.push({ name: key, type: 'list', length, items });
+      } else if (type === 'set') {
+        const length = await redis.scard(key);
+        const rawItems = await redis.smembers(key);
+        queues.push({ name: key, type: 'set', length, items: rawItems });
+      }
+    }
+    
+    const transformQueueLength = await redis.llen('transform_queue');
+    const rawTransformItems = await redis.lrange('transform_queue', 0, 19);
+    const transformItems = rawTransformItems.map(item => {
+      try {
+        return JSON.parse(item);
+      } catch {
+        return { raw: item };
+      }
+    });
+    
+    const activeProcessingLength = await redis.scard('active_processing');
+    const activeProcessingItems = await redis.smembers('active_processing');
+    
+    const deadLetterLength = await redis.llen('dead_letter_queue');
+    const rawDeadLetterItems = await redis.lrange('dead_letter_queue', 0, 49); // limit to top 50 failed items
+    const deadLetterItems = rawDeadLetterItems.map(item => {
+      try {
+        return JSON.parse(item);
+      } catch {
+        return { raw: item };
+      }
+    });
+    
+    res.json({
+      queues,
+      transformQueue: {
+        length: transformQueueLength,
+        items: transformItems
+      },
+      activeProcessing: {
+        length: activeProcessingLength,
+        items: activeProcessingItems
+      },
+      deadLetter: {
+        length: deadLetterLength,
+        items: deadLetterItems
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/queues/clear', async (req: Request, res: Response) => {
+  try {
+    const keys = await redis.keys('scrape_queue*');
+    const keysToClear = [...keys];
+    
+    const activeProcessingExists = await redis.exists('active_processing');
+    if (activeProcessingExists) {
+      keysToClear.push('active_processing');
+    }
+    
+    const deadLetterExists = await redis.exists('dead_letter_queue');
+    if (deadLetterExists) {
+      keysToClear.push('dead_letter_queue');
+    }
+    
+    const transformQueueExists = await redis.exists('transform_queue');
+    if (transformQueueExists) {
+      keysToClear.push('transform_queue');
+    }
+
+    if (keysToClear.length === 0) {
+      return res.json({ success: true, message: 'No queues found to clear', deletedCount: 0 });
+    }
+
+    const deletedCount = await redis.del(...keysToClear);
+    res.json({ success: true, message: 'Successfully cleared queues', deletedCount });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/queues/add', async (req: Request, res: Response) => {
+  try {
+    const { site, url, priority = 'medium' } = req.body;
+    if (!site || !url) {
+      return res.status(400).json({ error: 'Site and URL are required' });
+    }
+    
+    const allSites = getAllSites();
+    const siteDesc = allSites.find(s => s.key === site);
+    if (!siteDesc || !siteDesc.scraper) {
+      return res.status(400).json({ error: `Unsupported or non-scraped site: ${site}` });
+    }
+    
+    const queueName = `scrape_queue:${site}:${priority}`;
+    const payload = JSON.stringify({
+      site,
+      url,
+      attempt: 1,
+      priority
+    });
+    
+    await redis.rpush(queueName, payload);
+    
+    if (siteDesc.scraper.urlsCollectionName) {
+      const urlsColl = await mongo.getCollection(siteDesc.scraper.urlsCollectionName as `${'bronze' | 'silver'}/${string}`);
+      const id = siteDesc.scraper.extractId(url);
+      if (id) {
+        await urlsColl.updateOne(
+          { id },
+          {
+            $set: {
+              id,
+              url,
+              status: 'new',
+              pushedToRedis: true,
+              updatedAt: new Date()
+            }
+          },
+          { upsert: true }
+        );
+      }
+    }
+    
+    res.json({ success: true, queue: queueName, url });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
