@@ -174,6 +174,10 @@ const transformQueueCounts = computed(() => {
     .sort((a, b) => b.count - a.count);
 });
 
+const totalScrapingCount = computed(() => {
+  return queueData.value.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0);
+});
+
 const renderedMarkdownHtml = computed(() => {
   if (!selectedDoc.value) return '';
   const silver = selectedDoc.value.silver;
@@ -754,8 +758,14 @@ const iframeSrcDoc = computed(() => {
           <div class="queues-grid">
             <!-- Scrape Queues Detailed Status -->
             <div class="queue-section-card">
-              <div class="card-header">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h3>📥 스크레이퍼 대기 큐 (Scrape Queues)</h3>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="meta-tag">{{ totalScrapingCount.toLocaleString('ko-KR') }}</span>
+                  <span v-if="hasPreviousData && queueDeltas.scraping !== 0" :style="{ fontSize: '12px', fontWeight: '600', color: queueDeltas.scraping > 0 ? '#f87171' : '#4ade80' }">
+                    ({{ queueDeltas.scraping > 0 ? '+' : '' }}{{ queueDeltas.scraping }})
+                  </span>
+                </div>
               </div>
               <div class="card-body">
                 <div v-if="queueData.queues.length === 0" class="empty-state" style="height:100px;">대기 중인 수집 큐가 없습니다.</div>
@@ -784,9 +794,14 @@ const iframeSrcDoc = computed(() => {
 
             <!-- Transform Queue Detailed Status -->
             <div class="queue-section-card">
-              <div class="card-header">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h3>🔄 변환 대기 큐 (Transform Queue)</h3>
-                <span class="meta-tag">{{ queueData.transformQueue.length.toLocaleString('ko-KR') }}</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="meta-tag">{{ queueData.transformQueue.length.toLocaleString('ko-KR') }}</span>
+                  <span v-if="hasPreviousData && queueDeltas.transforming !== 0" :style="{ fontSize: '12px', fontWeight: '600', color: queueDeltas.transforming > 0 ? '#f87171' : '#4ade80' }">
+                    ({{ queueDeltas.transforming > 0 ? '+' : '' }}{{ queueDeltas.transforming }})
+                  </span>
+                </div>
               </div>
               <div class="card-body">
                 <div v-if="transformQueueCounts.length === 0" class="empty-state" style="height:100px;">현재 대기 중인 변환 작업이 없습니다.</div>
