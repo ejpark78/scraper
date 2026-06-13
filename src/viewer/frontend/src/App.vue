@@ -56,6 +56,7 @@ interface QueueStatusPayload {
   queues: QueueInfo[];
   transformQueue: {
     length: number;
+    siteCounts: Record<string, number>;
     items: TransformTask[];
   };
   activeProcessing: {
@@ -64,6 +65,7 @@ interface QueueStatusPayload {
   };
   deadLetter: {
     length: number;
+    siteCounts: Record<string, number>;
     items: DeadLetterTask[];
   };
 }
@@ -117,9 +119,9 @@ const isDraggingCountry = ref<boolean>(false);
 // Dashboard State
 const queueData = ref<QueueStatusPayload>({
   queues: [],
-  transformQueue: { length: 0, items: [] },
+  transformQueue: { length: 0, siteCounts: {}, items: [] },
   activeProcessing: { length: 0, items: [] },
-  deadLetter: { length: 0, items: [] }
+  deadLetter: { length: 0, siteCounts: {}, items: [] }
 });
 const loadingQueues = ref<boolean>(false);
 const addUrlSite = ref<string>('linkedin');
@@ -148,9 +150,8 @@ const countries = [
 const totalPages = computed(() => Math.max(1, Math.ceil(totalDocuments.value / limit)));
 
 const deadLetterSites = computed(() => {
-  const sites = queueData.value.deadLetter.items.map(item => item.site);
-  const uniqueSites = Array.from(new Set(sites)).filter(Boolean);
-  return ['All', ...uniqueSites];
+  const sites = Object.keys(queueData.value.deadLetter.siteCounts);
+  return ['All', ...sites];
 });
 
 const filteredDeadLetterItems = computed(() => {
@@ -161,12 +162,7 @@ const filteredDeadLetterItems = computed(() => {
 });
 
 const transformQueueCounts = computed(() => {
-  const counts: Record<string, number> = {};
-  queueData.value.transformQueue.items.forEach(item => {
-    const site = item.site || 'Unknown';
-    counts[site] = (counts[site] || 0) + 1;
-  });
-  return Object.entries(counts)
+  return Object.entries(queueData.value.transformQueue.siteCounts)
     .map(([site, count]) => ({ site, count }))
     .sort((a, b) => b.count - a.count);
 });

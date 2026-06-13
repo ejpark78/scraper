@@ -297,6 +297,7 @@ interface QueueStatusPayload {
   queues: QueueInfo[];
   transformQueue: {
     length: number;
+    siteCounts: Record<string, number>;
     items: TransformTaskPayload[];
   };
   activeProcessing: {
@@ -305,6 +306,7 @@ interface QueueStatusPayload {
   };
   deadLetter: {
     length: number;
+    siteCounts: Record<string, number>;
     items: DeadLetterPayload[];
   };
 }
@@ -344,8 +346,18 @@ app.get('/api/queues', async (req: Request, res: Response) => {
     }
     
     const transformQueueLength = await redis.llen('transform_queue');
-    const rawTransformItems = await redis.lrange('transform_queue', 0, 19);
-    const transformItems = rawTransformItems.map((item): TransformTaskPayload => {
+    const allTransformItems = await redis.lrange('transform_queue', 0, -1);
+    const transformQueueSiteCounts: Record<string, number> = {};
+    for (const item of allTransformItems) {
+      try {
+        const parsed = JSON.parse(item);
+        const site = parsed.site || 'Unknown';
+        transformQueueSiteCounts[site] = (transformQueueSiteCounts[site] || 0) + 1;
+      } catch {
+        transformQueueSiteCounts['Unknown'] = (transformQueueSiteCounts['Unknown'] || 0) + 1;
+      }
+    }
+    const transformItems = allTransformItems.slice(0, 20).map((item): TransformTaskPayload => {
       try {
         return JSON.parse(item) as TransformTaskPayload;
       } catch {
@@ -364,8 +376,18 @@ app.get('/api/queues', async (req: Request, res: Response) => {
     const activeProcessingItems = await redis.smembers('active_processing');
     
     const deadLetterLength = await redis.llen('dead_letter_queue');
-    const rawDeadLetterItems = await redis.lrange('dead_letter_queue', 0, 49); // limit to top 50 failed items
-    const deadLetterItems = rawDeadLetterItems.map((item): DeadLetterPayload => {
+    const allDeadLetterItems = await redis.lrange('dead_letter_queue', 0, -1);
+    const deadLetterSiteCounts: Record<string, number> = {};
+    for (const item of allDeadLetterItems) {
+      try {
+        const parsed = JSON.parse(item);
+        const site = parsed.site || 'Unknown';
+        deadLetterSiteCounts[site] = (deadLetterSiteCounts[site] || 0) + 1;
+      } catch {
+        deadLetterSiteCounts['Unknown'] = (deadLetterSiteCounts['Unknown'] || 0) + 1;
+      }
+    }
+    const deadLetterItems = allDeadLetterItems.slice(0, 50).map((item): DeadLetterPayload => {
       try {
         return JSON.parse(item) as DeadLetterPayload;
       } catch {
@@ -382,6 +404,7 @@ app.get('/api/queues', async (req: Request, res: Response) => {
       queues,
       transformQueue: {
         length: transformQueueLength,
+        siteCounts: transformQueueSiteCounts,
         items: transformItems
       },
       activeProcessing: {
@@ -390,6 +413,7 @@ app.get('/api/queues', async (req: Request, res: Response) => {
       },
       deadLetter: {
         length: deadLetterLength,
+        siteCounts: deadLetterSiteCounts,
         items: deadLetterItems
       }
     };
