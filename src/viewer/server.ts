@@ -1,10 +1,13 @@
 /**
  * @module server
- * @description Core functionality or script runner for server.ts.
+ * @description Hybrid HTTP Express & Model Context Protocol (MCP) Server for LinkedIn Clipper.
+ *              Serves the Vue frontend dashboard and lists collection, document details, and Redis queue status.
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
- * @dependencies express, path, mongo, mongodb, index.js
- * @lastUpdated 2026-06-11
+ *   - Access configurations only through Centralized AppConfig.
+ *   - Strict typing (avoid any where possible).
+ * @dependencies express, path, mongo, mongodb, AppConfig, ioredis, index.js
+ * @lastUpdated 2026-06-13
  */
 
 import express, { Request, Response } from 'express';
@@ -19,12 +22,12 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { getAllSites } from '../crawler/core/SiteRegistry';
 import { MeiliSearchDatabase } from '../database/meili';
+import { AppConfig } from '../config/AppConfig';
 import Redis from 'ioredis';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
-const redis = new Redis(REDIS_URL);
+const PORT = AppConfig.PORT;
+const redis = new Redis(AppConfig.REDIS_URL);
 redis.on('error', (err) => console.error('[Redis Error]', err));
 
 app.use(express.json());
@@ -259,11 +262,64 @@ app.get('/api/documents/:id/raw', async (req: Request, res: Response) => {
   }
 });
 
+// Queue dashboard Type Interfaces
+interface ScrapeTaskPayload {
+  site: string;
+  url: string;
+  attempt: number;
+  priority: string;
+}
+
+interface TransformTaskPayload {
+  site: string;
+  id: string;
+  bronze_db: string;
+  bronze_collection: string;
+  bronze_id: string;
+  timestamp: string;
+}
+
+interface DeadLetterPayload {
+  site: string;
+  url: string;
+  error: string;
+  failedAt: string;
+}
+
+interface QueueInfo {
+  name: string;
+  type: 'list' | 'set';
+  length: number;
+  items: (ScrapeTaskPayload | { raw: string })[] | string[];
+}
+
+interface QueueStatusPayload {
+  queues: QueueInfo[];
+  transformQueue: {
+    length: number;
+    items: (TransformTaskPayload | { raw: string })[];
+  };
+  activeProcessing: {
+    length: number;
+    items: string[];
+  };
+  deadLetter: {
+    length: number;
+    items: (DeadLetterPayload | { raw: string })[];
+  };
+}
+
+interface AddQueueRequest {
+  site: string;
+  url: string;
+  priority?: string;
+}
+
 // Queue dashboard API endpoints
 app.get('/api/queues', async (req: Request, res: Response) => {
   try {
     const keys = await redis.keys('scrape_queue*');
-    const queues: any[] = [];
+    const queues: QueueInfo[] = [];
     
     keys.sort();
     
@@ -272,9 +328,9 @@ app.get('/api/queues', async (req: Request, res: Response) => {
       if (type === 'list') {
         const length = await redis.llen(key);
         const rawItems = await redis.lrange(key, 0, 19);
-        const items = rawItems.map(item => {
+        const items = rawItems.map((item): ScrapeTaskPayload | { raw: string } => {
           try {
-            return JSON.parse(item);
+            return JSON.parse(item) as ScrapeTaskPayload;
           } catch {
             return { raw: item };
           }
@@ -289,9 +345,9 @@ app.get('/api/queues', async (req: Request, res: Response) => {
     
     const transformQueueLength = await redis.llen('transform_queue');
     const rawTransformItems = await redis.lrange('transform_queue', 0, 19);
-    const transformItems = rawTransformItems.map(item => {
+    const transformItems = rawTransformItems.map((item): TransformTaskPayload | { raw: string } => {
       try {
-        return JSON.parse(item);
+        return JSON.parse(item) as TransformTaskPayload;
       } catch {
         return { raw: item };
       }
@@ -302,15 +358,15 @@ app.get('/api/queues', async (req: Request, res: Response) => {
     
     const deadLetterLength = await redis.llen('dead_letter_queue');
     const rawDeadLetterItems = await redis.lrange('dead_letter_queue', 0, 49); // limit to top 50 failed items
-    const deadLetterItems = rawDeadLetterItems.map(item => {
+    const deadLetterItems = rawDeadLetterItems.map((item): DeadLetterPayload | { raw: string } => {
       try {
-        return JSON.parse(item);
+        return JSON.parse(item) as DeadLetterPayload;
       } catch {
         return { raw: item };
       }
     });
     
-    res.json({
+    const responsePayload: QueueStatusPayload = {
       queues,
       transformQueue: {
         length: transformQueueLength,
@@ -324,9 +380,12 @@ app.get('/api/queues', async (req: Request, res: Response) => {
         length: deadLetterLength,
         items: deadLetterItems
       }
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    };
+    
+    res.json(responsePayload);
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -356,14 +415,15 @@ app.post('/api/queues/clear', async (req: Request, res: Response) => {
 
     const deletedCount = await redis.del(...keysToClear);
     res.json({ success: true, message: 'Successfully cleared queues', deletedCount });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    res.status(500).json({ error: err.message });
   }
 });
 
 app.post('/api/queues/add', async (req: Request, res: Response) => {
   try {
-    const { site, url, priority = 'medium' } = req.body;
+    const { site, url, priority = 'medium' } = req.body as AddQueueRequest;
     if (!site || !url) {
       return res.status(400).json({ error: 'Site and URL are required' });
     }
@@ -405,8 +465,9 @@ app.post('/api/queues/add', async (req: Request, res: Response) => {
     }
     
     res.json({ success: true, queue: queueName, url });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    res.status(500).json({ error: err.message });
   }
 });
 

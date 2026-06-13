@@ -1,3 +1,12 @@
+/**
+ * @file App.vue
+ * @description Vue dashboard application for LinkedIn Clipper, including document viewer and Redis queue status dashboard.
+ * @constraints
+ *   - Strictly typed parameters, avoid loose 'any' declarations where possible.
+ *   - Clean aesthetics matching modern space-dark design principles.
+ * @dependencies Vue, marked, prismjs, AppConfig-based APIs
+ */
+
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { marked } from 'marked';
@@ -11,6 +20,52 @@ interface Collection {
   id: string;
   name: string;
   favicon?: string;
+}
+
+interface ScrapeTask {
+  site: string;
+  url: string;
+  attempt: number;
+  priority: string;
+}
+
+interface TransformTask {
+  site: string;
+  id: string;
+  bronze_db: string;
+  bronze_collection: string;
+  bronze_id: string;
+  timestamp: string;
+}
+
+interface DeadLetterTask {
+  site: string;
+  url: string;
+  error: string;
+  failedAt: string;
+}
+
+interface QueueInfo {
+  name: string;
+  type: string;
+  length: number;
+  items: (ScrapeTask | { raw: string })[];
+}
+
+interface QueueStatusPayload {
+  queues: QueueInfo[];
+  transformQueue: {
+    length: number;
+    items: (TransformTask | { raw: string })[];
+  };
+  activeProcessing: {
+    length: number;
+    items: string[];
+  };
+  deadLetter: {
+    length: number;
+    items: (DeadLetterTask | { raw: string })[];
+  };
 }
 
 interface DocumentMeta {
@@ -60,7 +115,7 @@ const sidebarCollapsed = ref<boolean>(false);
 const isDraggingCountry = ref<boolean>(false);
 
 // Dashboard State
-const queueData = ref<any>({
+const queueData = ref<QueueStatusPayload>({
   queues: [],
   transformQueue: { length: 0, items: [] },
   activeProcessing: { length: 0, items: [] },
