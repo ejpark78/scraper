@@ -12,7 +12,7 @@ services:
     image: getmeili/meilisearch:v1.8
     environment:
       - TZ=Asia/Seoul
-      - MEILI_MASTER_KEY=masterKey123
+      - MEILI_MASTER_KEY=superMasterKeySecret123
       - MEILI_ENV=production
       - MEILI_NO_ANALYTICS=true
     volumes:

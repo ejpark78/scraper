@@ -58,5 +58,5 @@ export class AppConfig {
     /**
      * Meilisearch Master Key
      */
-    public static readonly MEILI_MASTER_KEY: string = process.env.MEILI_MASTER_KEY || 'masterKey123';
+    public static readonly MEILI_MASTER_KEY: string = process.env.MEILI_MASTER_KEY || 'superMasterKeySecret123';
 }
