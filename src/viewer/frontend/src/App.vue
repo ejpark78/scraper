@@ -143,6 +143,7 @@ const errorLogs = ref<any[]>([]);
 const totalErrorLogs = ref<number>(0);
 const errorSiteCounts = ref<Record<string, number>>({});
 const errorFilter = ref<string>('All');
+const errorLevelFilter = ref<string>('All');
 const errorPage = ref<number>(1);
 const totalErrorPages = ref<number>(1);
 const loadingErrors = ref<boolean>(false);
@@ -238,6 +239,11 @@ watch([currentCollection, searchQuery, currentCountry, currentPage], () => {
 });
 
 watch(errorFilter, () => {
+  errorPage.value = 1;
+  fetchErrors();
+});
+
+watch(errorLevelFilter, () => {
   errorPage.value = 1;
   fetchErrors();
 });
@@ -391,7 +397,7 @@ async function fetchQueues() {
 async function fetchErrors() {
   loadingErrors.value = true;
   try {
-    const response = await fetch(`/api/errors?site=${errorFilter.value}&page=${errorPage.value}`);
+    const response = await fetch(`/api/errors?site=${errorFilter.value}&level=${errorLevelFilter.value}&page=${errorPage.value}`);
     const data = await response.json();
     errorLogs.value = data.errors || [];
     totalErrorLogs.value = data.totalCount || 0;
@@ -852,15 +858,31 @@ const iframeSrcDoc = computed(() => {
             </div>
           </div>
 
-          <!-- Docker Scraper & Converter Error Logs (Grep Errors) -->
-          <div class="queue-section-card" style="max-height: 800px; display: flex; flex-direction: column;">
+          <!-- Docker Scraper & Converter Log Center (Container Logs) -->
+          <div class="queue-section-card" style="max-height: 850px; display: flex; flex-direction: column;">
             <div class="card-header" style="border-top: 2px solid #ef4444; flex-direction: column; align-items: stretch; gap: 12px; height: auto;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="color:#f87171;">🛑 수집 및 변환 에러 로그 (Grep Errors)</h3>
+                <h3 style="color:#f87171;">📋 컨테이너 실시간 로그 (Container Logs)</h3>
                 <span class="badge-priority high">{{ totalErrorLogs.toLocaleString('ko-KR') }}</span>
               </div>
-              <!-- Site Badges Filters -->
+              <!-- Level Filters -->
               <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                <button 
+                  v-for="lvl in ['All', 'INFO', 'WARN', 'ERROR']" 
+                  :key="lvl"
+                  class="country-badge" 
+                  :class="{ active: errorLevelFilter === lvl }"
+                  @click="errorLevelFilter = lvl"
+                  style="padding: 4px 10px; font-size: 11px;"
+                >
+                  <span v-if="lvl === 'All'">📊 All</span>
+                  <span v-else-if="lvl === 'INFO'" style="color:#60a5fa;">ℹ️ INFO</span>
+                  <span v-else-if="lvl === 'WARN'" style="color:#fbbf24;">⚠️ WARN</span>
+                  <span v-else-if="lvl === 'ERROR'" style="color:#f87171;">🛑 ERROR</span>
+                </button>
+              </div>
+              <!-- Site Badges Filters -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px dashed var(--border-color); padding-top: 8px;">
                 <button 
                   v-for="site in errorSites" 
                   :key="site"
@@ -874,15 +896,16 @@ const iframeSrcDoc = computed(() => {
               </div>
             </div>
             <div class="card-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-              <div v-if="loadingErrors" class="empty-state" style="height:150px;">에러 로그를 로딩 중입니다...</div>
-              <div v-else-if="errorLogs.length === 0" class="empty-state" style="height:150px;">에러 로그가 없습니다. 모두 정상 작동 중입니다! ✨</div>
+              <div v-if="loadingErrors" class="empty-state" style="height:150px;">로그를 로딩 중입니다...</div>
+              <div v-else-if="errorLogs.length === 0" class="empty-state" style="height:150px;">해당 필터 조건에 부합하는 로그가 없습니다. ✨</div>
               <div v-else class="queue-table-container" style="flex: 1; overflow-y: auto;">
                 <table class="dashboard-table">
                   <thead>
                     <tr>
                       <th style="width:12%;">서비스</th>
+                      <th style="width:12%;">레벨</th>
                       <th style="width:15%;">사이트</th>
-                      <th style="width:58%;">에러 메시지</th>
+                      <th style="width:46%;">로그 메시지</th>
                       <th style="width:15%;">로그 시각</th>
                     </tr>
                   </thead>
@@ -893,9 +916,24 @@ const iframeSrcDoc = computed(() => {
                           {{ item.service }}
                         </span>
                       </td>
+                      <td>
+                        <span :style="{
+                          display: 'inline-block',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          color: item.level === 'ERROR' ? '#ff3b30' : item.level === 'WARN' ? '#ff9500' : '#007aff',
+                          backgroundColor: item.level === 'ERROR' ? 'rgba(255,59,48,0.15)' : item.level === 'WARN' ? 'rgba(255,149,0,0.15)' : 'rgba(0,122,255,0.15)'
+                        }">
+                          {{ item.level }}
+                        </span>
+                      </td>
                       <td style="font-weight:600; font-size:11px;">{{ item.site }}</td>
                       <td style="word-break:break-all; font-size:11px; text-align:left;">
-                        <div style="font-weight:600; color:#f87171;">{{ item.message }}</div>
+                        <div :style="{ fontWeight: '600', color: item.level === 'ERROR' ? '#f87171' : item.level === 'WARN' ? '#fbbf24' : '#fff' }">
+                          {{ item.message }}
+                        </div>
                         <div v-if="item.url" style="margin-top:2px;">
                           <a :href="item.url" target="_blank" style="color:var(--accent-color); text-decoration:underline; font-size:10px; font-family:monospace;">
                             {{ item.url }}
