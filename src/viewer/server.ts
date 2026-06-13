@@ -741,14 +741,20 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
     if (!trimmed) continue;
     
     const isJson = trimmed.startsWith('{') && trimmed.endsWith('}');
-    const isJsonError = isJson && trimmed.includes('"level":"ERROR"');
-    const isStartupError = !isJson && !/^\s*at /i.test(trimmed) && /TSError|error TS|Error:|Exception/i.test(trimmed);
     
-    if (isJsonError) {
+    if (isJson) {
       try {
         const parsed = JSON.parse(trimmed);
         const timestamp = parsed.timestamp || parsed.time || new Date().toISOString();
         const message = parsed.message || parsed.msg || 'No message';
+        const rawLevel = parsed.level || 'INFO';
+        const level = rawLevel.toUpperCase();
+        
+        // Only include INFO, WARN, ERROR
+        if (level !== 'INFO' && level !== 'WARN' && level !== 'ERROR') {
+          continue;
+        }
+
         const site = parsed.site || 'Unknown';
         const url = parsed.url || '';
         const stack = parsed.error_stack || parsed.stack || '';
@@ -756,7 +762,7 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
         errors.push({
           service,
           timestamp,
-          level: 'ERROR',
+          level,
           message: parsed.error_name ? `${parsed.error_name}: ${message}` : message,
           site,
           url,
@@ -766,19 +772,42 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
         errors.push({
           service,
           timestamp: new Date().toISOString(),
-          level: 'ERROR',
+          level: 'INFO',
           message: trimmed,
           site: 'Unknown',
           url: ''
         });
       }
-    } else if (isStartupError) {
+    } else {
+      // Exclude stack trace lines starting with "at " or spaces followed by "at "
+      if (/^\s*at /i.test(trimmed)) {
+        continue;
+      }
+
+      let level = 'INFO';
+      if (/ERROR|stderr|exception|TSError/i.test(trimmed)) {
+        level = 'ERROR';
+      } else if (/WARN/i.test(trimmed)) {
+        level = 'WARN';
+      }
+      
+      // Try to parse site from message brackets [site]
+      let site = 'Unknown';
+      const match = trimmed.match(/\[([a-zA-Z0-9_-]+)\]/);
+      if (match) {
+        const val = match[1];
+        const exclude = ['scraper', 'transformer', 'converter', 'error', 'warn', 'info', 'debug', 'recursive'];
+        if (!exclude.includes(val.toLowerCase())) {
+          site = val;
+        }
+      }
+      
       errors.push({
         service,
         timestamp: new Date().toISOString(),
-        level: 'STARTUP ERROR',
+        level,
         message: trimmed,
-        site: 'Unknown',
+        site,
         url: ''
       });
     }
@@ -789,6 +818,7 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
 app.get('/api/errors', async (req: Request, res: Response) => {
   try {
     const siteFilter = (req.query.site as string) || 'All';
+    const levelFilter = (req.query.level as string) || 'All';
     const page = parseInt(req.query.page as string) || 1;
     const limit = 30;
     
@@ -815,15 +845,19 @@ app.get('/api/errors', async (req: Request, res: Response) => {
     
     allErrors.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
+    let filteredErrors = allErrors;
+    if (levelFilter !== 'All') {
+      filteredErrors = filteredErrors.filter(err => err.level === levelFilter);
+    }
+
     const siteCounts: Record<string, number> = {};
-    for (const err of allErrors) {
+    for (const err of filteredErrors) {
       const site = err.site || 'Unknown';
       siteCounts[site] = (siteCounts[site] || 0) + 1;
     }
-    
-    let filteredErrors = allErrors;
+
     if (siteFilter !== 'All') {
-      filteredErrors = allErrors.filter(err => err.site === siteFilter);
+      filteredErrors = filteredErrors.filter(err => err.site === siteFilter);
     }
     
     const totalCount = filteredErrors.length;
