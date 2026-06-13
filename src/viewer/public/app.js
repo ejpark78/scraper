@@ -396,7 +396,7 @@ async function loadDocumentDetail(id, collection) {
     document.getElementById('bronze-json-code').textContent = 'Loading...';
     
     // Save active document reference
-    activeDoc = { silver, bronze };
+    activeDoc = { silver, bronze, id };
     
     // Auto reset to first tab (Silver Rendered)
     const defaultTabBtn = document.querySelector('.tab-btn[data-tab="tab-rendered"]');
@@ -447,55 +447,97 @@ function triggerLazyTabLoad(tabId) {
   }
   else if (tabId === 'tab-html') {
     const htmlIframe = document.getElementById('html-preview');
-    if (activeDoc.bronze.rawHtml) {
-      const raw = activeDoc.bronze.rawHtml;
-      const isJsonStr = typeof raw === 'string' && /^\s*[{[]/.test(raw);
-      let displayHtml = raw;
-      if (isJsonStr) {
-        try {
-          const parsed = JSON.parse(raw);
-          const fieldsMap = {};
-          if (Array.isArray(parsed.fields)) {
-            for (const f of parsed.fields) fieldsMap[f.key] = f.value;
-          }
-          displayHtml = (fieldsMap.content || parsed.shortContent || raw).replace(/\\(["nrt\\])/g, (_, c) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' })[c] || _);
-        } catch {}
-      }
-      const hasMainOutlet = displayHtml.includes('id="main-outlet"');
-      const hasComments = displayHtml.includes('id="discourse-comments"');
-      const hasItempropText = displayHtml.includes('itemprop="text"');
-      const isSpaShell = (hasMainOutlet || hasComments) && !hasItempropText;
-      if (isSpaShell) {
-        htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:30px;text-align:center;">
-          <h3>⚠️ Bronze HTML is a Discourse SPA shell</h3>
-          <p style="max-width:500px;margin:20px auto;line-height:1.6;">
-            The raw HTML was collected as a JavaScript-rendered SPA page without actual post content.
-            Use the <strong>Silver (Rendered)</strong> or <strong>Silver (JSON)</strong> tabs to view the extracted markdown content.
-          </p>
-        </body>`;
-      } else {
-        htmlIframe.srcdoc = displayHtml;
-      }
-    } else if (activeDoc.bronze.rawJson) {
-      const prettyJson = JSON.stringify(activeDoc.bronze.rawJson, null, 2);
-      htmlIframe.srcdoc = `<body style="background:#0f131a;color:#e2e8f0;font-family:monospace;padding:20px;font-size:12px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(prettyJson)}</body>`;
-    } else {
+    if (!activeDoc.bronze.rawHtml && !activeDoc.bronze.rawJson) {
       htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:20px;text-align:center;">
-        <h3>No original HTML preview available for this document</h3>
+        <h3>Loading raw content...</h3>
       </body>`;
+      
+      fetch(`/api/documents/${activeDoc.id}/raw?collection=${encodeURIComponent(currentCollection)}`)
+        .then(res => res.json())
+        .then(raw => {
+          activeDoc.bronze.rawHtml = raw.rawHtml;
+          activeDoc.bronze.rawJson = raw.rawJson;
+          renderRawHtml(htmlIframe);
+        })
+        .catch(err => {
+          htmlIframe.srcdoc = `<body style="background:#0f131a;color:#ef4444;font-family:sans-serif;padding:20px;text-align:center;">
+            <h3>Failed to load raw content: ${err.message}</h3>
+          </body>`;
+        });
+    } else {
+      renderRawHtml(htmlIframe);
     }
   } 
   else if (tabId === 'tab-bronze-json') {
     const jsonCode = document.getElementById('bronze-json-code');
-    const jsonString = JSON.stringify(activeDoc.bronze, null, 2);
-    jsonCode.textContent = jsonString;
-    
-    if (jsonString.length < 100000) {
-      Prism.highlightElement(jsonCode);
+    if (!activeDoc.bronze.rawHtml && !activeDoc.bronze.rawJson) {
+      jsonCode.textContent = 'Loading raw content...';
+      fetch(`/api/documents/${activeDoc.id}/raw?collection=${encodeURIComponent(currentCollection)}`)
+        .then(res => res.json())
+        .then(raw => {
+          activeDoc.bronze.rawHtml = raw.rawHtml;
+          activeDoc.bronze.rawJson = raw.rawJson;
+          renderBronzeJson(jsonCode);
+        })
+        .catch(err => {
+          jsonCode.textContent = `Failed to load raw content: ${err.message}`;
+        });
     } else {
-      jsonCode.textContent += '\n\n// [Notice] Syntax highlighting skipped because the JSON is too large (> 100KB)';
+      renderBronzeJson(jsonCode);
     }
   }
+}
+
+function renderRawHtml(htmlIframe) {
+  if (activeDoc.bronze.rawHtml) {
+    const raw = activeDoc.bronze.rawHtml;
+    const isJsonStr = typeof raw === 'string' && /^\s*[{[]/.test(raw);
+    let displayHtml = raw;
+    if (isJsonStr) {
+      try {
+        const parsed = JSON.parse(raw);
+        const fieldsMap = {};
+        if (Array.isArray(parsed.fields)) {
+          for (const f of parsed.fields) fieldsMap[f.key] = f.value;
+        }
+        displayHtml = (fieldsMap.content || parsed.shortContent || raw).replace(/\\(["nrt\\])/g, (_, c) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' })[c] || _);
+      } catch {}
+    }
+    const hasMainOutlet = displayHtml.includes('id="main-outlet"');
+    const hasComments = displayHtml.includes('id="discourse-comments"');
+    const hasItempropText = displayHtml.includes('itemprop="text"');
+    const isSpaShell = (hasMainOutlet || hasComments) && !hasItempropText;
+    if (isSpaShell) {
+      htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:30px;text-align:center;">
+        <h3>⚠️ Bronze HTML is a Discourse SPA shell</h3>
+        <p style="max-width:500px;margin:20px auto;line-height:1.6;">
+          The raw HTML was collected as a JavaScript-rendered SPA page without actual post content.
+          Use the <strong>Silver (Rendered)</strong> or <strong>Silver (JSON)</strong> tabs to view the extracted markdown content.
+        </p>
+      </body>`;
+    } else {
+      htmlIframe.srcdoc = displayHtml;
+    }
+  } else if (activeDoc.bronze.rawJson) {
+    const prettyJson = JSON.stringify(activeDoc.bronze.rawJson, null, 2);
+    htmlIframe.srcdoc = `<body style="background:#0f131a;color:#e2e8f0;font-family:monospace;padding:20px;font-size:12px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(prettyJson)}</body>`;
+  } else {
+    htmlIframe.srcdoc = `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:20px;text-align:center;">
+      <h3>No original HTML preview available for this document</h3>
+    </body>`;
+  }
+}
+
+function renderBronzeJson(jsonCode) {
+  const jsonString = JSON.stringify(activeDoc.bronze, null, 2);
+  jsonCode.textContent = jsonString;
+  
+  if (jsonString.length < 100000) {
+    Prism.highlightElement(jsonCode);
+  } else {
+    jsonCode.textContent += '\n\n// [Notice] Syntax highlighting skipped because the JSON is too large (> 100KB)';
+  }
+}
 }
 
 // Helpers

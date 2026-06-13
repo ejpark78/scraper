@@ -18,6 +18,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { getAllSites } from '../crawler/core/SiteRegistry';
+import { MeiliSearchDatabase } from '../database/meili';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -110,191 +111,54 @@ app.get('/api/documents', async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string || '30', 10);
     const skip = (page - 1) * limit;
 
-    // Special handling for merged 'linkedin.jobs' (lists documents based on bronze, stitched with silver)
+    let siteKey = '';
     if (collectionName === 'linkedin.jobs') {
-      const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
-      const silverColl = await mongo.getCollection('silver/linkedin.jobs');
+      siteKey = 'linkedin';
+    } else if (collectionName.startsWith('silver/')) {
+      siteKey = collectionName.replace('silver/', '').split('.')[0];
+    } else {
+      siteKey = collectionName.split('.')[0];
+    }
+
+    const meili = MeiliSearchDatabase.getInstance();
+    const filter = [`site = "${siteKey}"`];
+
+    if (collectionName === 'linkedin.jobs') {
       const country = req.query.country as string || '';
-      
-      let query: any = {};
-      let total = 0;
-      let hasPaginatedInSilver = false;
-      
       if (country) {
-        const countryRegex = new RegExp(country, 'i');
-        const silverQuery: any = { location: countryRegex };
-        
-        if (search) {
-          if (/^\d+$/.test(search)) {
-            const numId = parseInt(search, 10);
-            silverQuery.$or = [
-              { jobId: search },
-              { jobId: numId }
-            ];
-          } else {
-            silverQuery.$text = { $search: search };
-          }
-        }
-
-        // Get true total count from Silver (very fast count)
-        total = await silverColl.countDocuments(silverQuery);
-
-        // Paginate in Silver to get exact 30 IDs for the current page
-        const matchingSilverDocs = await silverColl.find(silverQuery)
-          .sort({ _id: -1 })
-          .skip(skip)
-          .limit(limit)
-          .project({ jobId: 1 })
-          .toArray();
-        const matchingJobIds = matchingSilverDocs.map(d => d.jobId).filter(Boolean);
-        
-        query = { jobId: { $in: matchingJobIds } };
-        hasPaginatedInSilver = true;
-      } else if (search) {
-        let silverQuery: any = {};
-        if (/^\d+$/.test(search)) {
-          const numId = parseInt(search, 10);
-          silverQuery = {
-            $or: [
-              { jobId: search },
-              { jobId: numId }
-            ]
-          };
-        } else {
-          silverQuery = { $text: { $search: search } };
-        }
-
-        total = await silverColl.countDocuments(silverQuery);
-
-        // Paginate in Silver to get exact 30 IDs for the current page
-        const matchingSilverDocs = await silverColl.find(silverQuery)
-          .sort({ _id: -1 })
-          .skip(skip)
-          .limit(limit)
-          .project({ jobId: 1 })
-          .toArray();
-        const matchingJobIds = matchingSilverDocs.map(d => d.jobId).filter(Boolean);
-        
-        if (/^\d+$/.test(search)) {
-          const numId = parseInt(search, 10);
-          query = {
-            $or: [
-              { jobId: search },
-              { jobId: numId }
-            ]
-          };
-        } else {
-          query = { jobId: { $in: matchingJobIds } };
-        }
-        hasPaginatedInSilver = true;
-      } else {
-        total = await bronzeColl.estimatedDocumentCount();
-      }
-
-      // Query bronze docs
-      const bronzeDocs = await (hasPaginatedInSilver
-        ? bronzeColl.find(query)
-            .project({
-              _id: 1,
-              jobId: 1,
-              scrapedAt: 1,
-              url: 1
-            })
-            .sort({ _id: -1 })
-            .toArray()
-        : bronzeColl.find(query)
-            .project({
-              _id: 1,
-              jobId: 1,
-              scrapedAt: 1,
-              url: 1
-            })
-            .sort({ _id: -1 })
-            .skip(skip)
-            .limit(limit)
-            .toArray()
-      );
-
-      // Stitch silver metadata
-      const jobIds = bronzeDocs.map(d => d.jobId).filter(Boolean);
-      const silverDocs = await silverColl.find({ jobId: { $in: jobIds } }).toArray();
-      const silverMap = new Map(silverDocs.map(d => [d.jobId, d]));
-
-      const combinedDocs = bronzeDocs.map(bDoc => {
-        const sDoc = silverMap.get(bDoc.jobId);
-        return {
-          _id: bDoc._id,
-          jobId: bDoc.jobId,
-          title: sDoc ? (sDoc.title || sDoc.jobTitle) : `LinkedIn - #${bDoc.jobId}`,
-          companyName: sDoc ? sDoc.companyName : 'Unknown Company',
-          collectedAt: bDoc.scrapedAt || (sDoc ? sDoc.updatedAt : null),
-          url: bDoc.url || (sDoc ? sDoc.url : null),
-          hasSilver: !!sDoc,
-          hasBronze: true
-        };
-      });
-
-      return res.json({
-        total,
-        page,
-        limit,
-        documents: combinedDocs
-      });
-    }
-
-    // Default handling for other collections
-    const collection = await mongo.getCollection(collectionName as `${'bronze' | 'silver'}/${string}`);
-    
-    let query: any = {};
-    if (search) {
-      if (/^\d+$/.test(search)) {
-        const numVal = parseInt(search, 10);
-        query = {
-          $or: [
-            { id: search },
-            { id: numVal },
-            { jobId: search },
-            { jobId: numVal },
-            { topicId: search },
-            { topicId: numVal },
-            { postId: search },
-            { postId: numVal }
-          ]
-        };
-      } else {
-        query = { $text: { $search: search } };
+        filter.push(`geo = "${country}"`);
       }
     }
 
-    const total = search ? await collection.countDocuments(query) : await collection.estimatedDocumentCount();
-    const docs = await collection.find(query)
-      .project({
-        _id: 1,
-        title: 1,
-        jobTitle: 1,
-        companyName: 1,
-        site: 1,
-        url: 1,
-        collectedAt: 1,
-        createdAt: 1,
-        scrapedAt: 1,
-        updatedAt: 1,
-        publishedAt: 1,
-        jobId: 1,
-        id: 1,
-        topicId: 1,
-        postId: 1
-      })
-      .sort({ publishedAt: -1, _id: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    const searchResults = await meili.search('contents', search, {
+      filter,
+      limit,
+      offset: skip,
+      sort: ['publishedAt:desc']
+    });
+
+    const mappedDocs = searchResults.hits.map(h => ({
+      _id: h.docId,
+      id: h.docId,
+      jobId: h.site === 'linkedin' ? h.docId : undefined,
+      title: h.title,
+      companyName: h.companyName,
+      site: h.site,
+      url: h.url,
+      geo: h.geo,
+      location: h.location,
+      publishedAt: h.publishedAt,
+      collectedAt: h.publishedAt,
+      updatedAt: h.updatedAt,
+      hasSilver: true,
+      hasBronze: true
+    }));
 
     res.json({
-      total,
+      total: searchResults.estimatedTotalHits,
       page,
       limit,
-      documents: docs
+      documents: mappedDocs
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -307,52 +171,19 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
     const collectionName = req.query.collection as string || 'linkedin.jobs';
 
     if (collectionName === 'linkedin.jobs') {
-      const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
       const silverColl = await mongo.getCollection('silver/linkedin.jobs');
-      
-      let bronzeDoc: any = null;
-      let silverDoc: any = null;
+      const numId = parseInt(id, 10);
+      const filter = isNaN(numId) ? { jobId: id } : { $or: [{ jobId: id }, { jobId: numId }] };
+      const silverDoc = await silverColl.findOne(filter);
 
-      if (ObjectId.isValid(id)) {
-        bronzeDoc = await bronzeColl.findOne({ _id: new ObjectId(id) });
-      } else {
-        const numId = parseInt(id, 10);
-        const filter = isNaN(numId) ? { jobId: id } : { $or: [{ jobId: id }, { jobId: numId }] };
-        bronzeDoc = await bronzeColl.findOne(filter);
-      }
-      
-      if (bronzeDoc && bronzeDoc.jobId) {
-        const searchJobId = bronzeDoc.jobId.toString();
-        const numJobId = parseInt(searchJobId, 10);
-        silverDoc = await silverColl.findOne({
-          $or: [
-            { jobId: searchJobId },
-            { jobId: numJobId }
-          ]
-        });
-      } else {
-        const numId = parseInt(id, 10);
-        const silverFilter = isNaN(numId) ? { jobId: id } : { $or: [{ jobId: id }, { jobId: numId }] };
-        silverDoc = await silverColl.findOne(silverFilter);
-        if (silverDoc && silverDoc.jobId) {
-          const searchJobId = silverDoc.jobId.toString();
-          const numJobId = parseInt(searchJobId, 10);
-          bronzeDoc = await bronzeColl.findOne({
-            $or: [
-              { jobId: searchJobId },
-              { jobId: numJobId }
-            ]
-          });
-        }
-      }
-
-      if (!bronzeDoc && !silverDoc) {
+      if (!silverDoc) {
         return res.status(404).json({ error: 'Document not found' });
       }
 
+      // Return a lightweight document without bronze's rawHtml
       return res.json({
         isMerged: true,
-        bronze: bronzeDoc,
+        bronze: { jobId: silverDoc.jobId, url: silverDoc.url },
         silver: silverDoc
       });
     }
@@ -371,40 +202,54 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Document not found' });
     }
 
-    if (!doc.rawHtml) {
-      try {
-        const site = sites.find(s => s.targetLoader?.collectionName === collectionName);
-        if (site && site.scraper?.collectionName) {
-          const bronzeColl = await mongo.getCollection(site.scraper.collectionName);
-          const filterField = site.targetLoader?.filterField || 'id';
-          const updateFilterKey = site.scraper.updateFilterKey || 'id';
-          const idValue = doc[filterField];
+    // Omit stitching rawHtml here to make it fast
+    res.json(doc);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-          if (idValue) {
-            const query: any = {};
-            if (updateFilterKey !== 'id') {
-              query.$or = [
-                { [updateFilterKey]: idValue },
-                { id: idValue }
-              ];
-            } else {
-              query.id = idValue;
-            }
-            const bronzeDoc = await bronzeColl.findOne(query);
-            if (bronzeDoc && bronzeDoc.rawHtml) {
-              doc.rawHtml = bronzeDoc.rawHtml;
-              if (bronzeDoc.scrapedAt) {
-                doc.scrapedAt = bronzeDoc.scrapedAt;
-              }
-            }
-          }
-        }
-      } catch (stitchErr) {
-        console.error(`[Stitch] Failed to attach rawHtml for ${collectionName}:`, stitchErr);
+// New endpoint for lazy loading raw HTML / JSON
+app.get('/api/documents/:id/raw', async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const collectionName = req.query.collection as string || 'linkedin.jobs';
+
+    if (collectionName === 'linkedin.jobs') {
+      const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
+      const numId = parseInt(id, 10);
+      const filter = isNaN(numId) ? { jobId: id } : { $or: [{ jobId: id }, { jobId: numId }] };
+      const bronzeDoc = await bronzeColl.findOne(filter);
+      
+      if (!bronzeDoc) {
+        return res.status(404).json({ error: 'Raw HTML not found' });
+      }
+      return res.json({ rawHtml: bronzeDoc.rawHtml, rawJson: bronzeDoc.rawJson });
+    }
+
+    // Other collections
+    const site = sites.find(s => s.targetLoader?.collectionName === collectionName);
+    if (site && site.scraper?.collectionName) {
+      const bronzeColl = await mongo.getCollection(site.scraper.collectionName);
+      const updateFilterKey = site.scraper.updateFilterKey || 'id';
+      
+      const query: any = {};
+      if (updateFilterKey !== 'id') {
+        query.$or = [
+          { [updateFilterKey]: id },
+          { id: id }
+        ];
+      } else {
+        query.id = id;
+      }
+      
+      const bronzeDoc = await bronzeColl.findOne(query);
+      if (bronzeDoc) {
+        return res.json({ rawHtml: bronzeDoc.rawHtml, rawJson: bronzeDoc.rawJson });
       }
     }
 
-    res.json(doc);
+    res.status(404).json({ error: 'Raw HTML not found' });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -453,21 +298,28 @@ function registerMcpHandlers(server: Server) {
     const limit = Number(request.params.arguments?.limit || 5);
 
     try {
-      const collection = await mongo.getCollection(collectionName as `${'bronze' | 'silver'}/${string}`);
-      const query = { $text: { $search: search } };
+      let siteKey = '';
+      if (collectionName === 'linkedin.jobs') {
+        siteKey = 'linkedin';
+      } else if (collectionName.startsWith('silver/')) {
+        siteKey = collectionName.replace('silver/', '').split('.')[0];
+      } else {
+        siteKey = collectionName.split('.')[0];
+      }
 
-      const docs = await collection.find(query)
-        .sort({ _id: -1 })
-        .limit(limit)
-        .toArray();
+      const meili = MeiliSearchDatabase.getInstance();
+      const searchResults = await meili.search('contents', search, {
+        filter: [`site = "${siteKey}"`],
+        limit
+      });
 
       // Map results to text output
-      const formattedResults = docs.map(doc => {
-        const title = doc.title || doc.jobTitle || 'Untitled';
+      const formattedResults = searchResults.hits.map(doc => {
+        const title = doc.title || 'Untitled';
         const company = doc.companyName || 'Unknown Company';
         const url = doc.url || 'No URL';
-        const body = doc.markdown || doc.text || doc.content || '(No body content)';
-        return `### Title: ${title}\nCompany: ${company}\nURL: ${url}\nID: ${doc.id || doc.jobId || doc._id}\n---\n${body.substring(0, 1000)}...\n\n`;
+        const body = doc.content || '(No body content)';
+        return `### Title: ${title}\nCompany: ${company}\nURL: ${url}\nID: ${doc.docId || doc.id}\n---\n${body.substring(0, 1000)}...\n\n`;
       }).join('\n');
 
       return {
