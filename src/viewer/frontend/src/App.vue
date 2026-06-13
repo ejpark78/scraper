@@ -138,8 +138,14 @@ const addingUrl = ref<boolean>(false);
 const addUrlSuccess = ref<string>('');
 const addUrlError = ref<string>('');
 
-// Dead Letter & Refresh states
-const deadLetterFilter = ref<string>('All');
+// Error Logs states
+const errorLogs = ref<any[]>([]);
+const totalErrorLogs = ref<number>(0);
+const errorSiteCounts = ref<Record<string, number>>({});
+const errorFilter = ref<string>('All');
+const errorPage = ref<number>(1);
+const totalErrorPages = ref<number>(1);
+const loadingErrors = ref<boolean>(false);
 const refreshFeedback = ref<boolean>(false);
 
 // Country badges list for LinkedIn Jobs
@@ -156,16 +162,9 @@ const countries = [
 // Computed
 const totalPages = computed(() => Math.max(1, Math.ceil(totalDocuments.value / limit)));
 
-const deadLetterSites = computed(() => {
-  const sites = Object.keys(queueData.value.deadLetter.siteCounts);
+const errorSites = computed(() => {
+  const sites = Object.keys(errorSiteCounts.value);
   return ['All', ...sites];
-});
-
-const filteredDeadLetterItems = computed(() => {
-  if (deadLetterFilter.value === 'All') {
-    return queueData.value.deadLetter.items;
-  }
-  return queueData.value.deadLetter.items.filter(item => item.site === deadLetterFilter.value);
 });
 
 const transformQueueCounts = computed(() => {
@@ -234,7 +233,17 @@ watch([currentCollection, searchQuery, currentCountry, currentPage], () => {
     fetchDocuments();
   } else if (currentCollection.value === '__dashboard__') {
     fetchQueues();
+    fetchErrors();
   }
+});
+
+watch(errorFilter, () => {
+  errorPage.value = 1;
+  fetchErrors();
+});
+
+watch(errorPage, () => {
+  fetchErrors();
 });
 
 // Lifecycle
@@ -376,6 +385,22 @@ async function fetchQueues() {
     console.error('Error loading queues status:', error);
   } finally {
     loadingQueues.value = false;
+  }
+}
+
+async function fetchErrors() {
+  loadingErrors.value = true;
+  try {
+    const response = await fetch(`/api/errors?site=${errorFilter.value}&page=${errorPage.value}`);
+    const data = await response.json();
+    errorLogs.value = data.errors || [];
+    totalErrorLogs.value = data.totalCount || 0;
+    errorSiteCounts.value = data.siteCounts || {};
+    totalErrorPages.value = data.totalPages || 1;
+  } catch (err) {
+    console.error('Error fetching error logs:', err);
+  } finally {
+    loadingErrors.value = false;
   }
 }
 
@@ -673,9 +698,9 @@ const iframeSrcDoc = computed(() => {
             </div>
           </div>
           <div class="dashboard-actions">
-            <button @click="fetchQueues" class="btn-secondary" :disabled="loadingQueues">
+            <button @click="() => { fetchQueues(); fetchErrors(); }" class="btn-secondary" :disabled="loadingQueues || loadingErrors">
               <span :style="{ display: 'inline-block', transition: 'transform 0.6s ease', transform: refreshFeedback ? 'rotate(360deg)' : 'none' }">🔄</span>
-              {{ loadingQueues ? '갱신 중...' : '새로고침' }}
+              {{ loadingQueues || loadingErrors ? '갱신 중...' : '새로고침' }}
             </button>
             <button @click="clearQueues" class="btn-danger">
               <span>🧹</span> 큐 전체 비우기
@@ -827,50 +852,71 @@ const iframeSrcDoc = computed(() => {
             </div>
           </div>
 
-          <!-- Dead Letter Queue (Failed Tasks) -->
-          <div class="queue-section-card" style="max-height: 600px;">
+          <!-- Docker Scraper & Converter Error Logs (Grep Errors) -->
+          <div class="queue-section-card" style="max-height: 800px; display: flex; flex-direction: column;">
             <div class="card-header" style="border-top: 2px solid #ef4444; flex-direction: column; align-items: stretch; gap: 12px; height: auto;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="color:#f87171;">⚠️ 최종 수집 실패 목록 (Dead Letter Queue)</h3>
-                <span class="badge-priority high">{{ filteredDeadLetterItems.length.toLocaleString('ko-KR') }}</span>
+                <h3 style="color:#f87171;">🛑 수집 및 변환 에러 로그 (Grep Errors)</h3>
+                <span class="badge-priority high">{{ totalErrorLogs.toLocaleString('ko-KR') }}</span>
               </div>
               <!-- Site Badges Filters -->
               <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
                 <button 
-                  v-for="site in deadLetterSites" 
+                  v-for="site in errorSites" 
                   :key="site"
                   class="country-badge" 
-                  :class="{ active: deadLetterFilter === site }"
-                  @click="deadLetterFilter = site"
+                  :class="{ active: errorFilter === site }"
+                  @click="errorFilter = site"
                   style="padding: 4px 10px; font-size: 11px;"
                 >
-                  {{ site }}
+                  {{ site }} ({{ site === 'All' ? totalErrorLogs : (errorSiteCounts[site] || 0) }})
                 </button>
               </div>
             </div>
-            <div class="card-body">
-              <div v-if="filteredDeadLetterItems.length === 0" class="empty-state" style="height:150px;">선택한 필터의 실패 데이터가 없습니다. 깨끗합니다! ✨</div>
-              <div v-else class="queue-table-container">
+            <div class="card-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+              <div v-if="loadingErrors" class="empty-state" style="height:150px;">에러 로그를 로딩 중입니다...</div>
+              <div v-else-if="errorLogs.length === 0" class="empty-state" style="height:150px;">에러 로그가 없습니다. 모두 정상 작동 중입니다! ✨</div>
+              <div v-else class="queue-table-container" style="flex: 1; overflow-y: auto;">
                 <table class="dashboard-table">
                   <thead>
                     <tr>
-                      <th style="width:12%;">사이트</th>
-                      <th style="width:38%;">실패 URL</th>
-                      <th style="width:35%;">실패 사유</th>
-                      <th style="width:15%;">실패 시각</th>
+                      <th style="width:12%;">서비스</th>
+                      <th style="width:15%;">사이트</th>
+                      <th style="width:58%;">에러 메시지</th>
+                      <th style="width:15%;">로그 시각</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(item, idx) in filteredDeadLetterItems" :key="idx">
-                      <td style="font-weight:600;">{{ item.site }}</td>
-                      <td style="word-break:break-all;font-family:monospace;font-size:12px;">
-                        <a :href="item.url" target="_blank" style="color:var(--primary);text-decoration:none;">{{ item.url }}</a>
+                    <tr v-for="(item, idx) in errorLogs" :key="idx">
+                      <td>
+                        <span :class="['badge-priority', item.service === 'scraper' ? 'high' : 'medium']" style="font-size:10px;">
+                          {{ item.service }}
+                        </span>
                       </td>
-                      <td class="dead-letter-reason" style="word-break:break-all;">{{ item.error }}</td>
-                      <td style="font-size:11px;">{{ formatCollectedDate(item.failedAt) }}</td>
+                      <td style="font-weight:600; font-size:11px;">{{ item.site }}</td>
+                      <td style="word-break:break-all; font-size:11px; text-align:left;">
+                        <div style="font-weight:600; color:#f87171;">{{ item.message }}</div>
+                        <div v-if="item.url" style="margin-top:2px;">
+                          <a :href="item.url" target="_blank" style="color:var(--accent-color); text-decoration:underline; font-size:10px; font-family:monospace;">
+                            {{ item.url }}
+                          </a>
+                        </div>
+                        <div v-if="item.stack" style="font-size:10px; color:#ef4444; opacity:0.8; margin-top:4px; font-family:monospace; white-space:pre-wrap; max-height:80px; overflow-y:auto; border-top:1px dashed rgba(239,68,68,0.2); padding-top:4px;">
+                          {{ item.stack }}
+                        </div>
+                      </td>
+                      <td style="font-size:11px; color:var(--text-muted);">
+                        {{ new Date(item.timestamp).toLocaleTimeString('ko-KR') }}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+              <!-- Pagination controls -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-color); flex-shrink:0;">
+                <button :disabled="errorPage <= 1" @click="errorPage--" class="page-btn" style="padding:4px 8px;font-size:11px;">◀ 이전</button>
+                <span style="font-size:11px;color:var(--text-secondary);">페이지 {{ errorPage }} / {{ totalErrorPages }} (총 {{ totalErrorLogs }}건)</span>
+                <button :disabled="errorPage >= totalErrorPages" @click="errorPage++" class="page-btn" style="padding:4px 8px;font-size:11px;">다음 ▶</button>
               </div>
             </div>
           </div>

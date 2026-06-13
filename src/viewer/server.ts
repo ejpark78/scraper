@@ -11,6 +11,7 @@
  */
 
 import express, { Request, Response } from 'express';
+import http from 'http';
 import path from 'path';
 import { MongoDatabase } from '../database/mongo';
 import { ObjectId } from 'mongodb';
@@ -647,6 +648,199 @@ app.post('/messages', async (req: Request, res: Response) => {
     await session.transport.handlePostMessage(req, res, req.body);
   } else {
     res.status(400).send(`No active SSE connection for sessionId: ${sessionId}`);
+  }
+});
+
+// --- DOCKER SOCKET LOGS GREP ERRORS IMPLEMENTATION ---
+interface DockerContainer {
+  Id: string;
+  Names: string[];
+  Labels: Record<string, string>;
+  State: string;
+}
+
+interface ParsedError {
+  service: string;
+  timestamp: string;
+  level: string;
+  message: string;
+  site: string;
+  url: string;
+  stack?: string;
+}
+
+function requestDockerSocket(path: string, method: string = 'GET'): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const options = {
+      socketPath: '/var/run/docker.sock',
+      path,
+      method,
+    };
+    const req = http.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          if (res.headers['content-type']?.includes('application/json')) {
+            resolve(JSON.parse(data));
+          } else {
+            resolve(data);
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function getDockerLogsBinary(containerId: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const options = {
+      socketPath: '/var/run/docker.sock',
+      path: `/containers/${containerId}/logs?stdout=true&stderr=true&tail=5000`,
+      method: 'GET',
+    };
+    const req = http.request(options, (res) => {
+      const chunks: Buffer[] = [];
+      res.on('data', (chunk) => { chunks.push(chunk as Buffer); });
+      res.on('end', () => {
+        resolve(Buffer.concat(chunks));
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+function demuxDockerLogs(buffer: Buffer): string {
+  let offset = 0;
+  let output = '';
+  while (offset < buffer.length) {
+    if (offset + 8 > buffer.length) break;
+    const size = buffer.readUInt32BE(offset + 4);
+    offset += 8;
+    if (offset + size > buffer.length) break;
+    output += buffer.toString('utf8', offset, offset + size);
+    offset += size;
+  }
+  if (output.length === 0 && buffer.length > 0) {
+    return buffer.toString('utf8');
+  }
+  return output;
+}
+
+function parseErrorsFromLogText(service: string, logText: string): ParsedError[] {
+  const lines = logText.split(/\r?\n/);
+  const errors: ParsedError[] = [];
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    
+    const isJson = trimmed.startsWith('{') && trimmed.endsWith('}');
+    const isJsonError = isJson && trimmed.includes('"level":"ERROR"');
+    const isStartupError = !isJson && !/^\s*at /i.test(trimmed) && /TSError|error TS|Error:|Exception/i.test(trimmed);
+    
+    if (isJsonError) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        const timestamp = parsed.timestamp || parsed.time || new Date().toISOString();
+        const message = parsed.message || parsed.msg || 'No message';
+        const site = parsed.site || 'Unknown';
+        const url = parsed.url || '';
+        const stack = parsed.error_stack || parsed.stack || '';
+        
+        errors.push({
+          service,
+          timestamp,
+          level: 'ERROR',
+          message: parsed.error_name ? `${parsed.error_name}: ${message}` : message,
+          site,
+          url,
+          stack
+        });
+      } catch {
+        errors.push({
+          service,
+          timestamp: new Date().toISOString(),
+          level: 'ERROR',
+          message: trimmed,
+          site: 'Unknown',
+          url: ''
+        });
+      }
+    } else if (isStartupError) {
+      errors.push({
+        service,
+        timestamp: new Date().toISOString(),
+        level: 'STARTUP ERROR',
+        message: trimmed,
+        site: 'Unknown',
+        url: ''
+      });
+    }
+  }
+  return errors;
+}
+
+app.get('/api/errors', async (req: Request, res: Response) => {
+  try {
+    const siteFilter = (req.query.site as string) || 'All';
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = 30;
+    
+    const containers: DockerContainer[] = await requestDockerSocket('/containers/json?all=true');
+    
+    const targetContainers = containers.filter(c => {
+      const service = c.Labels?.['com.docker.compose.service'] || '';
+      return service === 'scraper' || service === 'converter';
+    });
+    
+    let allErrors: ParsedError[] = [];
+    
+    for (const container of targetContainers) {
+      const serviceName = container.Labels?.['com.docker.compose.service'] || 'unknown';
+      try {
+        const logBuffer = await getDockerLogsBinary(container.Id);
+        const logText = demuxDockerLogs(logBuffer);
+        const parsed = parseErrorsFromLogText(serviceName, logText);
+        allErrors = allErrors.concat(parsed);
+      } catch (err) {
+        console.error(`Failed to fetch logs for container ${container.Id}:`, err);
+      }
+    }
+    
+    allErrors.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    const siteCounts: Record<string, number> = {};
+    for (const err of allErrors) {
+      const site = err.site || 'Unknown';
+      siteCounts[site] = (siteCounts[site] || 0) + 1;
+    }
+    
+    let filteredErrors = allErrors;
+    if (siteFilter !== 'All') {
+      filteredErrors = allErrors.filter(err => err.site === siteFilter);
+    }
+    
+    const totalCount = filteredErrors.length;
+    const startIndex = (page - 1) * limit;
+    const paginatedErrors = filteredErrors.slice(startIndex, startIndex + limit);
+    
+    res.json({
+      errors: paginatedErrors,
+      totalCount,
+      siteCounts,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit) || 1
+    });
+  } catch (error: any) {
+    console.error('[API Error Logs Fetch Error]', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch error logs from docker' });
   }
 });
 
