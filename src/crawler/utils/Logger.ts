@@ -49,18 +49,33 @@ export class Logger {
     // Strip ANSI colors/escapes for clean log aggregation
     const cleanMessage = message.replace(/[\u001b\u009b][[()#;?]*(?:[a-zA-Z\d]*(?:;[-a-zA-Z\d]*)*)?/g, '');
 
+    // Extract site from meta or parse it from message brackets [site_name]
+    let site = meta?.site || '';
+    if (!site) {
+      const match = message.match(/\[([a-zA-Z0-9_-]+)\]/);
+      if (match) {
+        const val = match[1];
+        const exclude = ['scraper', 'transformer', 'converter', 'error', 'warn', 'info', 'debug', 'recursive'];
+        if (!exclude.includes(val.toLowerCase())) {
+          site = val;
+        }
+      }
+    }
+
     if (this.isJson) {
       const logPayload = {
         timestamp,
         level,
         hostname: this.hostname,
+        site: site || undefined,
         message: cleanMessage,
         ...meta,
       };
       console.log(JSON.stringify(logPayload));
     } else {
+      const siteStr = site ? ` [${site}]` : '';
       const metaString = meta ? ` | ${JSON.stringify(meta)}` : '';
-      console.log(`[${timestamp}] [${level}] ${cleanMessage}${metaString}`);
+      console.log(`[${timestamp}] [${level}]${siteStr} ${cleanMessage}${metaString}`);
     }
   }
 }
