@@ -43,6 +43,8 @@ async function main() {
 
       Logger.info(`[Transformer] POP task [${site}] ID: ${id} (Bronze Ref: ${bronze_id})`);
 
+      await Logger.contextStorage.run({ site, url: bronze_id }, async () => {
+
       try {
         const desc = getSite(site);
         if (!desc?.transformer) {
@@ -200,6 +202,7 @@ async function main() {
           Logger.error(`[Transformer] Max retry attempts exceeded. Moved transform ID: ${id} to dead_letter_queue`);
         }
       }
+      });
 
     } catch (loopErr: any) {
       Logger.error(`[Transformer] Worker loop exception: ${loopErr.message}`, loopErr);
