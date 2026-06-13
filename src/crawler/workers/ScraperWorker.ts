@@ -188,6 +188,7 @@ class ScraperWorker {
     } catch (scrapeErr: any) {
       await this.handleScrapeFailure(payload, id, scrapeErr);
     }
+    });
   }
 
   private async checkAndApplyRateLimit(site: string, scraperSlack?: number): Promise<void> {
@@ -360,7 +361,6 @@ class ScraperWorker {
     } catch (err: any) {
       Logger.error(`[Scraper] Error during recursive discovery for [${site}]: ${err.message}`);
     }
-    });
   }
 
   private async handleScrapeFailure(
