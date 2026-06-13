@@ -18,11 +18,18 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 WORKDIR /app
 
-# Install dependencies using cache layers
+# Install root dependencies using cache layers
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
 
+# Install frontend dependencies using cache layers
+COPY src/viewer/frontend/package*.json ./src/viewer/frontend/
+RUN npm ci --prefix src/viewer/frontend && npm cache clean --force
+
 # Copy source files
 COPY . .
+
+# Build the frontend assets
+RUN npm --prefix src/viewer/frontend run build
 
 CMD ["tail", "-f", "/dev/null"]
