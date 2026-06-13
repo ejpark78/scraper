@@ -60,7 +60,7 @@ export const descriptor: SiteDescriptor = {
       'logout',
       'signup'
     ],
-    urlFilter: (url: string) => url.startsWith('https://maily.so/josh'),
+    urlFilter: (url: string) => /^https:\/\/maily\.so\/josh\/posts\/[a-zA-Z0-9]+$/.test(url.split('?')[0]),
     extractId: (url) => {
       const crypto = require('crypto');
       return crypto.createHash('md5').update(url).digest('hex');
