@@ -758,9 +758,6 @@ const iframeSrcDoc = computed(() => {
                     </tbody>
                   </table>
                 </div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 8px; line-height: 1.4;">
-                  💡 HTML 수집 완료 후, 실시간으로 Markdown/JSON 형태의 Silver 데이터로 변환되기 위해 대기하고 있는 사이트별 수량입니다.
-                </div>
               </div>
             </div>
           </div>
