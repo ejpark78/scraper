@@ -123,6 +123,13 @@ const queueData = ref<QueueStatusPayload>({
   activeProcessing: { length: 0, items: [] },
   deadLetter: { length: 0, siteCounts: {}, items: [] }
 });
+const queueDeltas = ref({
+  scraping: 0,
+  transforming: 0,
+  active: 0,
+  dead: 0
+});
+const hasPreviousData = ref(false);
 const loadingQueues = ref<boolean>(false);
 const addUrlSite = ref<string>('linkedin');
 const addUrlVal = ref<string>('');
@@ -335,7 +342,32 @@ async function fetchQueues() {
   }, 600);
   try {
     const response = await fetch('/api/queues');
-    queueData.value = await response.json();
+    const newData = await response.json();
+    
+    if (hasPreviousData.value) {
+      const prevScraping = queueData.value.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0);
+      const newScraping = newData.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0);
+      
+      const prevTransforming = queueData.value.transformQueue.length;
+      const newTransforming = newData.transformQueue.length;
+      
+      const prevActive = queueData.value.activeProcessing.length;
+      const newActive = newData.activeProcessing.length;
+      
+      const prevDead = queueData.value.deadLetter.length;
+      const newDead = newData.deadLetter.length;
+      
+      queueDeltas.value = {
+        scraping: newScraping - prevScraping,
+        transforming: newTransforming - prevTransforming,
+        active: newActive - prevActive,
+        dead: newDead - prevDead
+      };
+    } else {
+      hasPreviousData.value = true;
+    }
+    
+    queueData.value = newData;
   } catch (error) {
     console.error('Error loading queues status:', error);
   } finally {
@@ -654,22 +686,40 @@ const iframeSrcDoc = computed(() => {
               <span class="metric-label">수집 대기 중 (Scraping)</span>
               <span class="metric-value">
                 {{ queueData.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0).toLocaleString('ko-KR') }}
+                <span v-if="hasPreviousData && queueDeltas.scraping !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.scraping > 0 ? '#f87171' : '#4ade80' }">
+                  ({{ queueDeltas.scraping > 0 ? '+' : '' }}{{ queueDeltas.scraping }})
+                </span>
               </span>
               <span class="metric-sub">scrape_queue:* 합계</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">변환 대기 중 (Transforming)</span>
-              <span class="metric-value">{{ queueData.transformQueue.length.toLocaleString('ko-KR') }}</span>
+              <span class="metric-value">
+                {{ queueData.transformQueue.length.toLocaleString('ko-KR') }}
+                <span v-if="hasPreviousData && queueDeltas.transforming !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.transforming > 0 ? '#f87171' : '#4ade80' }">
+                  ({{ queueDeltas.transforming > 0 ? '+' : '' }}{{ queueDeltas.transforming }})
+                </span>
+              </span>
               <span class="metric-sub">transform_queue 대기 문서</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">현재 수집 중 (Active)</span>
-              <span class="metric-value">{{ queueData.activeProcessing.length.toLocaleString('ko-KR') }}</span>
+              <span class="metric-value">
+                {{ queueData.activeProcessing.length.toLocaleString('ko-KR') }}
+                <span v-if="hasPreviousData && queueDeltas.active !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.active > 0 ? '#60a5fa' : '#94a3b8' }">
+                  ({{ queueDeltas.active > 0 ? '+' : '' }}{{ queueDeltas.active }})
+                </span>
+              </span>
               <span class="metric-sub">active_processing 활성 세트</span>
             </div>
             <div class="metric-card" style="border-color: rgba(239, 68, 68, 0.2);">
               <span class="metric-label" style="color: #f87171;">수집 실패 (Dead)</span>
-              <span class="metric-value" style="color: #ef4444;">{{ queueData.deadLetter.length.toLocaleString('ko-KR') }}</span>
+              <span class="metric-value" style="color: #ef4444;">
+                {{ queueData.deadLetter.length.toLocaleString('ko-KR') }}
+                <span v-if="hasPreviousData && queueDeltas.dead !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.dead > 0 ? '#ef4444' : '#4ade80' }">
+                  ({{ queueDeltas.dead > 0 ? '+' : '' }}{{ queueDeltas.dead }})
+                </span>
+              </span>
               <span class="metric-sub">dead_letter_queue 등록 건수</span>
             </div>
           </div>
