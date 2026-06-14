@@ -272,7 +272,7 @@ interface ScrapeTaskPayload {
   priority: string;
 }
 
-interface TransformTaskPayload {
+interface ConvertTaskPayload {
   site: string;
   id: string;
   bronze_db: string;
@@ -297,10 +297,10 @@ interface QueueInfo {
 
 interface QueueStatusPayload {
   queues: QueueInfo[];
-  transformQueue: {
+  convertQueue: {
     length: number;
     siteCounts: Record<string, number>;
-    items: TransformTaskPayload[];
+    items: ConvertTaskPayload[];
   };
   activeProcessing: {
     length: number;
@@ -347,21 +347,21 @@ app.get('/api/queues', async (req: Request, res: Response) => {
       }
     }
     
-    const transformQueueLength = await redis.llen('transform_queue');
-    const allTransformItems = await redis.lrange('transform_queue', 0, -1);
-    const transformQueueSiteCounts: Record<string, number> = {};
-    for (const item of allTransformItems) {
+    const convertQueueLength = await redis.llen('convert_queue');
+    const allConvertItems = await redis.lrange('convert_queue', 0, -1);
+    const convertQueueSiteCounts: Record<string, number> = {};
+    for (const item of allConvertItems) {
       try {
         const parsed = JSON.parse(item);
         const site = parsed.site || 'Unknown';
-        transformQueueSiteCounts[site] = (transformQueueSiteCounts[site] || 0) + 1;
+        convertQueueSiteCounts[site] = (convertQueueSiteCounts[site] || 0) + 1;
       } catch {
-        transformQueueSiteCounts['Unknown'] = (transformQueueSiteCounts['Unknown'] || 0) + 1;
+        convertQueueSiteCounts['Unknown'] = (convertQueueSiteCounts['Unknown'] || 0) + 1;
       }
     }
-    const transformItems = allTransformItems.slice(0, 20).map((item): TransformTaskPayload => {
+    const convertItems = allConvertItems.slice(0, 20).map((item): ConvertTaskPayload => {
       try {
-        return JSON.parse(item) as TransformTaskPayload;
+        return JSON.parse(item) as ConvertTaskPayload;
       } catch {
         return {
           site: 'Unknown',
@@ -404,10 +404,10 @@ app.get('/api/queues', async (req: Request, res: Response) => {
     
     const responsePayload: QueueStatusPayload = {
       queues,
-      transformQueue: {
-        length: transformQueueLength,
-        siteCounts: transformQueueSiteCounts,
-        items: transformItems
+      convertQueue: {
+        length: convertQueueLength,
+        siteCounts: convertQueueSiteCounts,
+        items: convertItems
       },
       activeProcessing: {
         length: activeProcessingLength,
@@ -442,9 +442,9 @@ app.post('/api/queues/clear', async (req: Request, res: Response) => {
       keysToClear.push('dead_letter_queue');
     }
     
-    const transformQueueExists = await redis.exists('transform_queue');
-    if (transformQueueExists) {
-      keysToClear.push('transform_queue');
+    const convertQueueExists = await redis.exists('convert_queue');
+    if (convertQueueExists) {
+      keysToClear.push('convert_queue');
     }
 
     if (keysToClear.length === 0) {

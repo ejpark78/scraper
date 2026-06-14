@@ -74,7 +74,7 @@ export const descriptor: SiteDescriptor = {
     },
   },
 
-  transformer: {
+  converter: {
     converter: new MailyJoshConverter(),
     targetCollection: 'maily_josh.html',
     filter: (id) => ({ id }),

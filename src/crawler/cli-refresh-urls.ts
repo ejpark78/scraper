@@ -4,7 +4,7 @@
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
  * @dependencies BaseRefreshUrls, SiteRegistry
- * @lastUpdated 2026-06-12
+ * @lastUpdated 2026-06-15
  */
 
 import { BaseRefreshUrls } from './core/BaseRefreshUrls';
@@ -31,15 +31,15 @@ if (!desc) {
   console.error(`Unknown site key: ${siteKey}`);
   process.exit(1);
 }
-if (!desc.transformer?.completedSetKey) {
-  console.error(`Site ${siteKey} has no transformer.completedSetKey`);
+if (!desc.converter?.completedSetKey) {
+  console.error(`Site ${siteKey} has no converter.completedSetKey`);
   process.exit(1);
 }
 
 const refresh = new BaseRefreshUrls({
   site: desc.key,
   displayName: desc.name,
-  cacheSetKey: desc.transformer.completedSetKey,
+  cacheSetKey: desc.converter.completedSetKey,
   legacyQueue: siteKey === 'gpters',
 });
 

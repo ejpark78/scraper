@@ -1,10 +1,10 @@
 /**
- * @module TransformerWorker
- * @description Core functionality or script runner for TransformerWorker.ts.
+ * @module ConverterWorker
+ * @description Core functionality or script runner for ConverterWorker.ts.
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
  * @dependencies os, fs, path, ioredis, mongo
- * @lastUpdated 2026-06-11
+ * @lastUpdated 2026-06-15
  */
 
 import * as os from 'os';
@@ -17,7 +17,7 @@ import { getSite } from '../core/SiteRegistry';
 import { TargetLoader } from './TargetLoader';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
-const TRANSFORM_QUEUE = 'transform_queue';
+const CONVERT_QUEUE = 'convert_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
 const DEAD_LETTER_QUEUE = 'dead_letter_queue';
 
@@ -27,11 +27,11 @@ async function main() {
   const mongo = MongoDatabase.getInstance();
   await mongo.connect();
 
-  Logger.info(`Transformer Worker started, listening to: ${TRANSFORM_QUEUE}`);
+  Logger.info(`Converter Worker started, listening to: ${CONVERT_QUEUE}`);
 
   while (true) {
     try {
-      const res = await redis.blpop(TRANSFORM_QUEUE, 5);
+      const res = await redis.blpop(CONVERT_QUEUE, 5);
       if (!res) continue;
 
       const payloadRaw = res[1].trim();
@@ -41,17 +41,17 @@ async function main() {
       const { site, id, bronze_id } = task;
       const attempt = task.attempt || 1;
 
-      Logger.info(`[Transformer] POP task [${site}] ID: ${id} (Bronze Ref: ${bronze_id})`);
+      Logger.info(`[Converter] POP task [${site}] ID: ${id} (Bronze Ref: ${bronze_id})`);
 
       await Logger.contextStorage.run({ site, url: bronze_id }, async () => {
 
       try {
         const desc = getSite(site);
-        if (!desc?.transformer) {
-          throw new Error(`No transformer configuration for site: ${site}`);
+        if (!desc?.converter) {
+          throw new Error(`No converter configuration for site: ${site}`);
         }
 
-        const tf = desc.transformer;
+        const tf = desc.converter;
         const dbName = task.bronze_db || 'bronze';
         let collectionName = task.bronze_collection;
         if (!collectionName) {
@@ -88,12 +88,12 @@ async function main() {
         }
 
         if (site === 'pytorch_kr' && (!meta.content?.trim() || meta.content === `${meta.title}\n`)) {
-          Logger.info(`[Transformer] Content empty for [${site}] ID: ${id}, trying JSON API fallback...`);
+          Logger.info(`[Converter] Content empty for [${site}] ID: ${id}, trying JSON API fallback...`);
           if (typeof (converter as any).fetchAndConvertFromJsonApi === 'function') {
             const jsonMeta = await (converter as any).fetchAndConvertFromJsonApi(rawDoc.url, id);
             if (jsonMeta) {
               meta = jsonMeta;
-              Logger.info(`[Transformer] JSON API fallback succeeded for [${site}] ID: ${id}`);
+              Logger.info(`[Converter] JSON API fallback succeeded for [${site}] ID: ${id}`);
             }
           }
         }
@@ -158,9 +158,9 @@ async function main() {
               fs.writeFileSync(path.join(jsonDir, `${id}.json`), rawContent, 'utf-8');
             }
 
-            Logger.info(`[Transformer] Processed images and saved local files for [${site}] ID: ${id}`);
+            Logger.info(`[Converter] Processed images and saved local files for [${site}] ID: ${id}`);
           } catch (imgErr: any) {
-            Logger.warn(`[Transformer] Local file save or image download failed for [${site}] ID: ${id}: ${imgErr.message}`, imgErr);
+            Logger.warn(`[Converter] Local file save or image download failed for [${site}] ID: ${id}: ${imgErr.message}`, imgErr);
           }
         }
 
@@ -182,7 +182,7 @@ async function main() {
 
         await redis.sadd(tf.completedSetKey, id);
 
-        Logger.info(`[Transformer] Successfully completed pipeline for [${site}] ID: ${id}`, {
+        Logger.info(`[Converter] Successfully completed pipeline for [${site}] ID: ${id}`, {
           title: meta.jobTitle || meta.title || 'Untitled',
           company: meta.company || meta.companyName || 'N/A',
           location: meta.rawLocation || meta.location || 'N/A',
@@ -190,27 +190,27 @@ async function main() {
         });
 
       } catch (transErr: any) {
-        Logger.error(`[Transformer] Transformation failed for [${site}] ID: ${id} on attempt ${attempt}`, transErr);
+        Logger.error(`[Converter] Conversion failed for [${site}] ID: ${id} on attempt ${attempt}`, transErr);
 
         if (attempt < 3) {
           const retryTask = { site, id, bronze_id, attempt: attempt + 1 };
-          await redis.rpush(TRANSFORM_QUEUE, JSON.stringify(retryTask));
-          Logger.info(`[Transformer] Re-queued task to retry. Attempt: ${attempt + 1}`);
+          await redis.rpush(CONVERT_QUEUE, JSON.stringify(retryTask));
+          Logger.info(`[Converter] Re-queued task to retry. Attempt: ${attempt + 1}`);
         } else {
           const deadTask = { site, id, bronze_id, error: transErr.message, failedAt: new Date().toISOString() };
           await redis.rpush(DEAD_LETTER_QUEUE, JSON.stringify(deadTask));
-          Logger.error(`[Transformer] Max retry attempts exceeded. Moved transform ID: ${id} to dead_letter_queue`);
+          Logger.error(`[Converter] Max retry attempts exceeded. Moved convert ID: ${id} to dead_letter_queue`);
         }
       }
       });
 
     } catch (loopErr: any) {
-      Logger.error(`[Transformer] Worker loop exception: ${loopErr.message}`, loopErr);
+      Logger.error(`[Converter] Worker loop exception: ${loopErr.message}`, loopErr);
     }
   }
 }
 
 main().catch((err) => {
-  Logger.error('Fatal crash on Transformer Worker', err);
+  Logger.error('Fatal crash on Converter Worker', err);
   process.exit(1);
 });

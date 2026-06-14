@@ -132,7 +132,7 @@ export const descriptor: SiteDescriptor = {
     },
   },
 
-  transformer: {
+  converter: {
     converter: new UppityConverter(),
     targetCollection: 'uppity.html',
     filter: (id) => ({ id }),

@@ -14,8 +14,8 @@ graph TD
     A -->|Enqueue Crawl Targets| C[(Redis scrape_queue)]
     C -->|BLPOP Consumption| D[ScraperWorker]
     D -->|HTTP GET Fetch| E[(MongoDB bronze.html)]
-    D -->|Enqueue Transform Targets| F[(Redis transform_queue)]
-    F -->|BLPOP Consumption| G[TransformerWorker]
+    D -->|Enqueue Convert Targets| F[(Redis convert_queue)]
+    F -->|BLPOP Consumption| G[ConverterWorker]
     G -->|IConverter Transformation| H[TargetLoader]
     H -->|Upsert Payload| I[(MongoDB silver.contents)]
 ```
@@ -52,7 +52,7 @@ export interface IConverter<T> {
 ```
 - When parsing the main body, prioritize parsing **JSON-LD (`application/ld+json`)** or **Meta Tags** before falling back to DOM structure selectors.
 
-### 2.3 [BaseRefreshUrls.ts](src/crawler/core/BaseRefreshUrls.ts)
+### 2.3 [BaseRefreshConvert.ts](src/crawler/core/BaseRefreshConvert.ts)
 A recovery script that rescans and enqueues failed or uncollected targets.
 - `scanHtmlForUrls()`: Rescans internal links (`a[href]`) inside already crawled HTML to automatically discover new targets.
 - **Exception Filter**: Includes built-in filters to skip placeholder URLs (containing spaces, `<>`, `{`, `}`, `%7B`, `%7D`) and binary file links (`.png`, `.zip`, `.pdf`, etc.).
@@ -67,8 +67,8 @@ A recovery script that rescans and enqueues failed or uncollected targets.
 - **Error Handling**: Moves documents to the `dead_letter_queue` after 3 failed attempts.
 - **Scaling**: Supports running parallel container instances using commands like `make restart SCALE=3`.
 
-### 3.2 [TransformerWorker.ts](src/crawler/workers/TransformerWorker.ts)
-- **Role**: Consumes `transform_queue` tasks and transforms raw HTML to Markdown.
+### 3.2 [ConverterWorker.ts](src/crawler/workers/ConverterWorker.ts)
+- **Role**: Consumes `convert_queue` tasks and transforms raw HTML to Markdown.
 - **Post-Processing**: For all sites except `linkedin`, automatically calls the `downloadImages()` utility to download images locally to `data/sites/{site}/images/{id}/` and swaps image paths in Markdown. (Favicon removal follows the `refreshSilver.imageDownload.removeFavicons` setting.)
 
 ---
@@ -100,7 +100,7 @@ Follow these steps when creating a new crawler site `{site}`:
 
 ### 5.1 Creating Files
 1. **Configuration (`src/crawler/sites/{site}/site.config.ts`)**
-   - Define `key`, `name`, `domain`, `favicon`, `indexes`, `scraper`, `transformer`, and `targetLoader`.
+   - Define `key`, `name`, `domain`, `favicon`, `indexes`, `scraper`, `converter`, and `targetLoader`.
    - `excludePatterns` must include `['favicon', 'login', 'logout', 'signup']` to prevent crawling useless session or asset pages.
 2. **Converter (`src/crawler/sites/{site}/Converter.ts`)**
    - Write a class implementing [IConverter.ts](src/crawler/core/IConverter.ts) and tune TurndownService options.

@@ -107,10 +107,10 @@ if [ -n "$(git status --porcelain)" ]; then
   
   if echo "$STAGED_FILES" | grep -q "AGENTS.md"; then
     MSG="docs: update AGENTS.md rules"
-  elif echo "$STAGED_FILES" | grep -q "src/crawler/workers/TransformerWorker.ts"; then
+  elif echo "$STAGED_FILES" | grep -q "src/crawler/workers/ConverterWorker.ts"; then
     MSG="feat(crawler): retain original image URLs and append collected metadata"
   elif echo "$STAGED_FILES" | grep -q "src/"; then
-    MSG="feat: update scraper/transformer implementation"
+    MSG="feat: update scraper/converter implementation"
   fi
 
   git commit -m "$MSG" > /dev/null

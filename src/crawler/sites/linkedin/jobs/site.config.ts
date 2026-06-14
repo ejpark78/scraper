@@ -240,7 +240,7 @@ export const descriptor: SiteDescriptor = {
     generateUrls: (config: Config, options?: GenerateUrlsOptions) => generateUrls(config, options),
   },
 
-  transformer: {
+  converter: {
     converter: new LinkedInMarkdownConverter(),
     targetCollection: 'linkedin.jobs',
     filter: (id) => ({ jobId: id }),

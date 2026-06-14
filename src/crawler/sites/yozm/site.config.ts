@@ -60,7 +60,7 @@ export const descriptor: SiteDescriptor = {
     scrape: scrapeHttpFetch,
   },
 
-  transformer: {
+  converter: {
     converter: new YozmConverter(),
     targetCollection: 'yozm.html',
     filter: (id) => ({ id }),

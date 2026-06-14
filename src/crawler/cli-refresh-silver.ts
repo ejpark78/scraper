@@ -3,12 +3,12 @@
  * @description Core functionality or script runner for cli-refresh-silver.ts.
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
- * @dependencies SiteRegistry, BaseRefreshTransform
- * @lastUpdated 2026-06-12
+ * @dependencies SiteRegistry, BaseRefreshConvert
+ * @lastUpdated 2026-06-15
  */
 
 import { getSite } from './core/SiteRegistry';
-import { BaseRefreshTransform } from './core/BaseRefreshTransform';
+import { BaseRefreshConvert } from './core/BaseRefreshConvert';
 
 let siteKey = '';
 for (let i = 2; i < process.argv.length; i++) {
@@ -40,10 +40,10 @@ if (!desc.scraper?.collectionName) {
   process.exit(1);
 }
 
-const refreshTransform = new BaseRefreshTransform({
+const refreshConvert = new BaseRefreshConvert({
   site: desc.key,
   bronzeCollection: desc.scraper.collectionName,
   idExtract: siteKey === 'gpters' ? (doc: any) => doc.id || doc.postId : undefined,
   includeUrlInPayload: siteKey === 'gpters',
 });
-refreshTransform.run().catch(console.error).then(() => process.exit(0));
+refreshConvert.run().catch(console.error).then(() => process.exit(0));

@@ -24,9 +24,9 @@ flowchart LR
   List --> Redis[(Redis Queue)]
   Redis --> SW[ScraperWorker]
   SW --> Bronze[(MongoDB<br/>bronze/maily_josh.html)]
-  Bronze --> TW[TransformerWorker]
-  TW --> Silver[(MongoDB<br/>silver/maily_josh.contents)]
-  TW --> Redis2[(Redis<br/>completed set)]
+  Bronze --> CW[ConverterWorker]
+  CW --> Silver[(MongoDB<br/>silver/maily_josh.contents)]
+  CW --> Redis2[(Redis<br/>completed set)]
 ```
 
 ## 🔄 데이터 흐름
@@ -42,9 +42,9 @@ flowchart LR
    - Redis Queue에서 URL Pop
    - `scrapeHttpFetch`로 HTTP 요청
    - HTML을 MongoDB `bronze/maily_josh.html`에 저장
-   - Transform Queue에 Push
+   - Convert Queue에 Push
 
-3. **TransformerWorker** (자동 실행)
+3. **ConverterWorker** (자동 실행)
    - `MailyJoshConverter.convertHtmlToMarkdown()` 호출
    - HTML → Markdown 변환
    - `TargetLoader.buildDocument()`로 데이터 구조화

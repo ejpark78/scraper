@@ -48,7 +48,7 @@ export class LinkedInCompanyContents extends BasePipeline<CompanyMeta> {
         const config = require('./site.config').descriptor;
 
         // Save to Bronze Collection
-        const bronzeColl = await mongo.getCollection(config.transformer.targetCollection || 'linkedin.companies', 'bronze');
+        const bronzeColl = await mongo.getCollection(config.converter.targetCollection || 'linkedin.companies', 'bronze');
         await bronzeColl.updateOne(
             { companyId: id },
             {
@@ -78,8 +78,8 @@ export class LinkedInCompanyContents extends BasePipeline<CompanyMeta> {
         );
 
         // Mark completed in Redis if needed
-        if (redisInstance && config.transformer.completedSetKey) {
-            await redisInstance.sadd(config.transformer.completedSetKey, id);
+        if (redisInstance && config.converter.completedSetKey) {
+            await redisInstance.sadd(config.converter.completedSetKey, id);
         }
 
         return { targetDirName: 'linkedin.companies' };

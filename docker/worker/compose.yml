@@ -71,7 +71,7 @@ services:
         - BUILD_DATE
         - VCS_REF
     image: linkedin/converter:latest
-    command: ["npx", "ts-node", "src/crawler/workers/TransformerWorker.ts"]
+    command: ["npx", "ts-node", "src/crawler/workers/ConverterWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
@@ -86,7 +86,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "TransformerWorker.ts"]
+      test: ["CMD", "pgrep", "-f", "ConverterWorker.ts"]
       interval: 30s
       timeout: 5s
       retries: 3

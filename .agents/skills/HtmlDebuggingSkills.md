@@ -9,7 +9,7 @@ This document defines the skills and CLI instructions for analyzing crawler logs
 Quickly filter and audit error stacks from runtime container logs.
 
 ### 1.1 Running `grep-errors`
-Parse and audit error logs and transformer failures across containers:
+Parse and audit error logs and converter failures across containers:
 ```bash
 docker compose -p linkedin logs --no-color scraper converter | \
   docker compose -p linkedin run --rm -T \
@@ -18,7 +18,7 @@ docker compose -p linkedin logs --no-color scraper converter | \
 ```
 *(References: [grep-errors.ts](src/scripts/grep-errors.ts) CLI error aggregator)*
 
-- This command calculates statistics and identifies which site keys and document IDs have high frequencies of conversion failures (`Transformation failed`) or crawl failures.
+- This command calculates statistics and identifies which site keys and document IDs have high frequencies of conversion failures (`Conversion failed`) or crawl failures.
 
 ---
 

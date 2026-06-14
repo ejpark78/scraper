@@ -63,7 +63,7 @@ export const descriptor: SiteDescriptor = {
     scrape: scrapeHttpFetch,
   },
 
-  transformer: {
+  converter: {
     converter: new AiCasebookConverter(),
     targetCollection: 'aicasebook.html',
     filter: (id) => ({ id }),

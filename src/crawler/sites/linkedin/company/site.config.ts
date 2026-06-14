@@ -67,7 +67,7 @@ export const descriptor: SiteDescriptor = {
     scrape: scrapeLinkedinCompany,
   },
 
-  transformer: {
+  converter: {
     converter: new CompanyMarkdownConverter(),
     targetCollection: 'linkedin.companies',
     filter: (id) => ({ companyId: id }),

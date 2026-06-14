@@ -1,17 +1,17 @@
 /**
- * @module BaseRefreshTransform
- * @description Core functionality or script runner for BaseRefreshTransform.ts.
+ * @module BaseRefreshConvert
+ * @description Core functionality or script runner for BaseRefreshConvert.ts.
  * @constraints
  *   - Follows strict OOP patterns and clean error handling.
  * @dependencies mongo, ioredis
- * @lastUpdated 2026-06-11
+ * @lastUpdated 2026-06-15
  */
 
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
 import { getSite } from './SiteRegistry';
 
-export interface RefreshTransformConfig {
+export interface RefreshConvertConfig {
     site: string;
     bronzeCollection: `bronze/${string}`;
     silverCollection?: `silver/${string}`;
@@ -19,8 +19,8 @@ export interface RefreshTransformConfig {
     includeUrlInPayload?: boolean;
 }
 
-export class BaseRefreshTransform {
-    constructor(protected config: RefreshTransformConfig) {}
+export class BaseRefreshConvert {
+    constructor(protected config: RefreshConvertConfig) {}
 
     public async run(): Promise<void> {
         const { site, bronzeCollection, includeUrlInPayload } = this.config;
@@ -28,10 +28,10 @@ export class BaseRefreshTransform {
         const idField = desc?.scraper?.updateFilterKey ?? 'id';
         const silverCollection = this.config.silverCollection ?? desc?.targetLoader?.collectionName ?? `silver/${site}.contents` as `silver/${string}`;
         const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
-        const TRANSFORM_QUEUE = 'transform_queue';
+        const CONVERT_QUEUE = 'convert_queue';
         const BATCH_SIZE = 500;
 
-        console.log(`🔄 [Refresh Transform] Pushing ${site} items from bronze to transform_queue...`);
+        console.log(`🔄 [Refresh Convert] Pushing ${site} items from bronze to convert_queue...`);
         const mongo = MongoDatabase.getInstance();
         await mongo.connect();
 
@@ -82,15 +82,15 @@ export class BaseRefreshTransform {
                 }
 
                 if (batch.length > 0) {
-                    await redis.rpush(TRANSFORM_QUEUE, ...batch);
+                    await redis.rpush(CONVERT_QUEUE, ...batch);
                     count += batch.length;
-                    console.log(`🚀 Queued ${count}/${total} ${site} transform tasks.`);
+                    console.log(`🚀 Queued ${count}/${total} ${site} convert tasks.`);
                 }
             }
 
-            console.log(`✅ Done. Total ${count} ${site} transform tasks queued.`);
+            console.log(`✅ Done. Total ${count} ${site} convert tasks queued.`);
         } catch (e: any) {
-            console.error('❌ Failed to queue transform tasks:', e);
+            console.error('❌ Failed to queue convert tasks:', e);
         } finally {
             await redis.quit();
             await mongo.close();

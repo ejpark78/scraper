@@ -41,7 +41,7 @@ export interface SiteDescriptor {
     generateUrls?: (config: any, options?: any) => string[];
   };
 
-  transformer?: {
+  converter?: {
     converter: IConverter<any>;
     targetCollection: string;
     filter: (id: string) => Record<string, any>;

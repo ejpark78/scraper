@@ -83,7 +83,7 @@ export const descriptor: SiteDescriptor = {
     scrape: scrapeGptersGraphQL,
   },
 
-  transformer: {
+  converter: {
     converter: new GptersConverter(),
     targetCollection: 'gpters.html',
     filter: (id) => ({ $or: [{ postId: id }, { id: id }] }),

@@ -92,7 +92,7 @@ export const descriptor: SiteDescriptor = {
     },
   },
 
-  transformer: {
+  converter: {
     converter: new GeekNewsConverter(),
     targetCollection: 'geeknews.html',
     filter: (id) => ({ topicId: id }),

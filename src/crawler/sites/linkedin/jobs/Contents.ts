@@ -61,7 +61,7 @@ export class LinkedInJobsContents extends BasePipeline<JobMeta> {
         );
 
         // Update URL Status
-        const statusCollName = descriptor.transformer?.statusCollection || 'bronze/linkedin.job_urls';
+        const statusCollName = descriptor.converter?.statusCollection || 'bronze/linkedin.job_urls';
         const jobUrlsColl = await mongo.getCollection(statusCollName as any);
         await jobUrlsColl.updateOne(
             { jobId: id },
@@ -78,8 +78,8 @@ export class LinkedInJobsContents extends BasePipeline<JobMeta> {
         );
 
         // Mark completed in Redis if needed
-        if (redisInstance && descriptor.transformer?.completedSetKey) {
-            await redisInstance.sadd(descriptor.transformer.completedSetKey, id);
+        if (redisInstance && descriptor.converter?.completedSetKey) {
+            await redisInstance.sadd(descriptor.converter.completedSetKey, id);
         }
 
         return { targetDirName: descriptor.key };

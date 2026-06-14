@@ -97,7 +97,7 @@ export const descriptor: SiteDescriptor = {
     },
   },
 
-  transformer: {
+  converter: {
     converter: new DailyDoseDSConverter(),
     targetCollection: 'dailydose_ds.html',
     filter: (id) => ({ id }),

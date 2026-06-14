@@ -1,6 +1,6 @@
 # ==============================================================================
 # 🐳 Module: Dockerfile (converter)
-# Description: Docker image build specification for light transformer worker
+# Description: Docker image build specification for light converter worker
 # Last Updated: 2026-06-11
 # ==============================================================================
 
@@ -10,7 +10,7 @@ ARG BUILD_DATE
 ARG VCS_REF
 
 LABEL org.opencontainers.image.title="LinkedIn Converter Worker"
-LABEL org.opencontainers.image.description="Lightweight transformer worker for HTML-to-Markdown processing"
+LABEL org.opencontainers.image.description="Lightweight converter worker for HTML-to-Markdown processing"
 LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 LABEL org.opencontainers.image.revision="${VCS_REF}"
@@ -28,4 +28,4 @@ RUN npm ci && npm cache clean --force
 # Copy source files
 COPY . .
 
-CMD ["npx", "ts-node", "src/crawler/workers/TransformerWorker.ts"]
+CMD ["npx", "ts-node", "src/crawler/workers/ConverterWorker.ts"]

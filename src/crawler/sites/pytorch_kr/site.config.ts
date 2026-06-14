@@ -101,7 +101,7 @@ export const descriptor: SiteDescriptor = {
     },
   },
 
-  transformer: {
+  converter: {
     converter: new PyTorchKRConverter(),
     targetCollection: 'pytorch_kr.html',
     filter: (id) => ({ $or: [{ topicId: id }, { id: id }] }),

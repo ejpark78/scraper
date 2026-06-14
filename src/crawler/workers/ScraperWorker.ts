@@ -23,7 +23,7 @@ import { getSite, getAllSites } from '../core/SiteRegistry';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const SCRAPE_QUEUE = 'scrape_queue';
-const TRANSFORM_QUEUE = 'transform_queue';
+const CONVERT_QUEUE = 'convert_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
 const DEAD_LETTER_QUEUE = 'dead_letter_queue';
 
@@ -263,8 +263,8 @@ class ScraperWorker {
       timestamp: new Date().toISOString(),
     };
 
-    await this.redis.rpush(TRANSFORM_QUEUE, JSON.stringify(transformTask));
-    Logger.info(`[Scraper] Successfully saved Raw HTML and published transform event for ID: ${id}`);
+    await this.redis.rpush(CONVERT_QUEUE, JSON.stringify(transformTask));
+    Logger.info(`[Scraper] Successfully saved Raw HTML and published convert event for ID: ${id}`);
 
     if (payload?.recursive === true) {
       if (desc.domain && config.urlsCollectionName) {

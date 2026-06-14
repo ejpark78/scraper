@@ -29,7 +29,7 @@ interface ScrapeTask {
   priority: string;
 }
 
-interface TransformTask {
+interface ConvertTask {
   site: string;
   id: string;
   bronze_db: string;
@@ -54,10 +54,10 @@ interface QueueInfo {
 
 interface QueueStatusPayload {
   queues: QueueInfo[];
-  transformQueue: {
+  convertQueue: {
     length: number;
     siteCounts: Record<string, number>;
-    items: TransformTask[];
+    items: ConvertTask[];
   };
   activeProcessing: {
     length: number;
@@ -119,13 +119,13 @@ const isDraggingCountry = ref<boolean>(false);
 // Dashboard State
 const queueData = ref<QueueStatusPayload>({
   queues: [],
-  transformQueue: { length: 0, siteCounts: {}, items: [] },
+  convertQueue: { length: 0, siteCounts: {}, items: [] },
   activeProcessing: { length: 0, items: [] },
   deadLetter: { length: 0, siteCounts: {}, items: [] }
 });
 const queueDeltas = ref({
   scraping: 0,
-  transforming: 0,
+  converting: 0,
   active: 0,
   dead: 0
 });
@@ -168,8 +168,8 @@ const errorSites = computed(() => {
   return ['All', ...sites];
 });
 
-const transformQueueCounts = computed(() => {
-  return Object.entries(queueData.value.transformQueue.siteCounts)
+const convertQueueCounts = computed(() => {
+  return Object.entries(queueData.value.convertQueue.siteCounts)
     .map(([site, count]) => ({ site, count }))
     .sort((a, b) => b.count - a.count);
 });
@@ -372,8 +372,8 @@ async function fetchQueues() {
       const prevScraping = queueData.value.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0);
       const newScraping = newData.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0);
       
-      const prevTransforming = queueData.value.transformQueue.length;
-      const newTransforming = newData.transformQueue.length;
+      const prevConverting = queueData.value.convertQueue.length;
+      const newConverting = newData.convertQueue.length;
       
       const prevActive = queueData.value.activeProcessing.length;
       const newActive = newData.activeProcessing.length;
@@ -383,7 +383,7 @@ async function fetchQueues() {
       
       queueDeltas.value = {
         scraping: newScraping - prevScraping,
-        transforming: newTransforming - prevTransforming,
+        converting: newConverting - prevConverting,
         active: newActive - prevActive,
         dead: newDead - prevDead
       };
@@ -416,7 +416,7 @@ async function fetchErrors() {
 }
 
 async function clearQueues() {
-  if (!confirm('Are you sure you want to clear all queues in Redis? This will stop active scraping and transform tasks.')) {
+  if (!confirm('Are you sure you want to clear all queues in Redis? This will stop active scraping and convert tasks.')) {
     return;
   }
   try {
@@ -742,14 +742,14 @@ const iframeSrcDoc = computed(() => {
               <span class="metric-sub">scrape_queue:* 합계</span>
             </div>
             <div class="metric-card">
-              <span class="metric-label">변환 대기 중 (Transforming)</span>
+              <span class="metric-label">변환 대기 중 (Converting)</span>
               <span class="metric-value">
-                {{ queueData.transformQueue.length.toLocaleString('ko-KR') }}
-                <span v-if="hasPreviousData && queueDeltas.transforming !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.transforming > 0 ? '#f87171' : '#4ade80' }">
-                  ({{ queueDeltas.transforming > 0 ? '+' : '' }}{{ queueDeltas.transforming }})
+                {{ queueData.convertQueue.length.toLocaleString('ko-KR') }}
+                <span v-if="hasPreviousData && queueDeltas.converting !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.converting > 0 ? '#f87171' : '#4ade80' }">
+                  ({{ queueDeltas.converting > 0 ? '+' : '' }}{{ queueDeltas.converting }})
                 </span>
               </span>
-              <span class="metric-sub">transform_queue 대기 문서</span>
+              <span class="metric-sub">convert_queue 대기 문서</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">현재 수집 중 (Active)</span>
@@ -837,19 +837,19 @@ const iframeSrcDoc = computed(() => {
               </div>
             </div>
 
-            <!-- Transform Queue Detailed Status -->
+            <!-- Convert Queue Detailed Status -->
             <div class="queue-section-card">
               <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>🔄 변환 대기 큐 (Transform Queue)</h3>
+                <h3>🔄 변환 대기 큐 (Convert Queue)</h3>
                 <div style="display: flex; align-items: center; gap: 6px;">
-                  <span class="meta-tag">{{ queueData.transformQueue.length.toLocaleString('ko-KR') }}</span>
-                  <span v-if="hasPreviousData && queueDeltas.transforming !== 0" :style="{ fontSize: '12px', fontWeight: '600', color: queueDeltas.transforming > 0 ? '#f87171' : '#4ade80' }">
-                    ({{ queueDeltas.transforming > 0 ? '+' : '' }}{{ queueDeltas.transforming }})
+                  <span class="meta-tag">{{ queueData.convertQueue.length.toLocaleString('ko-KR') }}</span>
+                  <span v-if="hasPreviousData && queueDeltas.converting !== 0" :style="{ fontSize: '12px', fontWeight: '600', color: queueDeltas.converting > 0 ? '#f87171' : '#4ade80' }">
+                    ({{ queueDeltas.converting > 0 ? '+' : '' }}{{ queueDeltas.converting }})
                   </span>
                 </div>
               </div>
               <div class="card-body">
-                <div v-if="transformQueueCounts.length === 0" class="empty-state" style="height:100px;">현재 대기 중인 변환 작업이 없습니다.</div>
+                <div v-if="convertQueueCounts.length === 0" class="empty-state" style="height:100px;">현재 대기 중인 변환 작업이 없습니다.</div>
                 <div v-else class="queue-table-container">
                   <table class="dashboard-table">
                     <thead>
@@ -859,7 +859,7 @@ const iframeSrcDoc = computed(() => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="item in transformQueueCounts" :key="item.site">
+                      <tr v-for="item in convertQueueCounts" :key="item.site">
                         <td style="font-weight:600;color:#fff;">{{ item.site }}</td>
                         <td>
                           <span class="badge-priority medium">{{ item.count.toLocaleString('ko-KR') }}</span>

@@ -27,10 +27,10 @@ Playwright/HTTP 기반 다중 사이트 스크래핑, MongoDB Bronze/Silver 2단
 List (discovery) ──➜ Redis scrape_queue ──➜ ScraperWorker ──➜ MongoDB Bronze
                                                                     │
                                                                     ▼
-                                                           Redis transform_queue
+                                                           Redis convert_queue
                                                                     │
                                                                     ▼
-                                                           TransformerWorker
+                                                           ConverterWorker
                                                                     │
                                                                     ▼
                                                            MongoDB Silver
@@ -46,8 +46,8 @@ List (discovery) ──➜ Redis scrape_queue ──➜ ScraperWorker ──➜ 
 
 ### Workers
 
-- **ScraperWorker** (`scraper`): Redis `scrape_queue`를 BLPOP으로 소비, 사이트별 스크래핑 로직으로 전달, 결과를 Bronze에 저장하고 `transform_queue`에 발행
-- **TransformerWorker** (`converter`): Redis `transform_queue`를 BLPOP으로 소비, Bronze → Silver 변환, TargetLoader를 통해 Silver에 upsert
+- **ScraperWorker** (`scraper`): Redis `scrape_queue`를 BLPOP으로 소비, 사이트별 스크래핑 로직으로 전달, 결과를 Bronze에 저장하고 `convert_queue`에 발행
+- **ConverterWorker** (`converter`): Redis `convert_queue`를 BLPOP으로 소비, Bronze → Silver 변환, TargetLoader를 통해 Silver에 upsert
 
 ---
 
@@ -145,7 +145,7 @@ make up-viewer      # https://viewer.localhost
 | `traefik` | tools | Reverse proxy + TLS | `route.localhost` |
 | `worker` | runtime | CLI one-shot runner | — |
 | `scraper` | runtime | Scraper worker (replicas: 2) | — |
-| `converter` | runtime | Transformer worker (replica: 1) | — |
+| `converter` | runtime | Converter worker (replica: 1) | — |
 | `viewer` | tools | Document viewer + MCP server | `viewer.localhost` |
 | `mongo-express` | tools | MongoDB Web GUI | `me.localhost` |
 | `redisinsight` | tools | Redis GUI | `redis.localhost` |
@@ -169,11 +169,11 @@ make up-viewer      # https://viewer.localhost
 │   │   ├── gpters/        # GPters (gpters.org) — Bettermode GraphQL
 │   │   ├── pytorch_kr/    # PyTorch KR (discuss.pytorch.kr) — Discourse
 │   │   └── linkedin/      # LinkedIn Jobs + Company — Playwright (Custom architecture)
-│   │       ├── jobs/      # ListScraper, Converter, RefreshTransform, UrlManager
+│   │       ├── jobs/      # ListScraper, Converter, RefreshConvert, UrlManager
 │   │       └── company/   # Company Pipeline, Converter
 │   ├── viewer/            # Express + MCP SSE viewer server
 │   ├── ScraperWorker.ts   # Redis scraper worker (BLPOP scrape_queue)
-│   ├── TransformerWorker.ts # Redis transformer worker (BLPOP transform_queue)
+│   ├── ConverterWorker.ts # Redis converter worker (BLPOP convert_queue)
 │   └── TargetLoader.ts    # Silver layer upsert dispatcher
 ├── scripts/
 │   └── sites/             # Site-specific Makefiles

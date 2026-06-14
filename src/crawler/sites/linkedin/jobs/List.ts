@@ -294,7 +294,7 @@ export class LinkedInList {
             const cheerio = require('cheerio');
             const $ = cheerio.load(htmlContent);
             const dbInstance = MongoDatabase.getInstance();
-            const jobUrlsCollName = descriptor.transformer?.statusCollection || 'bronze/linkedin.job_urls';
+            const jobUrlsCollName = descriptor.converter?.statusCollection || 'bronze/linkedin.job_urls';
             const companyUrlsCollName = descriptor.companyUrlsCollectionName || 'bronze/linkedin.company_urls';
             const jobsCollName = descriptor.scraper?.collectionName || 'bronze/linkedin.jobs';
 

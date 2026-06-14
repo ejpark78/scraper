@@ -28,7 +28,7 @@ graph TD
     end
     subgraph Docker Network: linkedin-net
         Scraper[Scraper Worker]
-        Transformer[Transformer Worker]
+        Converter[Converter Worker]
         Viewer[Viewer Frontend & Server]
         Mongo[(MongoDB)]
         Redis[(Redis)]
@@ -40,9 +40,9 @@ graph TD
     Traefik -->|Proxy Domain Routing| Cronicle
     Scraper -->|Read/Write HTML & Status| Mongo
     Scraper -->|Queue Management| Redis
-    Transformer -->|Read HTML| Mongo
-    Transformer -->|Write Contents| Mongo
-    Transformer -->|Queue Management| Redis
+    Converter -->|Read HTML| Mongo
+    Converter -->|Write Contents| Mongo
+    Converter -->|Queue Management| Redis
     Viewer -->|Fetch Data| Mongo
     Viewer -->|Search Contents| Meili
 ```
