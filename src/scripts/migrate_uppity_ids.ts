@@ -19,14 +19,15 @@ async function migrateCollection(client: MongoClient, dbName: string, collName: 
     
     console.log(`\n📦 Processing collection: ${dbName}.${collName}...`);
     
-    const cursor = collection.find({});
-    const documents = await cursor.toArray();
-    console.log(`📥 Total documents loaded: ${documents.length}`);
+    // Project only id and url to avoid loading huge rawHtml fields
+    const cursor = collection.find({}).project({ id: 1, url: 1 });
     
     let migrateCount = 0;
     let duplicateDeletedCount = 0;
     
-    for (const doc of documents) {
+    while (await cursor.hasNext()) {
+        const doc = await cursor.next();
+        if (!doc) continue;
         if (!doc.url) {
             console.warn(`⚠️ Warning: Document _id: ${doc._id} has no url field. Skipping.`);
             continue;
@@ -60,6 +61,7 @@ async function migrateCollection(client: MongoClient, dbName: string, collName: 
     
     console.log(`✨ Finished ${dbName}.${collName}: Migrated ${migrateCount} IDs, deleted ${duplicateDeletedCount} duplicates.`);
 }
+
 
 async function main() {
     const mongoUrl = AppConfig.MONGO_URL;
