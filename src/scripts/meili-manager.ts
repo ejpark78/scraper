@@ -89,6 +89,27 @@ async function manage(): Promise<void> {
                     const batch = docs.slice(i, i + batchSize);
                     const meiliDocs = batch.map(doc => {
                         const docId = doc[site.targetLoader!.filterField] || doc.id || doc._id;
+                        let publishedAt = doc.publishedAt || doc.collectedAt || doc.createdAt || doc.scrapedAt || null;
+                        
+                        if (!publishedAt) {
+                            if (site.key === 'linkedin' && doc.description) {
+                                const match = doc.description.match(/posted_date:\s*"([^"]+)"/) || doc.description.match(/\*\*포스팅 날짜 \(Posted Date\):\*\*\s*([^\n]+)/);
+                                if (match) {
+                                    publishedAt = match[1].trim();
+                                }
+                            } else if (site.key === 'geeknews' && (doc.markdown || doc.content)) {
+                                const md = doc.markdown || doc.content || '';
+                                const match = md.match(/\*\*작성일:\*\*\s*([^\n]+)/);
+                                if (match && match[1].trim() !== '정보 없음') {
+                                    publishedAt = match[1].trim();
+                                }
+                            }
+                        }
+                        
+                        if (!publishedAt) {
+                            publishedAt = doc.updatedAt || new Date().toISOString();
+                        }
+
                         return {
                             id: `${site.key}_${docId}`, // Composite key
                             site: site.key,
@@ -99,7 +120,7 @@ async function manage(): Promise<void> {
                             geo: doc.geo || 'Unknown',
                             content: doc.description || doc.markdown || doc.content || '',
                             url: doc.url || null,
-                            publishedAt: doc.publishedAt || doc.collectedAt || doc.createdAt || doc.scrapedAt || doc.updatedAt || new Date().toISOString(),
+                            publishedAt: publishedAt,
                             updatedAt: doc.updatedAt || new Date().toISOString()
                         };
                     });

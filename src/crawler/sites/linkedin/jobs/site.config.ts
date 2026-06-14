@@ -265,6 +265,7 @@ export const descriptor: SiteDescriptor = {
         geo: stdLoc || 'Unknown',
         workStyle: '정보 없음',
         url: `https://www.linkedin.com/jobs/view/${id}`,
+        publishedAt: meta.postedDate || null,
         updatedAt: new Date(),
       };
     },

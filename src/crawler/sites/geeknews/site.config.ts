@@ -111,6 +111,7 @@ export const descriptor: SiteDescriptor = {
       comments: meta.comments || null,
       jsonLdRaw: meta.jsonLdRaw || null,
       markdown: meta.rawContent || null,
+      publishedAt: meta.publishedAt || null,
       updatedAt: new Date(),
     }),
   },
