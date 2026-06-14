@@ -9,7 +9,6 @@
 
 import { MongoDatabase } from '../../database/mongo';
 import { getSite } from '../core/SiteRegistry';
-import { MeiliSearchDatabase } from '../../database/meili';
 
 export class TargetLoader {
   public static async load(site: string, id: string, meta: any): Promise<void> {
@@ -30,27 +29,5 @@ export class TargetLoader {
       { $set: doc },
       { upsert: true }
     );
-
-    // 2. Index to Meilisearch
-    try {
-      const meili = MeiliSearchDatabase.getInstance();
-      const meiliDoc = {
-        id: `${site}_${id}`, // Unique composite ID
-        site: site,
-        docId: id,
-        title: doc.title || doc.jobTitle || 'Untitled',
-        companyName: doc.companyName || null,
-        location: doc.location || null,
-        geo: doc.geo || 'Unknown',
-        content: doc.description || doc.markdown || doc.content || '',
-        url: doc.url || null,
-        publishedAt: doc.publishedAt || doc.collectedAt || doc.createdAt || doc.scrapedAt || doc.updatedAt || new Date().toISOString(),
-        updatedAt: doc.updatedAt || new Date().toISOString()
-      };
-
-      await meili.addDocuments(`contents_${site}`, [meiliDoc]);
-    } catch (meiliErr: any) {
-      console.warn(`⚠️ [Meilisearch] Failed to index document ${site}_${id}: ${meiliErr.message}`);
-    }
   }
 }

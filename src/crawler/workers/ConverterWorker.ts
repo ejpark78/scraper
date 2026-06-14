@@ -18,6 +18,7 @@ import { TargetLoader } from './TargetLoader';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const CONVERT_QUEUE = 'convert_queue';
+const INDEX_QUEUE = 'index_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
 const DEAD_LETTER_QUEUE = 'dead_letter_queue';
 
@@ -165,6 +166,15 @@ async function main() {
         }
 
         await TargetLoader.load(site, id, meta);
+
+        // Queue task for Meilisearch indexing
+        const indexTask = {
+          site,
+          id,
+          timestamp: new Date().toISOString(),
+        };
+        await redis.rpush(INDEX_QUEUE, JSON.stringify(indexTask));
+        Logger.info(`[Converter] Published Meilisearch index task for [${site}] ID: ${id}`);
 
         if (tf.statusCollection) {
           const statusFilter = tf.statusFilterField ? { [tf.statusFilterField]: id } : { id };

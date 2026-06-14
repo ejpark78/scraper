@@ -93,3 +93,35 @@ services:
     deploy:
       replicas: 1
 
+  indexer:
+    build:
+      context: ../../
+      dockerfile: docker/worker/converter/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
+    image: linkedin/indexer:latest
+    command: ["npx", "ts-node", "src/crawler/workers/IndexerWorker.ts"]
+    environment:
+      - TZ=Asia/Seoul
+      - AUTH=${AUTH:-}
+      - JSON_LOG=true
+      - LIST_SLACK=0
+
+      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=mongodb://mongodb:27017
+      - MEILI_URL=http://meilisearch:7700
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-superMasterKeySecret123}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "IndexerWorker.ts"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      replicas: 1
+
+
