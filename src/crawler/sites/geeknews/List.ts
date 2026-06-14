@@ -81,7 +81,7 @@ class GeekNewsList extends BaseListService {
                     const issueLinks: string[] = [];
                     $('.weekly a[href*="/weekly/"]').each((_, el) => {
                         const href = $(el).attr('href');
-                        if (href) {
+                        if (href && /\/weekly\/\d+$/.test(href)) {
                             issueLinks.push(href);
                         }
                     });
