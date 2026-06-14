@@ -5,14 +5,14 @@
 .PHONY: dump restore index
 
 DB ?= bronze,silver
-DUMP_DIR ?= data/mongodb_backup_$(shell date +%Y%m%d_%H%M%S)
+DUMP_DIR ?= data/mongodb_backup/$(shell date +%Y%m%d_%H%M%S)
 
 dump:
 	@if [ -z "$(DB)" ]; then \
 		echo "❌ 에러: DB 변수를 지정해야 합니다. (예: make dump-db DB=bronze,silver)"; \
 		exit 1; \
 	fi
-	@mkdir -p data
+	@mkdir -p $(DUMP_DIR)
 	$(COMPOSE) exec -T mongodb sh -c "rm -rf /tmp/mongodb_backup && mkdir -p /tmp/mongodb_backup"
 	for db in $$(echo "$(DB)" | tr ',' ' '); do \
 		$(COMPOSE) exec -T mongodb mongodump --db=$$db --gzip --out=/tmp/mongodb_backup; \
