@@ -16,6 +16,8 @@ docker compose -p linkedin logs --no-color scraper converter | \
   -v ./src/scripts:/app/src/scripts \
   worker npx ts-node src/scripts/grep-errors.ts
 ```
+*(References: [grep-errors.ts](src/scripts/grep-errors.ts) CLI error aggregator)*
+
 - This command calculates statistics and identifies which site keys and document IDs have high frequencies of conversion failures (`Transformation failed`) or crawl failures.
 
 ---
@@ -31,6 +33,7 @@ docker compose -p linkedin run --rm \
   -v $(pwd):/app -v /app/node_modules \
   worker npx ts-node src/scripts/debug_html.ts --file tests/sites/yozm/fixtures/article.html
 ```
+*(References: [debug_html.ts](src/scripts/debug_html.ts) CLI runner)*
 
 ### 2.2 Directly Debugging a MongoDB Document
 Run debugging analysis on a document already stored in the `bronze` database:

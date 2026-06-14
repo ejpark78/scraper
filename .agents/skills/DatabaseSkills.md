@@ -15,6 +15,7 @@ docker compose -p linkedin run --rm \
   -v $(pwd):/app -v /app/node_modules \
   worker npx ts-node src/scripts/sync-indexes.ts
 ```
+*(References: [sync-indexes.ts](src/scripts/sync-indexes.ts) CLI runner)*
 
 ### 1.2 Key Audit Items
 - Verify that a unique index (`{ id: 1 }`, unique) exists on `bronze.html`, `bronze.urls`, and `silver.contents` collections.
@@ -32,6 +33,8 @@ docker compose -p linkedin run --rm \
   -v $(pwd):/app -v /app/node_modules \
   worker npx ts-node src/scripts/show_collection_columns.ts
 ```
+*(References: [show_collection_columns.ts](src/scripts/show_collection_columns.ts) database schema mapper)*
+
 - Upon completion, this script prints a Markdown matrix mapping all collection fields horizontally (by site) and vertically (by field name) for both `bronze` and `silver` databases.
 
 ---

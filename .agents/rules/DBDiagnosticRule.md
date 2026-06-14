@@ -13,7 +13,7 @@ This document defines the rules for the agent to safely and effectively diagnose
    * **Prohibited Example**: Attempting to connect directly from the host terminal using `mongosh mongodb://localhost:27017`
 
 2. **Connection Leak Prevention**:
-   - When establishing DB connections in Node.js scripts or external modules, always close the connection (e.g., `MongoDatabase.close()`, `redis.quit()`) inside a `finally` block to prevent the session from hanging.
+   - When establishing DB connections in Node.js scripts or external modules, always close the connection (e.g., `MongoDatabase.close()` in [mongo.ts](src/database/mongo.ts), `redis.quit()`) inside a `finally` block to prevent the session from hanging.
 
 ---
 

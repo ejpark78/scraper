@@ -30,11 +30,11 @@ graph TD
 
 ---
 
-## 2. 🗃️ Core Shared Classes & Interfaces (`src/crawler/core/`)
+## 2. 🗃️ Core Shared Classes & Interfaces ([src/crawler/core/](src/crawler/core/))
 
 All new sites must extend the following core classes or implement these interfaces.
 
-### 2.1 `BaseListService`
+### 2.1 [BaseListService.ts](src/crawler/core/BaseListService.ts)
 A base service that parses list pages or feeds to find new article URLs and pushes them to the crawl queue.
 - **Key Methods**:
   - `init()`: Establishes database and Redis connections.
@@ -43,7 +43,7 @@ A base service that parses list pages or feeds to find new article URLs and push
   - `close()`: Invokes `redis.quit()` and `MongoDatabase.close()` to release connections.
 - **Lifecycle Constraint**: To prevent hangs, you must call `await this.close()` inside a `finally` block.
 
-### 2.2 `IConverter<T>`
+### 2.2 [IConverter.ts](src/crawler/core/IConverter.ts)
 An interface for cleaning up HTML bodies and converting them into structured markdown formats.
 ```typescript
 export interface IConverter<T> {
@@ -52,44 +52,44 @@ export interface IConverter<T> {
 ```
 - When parsing the main body, prioritize parsing **JSON-LD (`application/ld+json`)** or **Meta Tags** before falling back to DOM structure selectors.
 
-### 2.3 `BaseRefreshUrls`
+### 2.3 [BaseRefreshUrls.ts](src/crawler/core/BaseRefreshUrls.ts)
 A recovery script that rescans and enqueues failed or uncollected targets.
 - `scanHtmlForUrls()`: Rescans internal links (`a[href]`) inside already crawled HTML to automatically discover new targets.
 - **Exception Filter**: Includes built-in filters to skip placeholder URLs (containing spaces, `<>`, `{`, `}`, `%7B`, `%7D`) and binary file links (`.png`, `.zip`, `.pdf`, etc.).
 
 ---
 
-## 3. ⚙️ Background Worker System (`src/crawler/workers/`)
+## 3. ⚙️ Background Worker System ([src/crawler/workers/](src/crawler/workers/))
 
-### 3.1 `ScraperWorker`
+### 3.1 [ScraperWorker.ts](src/crawler/workers/ScraperWorker.ts)
 - **Role**: Listens to `scrape_queue:{site}:{priority}` queues and fetches raw HTML via HTTP GET.
 - **Queue Priority**: Processes `high` ➡️ `medium` ➡️ `low` queues sequentially, but shuffles the site queues within each priority tier into a single array before calling `blpop`. This multi-argument `blpop` prevents site starvation.
 - **Error Handling**: Moves documents to the `dead_letter_queue` after 3 failed attempts.
 - **Scaling**: Supports running parallel container instances using commands like `make restart SCALE=3`.
 
-### 3.2 `TransformerWorker`
+### 3.2 [TransformerWorker.ts](src/crawler/workers/TransformerWorker.ts)
 - **Role**: Consumes `transform_queue` tasks and transforms raw HTML to Markdown.
 - **Post-Processing**: For all sites except `linkedin`, automatically calls the `downloadImages()` utility to download images locally to `data/sites/{site}/images/{id}/` and swaps image paths in Markdown. (Favicon removal follows the `refreshSilver.imageDownload.removeFavicons` setting.)
 
 ---
 
-## 4. 🛠️ Common Utility Features (`src/crawler/utils/`)
+## 4. 🛠️ Common Utility Features ([src/crawler/utils/](src/crawler/utils/))
 
 Always prioritize utilizing existing common utilities for development efficiency and data accuracy.
 
-### 4.1 `UrlUtils`
+### 4.1 [UrlUtils.ts](src/crawler/utils/UrlUtils.ts)
 - `UrlUtils.extractJobId(url)`: Robustly extracts job IDs from LinkedIn URL patterns.
 - `UrlUtils.standardizeLocation(loc)`: Maps geographical info to standardized country names using `country.json`.
 - `UrlUtils.stripTrackingParams(url)`: Trims advertising/tracking query parameters (e.g., `utm_source`, `ref`, `fbclid`).
 - `UrlUtils.isBinaryUrl(url)`: Detects binary file extensions such as `.zip`, `.pdf`, `.webp`, and `.ico`.
 
-### 4.2 `imageDownloader` (`downloadImages`)
+### 4.2 [imageDownloader.ts](src/crawler/utils/imageDownloader.ts) (`downloadImages`)
 - Automates local image downloading and path replacement in Markdown.
 - **Options**:
   - `removeFavicons`: If set to `true`, automatically filters out useless favicon links from parsed Markdown.
   - `htmlSource`: Sets the source field from which to extract raw HTML data.
 
-### 4.3 `HtmlMinifier`
+### 4.3 [HtmlMinifier.ts](src/crawler/utils/HtmlMinifier.ts)
 - Minifies raw HTML (removing whitespace, newlines, and comments) to save DB storage space. (Supports preserving JSON-LD).
 
 ---
@@ -103,9 +103,9 @@ Follow these steps when creating a new crawler site `{site}`:
    - Define `key`, `name`, `domain`, `favicon`, `indexes`, `scraper`, `transformer`, and `targetLoader`.
    - `excludePatterns` must include `['favicon', 'login', 'logout', 'signup']` to prevent crawling useless session or asset pages.
 2. **Converter (`src/crawler/sites/{site}/Converter.ts`)**
-   - Write a class implementing `IConverter` and tune TurndownService options.
+   - Write a class implementing [IConverter.ts](src/crawler/core/IConverter.ts) and tune TurndownService options.
 3. **List Scraper (`src/crawler/sites/{site}/List.ts`)**
-   - Implement `BaseListService` using pagination, site map parsers, or RSS feeds depending on target site structure.
+   - Implement [BaseListService.ts](src/crawler/core/BaseListService.ts) using pagination, site map parsers, or RSS feeds depending on target site structure.
 
 ### 5.2 Mandatory DB Indexes
 Declare the following indexes in the site descriptor's `indexes` field:

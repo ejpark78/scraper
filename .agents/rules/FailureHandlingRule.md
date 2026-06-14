@@ -13,7 +13,7 @@ This document defines the rules for systematically detecting and isolating excep
 
 2. **Existing Data Migration**:
    - If the ID generation algorithm changes (e.g., Base64 ➡️ MD5), existing crawled data might still be registered as completed (`urls.status = 'completed'`) under the old ID scheme.
-   - Consequently, during the transformation stage (Transformer), looking up HTML files using the new MD5 IDs will result in massive `Raw document not found` errors.
+   - Consequently, during the transformation stage ([TransformerWorker.ts](src/crawler/workers/TransformerWorker.ts)), looking up HTML files using the new MD5 IDs will result in massive `Raw document not found` errors.
    - After modifying ID generation logic, you must map the consistency of existing DB data, or reset/migrate the previous crawling history.
 
 ---
@@ -21,6 +21,6 @@ This document defines the rules for systematically detecting and isolating excep
 ## 2. 🔍 Pipeline Reverse Error Tracing Rules
 
 1. **Tracing Causes of Transformer Failures**:
-   - If a `[Transformer] Transformation failed` error occurs in the `TransformerWorker`, verify first if the document exists in the `bronze.html` collection.
-   - If the raw document is missing, it suggests a silent failure or interruption at the scraping stage (`ScraperWorker`) rather than a bug in the transformer.
+   - If a `[Transformer] Transformation failed` error occurs in the `TransformerWorker` (defined in [TransformerWorker.ts](src/crawler/workers/TransformerWorker.ts)), verify first if the document exists in the `bronze.html` collection.
+   - If the raw document is missing, it suggests a silent failure or interruption at the scraping stage ([ScraperWorker.ts](src/crawler/workers/ScraperWorker.ts)) rather than a bug in the transformer.
    - In this case, trace the target document's `status` and `error` metadata in the `bronze.urls` collection.
