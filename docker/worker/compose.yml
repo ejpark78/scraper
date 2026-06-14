@@ -45,7 +45,6 @@ services:
       - TZ=Asia/Seoul
       - JSON_LOG=true
       - LIST_SLACK=0
-
       - REDIS_URL=redis://redis:6379
       - MONGO_URL=mongodb://mongodb:27017
       - SESSION_DIR=/app/data/sessions
@@ -77,7 +76,6 @@ services:
       - AUTH=${AUTH:-}
       - JSON_LOG=true
       - LIST_SLACK=0
-
       - REDIS_URL=redis://redis:6379
       - MONGO_URL=mongodb://mongodb:27017
     volumes:
@@ -107,11 +105,10 @@ services:
       - AUTH=${AUTH:-}
       - JSON_LOG=true
       - LIST_SLACK=0
-
       - REDIS_URL=redis://redis:6379
       - MONGO_URL=mongodb://mongodb:27017
       - MEILI_URL=http://meilisearch:7700
-      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-superMasterKeySecret123}
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
