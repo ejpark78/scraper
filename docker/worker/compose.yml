@@ -17,7 +17,6 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
       - REDIS_URL=redis://redis:6379
       - AUTH=${AUTH:-}
-
       - LIST_SLACK=${LIST_SLACK:-}
       - CHUNK_SIZE=${CHUNK_SIZE:-}
       - SESSION_DIR=/app/data/sessions
@@ -120,5 +119,3 @@ services:
       retries: 3
     deploy:
       replicas: 1
-
-
