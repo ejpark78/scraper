@@ -19,6 +19,7 @@
    * **Playwright Browser Mismatch**: If you encounter a `browserType.launch: Executable doesn't exist` error due to mismatching versions:
      - Rebuild the specific service image only to align dependency versions: `docker compose build worker`
      - Or temporarily install matching browsers in the container: `docker compose run --rm worker npx playwright install`
+   * **No Host Port Exposure**: Do not expose infrastructure service ports (e.g., MongoDB `27017`, Redis `6379`, Meilisearch `7700`) directly to the host machine. All traffic must route through Traefik reverse proxy domains (e.g., `*.localhost`, `*.nip.io`).
 8. **Transcripts Export on Start**: Run `make agents-dump AGENTS=agy` ONLY on the first turn of a new or resumed session (do not run when exiting/finalizing).
 
 ## ⚠️ Security Rules
