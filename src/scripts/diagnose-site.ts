@@ -5,11 +5,12 @@
  * @constraints
  *   - Runs inside the Docker environment.
  *   - Follows strict TypeScript typing and connection lifecycle rules.
- * @dependencies MongoDatabase, SiteRegistry
+ * @dependencies MongoDatabase, SiteRegistry, MeiliSearchDatabase
  */
 
 import { MongoDatabase } from '../database/mongo';
 import { getAllSites } from '../crawler/core/SiteRegistry';
+import { MeiliSearchDatabase } from '../database/meili';
 import crypto from 'crypto';
 
 function printHelp() {
@@ -60,6 +61,7 @@ async function main() {
   console.log(`- Bronze HTML:     ${bHtmlColName}\n`);
 
   const mongo = MongoDatabase.getInstance();
+  const meili = MeiliSearchDatabase.getInstance();
   try {
     await mongo.connect();
     const bUrls = await mongo.getCollection(bUrlsColName as any);
@@ -95,18 +97,11 @@ async function main() {
         for (const doc of group.docs) {
           const id = doc.id;
           const url = doc.url || '';
-          
-          // Hex representation of URL
           const urlHex = Buffer.from(url).toString('hex');
-          
-          // Check existence in bronze
           const hasUrlsRecord = await bUrls.findOne({ id }) ? '✅ YES' : '❌ NO';
           const hasHtmlRecord = await bHtml.findOne({ id }) ? '✅ YES' : '❌ NO';
-
-          // Check if URL contains percent encoding
           const isPercentEncoded = url.includes('%') ? '⚠️ YES (Encoded)' : '✅ NO (Decoded)';
 
-          // Test ID hash generation consistency
           let expectedId = 'N/A';
           if (siteDesc.scraper?.extractId) {
             expectedId = siteDesc.scraper.extractId(url);
@@ -134,6 +129,81 @@ async function main() {
     console.log(`- Documents with missing/untitled titles: ${emptyTitles}`);
     console.log(`- Documents with missing URLs:             ${emptyUrls}`);
     console.log(`- Documents with empty content body:       ${emptyContent}\n`);
+
+    // 4. Check for suspicious list/archive URLs in Silver
+    console.log('📂 4. Detecting Suspicious Archive / List Pages in Silver layer...');
+    const allSilverDocs = await sContents.find().toArray();
+    const suspiciousDocs = allSilverDocs.filter(d => {
+      try {
+        const urlStr = d.url;
+        if (!urlStr) return false;
+        const parsed = new URL(urlStr);
+        const cleanPath = parsed.pathname.replace(/\/$/, '');
+        
+        // Count segments
+        const segments = parsed.pathname.split('/').filter(Boolean);
+        const isMultiSegment = segments.length > 1;
+        
+        const isKnownArchive = [
+          'newsletter', 'column-before', 'economy-dictionary', 'economy-news', 'category'
+        ].some(p => cleanPath.includes(`/${p}`));
+        
+        return isMultiSegment || isKnownArchive;
+      } catch {
+        return false;
+      }
+    });
+
+    if (suspiciousDocs.length === 0) {
+      console.log('✅ No suspicious list/archive pages detected in the Silver layer.\n');
+    } else {
+      console.log(`⚠️ Found ${suspiciousDocs.length} suspicious list/archive pages:\n`);
+      for (const d of suspiciousDocs.slice(0, 10)) {
+        console.log(`  * Title: "${d.title}"`);
+        console.log(`    URL:   ${d.url}`);
+        console.log(`    ID:    ${d.id}`);
+        console.log('');
+      }
+      if (suspiciousDocs.length > 10) {
+        console.log(`  ... and ${suspiciousDocs.length - 10} more.`);
+      }
+      console.log('');
+    }
+
+    // 5. Compare MongoDB with Meilisearch to find Orphaned items (causing Document Not Found)
+    console.log('👻 5. Detecting Orphaned Meilisearch Documents (Not in MongoDB)');
+    try {
+      const indexName = `contents_${siteKey}`;
+      const meiliResults = await meili.search(indexName, '', { limit: 1000 });
+      const meiliHits = meiliResults.hits;
+      
+      const orphaned = [];
+      for (const hit of meiliHits) {
+        const docId = hit.docId; // This is the ID in MongoDB
+        const mongoExists = await sContents.findOne({ id: docId });
+        if (!mongoExists) {
+          orphaned.push(hit);
+        }
+      }
+
+      if (orphaned.length === 0) {
+        console.log('✅ No orphaned Meilisearch documents detected.\n');
+      } else {
+        console.log(`⚠️ Found ${orphaned.length} orphaned Meilisearch documents (causes "Document not found" in viewer):\n`);
+        for (const hit of orphaned.slice(0, 10)) {
+          console.log(`  * Title:  "${hit.title}"`);
+          console.log(`    URL:    ${hit.url}`);
+          console.log(`    docId:  ${hit.docId} (composite ID in Meili: ${hit.id})`);
+          console.log('');
+        }
+        if (orphaned.length > 10) {
+          console.log(`  ... and ${orphaned.length - 10} more.`);
+        }
+        console.log('');
+      }
+    } catch (meiliErr: any) {
+      console.warn(`⚠️ Could not query Meilisearch for orphans: ${meiliErr.message}\n`);
+    }
 
     console.log('🏁 Diagnostics complete!');
   } catch (error: any) {
