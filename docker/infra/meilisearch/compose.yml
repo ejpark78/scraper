@@ -13,7 +13,7 @@ services:
     environment:
       - TZ=Asia/Seoul
       - MEILI_MASTER_KEY=superMasterKeySecret123
-      - MEILI_ENV=production
+      - MEILI_ENV=development
       - MEILI_NO_ANALYTICS=true
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/meilisearch:/meili_data

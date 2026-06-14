@@ -37,6 +37,11 @@ export class FormatUtils {
             return `[${cleanTitle}](${url.trim()})`;
         });
 
+        // 4. [title]( url ) 또는 ![alt]( src ) 형태 보정 (괄호 안의 공백/줄바꿈 제거)
+        cleaned = cleaned.replace(/\]\(\s*([^)]*?)\s*\)/g, (match, url) => {
+            return `](${url.replace(/\s+/g, '')})`;
+        });
+
         return cleaned;
     }
 
