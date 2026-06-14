@@ -96,7 +96,7 @@ services:
   indexer:
     build:
       context: ../../
-      dockerfile: docker/worker/converter/Dockerfile
+      dockerfile: docker/worker/indexer/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
