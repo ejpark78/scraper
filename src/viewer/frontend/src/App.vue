@@ -218,6 +218,11 @@ const bronzeJsonContent = computed(() => {
   return JSON.stringify(selectedDoc.value.bronze, null, 2);
 });
 
+const originalUrl = computed(() => {
+  if (!selectedDoc.value) return '';
+  return selectedDoc.value.silver?.url || selectedDoc.value.bronze?.url || '';
+});
+
 // Watch for search input changes (Debounce)
 let searchTimeout: any = null;
 watch(searchInputVal, (newVal) => {
@@ -476,10 +481,19 @@ function selectCollection(id: string) {
 }
 
 function getSiteNameFromCollection(col: string) {
-  if (col.includes('geeknews')) return 'GeekNews';
-  if (col.includes('gpters')) return 'GPters';
-  if (col.includes('pytorch')) return 'PyTorch KR';
-  if (col.includes('linkedin')) return 'LinkedIn';
+  // Try dynamic lookup in loaded collections list
+  const found = collections.value.find(c => c.id === col || c.id === `silver/${col}` || col === `silver/${c.id}`);
+  if (found) return found.name;
+  
+  // Fallbacks
+  const lower = col.toLowerCase();
+  if (lower.includes('geeknews')) return 'GeekNews';
+  if (lower.includes('gpters')) return 'GPters';
+  if (lower.includes('pytorch')) return 'PyTorch KR';
+  if (lower.includes('linkedin')) return 'LinkedIn';
+  if (lower.includes('uppity')) return 'Uppity';
+  if (lower.includes('yozm')) return 'Yozm IT';
+  if (lower.includes('aicasebook')) return 'AICasebook';
   return 'Database';
 }
 
@@ -973,9 +987,14 @@ const iframeSrcDoc = computed(() => {
         <header class="detail-header">
           <h2>{{ selectedDoc.silver.title || selectedDoc.silver.jobTitle }}</h2>
           <div class="doc-meta-info">
-            <span class="meta-tag">{{ selectedDoc.silver.companyName || getSiteNameFromCollection(currentCollection) }}</span>
+            <a v-if="originalUrl" :href="originalUrl" target="_blank" class="meta-tag clickable-site-link" style="text-decoration: none; cursor: pointer;">
+              {{ selectedDoc.silver.companyName || getSiteNameFromCollection(currentCollection) }} ↗
+            </a>
+            <span v-else class="meta-tag">
+              {{ selectedDoc.silver.companyName || getSiteNameFromCollection(currentCollection) }}
+            </span>
             <span class="meta-tag">{{ formatCollectedDate(selectedDoc.silver.publishedAt || selectedDoc.silver.updatedAt) }}</span>
-            <a v-if="selectedDoc.silver.url" :href="selectedDoc.silver.url" target="_blank" class="meta-link">Reference URL ↗</a>
+            <a v-if="originalUrl" :href="originalUrl" target="_blank" class="meta-link">Reference URL ↗</a>
           </div>
         </header>
 
