@@ -1,26 +1,26 @@
-# 🚨 장애 탐지 및 격리 규칙 (FailureHandlingRule.md)
+# 🚨 Failure Detection & Isolation Rules (FailureHandlingRule.md)
 
-이 문서는 크롤러 수집 및 변환 파이프라인 전반에서 발생하는 예외 상황을 체계적으로 감지하고 격리하기 위한 규칙을 정의합니다.
-
----
-
-## 1. 📂 파일 시스템 및 식별자 제약 규칙
-
-1. **파일명 길이 제한 (ENAMETOOLONG)**:
-   - 리눅스 파일 시스템의 최대 파일 이름 길이는 **255자**입니다.
-   - 크롤링 대상 URL 또는 인코딩된 값(예: Base64)을 파일 이름의 일부로 사용할 경우, 한글 인코딩 및 URL 파라미터가 누적되면서 이 길이를 초과하기 매우 쉽습니다.
-   - 신규 크롤러 설계 시 식별자(ID) 생성 알고리즘은 **반드시 고정 길이(예: MD5 32자 해시)**를 채택하십시오.
-
-2. **기존 데이터 마이그레이션**:
-   - ID 생성 알고리즘이 변경되는 경우(예: Base64 ➡️ MD5), 기존에 이미 다른 ID 체계로 저장된 데이터가 수집 완료 상태(`urls.status = 'completed'`)로 등록되어 있을 수 있습니다.
-   - 이로 인해 변환 단계(Transformer)에서 신규 해시 ID 기준으로 HTML 파일을 찾으려 할 때 `Raw document not found` 에러가 대거 발생하게 됩니다.
-   - ID 생성 로직 변경 후에는 반드시 기존 DB 데이터와의 정합성을 매핑하거나, 이전 수집 이력을 초기화/마이그레이션해야 합니다.
+This document defines the rules for systematically detecting and isolating exception cases across the scraper and transformer pipelines.
 
 ---
 
-## 2. 🔍 파이프라인 역방향 에러 추적 규칙
+## 1. 📂 File System & Identifier Constraint Rules
 
-1. **변환(Transformer) 실패의 원인 추적**:
-   - `TransformerWorker`에서 `[Transformer] Transformation failed` 오류가 발생한 경우, 1차적으로 `bronze.html` 내부에 해당 문서가 존재하는지 점검해야 합니다.
-   - 만약 본문이 존재하지 않는다면, 이는 변환 단계의 버그가 아니라 수집 단계(`ScraperWorker`)에서 무음 실패(Silent Failure)나 오류로 인해 수집이 중단되었을 가능성이 매우 높습니다.
-   - 이 경우 역방향으로 `bronze.urls` 컬렉션의 대상 문서 `status` 및 `error` 메타데이터를 추적해야 합니다.
+1. **File Name Length Limitation (ENAMETOOLONG)**:
+   - The maximum file name length on Linux file systems is **255 characters**.
+   - If you use target URLs or encoded values (e.g., Base64) as part of file names, Korean encoding and accumulated URL parameters will easily exceed this limit.
+   - When designing new crawlers, the identifier (ID) generation algorithm **must adopt a fixed length (e.g., MD5 32-character hash)**.
+
+2. **Existing Data Migration**:
+   - If the ID generation algorithm changes (e.g., Base64 ➡️ MD5), existing crawled data might still be registered as completed (`urls.status = 'completed'`) under the old ID scheme.
+   - Consequently, during the transformation stage (Transformer), looking up HTML files using the new MD5 IDs will result in massive `Raw document not found` errors.
+   - After modifying ID generation logic, you must map the consistency of existing DB data, or reset/migrate the previous crawling history.
+
+---
+
+## 2. 🔍 Pipeline Reverse Error Tracing Rules
+
+1. **Tracing Causes of Transformer Failures**:
+   - If a `[Transformer] Transformation failed` error occurs in the `TransformerWorker`, verify first if the document exists in the `bronze.html` collection.
+   - If the raw document is missing, it suggests a silent failure or interruption at the scraping stage (`ScraperWorker`) rather than a bug in the transformer.
+   - In this case, trace the target document's `status` and `error` metadata in the `bronze.urls` collection.
