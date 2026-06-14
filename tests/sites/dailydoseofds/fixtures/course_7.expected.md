@@ -1,7 +1,7 @@
 # 📂 [Daily Dose of DS] Policy Gradients: REINFORCE and Actor-Critic
 
 * **작성일:** Published on Jun 7, 2026
-* **원본 링크:** [바로가기](https://www.dailydoseofds.com/course_7)
+* **원본 링크:** [바로가기](https://www.dailydoseofds.com/rl-course-part-7/)
 
 ## 📝 본문 내용
 

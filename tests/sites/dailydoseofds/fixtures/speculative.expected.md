@@ -1,7 +1,7 @@
 # 📂 [Daily Dose of DS] Speculative Decoding in LLMs
 
 * **작성일:** 2026-05-13
-* **원본 링크:** [바로가기](https://www.dailydoseofds.com/speculative)
+* **원본 링크:** [바로가기](https://www.dailydoseofds.com/p/speculative-decoding-in-llms/)
 
 ## 📝 본문 내용
 

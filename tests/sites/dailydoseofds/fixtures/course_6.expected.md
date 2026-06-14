@@ -1,7 +1,7 @@
 # 📂 [Daily Dose of DS] Introduction to Deep RL and DQN
 
 * **작성일:** Published on May 31, 2026
-* **원본 링크:** [바로가기](https://www.dailydoseofds.com/course_6)
+* **원본 링크:** [바로가기](https://www.dailydoseofds.com/rl-course-part-6/)
 
 ## 📝 본문 내용
 

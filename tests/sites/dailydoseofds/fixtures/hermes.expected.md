@@ -1,7 +1,7 @@
 # 📂 [Daily Dose of DS] Hermes Agent Masterclass
 
 * **작성일:** 2026-05-14
-* **원본 링크:** [바로가기](https://www.dailydoseofds.com/hermes)
+* **원본 링크:** [바로가기](https://www.dailydoseofds.com/p/hermes-agent-masterclass/)
 
 ## 📝 본문 내용
 
