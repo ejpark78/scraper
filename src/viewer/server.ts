@@ -797,7 +797,7 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
       const match = trimmed.match(/\[([a-zA-Z0-9_-]+)\]/);
       if (match) {
         const val = match[1];
-        const exclude = ['scraper', 'transformer', 'converter', 'error', 'warn', 'info', 'debug', 'recursive'];
+        const exclude = ['scraper', 'converter', 'error', 'warn', 'info', 'debug', 'recursive'];
         if (!exclude.includes(val.toLowerCase())) {
           site = val;
         }

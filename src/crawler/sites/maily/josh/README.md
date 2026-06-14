@@ -76,8 +76,6 @@ src/crawler/sites/maily/josh/
 ├── site.config.ts         # SiteDescriptor 설정
 ├── Converter.ts           # HTML → Markdown 변환
 ├── List.ts                # RSS 기반 URL 수집
-├── RefreshTransform.ts     # Transform 큐 작업
-├── RefreshUrls.ts         # URL 큐 복구
 ├── README.md              # 이 파일
 
 tests/sites/maily/josh/

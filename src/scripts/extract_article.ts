@@ -73,7 +73,7 @@ async function main() {
     fs.writeFileSync(htmlPath, htmlContent, 'utf-8');
     console.log(`💾 Saved HTML to: [${id}.html](file://${htmlPath})`);
 
-    const converter = descriptor.transformer?.converter;
+    const converter = descriptor.converter?.converter;
     if (!converter) {
       console.warn(`⚠️ Warning: No converter registered for site "${site}". Skipping Markdown generation.`);
       return;

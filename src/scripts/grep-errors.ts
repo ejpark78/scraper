@@ -26,7 +26,7 @@ export class ErrorGrepper implements IErrorGrepper {
         const errorSummary: Record<string, number> = {};
         const serviceSummary: Record<string, number> = {};
 
-        console.log('\n=== 🛑 SCRAPER & TRANSFORMER ERROR LOGS ===\n');
+        console.log('\n=== 🛑 SCRAPER & CONVERTER ERROR LOGS ===\n');
 
         rl.on('line', (line: string) => {
             const separatorIndex = line.indexOf('|');

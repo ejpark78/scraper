@@ -184,7 +184,7 @@ class ScraperWorker {
       fs.unlinkSync(tempHtmlPath);
 
       this.logHtmlPreview(site, id, url, rawHtml);
-      await this.saveRawHtmlAndQueueTransformTask(site, id, url, rawHtml, payload);
+      await this.saveRawHtmlAndQueueConvertTask(site, id, url, rawHtml, payload);
     } catch (scrapeErr: any) {
       await this.handleScrapeFailure(payload, id, scrapeErr);
     }
@@ -223,7 +223,7 @@ class ScraperWorker {
     }
   }
 
-  private async saveRawHtmlAndQueueTransformTask(
+  private async saveRawHtmlAndQueueConvertTask(
     site: string,
     id: string,
     url: string,
@@ -254,7 +254,7 @@ class ScraperWorker {
 
     const dbRefId = updateResult.upsertedId ? updateResult.upsertedId.toString() : id;
 
-    const transformTask = {
+    const convertTask = {
       site,
       id,
       bronze_db: 'bronze',
@@ -263,7 +263,7 @@ class ScraperWorker {
       timestamp: new Date().toISOString(),
     };
 
-    await this.redis.rpush(CONVERT_QUEUE, JSON.stringify(transformTask));
+    await this.redis.rpush(CONVERT_QUEUE, JSON.stringify(convertTask));
     Logger.info(`[Scraper] Successfully saved Raw HTML and published convert event for ID: ${id}`);
 
     if (payload?.recursive === true) {

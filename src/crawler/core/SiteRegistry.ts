@@ -1,6 +1,6 @@
 /**
  * @module SiteRegistry
- * @description Automatically discovers and registers site scraping and transforming descriptors.
+ * @description Automatically discovers and registers site scraping and converting descriptors.
  * @constraints
  *   - Site configurations must define a unique key.
  *   - Automatically scans direct subdirectories of src/crawler/sites.
