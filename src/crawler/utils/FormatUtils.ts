@@ -42,6 +42,9 @@ export class FormatUtils {
             return `](${url.replace(/\s+/g, '')})`;
         });
 
+        // 5. \[ 또는 \] 또는 \* 또는 \_ 같은 백슬래시 이스케이프 해제
+        cleaned = cleaned.replace(/\\([!\[\]*_])/g, '$1');
+
         return cleaned;
     }
 
