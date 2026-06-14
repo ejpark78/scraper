@@ -67,7 +67,11 @@ export const descriptor: SiteDescriptor = {
     defaultSlack: 3,
     extractId: (url) => {
       const crypto = require('crypto');
-      return crypto.createHash('md5').update(url).digest('hex');
+      let normalized = url;
+      try {
+        normalized = decodeURIComponent(url);
+      } catch {}
+      return crypto.createHash('md5').update(normalized).digest('hex');
     },
     excludePatterns: ['logout.cm', 'login', 'join', 'signup', 'favicon', 'logout'],
     urlFilter: (urlStr: string): boolean => {
@@ -79,6 +83,24 @@ export const descriptor: SiteDescriptor = {
           '/category/', '/tag/', '/author/', '/page/', '#', 'download.cm'
         ];
         if (exclude.some(p => parsed.pathname.includes(p) || parsed.hash.includes(p))) {
+          return false;
+        }
+
+        // Exclude section list and archive root pages
+        const cleanPath = parsed.pathname.replace(/\/$/, '');
+        const excludePaths = [
+          '/newsletter',
+          '/column-before',
+          '/economy-dictionary',
+          '/economy-news',
+          '/column-before/uppity-original',
+          '/column-before/expert-contribution',
+          '/column-before/moneylog',
+          '/newsletter/money-letter',
+          '/newsletter/jalsseul-letter',
+          '/newsletter/career-letter',
+        ];
+        if (excludePaths.includes(cleanPath) || excludePaths.some(p => cleanPath.startsWith(p + '/'))) {
           return false;
         }
 

@@ -95,9 +95,14 @@ class UppityList extends BaseListService {
                 console.log(`🔍 [Uppity List] Found ${links.length} articles on page ${p} of ${section.name}.`);
 
                 for (const { url: articleUrl, title } of links) {
-                    const crypto = require('crypto');
-                    const id = crypto.createHash('md5').update(articleUrl).digest('hex');
-                    if (await this.processItem(id, articleUrl, title)) {
+                    let normalizedUrl = articleUrl;
+                    try {
+                        normalizedUrl = decodeURIComponent(articleUrl);
+                    } catch {}
+                    const id = descriptor.scraper?.extractId
+                        ? descriptor.scraper.extractId(normalizedUrl)
+                        : require('crypto').createHash('md5').update(normalizedUrl).digest('hex');
+                    if (await this.processItem(id, normalizedUrl, title)) {
                         queuedCount++;
                     }
                 }
