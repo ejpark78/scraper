@@ -70,8 +70,11 @@ export class LinkedInJobsContents extends BasePipeline<JobMeta> {
         );
 
         // Save to Silver Collection
+        if (!descriptor.targetLoader) {
+            throw new Error(`TargetLoader configuration missing in descriptor for site: ${descriptor.key}`);
+        }
         const doc = descriptor.targetLoader.buildDocument(id, meta);
-        const silverColl = await mongo.getCollection(descriptor.targetLoader.collectionName || 'silver/linkedin.jobs');
+        const silverColl = await mongo.getCollection(descriptor.targetLoader.collectionName);
         await silverColl.updateOne(
             { jobId: id },
             { $set: doc },

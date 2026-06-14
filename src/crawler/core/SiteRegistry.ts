@@ -10,7 +10,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { IConverter } from './IConverter';
+import type { IConverter, IFileSaver } from './IConverter';
 
 export interface IndexSpec {
   collection: `bronze/${string}` | `silver/${string}`;
@@ -42,7 +42,7 @@ export interface SiteDescriptor {
   };
 
   converter?: {
-    converter: IConverter<any>;
+    converter: IConverter<any> & Partial<IFileSaver>;
     targetCollection: string;
     filter: (id: string) => Record<string, any>;
     statusCollection?: string;

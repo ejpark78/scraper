@@ -83,8 +83,12 @@ async function main() {
     const result = await converter.convertHtmlToMarkdown(htmlContent, id, doc.url || '');
     
     const mdPath = path.join(fixturesDir, `${id}.expected.md`);
-    await converter.prettifyAndSave(result.rawContent, mdPath);
-    console.log(`💾 Saved MD to: [${id}.expected.md](file://${mdPath})`);
+    if (typeof converter.prettifyAndSave === 'function') {
+      await converter.prettifyAndSave(result.rawContent, mdPath);
+      console.log(`💾 Saved MD to: [${id}.expected.md](file://${mdPath})`);
+    } else {
+      console.warn(`⚠️ Warning: Converter for "${site}" does not support prettifyAndSave.`);
+    }
     console.log(`📊 Markdown Content Length: ${result.content.length} characters.`);
 
   } catch (error) {

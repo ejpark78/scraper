@@ -151,7 +151,9 @@ async function main() {
             fs.mkdirSync(mdDir, { recursive: true });
 
             fs.writeFileSync(path.join(htmlDir, `${id}.html`), rawContent, 'utf-8');
-            await converter.prettifyAndSave(meta.rawContent, path.join(mdDir, `${id}.md`));
+            if (typeof converter.prettifyAndSave === 'function') {
+              await converter.prettifyAndSave(meta.rawContent, path.join(mdDir, `${id}.md`));
+            }
 
             if (desc.refreshSilver?.saveJson) {
               const jsonDir = path.join(baseDir, 'json');
