@@ -48,7 +48,7 @@ export class TargetLoader {
         updatedAt: doc.updatedAt || new Date().toISOString()
       };
 
-      await meili.addDocuments('contents', [meiliDoc]);
+      await meili.addDocuments(`contents_${site}`, [meiliDoc]);
     } catch (meiliErr: any) {
       console.warn(`⚠️ [Meilisearch] Failed to index document ${site}_${id}: ${meiliErr.message}`);
     }

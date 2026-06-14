@@ -129,7 +129,8 @@ app.get('/api/documents', async (req: Request, res: Response) => {
     }
 
     const meili = MeiliSearchDatabase.getInstance();
-    const filter = [`site = "${siteKey}"`];
+    const indexName = `contents_${siteKey}`;
+    const filter: string[] = [];
 
     if (collectionName === 'linkedin.jobs') {
       const country = req.query.country as string || '';
@@ -138,8 +139,8 @@ app.get('/api/documents', async (req: Request, res: Response) => {
       }
     }
 
-    const searchResults = await meili.search('contents', search, {
-      filter,
+    const searchResults = await meili.search(indexName, search, {
+      filter: filter.length > 0 ? filter : undefined,
       limit,
       offset: skip,
       sort: ['publishedAt:desc']
@@ -561,8 +562,8 @@ function registerMcpHandlers(server: Server) {
       }
 
       const meili = MeiliSearchDatabase.getInstance();
-      const searchResults = await meili.search('contents', search, {
-        filter: [`site = "${siteKey}"`],
+      const indexName = `contents_${siteKey}`;
+      const searchResults = await meili.search(indexName, search, {
         limit
       });
 

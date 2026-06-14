@@ -32,34 +32,38 @@ async function manage(): Promise<void> {
         }
         console.log('✅ Meilisearch connection established.');
 
-        // Step 2: Initialize index settings for 'contents'
-        console.log(`⚙️ Setting up index configuration for "${INDEX_NAME}"...`);
-        await meili.updateSettings(INDEX_NAME, {
-            searchableAttributes: ['title', 'companyName', 'location', 'geo', 'content'],
-            filterableAttributes: ['site', 'geo', 'location'],
-            sortableAttributes: ['publishedAt', 'updatedAt'],
-            rankingRules: [
-                'words',
-                'typo',
-                'proximity',
-                'attribute',
-                'sort',
-                'exactness'
-            ]
-        });
-        console.log('✅ Index settings initialized successfully.');
+        const sites = getAllSites();
 
-        // Step 3: Handle clean reset if requested
-        if (shouldClean) {
-            console.log(`🧹 Clearing all documents from index "${INDEX_NAME}"...`);
-            // Trigger Meilisearch delete documents REST endpoint
-            const res = await (meili as any).request(`/indexes/${INDEX_NAME}/documents`, 'DELETE');
-            console.log('✅ Index cleared successfully.');
+        // Step 2 & 3: Initialize settings and clean/reset indexes for each site
+        for (const site of sites) {
+            if (!site.targetLoader) continue;
+            const indexName = `contents_${site.key}`;
+
+            console.log(`⚙️ Setting up index configuration for "${indexName}"...`);
+            await meili.updateSettings(indexName, {
+                searchableAttributes: ['title', 'companyName', 'location', 'geo', 'content'],
+                filterableAttributes: ['site', 'geo', 'location'],
+                sortableAttributes: ['publishedAt', 'updatedAt'],
+                rankingRules: [
+                    'words',
+                    'typo',
+                    'proximity',
+                    'attribute',
+                    'sort',
+                    'exactness'
+                ]
+            });
+            console.log(`✅ Index settings initialized successfully for "${indexName}".`);
+
+            if (shouldClean) {
+                console.log(`🧹 Clearing all documents from index "${indexName}"...`);
+                await (meili as any).request(`/indexes/${indexName}/documents`, 'DELETE');
+                console.log(`✅ Index "${indexName}" cleared successfully.`);
+            }
         }
 
         // Step 4: Fetch MongoDB collections and synchronize documents
         await mongo.connect();
-        const sites = getAllSites();
         
         let totalProcessed = 0;
 
@@ -79,6 +83,7 @@ async function manage(): Promise<void> {
                 }
 
                 // Batch insert into Meilisearch to respect payload limits
+                const indexName = `contents_${site.key}`;
                 const batchSize = 100;
                 for (let i = 0; i < docs.length; i += batchSize) {
                     const batch = docs.slice(i, i + batchSize);
@@ -99,7 +104,7 @@ async function manage(): Promise<void> {
                         };
                     });
 
-                    await meili.addDocuments(INDEX_NAME, meiliDocs);
+                    await meili.addDocuments(indexName, meiliDocs);
                 }
 
                 console.log(`  ✅ Successfully indexed ${docs.length} documents from ${collectionName}`);
