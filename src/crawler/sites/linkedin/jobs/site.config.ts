@@ -12,6 +12,7 @@ import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { LinkedInMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
 import { UrlUtils } from '../../../utils';
+import { AppConfig } from '../../../../config/AppConfig';
 import { NamingUtils } from '../../../utils';
 
 export interface GlobalSettings {
@@ -186,7 +187,7 @@ export function generateUrls(config: Config, options: GenerateUrlsOptions = {}):
 
 async function scrapeLinkedinJob(url: string, tempPath: string): Promise<void> {
   const crawler = new LinkedInCrawler({
-    login: process.env.LOGIN === 'true' || process.env.AUTH === 'true',
+    login: AppConfig.USE_LOGIN,
   });
   await crawler.scrapeJob(url, tempPath);
 }

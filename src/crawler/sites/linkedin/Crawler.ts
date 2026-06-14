@@ -11,6 +11,7 @@ import { chromium, Browser, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 import { HtmlMinifier } from '../../utils';
+import { AppConfig } from '../../../config/AppConfig';
 
 // ⚙️ LinkedIn Playwright 스크래퍼 및 인증 통합 OOP 엔진 (TypeScript)
 
@@ -21,11 +22,11 @@ export interface ICrawler {
 }
 
 export class LinkedInCrawler implements ICrawler {
-    private readonly sessionPath: string = path.join(process.env.SESSION_DIR || path.resolve(process.cwd(), 'data/sessions'), `${process.env.SITE || 'linkedin'}.json`);
+    private readonly sessionPath: string = path.join(AppConfig.SESSION_DIR, `${AppConfig.SITE}.json`);
     private readonly useLogin: boolean;
 
     constructor(options: { login?: boolean } = {}) {
-        this.useLogin = options.login !== undefined ? options.login : (process.env.LOGIN === 'true' || process.env.AUTH === 'true');
+        this.useLogin = options.login !== undefined ? options.login : AppConfig.USE_LOGIN;
     }
 
     /**

@@ -59,4 +59,34 @@ export class AppConfig {
      * Meilisearch Master Key
      */
     public static readonly MEILI_MASTER_KEY: string = process.env.MEILI_MASTER_KEY || 'superMasterKeySecret123';
+
+    /**
+     * Whether to overwrite existing files/documents
+     */
+    public static readonly OVERWRITE: boolean = process.env.OVERWRITE === 'true';
+
+    /**
+     * Whether to login (scraper settings)
+     */
+    public static readonly LOGIN: boolean = process.env.LOGIN === 'true';
+
+    /**
+     * Whether to reset error status on items
+     */
+    public static readonly ERROR_RESET: boolean = process.env.ERROR_RESET === 'true';
+
+    /**
+     * Whether recursive scraping is enabled
+     */
+    public static readonly RECURSIVE_SCRAPE: boolean = process.env.RECURSIVE_SCRAPE === 'true';
+
+    /**
+     * Combined login flag using LOGIN or AUTH env variables
+     */
+    public static readonly USE_LOGIN: boolean = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
+
+    /**
+     * Target crawler site (defaults to linkedin)
+     */
+    public static readonly SITE: string = process.env.SITE || 'linkedin';
 }

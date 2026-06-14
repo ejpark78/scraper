@@ -10,6 +10,7 @@
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
 import { getSite } from './SiteRegistry';
+import { AppConfig } from '../../config/AppConfig';
 
 export interface RefreshConvertConfig {
     site: string;
@@ -27,7 +28,7 @@ export class BaseRefreshConvert {
         const desc = getSite(site);
         const idField = desc?.scraper?.updateFilterKey ?? 'id';
         const silverCollection = this.config.silverCollection ?? desc?.targetLoader?.collectionName ?? `silver/${site}.contents` as `silver/${string}`;
-        const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
+        const REDIS_URL = AppConfig.REDIS_URL;
         const CONVERT_QUEUE = 'convert_queue';
         const BATCH_SIZE = 500;
 
@@ -38,7 +39,7 @@ export class BaseRefreshConvert {
         const redis = new Redis(REDIS_URL);
 
         try {
-            const overwrite = process.env.OVERWRITE === 'true';
+            const overwrite = AppConfig.OVERWRITE;
             const completedIds = new Set<string>();
             if (!overwrite) {
                 const silverColl = await mongo.getCollection(silverCollection);

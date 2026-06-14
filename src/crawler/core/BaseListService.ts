@@ -9,6 +9,7 @@
 
 import Redis from 'ioredis';
 import { MongoDatabase } from '../../database/mongo';
+import { AppConfig } from '../../config/AppConfig';
 
 export interface BaseListConfig {
     site: string;
@@ -27,7 +28,7 @@ export abstract class BaseListService {
     }
 
     async init(): Promise<void> {
-        const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+        const redisUrl = AppConfig.REDIS_URL;
         this.redis = new Redis(redisUrl);
         console.log(`📡 [${this.config.displayName} List] Connected to Redis for queueing.`);
     }
@@ -69,7 +70,7 @@ export abstract class BaseListService {
 
     async processItem(id: string, url: string, title: string, extras?: Record<string, any>): Promise<boolean> {
         const { site, displayName, cacheSetKey, urlsCollection } = this.config;
-        const overwrite = process.env.OVERWRITE === 'true';
+        const overwrite = AppConfig.OVERWRITE;
 
         if (overwrite) {
             await this.redis.srem(cacheSetKey, id);
@@ -107,15 +108,15 @@ export abstract class BaseListService {
         const alreadyPushed = doc?.pushedToRedis || false;
 
         if (!alreadyPushed) {
-            const priority = process.env.PRIORITY || 'medium';
-            const scraperSlackVal = process.env.SCRAPER_SLACK ? parseInt(process.env.SCRAPER_SLACK, 10) : 0;
+            const priority = AppConfig.PRIORITY;
+            const scraperSlackVal = AppConfig.SCRAPER_SLACK;
 
             const payload: Record<string, any> = {
                 site,
                 url,
                 attempt: 1,
                 priority,
-                recursive: process.env.RECURSIVE_SCRAPE === 'true',
+                recursive: AppConfig.RECURSIVE_SCRAPE,
             };
             if (scraperSlackVal > 0) {
                 payload.scraperSlack = scraperSlackVal;

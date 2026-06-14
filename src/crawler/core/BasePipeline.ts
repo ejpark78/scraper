@@ -11,6 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { DateUtils, FormatUtils } from '../utils';
+import { AppConfig } from '../../config/AppConfig';
 
 export abstract class BasePipeline<TMeta> {
     // 🔒 동시 워커 간 중복 수집 타겟 선점 방지용 인메모리 뮤텍스 셋
@@ -77,14 +78,14 @@ export abstract class BasePipeline<TMeta> {
         }
 
         // 로그인 상태 확인
-        const useLoginEnv = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
+        const useLoginEnv = AppConfig.USE_LOGIN;
         const sessionPath = path.join(__dirname, '..', '..', 'data', 'sessions', 'linkedin.json');
         const loginStatus = useLoginEnv 
             ? (fs.existsSync(sessionPath) ? '[AUTHED]' : '[UNAUTHED]')
             : '[UNAUTHED]';
 
         // 0. Redis 연동 및 캐시 로드
-        const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+        const redisUrl = AppConfig.REDIS_URL;
         let redis: any = null;
         let useRedisCache = false;
         try {
@@ -281,7 +282,7 @@ export abstract class BasePipeline<TMeta> {
             const myIndex = currentIndex;
 
             // 💤 [대기] 다음 요청까지 슬랙타임 대기
-            const sleepSec = parseInt(process.env.LIST_SLACK || '3', 10);
+            const sleepSec = AppConfig.LIST_SLACK;
             if (myIndex > 1 && sleepSec > 0) {
                 console.log(`💤 [대기] 다음 ${this.getDomainName()} 요청까지 ${sleepSec}초 대기 중...`);
                 await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));

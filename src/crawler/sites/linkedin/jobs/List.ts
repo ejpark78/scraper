@@ -13,14 +13,15 @@ import * as path from 'path';
 import { descriptor, Config } from './site.config';
 import { HtmlMinifier, DateUtils, UrlUtils, Logger } from '../../../utils';
 import { MongoDatabase } from '../../../../database/mongo';
+import { AppConfig } from '../../../../config/AppConfig';
 import Redis from 'ioredis';
 
 export class LinkedInList {
-    private readonly sessionPath: string = path.join(process.env.SESSION_DIR || path.resolve(process.cwd(), 'data/sessions'), 'linkedin.json');
+    private readonly sessionPath: string = path.join(AppConfig.SESSION_DIR, 'linkedin.json');
     private readonly useLogin: boolean;
 
     constructor() {
-        this.useLogin = process.env.LOGIN === 'true' || process.env.AUTH === 'true';
+        this.useLogin = AppConfig.USE_LOGIN;
     }
 
     private async autoScroll(page: any): Promise<void> {

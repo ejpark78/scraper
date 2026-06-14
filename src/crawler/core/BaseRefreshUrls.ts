@@ -13,6 +13,7 @@ import Redis from 'ioredis';
 import * as cheerio from 'cheerio';
 import { getSite } from './SiteRegistry';
 import { UrlUtils } from '../utils/UrlUtils';
+import { AppConfig } from '../../config/AppConfig';
 
 export interface RefreshUrlsConfig {
     site: string;
@@ -35,7 +36,7 @@ export class BaseRefreshUrls {
         const mongo = MongoDatabase.getInstance();
         await mongo.connect();
 
-        const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+        const redisUrl = AppConfig.REDIS_URL;
         const redis = new Redis(redisUrl);
 
         try {
@@ -46,7 +47,7 @@ export class BaseRefreshUrls {
             const completedIds = await bronzeHtml.distinct(idField);
             console.log(`📥 Loaded ${completedIds.length} already completed ${displayName} IDs.`);
 
-            const priority = process.env.PRIORITY || 'medium';
+            const priority = AppConfig.PRIORITY;
             const perSiteQueueKey = `scrape_queue:${site}:${priority}`;
             const existingQueueUrls = new Set<string>();
 
@@ -80,8 +81,8 @@ export class BaseRefreshUrls {
                 console.log(`📥 Loaded ${existingQueueUrls.size} ${displayName} URLs currently in Redis queue.`);
             }
 
-            const overwrite = process.env.OVERWRITE === 'true';
-            const errorReset = process.env.ERROR_RESET === 'true';
+            const overwrite = AppConfig.OVERWRITE;
+            const errorReset = AppConfig.ERROR_RESET;
 
             // Seed URLs registered in site configuration
             if (desc?.seedUrls && desc.seedUrls.length > 0 && desc.scraper) {
@@ -158,7 +159,7 @@ export class BaseRefreshUrls {
                     url: j.url,
                     attempt: 1,
                     priority,
-                    recursive: process.env.RECURSIVE_SCRAPE === 'true',
+                    recursive: AppConfig.RECURSIVE_SCRAPE,
                 }));
 
                 const chunkSize = 1000;
@@ -203,7 +204,7 @@ export class BaseRefreshUrls {
         if (!scraper.urlsCollectionName) return;
 
         const urlsColl = await mongo.getCollection(urlsCollection);
-        const priority = process.env.PRIORITY || 'medium';
+        const priority = AppConfig.PRIORITY;
         const perSiteQueueKey = `scrape_queue:${site}:${priority}`;
 
         // Load existing urls set
@@ -355,7 +356,7 @@ export class BaseRefreshUrls {
             url: u.url,
             attempt: 1,
             priority,
-            recursive: process.env.RECURSIVE_SCRAPE === 'true',
+            recursive: AppConfig.RECURSIVE_SCRAPE,
         }));
         for (let i = 0; i < queuePayloads.length; i += chunkSize) {
             const chunk = queuePayloads.slice(i, i + chunkSize);

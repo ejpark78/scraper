@@ -10,10 +10,11 @@
 import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { CompanyMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
+import { AppConfig } from '../../../../config/AppConfig';
 
 async function scrapeLinkedinCompany(url: string, tempPath: string): Promise<void> {
   const crawler = new LinkedInCrawler({
-    login: process.env.LOGIN === 'true' || process.env.AUTH === 'true',
+    login: AppConfig.USE_LOGIN,
   });
   await crawler.scrapeCompanyAbout(url, tempPath);
 }

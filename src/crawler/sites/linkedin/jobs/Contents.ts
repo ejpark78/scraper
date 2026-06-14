@@ -13,6 +13,7 @@ import { BasePipeline } from '../../../core/BasePipeline';
 import { LinkedInMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
 import { UrlUtils } from '../../../utils';
+import { AppConfig } from '../../../../config/AppConfig';
 import { descriptor, JobMeta } from './site.config';
 
 export class LinkedInJobsContents extends BasePipeline<JobMeta> {
@@ -33,7 +34,7 @@ export class LinkedInJobsContents extends BasePipeline<JobMeta> {
 
     protected async executeScrape(url: string, tempHtmlPath: string): Promise<void> {
         const crawler = new LinkedInCrawler({
-            login: process.env.LOGIN === 'true' || process.env.AUTH === 'true',
+            login: AppConfig.USE_LOGIN,
         });
         await crawler.scrapeJob(url, tempHtmlPath);
     }

@@ -13,6 +13,7 @@ import { BasePipeline } from '../../../core/BasePipeline';
 import { CompanyMarkdownConverter } from './Converter';
 import { CompanyMeta } from './site.config';
 import { LinkedInCrawler } from '../Crawler';
+import { AppConfig } from '../../../../config/AppConfig';
 
 export class LinkedInCompanyContents extends BasePipeline<CompanyMeta> {
     private readonly converter: CompanyMarkdownConverter;
@@ -33,7 +34,7 @@ export class LinkedInCompanyContents extends BasePipeline<CompanyMeta> {
 
     protected async executeScrape(url: string, tempHtmlPath: string): Promise<void> {
         const crawler = new LinkedInCrawler({
-            login: process.env.LOGIN === 'true' || process.env.AUTH === 'true',
+            login: AppConfig.USE_LOGIN,
         });
         await crawler.scrapeCompanyAbout(url, tempHtmlPath);
     }
