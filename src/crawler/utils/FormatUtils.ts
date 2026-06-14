@@ -26,7 +26,12 @@ export class FormatUtils {
         // 1. javascript: 로 시작하는 링크 패턴 전체 제거
         let cleaned = markdown.replace(/\[\s*[\s\S]*?\s*\]\(javascript\s*:\s*.*?\)/gi, '');
 
-        // 2. [ \n\n title \n\n ](url) 형태 보정
+        // 2. [![alt](img_url) \n\n ](link_url) 형태 보정 (이미지 링크 내 줄바꿈 제거)
+        cleaned = cleaned.replace(/\[\s*(!\[[\s\S]*?\]\([^)]+\))\s*\]\(([^)]+)\)/g, (match, image, url) => {
+            return `[${image.trim()}](${url.trim()})`;
+        });
+
+        // 3. [ \n\n title \n\n ](url) 형태 보정
         cleaned = cleaned.replace(/\[\s*([\s\S]*?)\s*\]\(([^)]+)\)/g, (match, title, url) => {
             const cleanTitle = title.trim().replace(/\s*\n\s*/g, ' ');
             return `[${cleanTitle}](${url.trim()})`;
@@ -34,4 +39,5 @@ export class FormatUtils {
 
         return cleaned;
     }
+
 }
