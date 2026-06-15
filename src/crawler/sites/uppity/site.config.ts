@@ -73,14 +73,14 @@ export const descriptor: SiteDescriptor = {
       } catch {}
       return crypto.createHash('md5').update(normalized).digest('hex');
     },
-    excludePatterns: ['logout.cm', 'login', 'join', 'signup', 'favicon', 'logout'],
+    excludePatterns: ['logout.cm', 'login', 'join', 'signup', 'favicon', 'logout', 'unsubscribe'],
     urlFilter: (urlStr: string): boolean => {
       try {
         const parsed = new URL(urlStr);
         // Exclude patterns
         const exclude = [
           'logout.cm', 'login', 'join', 'signup', 'favicon', 'logout',
-          '/category/', '/tag/', '/author/', '/page/', '#', 'download.cm'
+          '/category/', '/tag/', '/author/', '/page/', '#', 'download.cm', 'unsubscribe'
         ];
         if (exclude.some(p => parsed.pathname.includes(p) || parsed.hash.includes(p))) {
           return false;
