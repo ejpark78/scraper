@@ -24,7 +24,7 @@ RUN npm ci && npm cache clean --force
 
 # Install frontend dependencies using cache layers
 COPY src/viewer/frontend/package*.json ./src/viewer/frontend/
-RUN npm ci --prefix src/viewer/frontend && npm cache clean --force
+RUN npm install --prefix src/viewer/frontend && npm cache clean --force
 
 # Copy source files
 COPY . .
