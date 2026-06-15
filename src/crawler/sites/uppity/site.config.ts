@@ -93,6 +93,10 @@ export const descriptor: SiteDescriptor = {
 
         // Exclude section list and archive root pages
         const cleanPath = parsed.pathname.replace(/\/$/, '');
+        if (!cleanPath || cleanPath === '/') {
+          return false;
+        }
+
         const excludePaths = [
           '/newsletter',
           '/column-before',
@@ -113,12 +117,14 @@ export const descriptor: SiteDescriptor = {
           '/notice',
           '/uppitag',
           '/bamboo_forest',
+          '/column',
+          '/partnership',
         ];
         if (
           excludePaths.includes(cleanPath) ||
           excludePaths.some(p => cleanPath.startsWith(p + '/')) ||
-          /^\/\d+$/.test(cleanPath) ||
-          /\/page\/\d+$/.test(cleanPath)
+          /\/page\/\d+$/.test(cleanPath) ||
+          /\/\d+$/.test(cleanPath)
         ) {
           return false;
         }
