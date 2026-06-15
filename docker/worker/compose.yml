@@ -39,6 +39,8 @@ services:
         - BUILD_DATE
         - VCS_REF
     image: linkedin/scraper:latest
+    profiles:
+      - worker
     command: ["npx", "ts-node", "src/crawler/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
@@ -69,6 +71,8 @@ services:
         - BUILD_DATE
         - VCS_REF
     image: linkedin/converter:latest
+    profiles:
+      - worker
     command: ["npx", "ts-node", "src/crawler/workers/ConverterWorker.ts"]
     environment:
       - TZ=Asia/Seoul
@@ -98,6 +102,8 @@ services:
         - BUILD_DATE
         - VCS_REF
     image: linkedin/indexer:latest
+    profiles:
+      - worker
     command: ["npx", "ts-node", "src/crawler/workers/IndexerWorker.ts"]
     environment:
       - TZ=Asia/Seoul
