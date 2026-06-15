@@ -5,7 +5,7 @@
 .PHONY: dump restore index
 
 DB ?= bronze,silver,crawler
-DUMP_DIR ?= data/backup/$(shell date +%Y%m%dT%H%M%S)
+DUMP_DIR ?= data/backup/mongodb/$(shell date +%Y%m%dT%H%M%S)
 
 dump:
 	@if [ -z "$(DB)" ]; then \
