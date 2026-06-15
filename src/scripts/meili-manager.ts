@@ -86,61 +86,76 @@ async function manage(): Promise<void> {
 
             try {
                 const collection = await mongo.getCollection(collectionName);
-                const docs = await collection.find({}).toArray();
-
-                if (docs.length === 0) {
-                    console.log(`  ℹ️ No documents found in ${collectionName}.`);
-                    continue;
-                }
-
-                // Batch insert into Meilisearch to respect payload limits
+                const cursor = collection.find({});
                 const indexName = `contents_${site.key}`;
                 const batchSize = 100;
-                for (let i = 0; i < docs.length; i += batchSize) {
-                    const batch = docs.slice(i, i + batchSize);
-                    const meiliDocs = batch.map(doc => {
-                        const docId = doc[site.targetLoader!.filterField] || doc.id || doc._id;
-                        let publishedAt = doc.publishedAt || doc.collectedAt || doc.createdAt || doc.scrapedAt || null;
-                        
-                        if (!publishedAt) {
-                            if (site.key === 'linkedin' && doc.description) {
-                                const match = doc.description.match(/posted_date:\s*"([^"]+)"/) || doc.description.match(/\*\*포스팅 날짜 \(Posted Date\):\*\*\s*([^\n]+)/);
-                                if (match) {
-                                    publishedAt = match[1].trim();
-                                }
-                            } else if (site.key === 'geeknews' && (doc.markdown || doc.content)) {
-                                const md = doc.markdown || doc.content || '';
-                                const match = md.match(/\*\*작성일:\*\*\s*([^\n]+)/);
-                                if (match && match[1].trim() !== '정보 없음') {
-                                    publishedAt = match[1].trim();
-                                }
+                let batch: any[] = [];
+                let siteProcessedCount = 0;
+
+                const mapDoc = (doc: any) => {
+                    const docId = doc[site.targetLoader!.filterField] || doc.id || doc._id;
+                    let publishedAt = doc.publishedAt || doc.collectedAt || doc.createdAt || doc.scrapedAt || null;
+                    
+                    if (!publishedAt) {
+                        if (site.key === 'linkedin' && doc.description) {
+                            const match = doc.description.match(/posted_date:\s*"([^"]+)"/) || doc.description.match(/\*\*포스팅 날짜 \(Posted Date\):\*\*\s*([^\n]+)/);
+                            if (match) {
+                                publishedAt = match[1].trim();
+                            }
+                        } else if (site.key === 'geeknews' && (doc.markdown || doc.content)) {
+                            const md = doc.markdown || doc.content || '';
+                            const match = md.match(/\*\*작성일:\*\*\s*([^\n]+)/);
+                            if (match && match[1].trim() !== '정보 없음') {
+                                publishedAt = match[1].trim();
                             }
                         }
-                        
-                        if (!publishedAt) {
-                            publishedAt = doc.updatedAt || new Date().toISOString();
-                        }
+                    }
+                    
+                    if (!publishedAt) {
+                        publishedAt = doc.updatedAt || new Date().toISOString();
+                    }
 
-                        return {
-                            id: `${site.key}_${docId}`, // Composite key
-                            site: site.key,
-                            docId: String(docId),
-                            title: doc.title || doc.jobTitle || 'Untitled',
-                            companyName: doc.companyName || null,
-                            location: doc.location || null,
-                            geo: doc.geo || 'Unknown',
-                            content: doc.description || doc.markdown || doc.content || '',
-                            url: doc.url || null,
-                            publishedAt: publishedAt,
-                            updatedAt: doc.updatedAt || new Date().toISOString()
-                        };
-                    });
+                    return {
+                        id: `${site.key}_${docId}`, // Composite key
+                        site: site.key,
+                        docId: String(docId),
+                        title: doc.title || doc.jobTitle || 'Untitled',
+                        companyName: doc.companyName || null,
+                        location: doc.location || null,
+                        geo: doc.geo || 'Unknown',
+                        content: doc.description || doc.markdown || doc.content || '',
+                        url: doc.url || null,
+                        publishedAt: publishedAt,
+                        updatedAt: doc.updatedAt || new Date().toISOString()
+                    };
+                };
 
-                    await meili.addDocuments(indexName, meiliDocs);
+                while (await cursor.hasNext()) {
+                    const doc = await cursor.next();
+                    if (!doc) continue;
+
+                    batch.push(doc);
+
+                    if (batch.length >= batchSize) {
+                        const meiliDocs = batch.map(mapDoc);
+                        await meili.addDocuments(indexName, meiliDocs);
+                        siteProcessedCount += batch.length;
+                        batch = [];
+                    }
                 }
 
-                console.log(`  ✅ Successfully indexed ${docs.length} documents from ${collectionName}`);
-                totalProcessed += docs.length;
+                if (batch.length > 0) {
+                    const meiliDocs = batch.map(mapDoc);
+                    await meili.addDocuments(indexName, meiliDocs);
+                    siteProcessedCount += batch.length;
+                }
+
+                if (siteProcessedCount === 0) {
+                    console.log(`  ℹ️ No documents found in ${collectionName}.`);
+                } else {
+                    console.log(`  ✅ Successfully indexed ${siteProcessedCount} documents from ${collectionName}`);
+                    totalProcessed += siteProcessedCount;
+                }
             } catch (collErr: any) {
                 console.error(`  ❌ Failed to process collection ${collectionName}: ${collErr.message}`);
             }
