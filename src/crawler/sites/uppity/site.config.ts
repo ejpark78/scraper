@@ -86,6 +86,11 @@ export const descriptor: SiteDescriptor = {
           return false;
         }
 
+        // If it is an explicit board view detail page, allow it immediately
+        if (parsed.searchParams.get('bmode') === 'view') {
+          return true;
+        }
+
         // Exclude section list and archive root pages
         const cleanPath = parsed.pathname.replace(/\/$/, '');
         const excludePaths = [
@@ -99,8 +104,22 @@ export const descriptor: SiteDescriptor = {
           '/newsletter/money-letter',
           '/newsletter/jalsseul-letter',
           '/newsletter/career-letter',
+          '/2030-research',
+          '/serial',
+          '/moneyletter_archive',
+          '/careerletter_archive',
+          '/moneylog',
+          '/news',
+          '/notice',
+          '/uppitag',
+          '/bamboo_forest',
         ];
-        if (excludePaths.includes(cleanPath) || excludePaths.some(p => cleanPath.startsWith(p + '/'))) {
+        if (
+          excludePaths.includes(cleanPath) ||
+          excludePaths.some(p => cleanPath.startsWith(p + '/')) ||
+          /^\/\d+$/.test(cleanPath) ||
+          /\/page\/\d+$/.test(cleanPath)
+        ) {
           return false;
         }
 
