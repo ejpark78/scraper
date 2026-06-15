@@ -423,20 +423,54 @@ app.get('/api/queues', async (req: Request, res: Response) => {
     });
 
     // Fetch site stats (Silver DB counts & Meilisearch Index counts)
-    const siteStats: Record<string, { silverCount: number; meiliCount: number }> = {};
+    const siteStats: Record<string, { silverCount: number; meiliCount: number; htmlCount: number; urlsCount: number }> = {};
     try {
       await mongo.connect();
       const client = (mongo as any).client;
       if (client) {
         const silverDb = client.db('silver');
+        const bronzeDb = client.db('bronze');
         const meili = MeiliSearchDatabase.getInstance();
 
         for (const site of sites) {
           if (!site.key) continue;
           let silverCount = 0;
           let meiliCount = 0;
+          let htmlCount = 0;
+          let urlsCount = 0;
 
-          // 1. Get Silver DB counts
+          // 1. Get Bronze DB counts (HTML and URLs)
+          try {
+            const htmlCollName = site.scraper?.collectionName?.replace(/^bronze\//, '');
+            if (htmlCollName) {
+              const collExists = (await bronzeDb.listCollections({ name: htmlCollName }).toArray()).length > 0;
+              if (collExists) {
+                htmlCount = await bronzeDb.collection(htmlCollName).countDocuments({});
+              }
+            }
+          } catch (dbErr) {
+            console.error(`[Stats] Error fetching bronze html count for ${site.key}:`, dbErr);
+          }
+
+          try {
+            const urlsCollName = (
+              site.scraper?.urlsCollectionName || 
+              site.converter?.statusCollection || 
+              site.listsCollectionName || 
+              site.companyUrlsCollectionName
+            )?.replace(/^bronze\//, '');
+
+            if (urlsCollName) {
+              const collExists = (await bronzeDb.listCollections({ name: urlsCollName }).toArray()).length > 0;
+              if (collExists) {
+                urlsCount = await bronzeDb.collection(urlsCollName).countDocuments({});
+              }
+            }
+          } catch (dbErr) {
+            console.error(`[Stats] Error fetching bronze urls count for ${site.key}:`, dbErr);
+          }
+
+          // 2. Get Silver DB counts
           try {
             const collName = site.key === 'linkedin' ? 'linkedin.jobs' : `${site.key}.contents`;
             // Check if collection exists
@@ -448,7 +482,7 @@ app.get('/api/queues', async (req: Request, res: Response) => {
             console.error(`[Stats] Error fetching silver db count for ${site.key}:`, dbErr);
           }
 
-          // 2. Get Meilisearch counts
+          // 3. Get Meilisearch counts
           try {
             const indexName = `contents_${site.key}`;
             const stats = await meili.getStats(indexName);
@@ -457,14 +491,14 @@ app.get('/api/queues', async (req: Request, res: Response) => {
             // Index might not exist yet, treat as 0
           }
 
-          siteStats[site.key] = { silverCount, meiliCount };
+          siteStats[site.key] = { silverCount, meiliCount, htmlCount, urlsCount };
         }
       }
     } catch (statsErr) {
       console.error('[Stats] Error gathering site stats:', statsErr);
     }
 
-    const responsePayload: QueueStatusPayload & { siteStats?: Record<string, { silverCount: number; meiliCount: number }> } = {
+    const responsePayload: QueueStatusPayload & { siteStats?: Record<string, { silverCount: number; meiliCount: number; htmlCount: number; urlsCount: number }> } = {
       queues,
       convertQueue: {
         length: convertQueueLength,

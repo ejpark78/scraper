@@ -73,7 +73,7 @@ interface QueueStatusPayload {
     siteCounts: Record<string, number>;
     items: DeadLetterTask[];
   };
-  siteStats?: Record<string, { silverCount: number; meiliCount: number }>;
+  siteStats?: Record<string, { silverCount: number; meiliCount: number; htmlCount: number; urlsCount: number }>;
 }
 
 interface DocumentMeta {
@@ -803,18 +803,26 @@ const iframeSrcDoc = computed(() => {
             </div>
             <div class="card-body">
               <div class="queue-table-container">
-                <table class="dashboard-table" style="font-size: 12px; width: 100%;">
+                <table class="dashboard-table" style="font-size: 11px; width: 100%;">
                   <thead>
                     <tr>
-                      <th style="width: 40%; text-align: left;">사이트 이름</th>
-                      <th style="width: 30%; text-align: center;">실버 DB 수집 수량 (MongoDB)</th>
-                      <th style="width: 30%; text-align: center;">인덱스 수량 (Meilisearch)</th>
+                      <th style="width: 28%; text-align: left;">사이트 이름</th>
+                      <th style="width: 18%; text-align: center;">Bronze URLs (대상)</th>
+                      <th style="width: 18%; text-align: center;">Bronze HTML (다운로드)</th>
+                      <th style="width: 18%; text-align: center;">Silver DB (정제)</th>
+                      <th style="width: 18%; text-align: center;">Meilisearch (인덱스)</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="(stats, siteKey) in queueData.siteStats" :key="siteKey">
                       <td style="font-weight: 600; color: #fff; text-align: left;">
                         {{ getSiteNameFromCollection(siteKey) }} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">({{ siteKey }})</span>
+                      </td>
+                      <td style="text-align: center; font-weight: 500;">
+                        <span class="badge-priority low" style="padding: 3px 6px; font-size: 10px; background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2);">{{ stats.urlsCount ? stats.urlsCount.toLocaleString('ko-KR') : 0 }} 건</span>
+                      </td>
+                      <td style="text-align: center; font-weight: 500;">
+                        <span class="badge-priority low" style="padding: 3px 6px; font-size: 10px; background-color: rgba(168, 85, 247, 0.1); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.2);">{{ stats.htmlCount ? stats.htmlCount.toLocaleString('ko-KR') : 0 }} 건</span>
                       </td>
                       <td style="text-align: center; font-weight: 500;">
                         <span class="badge-priority low" style="padding: 3px 8px; font-size: 11px;">{{ stats.silverCount.toLocaleString('ko-KR') }} 건</span>
