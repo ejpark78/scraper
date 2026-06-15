@@ -9,6 +9,7 @@
  * - Strict Typing: Typed variables and standard TypeScript conventions.
  */
 
+import Redis from 'ioredis';
 import { MongoDatabase } from '../database/mongo';
 import { MeiliSearchDatabase } from '../database/meili';
 import { getAllSites } from '../crawler/core/SiteRegistry';
@@ -28,6 +29,8 @@ async function manage(): Promise<void> {
 
     const mongo = MongoDatabase.getInstance();
     const meili = MeiliSearchDatabase.getInstance();
+    const redisUrl = process.env.REDIS_URL || 'redis://redis:6379';
+    const redis = new Redis(redisUrl);
 
     try {
         // Step 1: Ensure Meilisearch is reachable
@@ -46,6 +49,12 @@ async function manage(): Promise<void> {
         }
 
         // Step 2 & 3: Initialize settings and clean/reset indexes for each site
+        if (shouldClean) {
+            console.log('🧹 Clearing Redis index queue (index_queue & dead_letter_queue)...');
+            await redis.del('index_queue', 'dead_letter_queue');
+            console.log('✅ Redis index queue cleared.');
+        }
+
         for (const site of sites) {
             if (!site.targetLoader) continue;
             const indexName = `contents_${site.key}`;
@@ -86,74 +95,36 @@ async function manage(): Promise<void> {
 
             try {
                 const collection = await mongo.getCollection(collectionName);
-                const cursor = collection.find({});
-                const indexName = `contents_${site.key}`;
-                const batchSize = 100;
-                let batch: any[] = [];
+                const filterField = site.targetLoader.filterField;
+                const cursor = collection.find({}).project({ [filterField]: 1, id: 1, _id: 1 });
+                const indexTasks: string[] = [];
                 let siteProcessedCount = 0;
-
-                const mapDoc = (doc: any) => {
-                    const docId = doc[site.targetLoader!.filterField] || doc.id || doc._id;
-                    let publishedAt = doc.publishedAt || doc.collectedAt || doc.createdAt || doc.scrapedAt || null;
-                    
-                    if (!publishedAt) {
-                        if (site.key === 'linkedin' && doc.description) {
-                            const match = doc.description.match(/posted_date:\s*"([^"]+)"/) || doc.description.match(/\*\*포스팅 날짜 \(Posted Date\):\*\*\s*([^\n]+)/);
-                            if (match) {
-                                publishedAt = match[1].trim();
-                            }
-                        } else if (site.key === 'geeknews' && (doc.markdown || doc.content)) {
-                            const md = doc.markdown || doc.content || '';
-                            const match = md.match(/\*\*작성일:\*\*\s*([^\n]+)/);
-                            if (match && match[1].trim() !== '정보 없음') {
-                                publishedAt = match[1].trim();
-                            }
-                        }
-                    }
-                    
-                    if (!publishedAt) {
-                        publishedAt = doc.updatedAt || new Date().toISOString();
-                    }
-
-                    return {
-                        id: `${site.key}_${docId}`, // Composite key
-                        site: site.key,
-                        docId: String(docId),
-                        title: doc.title || doc.jobTitle || 'Untitled',
-                        companyName: doc.companyName || null,
-                        location: doc.location || null,
-                        geo: doc.geo || 'Unknown',
-                        content: doc.description || doc.markdown || doc.content || '',
-                        url: doc.url || null,
-                        publishedAt: publishedAt,
-                        updatedAt: doc.updatedAt || new Date().toISOString()
-                    };
-                };
 
                 while (await cursor.hasNext()) {
                     const doc = await cursor.next();
                     if (!doc) continue;
 
-                    batch.push(doc);
+                    const docId = doc[filterField] || doc.id || doc._id;
+                    if (docId) {
+                        indexTasks.push(JSON.stringify({ site: site.key, id: String(docId) }));
+                    }
 
-                    if (batch.length >= batchSize) {
-                        const meiliDocs = batch.map(mapDoc);
-                        await meili.addDocuments(indexName, meiliDocs);
-                        siteProcessedCount += batch.length;
-                        batch = [];
+                    if (indexTasks.length >= 1000) {
+                        await redis.rpush('index_queue', ...indexTasks);
+                        siteProcessedCount += indexTasks.length;
+                        indexTasks.length = 0; // Clear array
                     }
                 }
 
-                if (batch.length > 0) {
-                    const meiliDocs = batch.map(mapDoc);
-                    await meili.addDocuments(indexName, meiliDocs);
-                    siteProcessedCount += batch.length;
+                if (indexTasks.length > 0) {
+                    await redis.rpush('index_queue', ...indexTasks);
+                    siteProcessedCount += indexTasks.length;
                 }
 
                 if (siteProcessedCount === 0) {
                     console.log(`  ℹ️ No documents found in ${collectionName}.`);
                 } else {
-                    console.log(`  ✅ Successfully indexed ${siteProcessedCount} documents from ${collectionName}`);
+                    console.log(`  ✅ Successfully queued ${siteProcessedCount} indexing tasks for ${collectionName}`);
                     totalProcessed += siteProcessedCount;
                 }
             } catch (collErr: any) {
@@ -169,6 +140,7 @@ async function manage(): Promise<void> {
         process.exit(1);
     } finally {
         await mongo.close();
+        await redis.quit();
     }
 }
 
