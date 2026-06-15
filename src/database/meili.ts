@@ -86,6 +86,18 @@ export class MeiliSearchDatabase {
     }
 
     /**
+     * Ensure index exists, creating it with primaryKey: 'id' if missing.
+     */
+    public async ensureIndex(indexName: string): Promise<void> {
+        try {
+            await this.request(`/indexes/${indexName}`, 'GET');
+        } catch (e) {
+            // Index doesn't exist, create it with primaryKey 'id'
+            await this.request('/indexes', 'POST', { uid: indexName, primaryKey: 'id' });
+        }
+    }
+
+    /**
      * Add or replace documents in an index
      */
     public async addDocuments(indexName: string, documents: any[]): Promise<void> {
@@ -101,6 +113,7 @@ export class MeiliSearchDatabase {
             };
         });
 
+        await this.ensureIndex(indexName);
         await this.request(`/indexes/${indexName}/documents`, 'POST', cleanedDocs);
     }
 
@@ -134,12 +147,7 @@ export class MeiliSearchDatabase {
      */
     public async updateSettings(indexName: string, settings: MeiliIndexSettings): Promise<void> {
         // First ensure index exists by triggering index creation (if not exists)
-        try {
-            await this.request(`/indexes/${indexName}`, 'GET');
-        } catch (e) {
-            // Index doesn't exist, create it
-            await this.request('/indexes', 'POST', { uid: indexName, primaryKey: 'id' });
-        }
+        await this.ensureIndex(indexName);
 
         // Apply settings
         await this.request(`/indexes/${indexName}/settings`, 'PATCH', settings);
