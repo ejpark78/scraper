@@ -29,6 +29,9 @@ RUN npm ci --prefix src/viewer/frontend && npm cache clean --force
 # Copy source files
 COPY . .
 
+# Generate static sites config JSON
+RUN npx ts-node src/scripts/generate-sites-config.ts
+
 # Build the frontend assets
 RUN npm --prefix src/viewer/frontend run build
 

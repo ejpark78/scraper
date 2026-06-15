@@ -75,6 +75,33 @@ export interface SiteDescriptor {
 const registry = new Map<string, SiteDescriptor>();
 
 function discoverSites(): void {
+  const staticConfigPath = path.resolve(__dirname, '..', '..', '..', 'config', 'sites.json');
+  const isViewer = process.env.IS_VIEWER === 'true';
+
+  if (isViewer && fs.existsSync(staticConfigPath)) {
+    try {
+      const raw = fs.readFileSync(staticConfigPath, 'utf8');
+      const staticConfigs = JSON.parse(raw);
+      for (const s of staticConfigs) {
+        registry.set(s.key, {
+          key: s.key,
+          name: s.name,
+          favicon: s.favicon,
+          indexName: s.indexName,
+          targetLoader: {
+            collectionName: s.collectionName,
+            filterField: 'id',
+            buildDocument: () => ({})
+          }
+        } as any);
+      }
+      console.log(`✅ [SiteRegistry] Loaded ${staticConfigs.length} site descriptors statically from config/sites.json`);
+      return;
+    } catch (err: any) {
+      console.error(`[SiteRegistry] Failed to load static config from ${staticConfigPath}: ${err.message}`);
+    }
+  }
+
   const sitesDir = path.resolve(__dirname, '..', 'sites');
 
   if (!fs.existsSync(sitesDir)) return;

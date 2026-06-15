@@ -114,10 +114,13 @@ const limit = 30;
 const documents = ref<DocumentMeta[]>([]);
 const totalDocuments = ref<number>(0);
 const loadingDocs = ref<boolean>(false);
+const errorMessage = ref<string>('');
 
 const selectedDoc = ref<ActiveDoc | null>(null);
 const activeTab = ref<string>('tab-rendered');
 const loadingRaw = ref<boolean>(false);
+const loadingRawDetail = ref<boolean>(false);
+let detailAbortController: AbortController | null = null;
 
 const sidebarCollapsed = ref<boolean>(false);
 const isDraggingCountry = ref<boolean>(false);
@@ -307,16 +310,25 @@ async function fetchCollections() {
 async function fetchDocuments() {
   loadingDocs.value = true;
   selectedDoc.value = null; // Reset details panel
+  documents.value = [];     // Clear stale documents immediately
+  totalDocuments.value = 0; // Clear total count
+  errorMessage.value = '';  // Clear previous error message
   
   try {
     const url = `/api/documents?collection=${encodeURIComponent(currentCollection.value)}&search=${encodeURIComponent(searchQuery.value)}&page=${currentPage.value}&limit=${limit}&country=${encodeURIComponent(currentCountry.value)}`;
     const response = await fetch(url);
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
-    
     documents.value = data.documents || [];
     totalDocuments.value = data.total || 0;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error loading documents:', error);
+    errorMessage.value = error.message || '문서를 불러오는 중 오류가 발생했습니다.';
+    documents.value = [];
+    totalDocuments.value = 0;
   } finally {
     loadingDocs.value = false;
   }
@@ -326,8 +338,33 @@ async function selectDocument(doc: DocumentMeta) {
   const docId = doc._id || doc.id || doc.jobId;
   if (!docId) return;
 
+  // 1. Cancel previous pending details fetch if any
+  if (detailAbortController) {
+    detailAbortController.abort();
+  }
+  detailAbortController = new AbortController();
+  const { signal } = detailAbortController;
+
+  // 2. Render Silver content instantly using the existing search result item metadata
+  selectedDoc.value = {
+    id: docId,
+    silver: { ...doc },
+    bronze: {
+      jobId: doc.jobId,
+      url: doc.url,
+      rawHtml: '',
+      rawJson: null
+    }
+  };
+  activeTab.value = 'tab-rendered';
+  loadingRawDetail.value = true;
+
+  // 3. Fetch full document details in the background with abort signal
   try {
-    const response = await fetch(`/api/documents/${docId}?collection=${encodeURIComponent(currentCollection.value)}`);
+    const response = await fetch(`/api/documents/${docId}?collection=${encodeURIComponent(currentCollection.value)}`, { signal });
+    if (!response.ok) {
+      throw new Error(`Failed to load details: ${response.status}`);
+    }
     const docData = await response.json();
 
     let silver = {};
@@ -340,28 +377,39 @@ async function selectDocument(doc: DocumentMeta) {
       bronze = docData;
     }
 
-    selectedDoc.value = {
-      id: docId,
-      silver,
-      bronze
-    };
-
-    activeTab.value = 'tab-rendered';
-  } catch (error) {
-    console.error('Error loading document detail:', error);
+    // Preserve the ID but update with the full backend response
+    if (selectedDoc.value && selectedDoc.value.id === docId) {
+      selectedDoc.value.silver = { ...selectedDoc.value.silver, ...silver };
+      selectedDoc.value.bronze = { ...selectedDoc.value.bronze, ...bronze };
+    }
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      // Quietly ignore since it's a user-initiated request cancellation
+      return;
+    }
+    console.error('Error loading document detail asynchronously:', error);
+  } finally {
+    // Only set loading to false if this was the active request
+    if (!signal.aborted) {
+      loadingRawDetail.value = false;
+      triggerHighlighting();
+    }
   }
 }
 
 async function fetchRawContent() {
   if (!selectedDoc.value || loadingRaw.value) return;
-  if (selectedDoc.value.bronze.rawHtml || selectedDoc.value.bronze.rawJson) return; // Already loaded
+  // If we already have HTML/JSON, don't refetch
+  if (selectedDoc.value.bronze.rawHtml || selectedDoc.value.bronze.rawJson) return;
 
   loadingRaw.value = true;
   try {
     const response = await fetch(`/api/documents/${selectedDoc.value.id}/raw?collection=${encodeURIComponent(currentCollection.value)}`);
     const rawData = await response.json();
-    selectedDoc.value.bronze.rawHtml = rawData.rawHtml;
-    selectedDoc.value.bronze.rawJson = rawData.rawJson;
+    if (selectedDoc.value) {
+      selectedDoc.value.bronze.rawHtml = rawData.rawHtml;
+      selectedDoc.value.bronze.rawJson = rawData.rawJson;
+    }
   } catch (error) {
     console.error('Error loading raw content:', error);
   } finally {
@@ -721,6 +769,11 @@ const iframeSrcDoc = computed(() => {
           <div v-if="loadingDocs" class="loading-container">
             <div class="spinner"></div>
             <div>Loading documents...</div>
+          </div>
+          <div v-else-if="errorMessage" class="error-banner" style="padding: 20px; text-align: center; color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin: 10px;">
+            <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+            <h4 style="margin: 0 0 4px; color: #ef4444;">API 요청 실패</h4>
+            <p style="margin: 0; font-size: 11px; opacity: 0.8; font-family: monospace; word-break: break-all;">{{ errorMessage }}</p>
           </div>
           <div v-else-if="documents.length === 0" class="empty-state">No documents found</div>
           <div 
@@ -1148,12 +1201,20 @@ const iframeSrcDoc = computed(() => {
           </div>
           
           <!-- HTML Preview Pane -->
-          <div v-if="activeTab === 'tab-html'" class="tab-pane active">
+          <div v-if="activeTab === 'tab-html'" class="tab-pane active" style="position: relative; min-height: 200px;">
+            <div v-if="loadingRawDetail" class="loading-container" style="position: absolute; inset: 0; background: rgba(15, 19, 26, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">
+              <div class="spinner"></div>
+              <div style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">원본 HTML을 데이터베이스에서 불러오는 중...</div>
+            </div>
             <iframe class="html-preview" :srcdoc="iframeSrcDoc"></iframe>
           </div>
           
           <!-- Bronze JSON Pane -->
-          <div v-if="activeTab === 'tab-bronze-json'" class="tab-pane active">
+          <div v-if="activeTab === 'tab-bronze-json'" class="tab-pane active" style="position: relative; min-height: 200px;">
+            <div v-if="loadingRawDetail" class="loading-container" style="position: absolute; inset: 0; background: rgba(15, 19, 26, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;">
+              <div class="spinner"></div>
+              <div style="margin-top: 12px; color: var(--text-secondary); font-size: 13px;">Bronze 원본 JSON을 불러오는 중...</div>
+            </div>
             <pre><code class="language-json">{{ bronzeJsonContent }}</code></pre>
           </div>
         </div>
