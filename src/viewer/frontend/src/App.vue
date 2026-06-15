@@ -152,8 +152,10 @@ const addUrlError = ref<string>('');
 const errorLogs = ref<any[]>([]);
 const totalErrorLogs = ref<number>(0);
 const errorSiteCounts = ref<Record<string, number>>({});
+const errorServiceCounts = ref<Record<string, number>>({});
 const errorFilter = ref<string>('All');
 const errorLevelFilter = ref<string>('All');
+const errorServiceFilter = ref<string>('All');
 const errorPage = ref<number>(1);
 const totalErrorPages = ref<number>(1);
 const loadingErrors = ref<boolean>(false);
@@ -173,10 +175,12 @@ const countries = [
 // Computed
 const totalPages = computed(() => Math.max(1, Math.ceil(totalDocuments.value / limit)));
 
-const errorSites = computed(() => {
-  const sites = Object.keys(errorSiteCounts.value);
-  return ['All', ...sites];
+const errorServices = computed(() => {
+  const services = Object.keys(errorServiceCounts.value);
+  return ['All', ...services];
 });
+
+
 
 const convertQueueCounts = computed(() => {
   return Object.entries(queueData.value.convertQueue.siteCounts)
@@ -269,6 +273,11 @@ watch(errorFilter, () => {
 });
 
 watch(errorLevelFilter, () => {
+  errorPage.value = 1;
+  fetchErrors();
+});
+
+watch(errorServiceFilter, () => {
   errorPage.value = 1;
   fetchErrors();
 });
@@ -439,11 +448,12 @@ async function fetchSiteStats() {
 async function fetchErrors() {
   loadingErrors.value = true;
   try {
-    const response = await fetch(`/api/errors?site=${errorFilter.value}&level=${errorLevelFilter.value}&page=${errorPage.value}`);
+    const response = await fetch(`/api/errors?site=${errorFilter.value}&level=${errorLevelFilter.value}&service=${errorServiceFilter.value}&page=${errorPage.value}`);
     const data = await response.json();
     errorLogs.value = data.errors || [];
     totalErrorLogs.value = data.totalCount || 0;
     errorSiteCounts.value = data.siteCounts || {};
+    errorServiceCounts.value = data.serviceCounts || {};
     totalErrorPages.value = data.totalPages || 1;
   } catch (err) {
     console.error('Error fetching error logs:', err);
@@ -996,8 +1006,22 @@ const iframeSrcDoc = computed(() => {
                 <h3 style="color:#f87171;">📋 컨테이너 실시간 로그 (Container Logs)</h3>
                 <span class="badge-priority high">{{ totalErrorLogs.toLocaleString('ko-KR') }}</span>
               </div>
-              <!-- Level Filters -->
+              <!-- Service Badges Filters -->
               <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                <button 
+                  v-for="svc in errorServices" 
+                  :key="svc"
+                  class="country-badge" 
+                  :class="{ active: errorServiceFilter === svc }"
+                  @click="errorServiceFilter = svc"
+                  style="padding: 4px 10px; font-size: 11px;"
+                >
+                  <span v-if="svc === 'All'">📦 All</span>
+                  <span v-else>{{ svc }} ({{ (errorServiceCounts[svc] || 0).toLocaleString('ko-KR') }})</span>
+                </button>
+              </div>
+              <!-- Level Filters -->
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px dashed var(--border-color); padding-top: 8px;">
                 <button 
                   v-for="lvl in ['All', 'INFO', 'WARN', 'ERROR']" 
                   :key="lvl"
@@ -1010,19 +1034,6 @@ const iframeSrcDoc = computed(() => {
                   <span v-else-if="lvl === 'INFO'" style="color:#60a5fa;">ℹ️ INFO</span>
                   <span v-else-if="lvl === 'WARN'" style="color:#fbbf24;">⚠️ WARN</span>
                   <span v-else-if="lvl === 'ERROR'" style="color:#f87171;">🛑 ERROR</span>
-                </button>
-              </div>
-              <!-- Site Badges Filters -->
-              <div style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px dashed var(--border-color); padding-top: 8px;">
-                <button 
-                  v-for="site in errorSites" 
-                  :key="site"
-                  class="country-badge" 
-                  :class="{ active: errorFilter === site }"
-                  @click="errorFilter = site"
-                  style="padding: 4px 10px; font-size: 11px;"
-                >
-                  {{ site }} ({{ (site === 'All' ? totalErrorLogs : (errorSiteCounts[site] || 0)).toLocaleString('ko-KR') }})
                 </button>
               </div>
             </div>

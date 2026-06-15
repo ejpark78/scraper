@@ -781,6 +781,7 @@ app.get('/api/errors', async (req: Request, res: Response) => {
   try {
     const siteFilter = (req.query.site as string) || 'All';
     const levelFilter = (req.query.level as string) || 'All';
+    const serviceFilter = (req.query.service as string) || 'All';
     const page = parseInt(req.query.page as string) || 1;
     const limit = 30;
     
@@ -788,7 +789,7 @@ app.get('/api/errors', async (req: Request, res: Response) => {
     
     const targetContainers = containers.filter(c => {
       const service = c.Labels?.['com.docker.compose.service'] || '';
-      return service === 'scraper' || service === 'converter';
+      return service === 'scraper' || service === 'converter' || service === 'indexer';
     });
     
     let allErrors: ParsedError[] = [];
@@ -813,9 +814,17 @@ app.get('/api/errors', async (req: Request, res: Response) => {
     }
 
     const siteCounts: Record<string, number> = {};
+    const serviceCounts: Record<string, number> = {};
     for (const err of filteredErrors) {
       const site = err.site || 'Unknown';
       siteCounts[site] = (siteCounts[site] || 0) + 1;
+      
+      const svc = err.service || 'unknown';
+      serviceCounts[svc] = (serviceCounts[svc] || 0) + 1;
+    }
+
+    if (serviceFilter !== 'All') {
+      filteredErrors = filteredErrors.filter(err => err.service === serviceFilter);
     }
 
     if (siteFilter !== 'All') {
@@ -830,6 +839,7 @@ app.get('/api/errors', async (req: Request, res: Response) => {
       errors: paginatedErrors,
       totalCount,
       siteCounts,
+      serviceCounts,
       page,
       limit,
       totalPages: Math.ceil(totalCount / limit) || 1
