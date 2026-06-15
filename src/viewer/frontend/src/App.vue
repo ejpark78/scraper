@@ -757,7 +757,7 @@ const iframeSrcDoc = computed(() => {
               <span class="metric-value">
                 {{ queueData.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0).toLocaleString('ko-KR') }}
                 <span v-if="hasPreviousData && queueDeltas.scraping !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.scraping > 0 ? '#f87171' : '#4ade80' }">
-                  ({{ queueDeltas.scraping > 0 ? '+' : '' }}{{ queueDeltas.scraping }})
+                  ({{ queueDeltas.scraping > 0 ? '+' : '' }}{{ queueDeltas.scraping.toLocaleString('ko-KR') }})
                 </span>
               </span>
               <span class="metric-sub">scrape_queue:* 합계</span>
@@ -767,7 +767,7 @@ const iframeSrcDoc = computed(() => {
               <span class="metric-value">
                 {{ queueData.convertQueue.length.toLocaleString('ko-KR') }}
                 <span v-if="hasPreviousData && queueDeltas.converting !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.converting > 0 ? '#f87171' : '#4ade80' }">
-                  ({{ queueDeltas.converting > 0 ? '+' : '' }}{{ queueDeltas.converting }})
+                  ({{ queueDeltas.converting > 0 ? '+' : '' }}{{ queueDeltas.converting.toLocaleString('ko-KR') }})
                 </span>
               </span>
               <span class="metric-sub">convert_queue 대기 문서</span>
@@ -777,7 +777,7 @@ const iframeSrcDoc = computed(() => {
               <span class="metric-value">
                 {{ (queueData.indexQueue?.length || 0).toLocaleString('ko-KR') }}
                 <span v-if="hasPreviousData && queueDeltas.indexing !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.indexing > 0 ? '#f87171' : '#4ade80' }">
-                  ({{ queueDeltas.indexing > 0 ? '+' : '' }}{{ queueDeltas.indexing }})
+                  ({{ queueDeltas.indexing > 0 ? '+' : '' }}{{ queueDeltas.indexing.toLocaleString('ko-KR') }})
                 </span>
               </span>
               <span class="metric-sub">index_queue 대기 문서</span>
@@ -788,7 +788,7 @@ const iframeSrcDoc = computed(() => {
               <span class="metric-value" style="color: #ef4444;">
                 {{ queueData.deadLetter.length.toLocaleString('ko-KR') }}
                 <span v-if="hasPreviousData && queueDeltas.dead !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.dead > 0 ? '#ef4444' : '#4ade80' }">
-                  ({{ queueDeltas.dead > 0 ? '+' : '' }}{{ queueDeltas.dead }})
+                  ({{ queueDeltas.dead > 0 ? '+' : '' }}{{ queueDeltas.dead.toLocaleString('ko-KR') }})
                 </span>
               </span>
               <span class="metric-sub">dead_letter_queue 등록 건수</span>
@@ -837,7 +837,7 @@ const iframeSrcDoc = computed(() => {
                 <div>
                   <h4 style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
                     <span>📥 Scrape Queues</span>
-                    <span class="meta-tag" style="font-size: 10px;">{{ totalScrapingCount }}</span>
+                    <span class="meta-tag" style="font-size: 10px;">{{ totalScrapingCount.toLocaleString('ko-KR') }}</span>
                   </h4>
                   <div v-if="queueData.queues.length === 0" class="empty-state" style="height: 100px;">대기 중인 수집 큐가 없습니다.</div>
                   <div v-else class="queue-table-container">
@@ -864,7 +864,7 @@ const iframeSrcDoc = computed(() => {
                 <div>
                   <h4 style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
                     <span>🔄 Convert Queue</span>
-                    <span class="meta-tag" style="font-size: 10px;">{{ queueData.convertQueue.length }}</span>
+                    <span class="meta-tag" style="font-size: 10px;">{{ queueData.convertQueue.length.toLocaleString('ko-KR') }}</span>
                   </h4>
                   <div v-if="convertQueueCounts.length === 0" class="empty-state" style="height: 100px;">대기 중인 변환 작업이 없습니다.</div>
                   <div v-else class="queue-table-container">
@@ -891,7 +891,7 @@ const iframeSrcDoc = computed(() => {
                 <div>
                   <h4 style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
                     <span>🔍 Index Queue</span>
-                    <span class="meta-tag" style="font-size: 10px;">{{ queueData.indexQueue?.length || 0 }}</span>
+                    <span class="meta-tag" style="font-size: 10px;">{{ (queueData.indexQueue?.length || 0).toLocaleString('ko-KR') }}</span>
                   </h4>
                   <div v-if="indexQueueCounts.length === 0" class="empty-state" style="height: 100px;">대기 중인 인덱싱 작업이 없습니다.</div>
                   <div v-else class="queue-table-container">
@@ -1012,7 +1012,7 @@ const iframeSrcDoc = computed(() => {
               <!-- Pagination controls -->
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-color); flex-shrink:0;">
                 <button :disabled="errorPage <= 1" @click="errorPage--" class="page-btn" style="padding:4px 8px;font-size:11px;">◀ 이전</button>
-                <span style="font-size:11px;color:var(--text-secondary);">페이지 {{ errorPage }} / {{ totalErrorPages }} (총 {{ totalErrorLogs }}건)</span>
+                <span style="font-size:11px;color:var(--text-secondary);">페이지 {{ errorPage }} / {{ totalErrorPages }} (총 {{ totalErrorLogs.toLocaleString('ko-KR') }}건)</span>
                 <button :disabled="errorPage >= totalErrorPages" @click="errorPage++" class="page-btn" style="padding:4px 8px;font-size:11px;">다음 ▶</button>
               </div>
             </div>
