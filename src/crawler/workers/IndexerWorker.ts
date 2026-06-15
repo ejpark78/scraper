@@ -96,7 +96,7 @@ async function main() {
             updatedAt: doc.updatedAt || new Date().toISOString()
           };
 
-          await meili.addDocuments(`contents_${site}`, [meiliDoc]);
+          await meili.addDocuments(site, [meiliDoc]);
           Logger.info(`[Indexer] Successfully indexed to Meilisearch for [${site}] ID: ${id}`);
 
         } catch (err: any) {

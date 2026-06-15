@@ -117,6 +117,8 @@ app.get('/api/documents', async (req: Request, res: Response) => {
     let siteKey = '';
     if (collectionName === 'linkedin.jobs') {
       siteKey = 'linkedin';
+    } else if (collectionName === 'silver/linkedin.companies') {
+      siteKey = 'linkedin_company';
     } else if (collectionName.startsWith('silver/')) {
       siteKey = collectionName.replace('silver/', '').split('.')[0];
     } else {
@@ -124,7 +126,7 @@ app.get('/api/documents', async (req: Request, res: Response) => {
     }
 
     const meili = MeiliSearchDatabase.getInstance();
-    const indexName = `contents_${siteKey}`;
+    const indexName = siteKey;
     const filter: string[] = [];
 
     if (collectionName === 'linkedin.jobs') {
@@ -514,7 +516,7 @@ app.get('/api/site-stats', async (req: Request, res: Response) => {
 
         // 3. Get Meilisearch counts
         try {
-          const indexName = `contents_${site.key}`;
+          const indexName = site.key;
           const stats = await meili.getStats(indexName);
           meiliCount = stats.numberOfDocuments || 0;
         } catch (meiliErr) {

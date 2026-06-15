@@ -124,8 +124,8 @@ class UppityCleanup {
         const delContentsRes = await silverContentsColl.deleteMany({ id: { $in: allIdsToDelete } });
         console.log(`   └─ Deleted ${delContentsRes.deletedCount} documents.`);
 
-        // 4. Delete from Meilisearch index contents_uppity
-        console.log(`🗑️ Deleting from Meilisearch index: contents_uppity...`);
+        // 4. Delete from Meilisearch index uppity
+        console.log(`🗑️ Deleting from Meilisearch index: uppity...`);
         let meiliDeleted = 0;
         let meiliErrors = 0;
         
@@ -133,7 +133,7 @@ class UppityCleanup {
             try {
                 // Composite key structure used in IndexerWorker.ts: `${site}_${id}`
                 const compositeId = `uppity_${id}`;
-                await this.meili.deleteDocument('contents_uppity', compositeId);
+                await this.meili.deleteDocument('uppity', compositeId);
                 meiliDeleted++;
             } catch (err: any) {
                 // If it wasn't indexed in the first place, Meilisearch returns 404

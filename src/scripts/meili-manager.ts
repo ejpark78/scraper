@@ -57,7 +57,7 @@ async function manage(): Promise<void> {
 
         for (const site of sites) {
             if (!site.targetLoader) continue;
-            const indexName = `contents_${site.key}`;
+            const indexName = site.key;
 
             console.log(`⚙️ Setting up index configuration for "${indexName}"...`);
             await meili.updateSettings(indexName, {

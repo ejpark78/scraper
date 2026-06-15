@@ -173,7 +173,7 @@ async function main() {
     // 5. Compare MongoDB with Meilisearch to find Orphaned items (causing Document Not Found)
     console.log('👻 5. Detecting Orphaned Meilisearch Documents (Not in MongoDB)');
     try {
-      const indexName = `contents_${siteKey}`;
+      const indexName = siteKey;
       const meiliResults = await meili.search(indexName, '', { limit: 1000 });
       const meiliHits = meiliResults.hits;
       

@@ -63,6 +63,8 @@ function registerMcpHandlers(server: Server) {
       let siteKey = '';
       if (collectionName === 'linkedin.jobs') {
         siteKey = 'linkedin';
+      } else if (collectionName === 'silver/linkedin.companies') {
+        siteKey = 'linkedin_company';
       } else if (collectionName.startsWith('silver/')) {
         siteKey = collectionName.replace('silver/', '').split('.')[0];
       } else {
@@ -70,7 +72,7 @@ function registerMcpHandlers(server: Server) {
       }
 
       const meili = MeiliSearchDatabase.getInstance();
-      const indexName = `contents_${siteKey}`;
+      const indexName = siteKey;
       const searchResults = await meili.search(indexName, search, {
         limit
       });
