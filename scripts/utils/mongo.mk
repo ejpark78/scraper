@@ -17,7 +17,7 @@ dump:
 	for db in $$(echo "$(DB)" | tr ',' ' '); do \
 		$(COMPOSE) exec -T mongodb mongodump --db=$$db --gzip --out=/tmp/mongodb_backup; \
 	done
-	$(COMPOSE) cp mongodb:/tmp/mongodb_backup $(DUMP_DIR)
+	$(COMPOSE) cp mongodb:/tmp/mongodb_backup/. $(DUMP_DIR)
 	$(COMPOSE) exec -T mongodb rm -rf /tmp/mongodb_backup
 	@echo "💾 DB( $(DB) ) Gzip 압축 백업 완료 -> $(DUMP_DIR)"
 
