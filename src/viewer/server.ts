@@ -451,8 +451,8 @@ app.get('/api/queues', async (req: Request, res: Response) => {
           // 2. Get Meilisearch counts
           try {
             const indexName = `contents_${site.key}`;
-            const searchResults = await meili.search(indexName, '', { limit: 0 });
-            meiliCount = searchResults.estimatedTotalHits || 0;
+            const stats = await meili.getStats(indexName);
+            meiliCount = stats.numberOfDocuments || 0;
           } catch (meiliErr) {
             // Index might not exist yet, treat as 0
           }

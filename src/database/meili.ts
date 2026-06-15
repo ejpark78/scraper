@@ -144,4 +144,15 @@ export class MeiliSearchDatabase {
         // Apply settings
         await this.request(`/indexes/${indexName}/settings`, 'PATCH', settings);
     }
+
+    /**
+     * Get index stats (including number of documents)
+     */
+    public async getStats(indexName: string): Promise<{
+        numberOfDocuments: number;
+        isIndexing: boolean;
+        fieldDistribution: Record<string, number>;
+    }> {
+        return this.request(`/indexes/${indexName}/stats`, 'GET');
+    }
 }
