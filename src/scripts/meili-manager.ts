@@ -17,9 +17,14 @@ const INDEX_NAME = 'contents';
 
 async function manage(): Promise<void> {
     const args = process.argv.slice(2);
-    const shouldClean = args.includes('--clean') || args.includes('--reset');
+    const shouldClean = args.includes('--clean') || args.includes('--reset') || args.includes('--reindex');
+    let targetSiteKey = '';
+    const siteIdx = args.indexOf('--site');
+    if (siteIdx !== -1 && args[siteIdx + 1]) {
+        targetSiteKey = args[siteIdx + 1];
+    }
 
-    console.log(`🚀 Starting Meilisearch Manager (Mode: ${shouldClean ? 'RESET/CLEAN REBUILD' : 'INCREMENTAL REFRESH'})...`);
+    console.log(`🚀 Starting Meilisearch Manager (Mode: ${shouldClean ? 'RESET/CLEAN REBUILD' : 'INCREMENTAL REFRESH'}, Site: ${targetSiteKey || 'ALL'})...`);
 
     const mongo = MongoDatabase.getInstance();
     const meili = MeiliSearchDatabase.getInstance();
@@ -32,7 +37,13 @@ async function manage(): Promise<void> {
         }
         console.log('✅ Meilisearch connection established.');
 
-        const sites = getAllSites();
+        let sites = getAllSites();
+        if (targetSiteKey) {
+            sites = sites.filter(s => s.key === targetSiteKey);
+            if (sites.length === 0) {
+                throw new Error(`Site "${targetSiteKey}" not found in SiteRegistry.`);
+            }
+        }
 
         // Step 2 & 3: Initialize settings and clean/reset indexes for each site
         for (const site of sites) {
