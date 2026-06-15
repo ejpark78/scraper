@@ -694,6 +694,33 @@ function demuxDockerLogs(buffer: Buffer): string {
   return output;
 }
 
+function ansiToHtml(text: string): string {
+  // HTML Escape (prevent XSS)
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Replace ANSI escape codes with CSS styled span tags
+  html = html
+    .replace(/\x1B\[1m/g, '<strong>')
+    .replace(/\x1B\[2m/g, '<span style="opacity: 0.65;">')
+    .replace(/\x1B\[3m/g, '<em>')
+    .replace(/\x1B\[4m/g, '<span style="text-decoration: underline;">')
+    .replace(/\x1B\[30m/g, '<span style="color: #4b5563;">') // Black/Gray
+    .replace(/\x1B\[31m/g, '<span style="color: #f87171; font-weight: bold;">') // Red
+    .replace(/\x1B\[32m/g, '<span style="color: #4ade80;">') // Green
+    .replace(/\x1B\[33m/g, '<span style="color: #fbbf24;">') // Yellow
+    .replace(/\x1B\[34m/g, '<span style="color: #60a5fa;">') // Blue
+    .replace(/\x1B\[35m/g, '<span style="color: #c084fc;">') // Magenta
+    .replace(/\x1B\[36m/g, '<span style="color: #22d3ee;">') // Cyan
+    .replace(/\x1B\[37m/g, '<span style="color: #f3f4f6;">') // White
+    .replace(/\x1B\[90m/g, '<span style="color: #6b7280; opacity: 0.8;">') // Bright Black / Gray
+    .replace(/\x1B\[0m/g, '</span></strong></span></em>'); // Reset
+
+  return html;
+}
+
 function parseErrorsFromLogText(service: string, logText: string): ParsedError[] {
   const lines = logText.split(/\r?\n/);
   const errors: ParsedError[] = [];
@@ -725,17 +752,17 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
           service,
           timestamp,
           level,
-          message: parsed.error_name ? `${parsed.error_name}: ${message}` : message,
+          message: ansiToHtml(parsed.error_name ? `${parsed.error_name}: ${message}` : message),
           site,
           url,
-          stack
+          stack: stack ? ansiToHtml(stack) : undefined
         });
       } catch {
         errors.push({
           service,
           timestamp: new Date().toISOString(),
           level: 'INFO',
-          message: trimmed,
+          message: ansiToHtml(trimmed),
           site: 'Unknown',
           url: ''
         });
@@ -768,7 +795,7 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
         service,
         timestamp: new Date().toISOString(),
         level,
-        message: trimmed,
+        message: ansiToHtml(trimmed),
         site,
         url: ''
       });

@@ -1069,17 +1069,20 @@ const iframeSrcDoc = computed(() => {
                       </td>
                       <td style="font-weight:600; font-size:11px;">{{ item.site }}</td>
                       <td style="word-break:break-all; font-size:11px; text-align:left;">
-                        <div :style="{ fontWeight: '600', color: item.level === 'ERROR' ? '#f87171' : item.level === 'WARN' ? '#fbbf24' : '#fff' }">
-                          {{ item.message }}
-                        </div>
+                        <div 
+                          :style="{ fontWeight: '600', color: item.level === 'ERROR' ? '#f87171' : item.level === 'WARN' ? '#fbbf24' : '#fff' }"
+                          v-html="item.message"
+                        ></div>
                         <div v-if="item.url" style="margin-top:2px;">
                           <a :href="item.url" target="_blank" style="color:var(--accent-color); text-decoration:underline; font-size:10px; font-family:monospace;">
                             {{ item.url }}
                           </a>
                         </div>
-                        <div v-if="item.stack" style="font-size:10px; color:#ef4444; opacity:0.8; margin-top:4px; font-family:monospace; white-space:pre-wrap; max-height:80px; overflow-y:auto; border-top:1px dashed rgba(239,68,68,0.2); padding-top:4px;">
-                          {{ item.stack }}
-                        </div>
+                        <div 
+                          v-if="item.stack" 
+                          style="font-size:10px; color:#ef4444; opacity:0.8; margin-top:4px; font-family:monospace; white-space:pre-wrap; max-height:80px; overflow-y:auto; border-top:1px dashed rgba(239,68,68,0.2); padding-top:4px;"
+                          v-html="item.stack"
+                        ></div>
                       </td>
                       <td style="font-size:11px; color:var(--text-muted);">
                         {{ new Date(item.timestamp).toLocaleTimeString('ko-KR') }}
