@@ -9,7 +9,7 @@
  */
 
 import { MongoDatabase } from '../database/mongo';
-import { getAllSites } from '../crawler/core/SiteRegistry';
+import { getAllSites, getIndexName } from '../crawler/core/SiteRegistry';
 import { MeiliSearchDatabase } from '../database/meili';
 import crypto from 'crypto';
 
@@ -173,7 +173,7 @@ async function main() {
     // 5. Compare MongoDB with Meilisearch to find Orphaned items (causing Document Not Found)
     console.log('👻 5. Detecting Orphaned Meilisearch Documents (Not in MongoDB)');
     try {
-      const indexName = siteKey;
+      const indexName = getIndexName(siteKey);
       const meiliResults = await meili.search(indexName, '', { limit: 1000 });
       const meiliHits = meiliResults.hits;
       

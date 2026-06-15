@@ -16,7 +16,7 @@ import path from 'path';
 import { MongoDatabase } from '../database/mongo';
 import { ObjectId } from 'mongodb';
 import { setupMcpServer } from './mcp';
-import { getAllSites } from '../crawler/core/SiteRegistry';
+import { getAllSites, getIndexName, getSiteKeyFromCollection } from '../crawler/core/SiteRegistry';
 import { MeiliSearchDatabase } from '../database/meili';
 import { AppConfig } from '../config/AppConfig';
 import Redis from 'ioredis';
@@ -114,19 +114,9 @@ app.get('/api/documents', async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string || '30', 10);
     const skip = (page - 1) * limit;
 
-    let siteKey = '';
-    if (collectionName === 'linkedin.jobs') {
-      siteKey = 'linkedin';
-    } else if (collectionName === 'silver/linkedin.companies') {
-      siteKey = 'linkedin_company';
-    } else if (collectionName.startsWith('silver/')) {
-      siteKey = collectionName.replace('silver/', '').split('.')[0];
-    } else {
-      siteKey = collectionName.split('.')[0];
-    }
-
+    const siteKey = getSiteKeyFromCollection(collectionName);
     const meili = MeiliSearchDatabase.getInstance();
-    const indexName = siteKey;
+    const indexName = getIndexName(siteKey);
     const filter: string[] = [];
 
     if (collectionName === 'linkedin.jobs') {
@@ -516,7 +506,7 @@ app.get('/api/site-stats', async (req: Request, res: Response) => {
 
         // 3. Get Meilisearch counts
         try {
-          const indexName = site.key;
+          const indexName = getIndexName(site.key);
           const stats = await meili.getStats(indexName);
           meiliCount = stats.numberOfDocuments || 0;
         } catch (meiliErr) {

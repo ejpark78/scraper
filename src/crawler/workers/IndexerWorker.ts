@@ -11,7 +11,7 @@ import Redis from 'ioredis';
 import { MongoDatabase } from '../../database/mongo';
 import { MeiliSearchDatabase } from '../../database/meili';
 import { Logger } from '../utils';
-import { getSite } from '../core/SiteRegistry';
+import { getSite, getIndexName } from '../core/SiteRegistry';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 const INDEX_QUEUE = 'index_queue';
@@ -96,7 +96,8 @@ async function main() {
             updatedAt: doc.updatedAt || new Date().toISOString()
           };
 
-          await meili.addDocuments(site, [meiliDoc]);
+          const targetIndex = getIndexName(site);
+          await meili.addDocuments(targetIndex, [meiliDoc]);
           Logger.info(`[Indexer] Successfully indexed to Meilisearch for [${site}] ID: ${id}`);
 
         } catch (err: any) {

@@ -46,6 +46,7 @@ export const descriptor: SiteDescriptor = {
   key: 'linkedin_company',
   name: 'LinkedIn Company',
   favicon: 'https://www.linkedin.com/favicon.ico',
+  indexName: 'linkedin_company',
 
   indexes: [
     { collection: 'bronze/linkedin.companies', fields: { companyId: 1 }, options: { unique: true } },

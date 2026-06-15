@@ -206,6 +206,7 @@ export const descriptor: SiteDescriptor = {
   key: 'linkedin',
   name: 'LinkedIn Jobs',
   favicon: 'https://www.linkedin.com/favicon.ico',
+  indexName: 'linkedin_jobs',
 
   indexes: [
     { collection: 'bronze/linkedin.jobs', fields: { jobId: 1 }, options: { unique: true } },

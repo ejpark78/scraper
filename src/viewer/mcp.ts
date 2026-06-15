@@ -17,6 +17,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { MeiliSearchDatabase } from '../database/meili';
+import { getIndexName, getSiteKeyFromCollection } from '../crawler/core/SiteRegistry';
 
 function registerMcpHandlers(server: Server) {
   // MCP: List tools
@@ -60,19 +61,9 @@ function registerMcpHandlers(server: Server) {
     const limit = Number(request.params.arguments?.limit || 5);
 
     try {
-      let siteKey = '';
-      if (collectionName === 'linkedin.jobs') {
-        siteKey = 'linkedin';
-      } else if (collectionName === 'silver/linkedin.companies') {
-        siteKey = 'linkedin_company';
-      } else if (collectionName.startsWith('silver/')) {
-        siteKey = collectionName.replace('silver/', '').split('.')[0];
-      } else {
-        siteKey = collectionName.split('.')[0];
-      }
-
+      const siteKey = getSiteKeyFromCollection(collectionName);
       const meili = MeiliSearchDatabase.getInstance();
-      const indexName = siteKey;
+      const indexName = getIndexName(siteKey);
       const searchResults = await meili.search(indexName, search, {
         limit
       });

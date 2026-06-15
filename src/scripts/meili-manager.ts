@@ -12,7 +12,7 @@
 import Redis from 'ioredis';
 import { MongoDatabase } from '../database/mongo';
 import { MeiliSearchDatabase } from '../database/meili';
-import { getAllSites } from '../crawler/core/SiteRegistry';
+import { getAllSites, getIndexName } from '../crawler/core/SiteRegistry';
 
 const INDEX_NAME = 'contents';
 
@@ -57,7 +57,7 @@ async function manage(): Promise<void> {
 
         for (const site of sites) {
             if (!site.targetLoader) continue;
-            const indexName = site.key;
+            const indexName = getIndexName(site.key);
 
             console.log(`⚙️ Setting up index configuration for "${indexName}"...`);
             await meili.updateSettings(indexName, {

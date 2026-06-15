@@ -24,6 +24,7 @@ export interface SiteDescriptor {
   domain?: string;
   seedUrls?: string[];
   favicon?: string;
+  indexName?: string;
 
   indexes?: IndexSpec[];
 
@@ -129,4 +130,21 @@ export function getSite(key: string): SiteDescriptor | undefined {
 
 export function getAllSites(): SiteDescriptor[] {
   return Array.from(registry.values());
+}
+
+export function getIndexName(siteKey: string): string {
+  const desc = getSite(siteKey);
+  return desc?.indexName || siteKey;
+}
+
+export function getSiteKeyFromCollection(collectionName: string): string {
+  if (collectionName === 'linkedin.jobs') {
+    return 'linkedin';
+  } else if (collectionName === 'silver/linkedin.companies') {
+    return 'linkedin_company';
+  } else if (collectionName.startsWith('silver/')) {
+    return collectionName.replace('silver/', '').split('.')[0];
+  } else {
+    return collectionName.split('.')[0];
+  }
 }
