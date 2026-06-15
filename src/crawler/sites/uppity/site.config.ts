@@ -43,6 +43,7 @@ export const descriptor: SiteDescriptor = {
   name: 'Uppity',
   domain: 'uppity.co.kr',
   favicon: 'https://uppity.co.kr/favicon.ico',
+  indexName: 'uppity',
 
   indexes: [
     { collection: 'bronze/uppity.html', fields: { id: 1 }, options: { unique: true } },

@@ -29,6 +29,7 @@ export const descriptor: SiteDescriptor = {
   name: '요즘IT',
   domain: 'yozm.wishket.com',
   favicon: 'https://yozm.wishket.com/favicon.ico',
+  indexName: 'yozm',
 
   indexes: [
     { collection: 'bronze/yozm.html', fields: { id: 1 }, options: { unique: true } },

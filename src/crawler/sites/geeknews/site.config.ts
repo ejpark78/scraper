@@ -33,6 +33,7 @@ export const descriptor: SiteDescriptor = {
   name: 'GeekNews',
   domain: 'news.hada.io',
   favicon: 'https://news.hada.io/favicon.ico',
+  indexName: 'geeknews',
 
   indexes: [
     { collection: 'bronze/geeknews.html', fields: { id: 1 }, options: { unique: true } },

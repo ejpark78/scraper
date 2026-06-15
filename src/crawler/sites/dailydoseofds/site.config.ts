@@ -28,6 +28,7 @@ export const descriptor: SiteDescriptor = {
   name: 'Daily Dose of DS',
   domain: 'dailydoseofds.com',
   favicon: 'https://www.dailydoseofds.com/favicon.ico',
+  indexName: 'dailydose_ds',
 
   indexes: [
     { collection: 'bronze/dailydose_ds.html', fields: { id: 1 }, options: { unique: true } },

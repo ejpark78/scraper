@@ -64,6 +64,7 @@ export const descriptor: SiteDescriptor = {
   name: 'PyTorch KR',
   domain: 'discuss.pytorch.kr',
   favicon: 'https://discuss.pytorch.kr/uploads/default/optimized/1X/a15555c82ffc1409ffc05e1adbe5f9cf8e1cc385_2_32x32.png',
+  indexName: 'pytorch_kr',
 
   indexes: [
     { collection: 'bronze/pytorch_kr.html', fields: { id: 1 }, options: { unique: true } },

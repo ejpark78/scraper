@@ -28,6 +28,7 @@ export const descriptor: SiteDescriptor = {
   name: '조쉬의 뉴스레터 (Maily)',
   domain: 'maily.so',
   favicon: 'https://maily.so/favicon.ico',
+  indexName: 'maily_josh',
 
   indexes: [
     { collection: 'bronze/maily_josh.html', fields: { id: 1 }, options: { unique: true } },

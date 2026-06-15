@@ -71,6 +71,7 @@ export const descriptor: SiteDescriptor = {
   name: 'GPTers Newsletter',
   domain: 'gpters.org',
   favicon: 'https://gpters.org/favicon.ico',
+  indexName: 'gpters_newsletter',
 
   indexes: [
     { collection: 'bronze/gpters_newsletter.html', fields: { id: 1 }, options: { unique: true } },

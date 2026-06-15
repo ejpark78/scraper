@@ -32,6 +32,7 @@ export const descriptor: SiteDescriptor = {
   name: 'AI Casebook',
   domain: 'aicasebook.dev',
   favicon: 'https://aicasebook.dev/favicon.ico',
+  indexName: 'aicasebook',
 
   indexes: [
     { collection: 'bronze/aicasebook.html', fields: { id: 1 }, options: { unique: true } },
