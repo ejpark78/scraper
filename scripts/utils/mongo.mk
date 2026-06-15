@@ -17,7 +17,7 @@ dump:
 	for db in $$(echo "$(DB)" | tr ',' ' '); do \
 		$(COMPOSE) exec -T mongodb mongodump --db=$$db --gzip --out=/tmp/mongodb_backup; \
 	done
-	docker cp $$(docker compose -p linkedin -f compose.yml ps -q mongodb):/tmp/mongodb_backup $(DUMP_DIR)
+	$(COMPOSE) cp mongodb:/tmp/mongodb_backup $(DUMP_DIR)
 	$(COMPOSE) exec -T mongodb rm -rf /tmp/mongodb_backup
 	@echo "💾 DB( $(DB) ) Gzip 압축 백업 완료 -> $(DUMP_DIR)"
 
@@ -27,7 +27,7 @@ restore:
 		exit 1; \
 	fi
 	$(COMPOSE) exec -T mongodb sh -c "rm -rf /tmp/mongodb_restore"
-	docker cp data/$(BACKUP_DIR) $$(docker compose -p linkedin -f compose.yml ps -q mongodb):/tmp/mongodb_restore
+	$(COMPOSE) cp data/$(BACKUP_DIR) mongodb:/tmp/mongodb_restore
 	$(COMPOSE) exec -T mongodb mongorestore --gzip /tmp/mongodb_restore
 	$(COMPOSE) exec -T mongodb rm -rf /tmp/mongodb_restore
 	@echo "💾 DB 복구 완료."
