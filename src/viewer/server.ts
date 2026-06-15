@@ -297,6 +297,11 @@ interface QueueStatusPayload {
     siteCounts: Record<string, number>;
     items: ConvertTaskPayload[];
   };
+  indexQueue: {
+    length: number;
+    siteCounts: Record<string, number>;
+    items: any[];
+  };
   activeProcessing: {
     length: number;
     items: string[];
@@ -397,12 +402,37 @@ app.get('/api/queues', async (req: Request, res: Response) => {
       }
     });
     
+    const indexQueueLength = await redis.llen('index_queue');
+    const allIndexItems = await redis.lrange('index_queue', 0, -1);
+    const indexQueueSiteCounts: Record<string, number> = {};
+    for (const item of allIndexItems) {
+      try {
+        const parsed = JSON.parse(item);
+        const site = parsed.site || 'Unknown';
+        indexQueueSiteCounts[site] = (indexQueueSiteCounts[site] || 0) + 1;
+      } catch {
+        indexQueueSiteCounts['Unknown'] = (indexQueueSiteCounts['Unknown'] || 0) + 1;
+      }
+    }
+    const indexItems = allIndexItems.slice(0, 20).map((item): any => {
+      try {
+        return JSON.parse(item);
+      } catch {
+        return { site: 'Unknown', id: item };
+      }
+    });
+
     const responsePayload: QueueStatusPayload = {
       queues,
       convertQueue: {
         length: convertQueueLength,
         siteCounts: convertQueueSiteCounts,
         items: convertItems
+      },
+      indexQueue: {
+        length: indexQueueLength,
+        siteCounts: indexQueueSiteCounts,
+        items: indexItems
       },
       activeProcessing: {
         length: activeProcessingLength,
@@ -440,6 +470,11 @@ app.post('/api/queues/clear', async (req: Request, res: Response) => {
     const convertQueueExists = await redis.exists('convert_queue');
     if (convertQueueExists) {
       keysToClear.push('convert_queue');
+    }
+
+    const indexQueueExists = await redis.exists('index_queue');
+    if (indexQueueExists) {
+      keysToClear.push('index_queue');
     }
 
     if (keysToClear.length === 0) {

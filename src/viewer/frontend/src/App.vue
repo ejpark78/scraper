@@ -59,6 +59,11 @@ interface QueueStatusPayload {
     siteCounts: Record<string, number>;
     items: ConvertTask[];
   };
+  indexQueue: {
+    length: number;
+    siteCounts: Record<string, number>;
+    items: any[];
+  };
   activeProcessing: {
     length: number;
     items: string[];
@@ -120,15 +125,18 @@ const isDraggingCountry = ref<boolean>(false);
 const queueData = ref<QueueStatusPayload>({
   queues: [],
   convertQueue: { length: 0, siteCounts: {}, items: [] },
+  indexQueue: { length: 0, siteCounts: {}, items: [] },
   activeProcessing: { length: 0, items: [] },
   deadLetter: { length: 0, siteCounts: {}, items: [] }
 });
 const queueDeltas = ref({
   scraping: 0,
   converting: 0,
+  indexing: 0,
   active: 0,
   dead: 0
 });
+const activeQueueTab = ref<'scrape' | 'convert' | 'index'>('scrape');
 const hasPreviousData = ref(false);
 const loadingQueues = ref<boolean>(false);
 const addUrlSite = ref<string>('linkedin');
@@ -170,6 +178,12 @@ const errorSites = computed(() => {
 
 const convertQueueCounts = computed(() => {
   return Object.entries(queueData.value.convertQueue.siteCounts)
+    .map(([site, count]) => ({ site, count }))
+    .sort((a, b) => b.count - a.count);
+});
+
+const indexQueueCounts = computed(() => {
+  return Object.entries(queueData.value.indexQueue?.siteCounts || {})
     .map(([site, count]) => ({ site, count }))
     .sort((a, b) => b.count - a.count);
 });
@@ -374,6 +388,9 @@ async function fetchQueues() {
       
       const prevConverting = queueData.value.convertQueue.length;
       const newConverting = newData.convertQueue.length;
+
+      const prevIndexing = queueData.value.indexQueue?.length || 0;
+      const newIndexing = newData.indexQueue?.length || 0;
       
       const prevActive = queueData.value.activeProcessing.length;
       const newActive = newData.activeProcessing.length;
@@ -384,6 +401,7 @@ async function fetchQueues() {
       queueDeltas.value = {
         scraping: newScraping - prevScraping,
         converting: newConverting - prevConverting,
+        indexing: newIndexing - prevIndexing,
         active: newActive - prevActive,
         dead: newDead - prevDead
       };
@@ -752,6 +770,16 @@ const iframeSrcDoc = computed(() => {
               <span class="metric-sub">convert_queue 대기 문서</span>
             </div>
             <div class="metric-card">
+              <span class="metric-label">인덱싱 대기 중 (Indexing)</span>
+              <span class="metric-value">
+                {{ (queueData.indexQueue?.length || 0).toLocaleString('ko-KR') }}
+                <span v-if="hasPreviousData && queueDeltas.indexing !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.indexing > 0 ? '#f87171' : '#4ade80' }">
+                  ({{ queueDeltas.indexing > 0 ? '+' : '' }}{{ queueDeltas.indexing }})
+                </span>
+              </span>
+              <span class="metric-sub">index_queue 대기 문서</span>
+            </div>
+            <div class="metric-card">
               <span class="metric-label">현재 수집 중 (Active)</span>
               <span class="metric-value">
                 {{ queueData.activeProcessing.length.toLocaleString('ko-KR') }}
@@ -799,21 +827,41 @@ const iframeSrcDoc = computed(() => {
             <p v-if="addUrlError" style="color:#ef4444;font-size:12px;margin-top:8px;font-weight:500;">{{ addUrlError }}</p>
           </div>
 
-          <!-- Queues Tables Grid -->
-          <div class="queues-grid">
-            <!-- Scrape Queues Detailed Status -->
-            <div class="queue-section-card">
-              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>📥 스크레이퍼 대기 큐 (Scrape Queues)</h3>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span class="meta-tag">{{ totalScrapingCount.toLocaleString('ko-KR') }}</span>
-                  <span v-if="hasPreviousData && queueDeltas.scraping !== 0" :style="{ fontSize: '12px', fontWeight: '600', color: queueDeltas.scraping > 0 ? '#f87171' : '#4ade80' }">
-                    ({{ queueDeltas.scraping > 0 ? '+' : '' }}{{ queueDeltas.scraping }})
-                  </span>
-                </div>
+          <!-- Queues Tables Monitor -->
+          <div class="queue-section-card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <h3>📥 대기 큐 모니터 (Active Queues)</h3>
+              <div style="display: flex; gap: 8px;">
+                <button 
+                  class="country-badge" 
+                  :class="{ active: activeQueueTab === 'scrape' }"
+                  @click="activeQueueTab = 'scrape'"
+                  style="padding: 6px 12px; font-size: 12px;"
+                >
+                  Scrape Queues <span class="badge" style="margin-left: 4px; background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 4px;">{{ totalScrapingCount.toLocaleString('ko-KR') }}</span>
+                </button>
+                <button 
+                  class="country-badge" 
+                  :class="{ active: activeQueueTab === 'convert' }"
+                  @click="activeQueueTab = 'convert'"
+                  style="padding: 6px 12px; font-size: 12px;"
+                >
+                  Convert Queue <span class="badge" style="margin-left: 4px; background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 4px;">{{ queueData.convertQueue.length.toLocaleString('ko-KR') }}</span>
+                </button>
+                <button 
+                  class="country-badge" 
+                  :class="{ active: activeQueueTab === 'index' }"
+                  @click="activeQueueTab = 'index'"
+                  style="padding: 6px 12px; font-size: 12px;"
+                >
+                  Index Queue <span class="badge" style="margin-left: 4px; background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 4px;">{{ (queueData.indexQueue?.length || 0).toLocaleString('ko-KR') }}</span>
+                </button>
               </div>
-              <div class="card-body">
-                <div v-if="queueData.queues.length === 0" class="empty-state" style="height:100px;">대기 중인 수집 큐가 없습니다.</div>
+            </div>
+            <div class="card-body">
+              <!-- Scrape Tab Content -->
+              <div v-if="activeQueueTab === 'scrape'">
+                <div v-if="queueData.queues.length === 0" class="empty-state" style="height:120px;">대기 중인 수집 큐가 없습니다.</div>
                 <div v-else class="queue-table-container">
                   <table class="dashboard-table">
                     <thead>
@@ -835,21 +883,10 @@ const iframeSrcDoc = computed(() => {
                   </table>
                 </div>
               </div>
-            </div>
 
-            <!-- Convert Queue Detailed Status -->
-            <div class="queue-section-card">
-              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>🔄 변환 대기 큐 (Convert Queue)</h3>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span class="meta-tag">{{ queueData.convertQueue.length.toLocaleString('ko-KR') }}</span>
-                  <span v-if="hasPreviousData && queueDeltas.converting !== 0" :style="{ fontSize: '12px', fontWeight: '600', color: queueDeltas.converting > 0 ? '#f87171' : '#4ade80' }">
-                    ({{ queueDeltas.converting > 0 ? '+' : '' }}{{ queueDeltas.converting }})
-                  </span>
-                </div>
-              </div>
-              <div class="card-body">
-                <div v-if="convertQueueCounts.length === 0" class="empty-state" style="height:100px;">현재 대기 중인 변환 작업이 없습니다.</div>
+              <!-- Convert Tab Content -->
+              <div v-if="activeQueueTab === 'convert'">
+                <div v-if="convertQueueCounts.length === 0" class="empty-state" style="height:120px;">현재 대기 중인 변환 작업이 없습니다.</div>
                 <div v-else class="queue-table-container">
                   <table class="dashboard-table">
                     <thead>
@@ -863,6 +900,29 @@ const iframeSrcDoc = computed(() => {
                         <td style="font-weight:600;color:#fff;">{{ item.site }}</td>
                         <td>
                           <span class="badge-priority medium">{{ item.count.toLocaleString('ko-KR') }}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Index Tab Content -->
+              <div v-if="activeQueueTab === 'index'">
+                <div v-if="indexQueueCounts.length === 0" class="empty-state" style="height:120px;">현재 대기 중인 인덱싱 작업이 없습니다.</div>
+                <div v-else class="queue-table-container">
+                  <table class="dashboard-table">
+                    <thead>
+                      <tr>
+                        <th>사이트</th>
+                        <th>대기 건수</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in indexQueueCounts" :key="item.site">
+                        <td style="font-weight:600;color:#fff;">{{ item.site }}</td>
+                        <td>
+                          <span class="badge-priority high">{{ item.count.toLocaleString('ko-KR') }}</span>
                         </td>
                       </tr>
                     </tbody>
