@@ -4,8 +4,8 @@
 
 .PHONY: dump restore index
 
-DB ?= bronze,silver
-DUMP_DIR ?= data/mongodb_backup/$(shell date +%Y%m%d_%H%M%S)
+DB ?= bronze,silver,crawler
+DUMP_DIR ?= data/backup/$(shell date +%Y%m%dT%H%M%S)
 
 dump:
 	@if [ -z "$(DB)" ]; then \
@@ -23,7 +23,7 @@ dump:
 
 restore:
 	@if [ -z "$(BACKUP_DIR)" ]; then \
-		echo "❌ 에러: BACKUP_DIR 변수를 지정해야 합니다. (예: make restore-db BACKUP_DIR=mongodb_backup_20260606_214122)"; \
+		echo "❌ 에러: BACKUP_DIR 변수를 지정해야 합니다. (예: make restore-db BACKUP_DIR=backup/mongodb/20260606_214122)"; \
 		exit 1; \
 	fi
 	$(COMPOSE) exec -T mongodb sh -c "rm -rf /tmp/mongodb_restore"
