@@ -15,6 +15,9 @@ import { UrlUtils } from '../../../utils';
 import { AppConfig } from '../../../../config/AppConfig';
 import { NamingUtils } from '../../../utils';
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 export interface GlobalSettings {
     max_page?: number;
     f_TPR?: string | string[];
@@ -45,32 +48,21 @@ export interface GenerateUrlsOptions {
     skipDirectUrls?: boolean;
 }
 
-export const geoRegistry: Record<string, string | number> = {
-  "South Korea": 105149562,
-  "United Arab Emirates": 100205264,
-  "Japan": 103925994,
-  "Switzerland": 106693272,
-  "Singapore": 102454443,
-  "United Kingdom": 101165590,
-  "Germany": 101282230,
-  "Canada": 101174742,
-  "Australia": 101452733,
-  "Netherlands": 102890719,
-  "United States": 103644278
-};
-
-export const parameterRegistry: Record<string, Record<string, string>> = {
-  "f_TPR": {
-    "past 24 hours": "r86400",
-    "past 1 week": "r604800",
-    "past 1 month": "r2592000",
-    "any time": ""
-  },
-  "sortBy": {
-    "relevant": "R",
-    "recent": "DD"
-  }
-};
+function loadDefaultRegistry(): { geo_registry: Record<string, string | number>; parameter_registry: Record<string, Record<string, string>> } {
+    try {
+        const configPath = path.join(__dirname, '../../../../..', 'config', 'config.json');
+        if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+            return {
+                geo_registry: config.geo_registry || {},
+                parameter_registry: config.parameter_registry || {}
+            };
+        }
+    } catch (e) {
+        console.error('Failed to load default registries from config.json:', e);
+    }
+    return { geo_registry: {}, parameter_registry: {} };
+}
 
 export function generateUrls(config: Config, options: GenerateUrlsOptions = {}): string[] {
     const skipDirectUrls = !!options.skipDirectUrls;
@@ -78,12 +70,14 @@ export function generateUrls(config: Config, options: GenerateUrlsOptions = {}):
     const { global_settings, search_targets, direct_urls } = config;
     const globalSettings = global_settings || {};
 
+    const defaultRegistry = loadDefaultRegistry();
+
     const activeGeoRegistry = config.geo_registry && Object.keys(config.geo_registry).length > 0
         ? config.geo_registry
-        : geoRegistry;
+        : defaultRegistry.geo_registry;
     const activeParameterRegistry = config.parameter_registry && Object.keys(config.parameter_registry).length > 0
         ? config.parameter_registry
-        : parameterRegistry;
+        : defaultRegistry.parameter_registry;
 
     // f_TPR 값을 배열로 표준화 및 레디스트리 파라미터 변환
     const raw_f_TPRs = globalSettings.f_TPR 
