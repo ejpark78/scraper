@@ -66,6 +66,11 @@ export class AppConfig {
     public static readonly OVERWRITE: boolean = process.env.OVERWRITE === 'true';
 
     /**
+     * Whether to reset the silver database during conversion
+     */
+    public static readonly RESET: boolean = process.env.RESET === 'true';
+
+    /**
      * Whether to login (scraper settings)
      */
     public static readonly LOGIN: boolean = process.env.LOGIN === 'true';

@@ -39,7 +39,7 @@ export class BaseRefreshConvert {
         const redis = new Redis(REDIS_URL);
 
         try {
-            const reset = process.env.RESET === 'true';
+            const reset = AppConfig.RESET;
             const overwrite = AppConfig.OVERWRITE || reset;
             const completedIds = new Set<string>();
             
