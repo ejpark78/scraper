@@ -789,7 +789,7 @@ app.get('/api/errors', async (req: Request, res: Response) => {
     
     const targetContainers = containers.filter(c => {
       const service = c.Labels?.['com.docker.compose.service'] || '';
-      return service === 'scraper' || service === 'converter' || service === 'indexer';
+      return service !== '';
     });
     
     let allErrors: ParsedError[] = [];
