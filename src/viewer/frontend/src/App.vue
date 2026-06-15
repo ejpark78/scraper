@@ -139,6 +139,8 @@ const queueDeltas = ref({
 });
 const hasPreviousData = ref(false);
 const loadingQueues = ref<boolean>(false);
+const siteStats = ref<Record<string, { silverCount: number; meiliCount: number; htmlCount: number; urlsCount: number }> | null>(null);
+const loadingSiteStats = ref<boolean>(false);
 const addUrlSite = ref<string>('linkedin');
 const addUrlVal = ref<string>('');
 const addUrlPriority = ref<string>('medium');
@@ -418,6 +420,19 @@ async function fetchQueues() {
     console.error('Error loading queues status:', error);
   } finally {
     loadingQueues.value = false;
+  }
+}
+
+async function fetchSiteStats() {
+  loadingSiteStats.value = true;
+  try {
+    const response = await fetch('/api/site-stats');
+    const data = await response.json();
+    siteStats.value = data;
+  } catch (err) {
+    console.error('Error fetching site stats:', err);
+  } finally {
+    loadingSiteStats.value = false;
   }
 }
 
@@ -797,12 +812,27 @@ const iframeSrcDoc = computed(() => {
           </div>
 
           <!-- Site Content Stats (MongoDB vs Meilisearch Index Compare) -->
-          <div class="queue-section-card" v-if="queueData.siteStats && Object.keys(queueData.siteStats).length > 0">
-            <div class="card-header">
-              <h3>📦 사이트별 콘텐츠 수집 및 인덱싱 현황</h3>
+          <div class="queue-section-card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
+              <h3 style="margin: 0;">📦 사이트별 콘텐츠 수집 및 인덱싱 현황</h3>
+              <button 
+                @click="fetchSiteStats" 
+                class="btn-secondary" 
+                :disabled="loadingSiteStats"
+                style="padding: 4px 10px; font-size: 11px; display: flex; align-items: center; gap: 4px; height: 26px;"
+              >
+                <span>🔄 {{ loadingSiteStats ? '조회 중...' : '수량 조회/새로고침' }}</span>
+              </button>
             </div>
             <div class="card-body">
-              <div class="queue-table-container">
+              <div v-if="!siteStats && !loadingSiteStats" class="empty-state" style="height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px;">
+                <span style="color: var(--text-muted); font-size: 12px;">수집 및 인덱싱 수량이 계산되지 않았습니다.</span>
+                <button @click="fetchSiteStats" class="btn-primary" style="padding: 6px 12px; font-size: 11px; height: 30px;">수량 계산하기</button>
+              </div>
+              <div v-else-if="loadingSiteStats && !siteStats" class="empty-state" style="height: 100px; display: flex; justify-content: center; align-items: center;">
+                <span style="color: var(--text-muted); font-size: 12px;">데이터베이스에서 수량을 계산 중입니다. 잠시만 기다려주세요...</span>
+              </div>
+              <div class="queue-table-container" v-else-if="siteStats">
                 <table class="dashboard-table" style="font-size: 11px; width: 100%;">
                   <thead>
                     <tr>
@@ -814,7 +844,7 @@ const iframeSrcDoc = computed(() => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(stats, siteKey) in queueData.siteStats" :key="siteKey">
+                    <tr v-for="(stats, siteKey) in siteStats" :key="siteKey">
                       <td style="font-weight: 600; color: #fff; text-align: left;">
                         {{ getSiteNameFromCollection(siteKey) }} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">({{ siteKey }})</span>
                       </td>
