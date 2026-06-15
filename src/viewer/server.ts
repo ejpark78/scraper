@@ -208,13 +208,33 @@ app.get('/api/documents/:id', async (req: Request, res: Response) => {
 // New endpoint for lazy loading raw HTML / JSON
 app.get('/api/documents/:id/raw', async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    let id = req.params.id;
     const collectionName = req.query.collection as string || 'linkedin.jobs';
+
+    // 1. If the id is a valid MongoDB ObjectId, it might be the silver document's _id.
+    // We should first try to find the silver document to get its real business ID.
+    if (ObjectId.isValid(id)) {
+      try {
+        const silverColl = await mongo.getCollection(collectionName as `${'bronze' | 'silver'}/${string}`);
+        const silverDoc = await silverColl.findOne({ _id: new ObjectId(id) });
+        if (silverDoc) {
+          // Extract the business ID from the silver document
+          id = silverDoc.id || silverDoc.jobId || silverDoc.topicId || silverDoc.postId || id;
+        }
+      } catch (err) {
+        console.warn(`[Server] Failed to resolve business ID from silver ObjectId: ${id}`, err);
+      }
+    }
 
     if (collectionName === 'linkedin.jobs') {
       const bronzeColl = await mongo.getCollection('bronze/linkedin.jobs');
       const numId = parseInt(id, 10);
-      const filter = isNaN(numId) ? { jobId: id } : { $or: [{ jobId: id }, { jobId: numId }] };
+      const isNum = !isNaN(numId) && /^\d+$/.test(id);
+      
+      const filter = isNum 
+        ? { $or: [{ jobId: id }, { jobId: numId }, { _id: ObjectId.isValid(id) ? new ObjectId(id) : undefined }] } 
+        : { $or: [{ jobId: id }, { _id: ObjectId.isValid(id) ? new ObjectId(id) : undefined }] };
+        
       const bronzeDoc = await bronzeColl.findOne(filter);
       
       if (!bronzeDoc) {
@@ -229,17 +249,27 @@ app.get('/api/documents/:id/raw', async (req: Request, res: Response) => {
       const bronzeColl = await mongo.getCollection(site.scraper.collectionName);
       const updateFilterKey = site.scraper.updateFilterKey || 'id';
       
-      const query: any = {};
+      const numId = parseInt(id, 10);
+      const isNum = !isNaN(numId) && /^\d+$/.test(id);
+      
+      const orConditions: any[] = [];
+      
+      // Query by updateFilterKey
+      orConditions.push({ [updateFilterKey]: id });
+      if (isNum) orConditions.push({ [updateFilterKey]: numId });
+      
+      // Query by id
       if (updateFilterKey !== 'id') {
-        query.$or = [
-          { [updateFilterKey]: id },
-          { id: id }
-        ];
-      } else {
-        query.id = id;
+        orConditions.push({ id: id });
+        if (isNum) orConditions.push({ id: numId });
       }
       
-      const bronzeDoc = await bronzeColl.findOne(query);
+      // Query by _id in case the original parameter id was the bronze _id
+      if (ObjectId.isValid(id)) {
+        orConditions.push({ _id: new ObjectId(id) });
+      }
+      
+      const bronzeDoc = await bronzeColl.findOne({ $or: orConditions });
       if (bronzeDoc) {
         return res.json({ rawHtml: bronzeDoc.rawHtml, rawJson: bronzeDoc.rawJson });
       }
