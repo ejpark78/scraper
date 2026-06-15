@@ -664,7 +664,18 @@ const iframeSrcDoc = computed(() => {
         <h2>Antigravity</h2>
         <button @click="sidebarCollapsed = true" class="sidebar-toggle" title="Collapse Sidebar">◀</button>
       </div>
-      <div class="section-title">Collections</div>
+      <div class="section-title" style="margin-top:10px;">Operations</div>
+      <ul class="collection-list" style="flex:none;">
+        <li 
+          class="collection-item"
+          :class="{ active: currentCollection === '__dashboard__' }"
+          @click="selectDashboard"
+        >
+          <span style="vertical-align:middle;margin-right:8px;font-size:16px;">📊</span>
+          <span style="vertical-align:middle;">Dashboard</span>
+        </li>
+      </ul>
+      <div class="section-title" style="margin-top:20px;">Collections</div>
       <ul class="collection-list">
         <li v-if="collections.length === 0" class="loading-text">Loading collections...</li>
         <li 
@@ -676,17 +687,6 @@ const iframeSrcDoc = computed(() => {
         >
           <img v-if="col.favicon" :src="col.favicon" class="collection-favicon" alt="" style="width:16px;height:16px;margin-right:8px;vertical-align:middle;border-radius:3px;display:inline-block;" />
           <span style="vertical-align:middle;">{{ col.name }}</span>
-        </li>
-      </ul>
-      <div class="section-title" style="margin-top:20px;">Operations</div>
-      <ul class="collection-list" style="flex:none;">
-        <li 
-          class="collection-item"
-          :class="{ active: currentCollection === '__dashboard__' }"
-          @click="selectDashboard"
-        >
-          <span style="vertical-align:middle;margin-right:8px;font-size:16px;">📊</span>
-          <span style="vertical-align:middle;">Dashboard</span>
         </li>
       </ul>
       <div class="sidebar-footer">
