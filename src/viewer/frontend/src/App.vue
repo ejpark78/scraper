@@ -782,16 +782,7 @@ const iframeSrcDoc = computed(() => {
               </span>
               <span class="metric-sub">index_queue 대기 문서</span>
             </div>
-            <div class="metric-card">
-              <span class="metric-label">현재 수집 중 (Active)</span>
-              <span class="metric-value">
-                {{ queueData.activeProcessing.length.toLocaleString('ko-KR') }}
-                <span v-if="hasPreviousData && queueDeltas.active !== 0" :style="{ fontSize: '13px', marginLeft: '6px', fontWeight: '500', color: queueDeltas.active > 0 ? '#60a5fa' : '#94a3b8' }">
-                  ({{ queueDeltas.active > 0 ? '+' : '' }}{{ queueDeltas.active }})
-                </span>
-              </span>
-              <span class="metric-sub">active_processing 활성 세트</span>
-            </div>
+
             <div class="metric-card" style="border-color: rgba(239, 68, 68, 0.2);">
               <span class="metric-label" style="color: #f87171;">수집 실패 (Dead)</span>
               <span class="metric-value" style="color: #ef4444;">
