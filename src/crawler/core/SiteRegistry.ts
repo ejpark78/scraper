@@ -87,10 +87,14 @@ function discoverSites(): void {
       try {
         const mod = require(configPath) as { descriptor: SiteDescriptor };
         if (mod.descriptor) {
+          if (registry.has(mod.descriptor.key)) {
+            throw new Error(`Duplicate site key collision detected: key '${mod.descriptor.key}' is already registered.`);
+          }
           registry.set(mod.descriptor.key, mod.descriptor);
         }
       } catch (err: any) {
         console.error(`[SiteRegistry] Failed to load config: ${configPath} - ${err.message}`);
+        throw err;
       }
     }
 
@@ -103,10 +107,14 @@ function discoverSites(): void {
         try {
           const mod = require(subConfigPath) as { descriptor: SiteDescriptor };
           if (mod.descriptor) {
+            if (registry.has(mod.descriptor.key)) {
+              throw new Error(`Duplicate site key collision detected: key '${mod.descriptor.key}' is already registered.`);
+            }
             registry.set(mod.descriptor.key, mod.descriptor);
           }
         } catch (err: any) {
           console.error(`[SiteRegistry] Failed to load config: ${subConfigPath} - ${err.message}`);
+          throw err;
         }
       }
     }

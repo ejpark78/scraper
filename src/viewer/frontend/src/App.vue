@@ -802,10 +802,14 @@ const iframeSrcDoc = computed(() => {
               <select v-model="addUrlSite" class="form-select">
                 <option value="linkedin">LinkedIn Jobs</option>
                 <option value="geeknews">GeekNews</option>
-                <option value="gpters_news">GPters News</option>
+                <option value="gpters">GPters News</option>
+                <option value="gpters_newsletter">GPters Newsletter</option>
                 <option value="pytorch_kr">PyTorch KR</option>
                 <option value="aicasebook">AICasebook</option>
                 <option value="yozm">Yozm IT</option>
+                <option value="uppity">Uppity</option>
+                <option value="dailydose_ds">Daily Dose of DS</option>
+                <option value="maily_josh">Maily Josh</option>
               </select>
               <select v-model="addUrlPriority" class="form-select">
                 <option value="high">🔥 High</option>
