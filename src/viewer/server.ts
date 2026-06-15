@@ -422,7 +422,49 @@ app.get('/api/queues', async (req: Request, res: Response) => {
       }
     });
 
-    const responsePayload: QueueStatusPayload = {
+    // Fetch site stats (Silver DB counts & Meilisearch Index counts)
+    const siteStats: Record<string, { silverCount: number; meiliCount: number }> = {};
+    try {
+      await mongo.connect();
+      const client = (mongo as any).client;
+      if (client) {
+        const silverDb = client.db('silver');
+        const meili = MeiliSearchDatabase.getInstance();
+
+        for (const site of sites) {
+          if (!site.key) continue;
+          let silverCount = 0;
+          let meiliCount = 0;
+
+          // 1. Get Silver DB counts
+          try {
+            const collName = site.key === 'linkedin' ? 'linkedin.jobs' : `${site.key}.contents`;
+            // Check if collection exists
+            const collExists = (await silverDb.listCollections({ name: collName }).toArray()).length > 0;
+            if (collExists) {
+              silverCount = await silverDb.collection(collName).countDocuments({});
+            }
+          } catch (dbErr) {
+            console.error(`[Stats] Error fetching silver db count for ${site.key}:`, dbErr);
+          }
+
+          // 2. Get Meilisearch counts
+          try {
+            const indexName = `contents_${site.key}`;
+            const searchResults = await meili.search(indexName, '', { limit: 0 });
+            meiliCount = searchResults.estimatedTotalHits || 0;
+          } catch (meiliErr) {
+            // Index might not exist yet, treat as 0
+          }
+
+          siteStats[site.key] = { silverCount, meiliCount };
+        }
+      }
+    } catch (statsErr) {
+      console.error('[Stats] Error gathering site stats:', statsErr);
+    }
+
+    const responsePayload: QueueStatusPayload & { siteStats?: Record<string, { silverCount: number; meiliCount: number }> } = {
       queues,
       convertQueue: {
         length: convertQueueLength,
@@ -442,7 +484,8 @@ app.get('/api/queues', async (req: Request, res: Response) => {
         length: deadLetterLength,
         siteCounts: deadLetterSiteCounts,
         items: deadLetterItems
-      }
+      },
+      siteStats
     };
     
     res.json(responsePayload);

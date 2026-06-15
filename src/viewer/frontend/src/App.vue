@@ -73,6 +73,7 @@ interface QueueStatusPayload {
     siteCounts: Record<string, number>;
     items: DeadLetterTask[];
   };
+  siteStats?: Record<string, { silverCount: number; meiliCount: number }>;
 }
 
 interface DocumentMeta {
@@ -660,7 +661,7 @@ const iframeSrcDoc = computed(() => {
           @click="selectDashboard"
         >
           <span style="vertical-align:middle;margin-right:8px;font-size:16px;">📊</span>
-          <span style="vertical-align:middle;">Queue Dashboard</span>
+          <span style="vertical-align:middle;">Dashboard</span>
         </li>
       </ul>
       <div class="sidebar-footer">
@@ -734,8 +735,8 @@ const iframeSrcDoc = computed(() => {
           <div class="dashboard-title-area">
             <span class="brand-icon" style="font-size:24px;">📊</span>
             <div>
-              <h2 style="font-size:18px;font-weight:700;color:#fff;margin:0;">수집 큐 대시보드</h2>
-              <p style="font-size:12px;color:var(--text-secondary);margin:0;">Redis의 작업 대기/진행 큐 현황을 모니터링합니다.</p>
+              <h2 style="font-size:18px;font-weight:700;color:#fff;margin:0;">대시보드</h2>
+              <p style="font-size:12px;color:var(--text-secondary);margin:0;">수집 및 가공 현황과 Redis의 작업 대기/진행 큐 현황을 모니터링합니다.</p>
             </div>
           </div>
           <div class="dashboard-actions">
@@ -792,6 +793,39 @@ const iframeSrcDoc = computed(() => {
                 </span>
               </span>
               <span class="metric-sub">dead_letter_queue 등록 건수</span>
+            </div>
+          </div>
+
+          <!-- Site Content Stats (MongoDB vs Meilisearch Index Compare) -->
+          <div class="queue-section-card" v-if="queueData.siteStats && Object.keys(queueData.siteStats).length > 0">
+            <div class="card-header">
+              <h3>📦 사이트별 콘텐츠 수집 및 인덱싱 현황</h3>
+            </div>
+            <div class="card-body">
+              <div class="queue-table-container">
+                <table class="dashboard-table" style="font-size: 12px; width: 100%;">
+                  <thead>
+                    <tr>
+                      <th style="width: 40%; text-align: left;">사이트 이름</th>
+                      <th style="width: 30%; text-align: center;">실버 DB 수집 수량 (MongoDB)</th>
+                      <th style="width: 30%; text-align: center;">인덱스 수량 (Meilisearch)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(stats, siteKey) in queueData.siteStats" :key="siteKey">
+                      <td style="font-weight: 600; color: #fff; text-align: left;">
+                        {{ getSiteNameFromCollection(siteKey) }} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">({{ siteKey }})</span>
+                      </td>
+                      <td style="text-align: center; font-weight: 500;">
+                        <span class="badge-priority low" style="padding: 3px 8px; font-size: 11px;">{{ stats.silverCount.toLocaleString('ko-KR') }} 건</span>
+                      </td>
+                      <td style="text-align: center; font-weight: 500;">
+                        <span class="badge-priority medium" style="padding: 3px 8px; font-size: 11px;">{{ stats.meiliCount.toLocaleString('ko-KR') }} 건</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
