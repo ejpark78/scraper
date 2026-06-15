@@ -101,7 +101,8 @@ class GeekNewsList extends BaseListService {
 
                         if (issueNum) {
                             const issueId = `weekly-${issueNum}`;
-                            if (this.cacheSet.has(issueId)) {
+                            const isCompleted = await this.redis.sismember(this.config.cacheSetKey, issueId);
+                            if (isCompleted) {
                                 console.log(`⏭️ [GeekNews List] Skipping already processed weekly issue: ${issueId} (${issueUrl})`);
                                 continue;
                             }
