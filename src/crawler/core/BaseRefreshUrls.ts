@@ -121,12 +121,12 @@ export class BaseRefreshUrls {
                 query = { status: 'failed' };
                 console.log(`🔧 ERROR_RESET mode: fetching only failed URLs...`);
             } else {
-                query = { ...(overwrite ? {} : { [idField]: { $nin: completedIds } }), status: { $ne: 'failed' } };
+                query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $ne: 'failed' } };
             }
             let targets: any[] = [];
-            const targetCursor = urlsColl.find(query, { projection: { [idField]: 1, url: 1 } });
+            const targetCursor = urlsColl.find(query, { projection: { id: 1, url: 1 } });
             for await (const doc of targetCursor) {
-                targets.push({ id: doc[idField] || doc.id, url: doc.url });
+                targets.push({ id: doc.id, url: doc.url });
             }
             console.log(`🔍 Found ${targets.length} target items in database${overwrite ? ' (OVERWRITE mode)' : ''}${errorReset ? ' (ERROR_RESET mode)' : ''}.`);
 
@@ -169,7 +169,7 @@ export class BaseRefreshUrls {
                 }
 
                 const result = await urlsColl.updateMany(
-                    { [idField]: { $in: idsToUpdate } },
+                    { id: { $in: idsToUpdate } },
                     { $set: { pushedToRedis: true, status: 'new', updatedAt: new Date() } }
                 );
 
