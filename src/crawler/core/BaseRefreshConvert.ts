@@ -39,15 +39,23 @@ export class BaseRefreshConvert {
         const redis = new Redis(REDIS_URL);
 
         try {
-            const overwrite = AppConfig.OVERWRITE;
+            const reset = process.env.RESET === 'true';
+            const overwrite = AppConfig.OVERWRITE || reset;
             const completedIds = new Set<string>();
+            
+            const silverColl = await mongo.getCollection(silverCollection);
+            if (reset) {
+                console.log(`🧹 RESET=true — clearing all documents from ${silverCollection} before rebuild...`);
+                await silverColl.deleteMany({});
+                console.log(`✅ Cleared ${silverCollection}.`);
+            }
+
             if (!overwrite) {
-                const silverColl = await mongo.getCollection(silverCollection);
                 const completed = await silverColl.distinct(idField);
                 completed.forEach(id => completedIds.add(String(id)));
                 console.log(`📥 Loaded ${completedIds.size} already completed ${site} IDs from Silver Layer using ID field '${idField}'.`);
             } else {
-                console.log('⚠️ OVERWRITE=true — skipping Silver Layer check.');
+                console.log(`⚠️ ${reset ? 'RESET' : 'OVERWRITE'}=true — skipping Silver Layer check.`);
             }
 
             const bronzeColl = await mongo.getCollection(bronzeCollection);
