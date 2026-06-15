@@ -96,6 +96,17 @@ class GeekNewsList extends BaseListService {
 
                     for (const issueLink of issueLinks) {
                         const issueUrl = issueLink.startsWith('http') ? issueLink : `https://${descriptor.domain || 'news.hada.io'}/${issueLink.replace(/^\//, '')}`;
+                        const issueMatch = issueUrl.match(/\/weekly\/(\d+)$/);
+                        const issueNum = issueMatch ? issueMatch[1] : '';
+
+                        if (issueNum) {
+                            const issueId = `weekly-${issueNum}`;
+                            if (this.cacheSet.has(issueId)) {
+                                console.log(`⏭️ [GeekNews List] Skipping already processed weekly issue: ${issueId} (${issueUrl})`);
+                                continue;
+                            }
+                        }
+
                         console.log(`🌐 [GeekNews List] Fetching weekly issue: ${issueUrl}`);
                         if (sleepSec > 0) {
                             await new Promise(resolve => setTimeout(resolve, sleepSec * 1000));
@@ -110,9 +121,7 @@ class GeekNewsList extends BaseListService {
                             const issueHtml = await issueRes.text();
                             const $issue = cheerio.load(issueHtml);
 
-                            const issueMatch = issueUrl.match(/\/weekly\/(\d+)$/);
-                            if (issueMatch) {
-                                const issueNum = issueMatch[1];
+                            if (issueNum) {
                                 const queuedSelf = await this.processItem(`weekly-${issueNum}`, issueUrl, `GeekNews 주간 소식 (${issueNum})`);
                                 if (queuedSelf) {
                                     queuedCount++;
