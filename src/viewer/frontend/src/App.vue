@@ -136,7 +136,7 @@ const queueDeltas = ref({
   active: 0,
   dead: 0
 });
-const activeQueueTab = ref<'scrape' | 'convert' | 'index'>('scrape');
+const activeQueueTab = ref<'all' | 'scrape' | 'convert' | 'index'>('all');
 const hasPreviousData = ref(false);
 const loadingQueues = ref<boolean>(false);
 const addUrlSite = ref<string>('linkedin');
@@ -190,6 +190,10 @@ const indexQueueCounts = computed(() => {
 
 const totalScrapingCount = computed(() => {
   return queueData.value.queues.reduce((acc: number, q: any) => acc + (q.type === 'list' ? q.length : 0), 0);
+});
+
+const totalAllQueuesCount = computed(() => {
+  return totalScrapingCount.value + queueData.value.convertQueue.length + (queueData.value.indexQueue?.length || 0);
 });
 
 const renderedMarkdownHtml = computed(() => {
@@ -834,6 +838,14 @@ const iframeSrcDoc = computed(() => {
               <div style="display: flex; gap: 8px;">
                 <button 
                   class="country-badge" 
+                  :class="{ active: activeQueueTab === 'all' }"
+                  @click="activeQueueTab = 'all'"
+                  style="padding: 6px 12px; font-size: 12px;"
+                >
+                  📊 All <span class="badge" style="margin-left: 4px; background: rgba(255,255,255,0.2); padding: 1px 5px; border-radius: 4px;">{{ totalAllQueuesCount.toLocaleString('ko-KR') }}</span>
+                </button>
+                <button 
+                  class="country-badge" 
                   :class="{ active: activeQueueTab === 'scrape' }"
                   @click="activeQueueTab = 'scrape'"
                   style="padding: 6px 12px; font-size: 12px;"
@@ -859,6 +871,92 @@ const iframeSrcDoc = computed(() => {
               </div>
             </div>
             <div class="card-body">
+              <!-- All Tab Summary Content -->
+              <div v-if="activeQueueTab === 'all'">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                  <!-- Scrape Queues Column -->
+                  <div>
+                    <h4 style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+                      <span>📥 Scrape Queues</span>
+                      <span class="meta-tag" style="font-size: 10px;">{{ totalScrapingCount }}</span>
+                    </h4>
+                    <div v-if="queueData.queues.length === 0" class="empty-state" style="height: 100px;">대기 중인 수집 큐가 없습니다.</div>
+                    <div v-else class="queue-table-container">
+                      <table class="dashboard-table" style="font-size: 11px;">
+                        <thead>
+                          <tr>
+                            <th>큐 이름</th>
+                            <th>대기 건수</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="q in queueData.queues" :key="q.name">
+                            <td style="font-weight: 600; color: #fff;">{{ q.name.replace('scrape_queue:', '') }}</td>
+                            <td>
+                              <span :class="['badge-priority', q.name.split(':').pop() || 'low']" style="font-size: 10px; padding: 2px 6px;">{{ q.length.toLocaleString('ko-KR') }}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- Convert Queue Column -->
+                  <div>
+                    <h4 style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+                      <span>🔄 Convert Queue</span>
+                      <span class="meta-tag" style="font-size: 10px;">{{ queueData.convertQueue.length }}</span>
+                    </h4>
+                    <div v-if="convertQueueCounts.length === 0" class="empty-state" style="height: 100px;">대기 중인 변환 작업이 없습니다.</div>
+                    <div v-else class="queue-table-container">
+                      <table class="dashboard-table" style="font-size: 11px;">
+                        <thead>
+                          <tr>
+                            <th>사이트</th>
+                            <th>대기 건수</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="item in convertQueueCounts" :key="item.site">
+                            <td style="font-weight: 600; color: #fff;">{{ item.site }}</td>
+                            <td>
+                              <span class="badge-priority medium" style="font-size: 10px; padding: 2px 6px;">{{ item.count.toLocaleString('ko-KR') }}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- Index Queue Column -->
+                  <div>
+                    <h4 style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+                      <span>🔍 Index Queue</span>
+                      <span class="meta-tag" style="font-size: 10px;">{{ queueData.indexQueue?.length || 0 }}</span>
+                    </h4>
+                    <div v-if="indexQueueCounts.length === 0" class="empty-state" style="height: 100px;">대기 중인 인덱싱 작업이 없습니다.</div>
+                    <div v-else class="queue-table-container">
+                      <table class="dashboard-table" style="font-size: 11px;">
+                        <thead>
+                          <tr>
+                            <th>사이트</th>
+                            <th>대기 건수</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="item in indexQueueCounts" :key="item.site">
+                            <td style="font-weight: 600; color: #fff;">{{ item.site }}</td>
+                            <td>
+                              <span class="badge-priority high" style="font-size: 10px; padding: 2px 6px;">{{ item.count.toLocaleString('ko-KR') }}</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Scrape Tab Content -->
               <div v-if="activeQueueTab === 'scrape'">
                 <div v-if="queueData.queues.length === 0" class="empty-state" style="height:120px;">대기 중인 수집 큐가 없습니다.</div>
