@@ -136,7 +136,6 @@ const queueDeltas = ref({
   active: 0,
   dead: 0
 });
-const activeQueueTab = ref<'all' | 'scrape' | 'convert' | 'index'>('all');
 const hasPreviousData = ref(false);
 const loadingQueues = ref<boolean>(false);
 const addUrlSite = ref<string>('linkedin');
