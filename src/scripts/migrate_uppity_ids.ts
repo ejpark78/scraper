@@ -1,89 +1,139 @@
 /**
  * @file migrate_uppity_ids.ts
- * @description Migrates existing Base64 encoded URL IDs in MongoDB to MD5 hash IDs
- * for all uppity collections: bronze/uppity.html, bronze/uppity.urls, and silver/uppity.contents.
- * Resolves duplicates and ensures consistent ID indexing.
+ * @description General-purpose command-line migration script to align MongoDB document IDs
+ * with the updated URL normalization rules in each site's configuration.
+ * Supports running for a specific site using the --site [siteKey] argument.
+ * @constraints
+ *   - Follows strict OOP patterns and clean error/connection handling.
+ * @dependencies MongoDatabase, SiteRegistry
+ * @lastUpdated 2026-06-15
  */
 
-import { MongoClient } from 'mongodb';
-import * as crypto from 'crypto';
-import { AppConfig } from '../config/AppConfig';
+import { MongoDatabase } from '../database/mongo';
+import { getSite, getAllSites } from '../crawler/core/SiteRegistry';
 
-function toMd5(url: string): string {
-    return crypto.createHash('md5').update(url).digest('hex');
-}
+class IdMigrationRunner {
+    private mongo = MongoDatabase.getInstance();
 
-async function migrateCollection(client: MongoClient, dbName: string, collName: string) {
-    const db = client.db(dbName);
-    const collection = db.collection(collName);
-    
-    console.log(`\n📦 Processing collection: ${dbName}.${collName}...`);
-    
-    // Project only id and url to avoid loading huge rawHtml fields
-    const cursor = collection.find({}).project({ id: 1, url: 1 });
-    
-    let migrateCount = 0;
-    let duplicateDeletedCount = 0;
-    
-    while (await cursor.hasNext()) {
-        const doc = await cursor.next();
-        if (!doc) continue;
-        if (!doc.url) {
-            console.warn(`⚠️ Warning: Document _id: ${doc._id} has no url field. Skipping.`);
-            continue;
+    public async run(siteKey: string): Promise<void> {
+        if (!siteKey) {
+            console.error('❌ Error: Missing --site [siteKey] argument.');
+            this.printHelp();
+            process.exit(1);
         }
+
+        const site = getSite(siteKey);
+        if (!site) {
+            console.error(`❌ Error: Site "${siteKey}" is not registered in the SiteRegistry.`);
+            console.log('Available sites:', getAllSites().map(s => s.key).join(', '));
+            process.exit(1);
+        }
+
+        console.log(`🔌 Connecting to MongoDB for migrating site: [${site.name}]...`);
+        await this.mongo.connect();
+
+        const scraper = site.scraper;
+        if (!scraper) {
+            throw new Error(`Scraper configuration is missing for site: ${siteKey}`);
+        }
+
+        const urlsCollectionName = scraper.urlsCollectionName || `bronze/${siteKey}.urls`;
+        const htmlCollectionName = scraper.collectionName || `bronze/${siteKey}.html`;
+        const contentsCollectionName = site.targetLoader?.collectionName || `silver/${siteKey}.contents`;
+
+        const collectionsToMigrate = [
+            { name: urlsCollectionName, idField: 'id' },
+            { name: htmlCollectionName, idField: scraper.updateFilterKey || 'id' },
+            { name: contentsCollectionName, idField: site.targetLoader?.filterField || 'id' }
+        ];
+
+        for (const colSpec of collectionsToMigrate) {
+            await this.migrateCollection(colSpec.name, colSpec.idField, scraper.extractId);
+        }
+
+        console.log(`\n🎉 Migration for site [${site.name}] completed successfully!`);
+    }
+
+    private async migrateCollection(
+        collectionName: string, 
+        idField: string, 
+        extractIdFn: (url: string) => string | null
+    ): Promise<void> {
+        console.log(`\n📦 Processing collection: ${collectionName} (using ID field: '${idField}')...`);
+        const collection = await this.mongo.getCollection(collectionName as any);
+
+        // Fetch documents having both the ID field and url
+        const cursor = collection.find({ url: { $exists: true } }).project({ _id: 1, [idField]: 1, url: 1 });
         
-        const expectedMd5Id = toMd5(doc.url);
-        
-        // If the ID is not already the MD5 ID (e.g. it's Base64), we need to migrate it.
-        if (doc.id !== expectedMd5Id) {
-            const oldId = doc.id;
-            
-            // Check if a document with the expected MD5 ID already exists in the collection
-            const duplicate = await collection.findOne({ id: expectedMd5Id });
-            
-            if (duplicate) {
-                // If a duplicate exists, we remove the old Base64 document to avoid duplicate key errors.
-                // We keep the newer/duplicate MD5 document.
-                await collection.deleteOne({ _id: doc._id });
-                duplicateDeletedCount++;
-                console.log(`🗑️ Removed duplicate Base64 document for url: ${doc.url} (Old ID: ${oldId})`);
-            } else {
-                // If no duplicate exists, update the ID to the MD5 ID.
-                await collection.updateOne(
-                    { _id: doc._id },
-                    { $set: { id: expectedMd5Id, updatedAt: new Date() } }
-                );
-                migrateCount++;
+        let processedCount = 0;
+        let migratedCount = 0;
+        let deletedDuplicates = 0;
+
+        for await (const doc of cursor) {
+            processedCount++;
+            const currentId = doc[idField] || doc.id;
+            const url = doc.url;
+
+            if (!url || !currentId) continue;
+
+            const expectedId = extractIdFn(url);
+            if (!expectedId) {
+                console.warn(`⚠️ Warning: extractId returned null/empty for URL: ${url}`);
+                continue;
+            }
+
+            if (currentId !== expectedId) {
+                // Check if a document with the expected ID already exists to avoid unique key index collisions
+                const duplicate = await collection.findOne({ [idField]: expectedId });
+                
+                if (duplicate) {
+                    // Remove the old document because the normalized URL already exists under the correct ID
+                    await collection.deleteOne({ _id: doc._id });
+                    deletedDuplicates++;
+                    console.log(`   🗑️ Deleted duplicate document for URL: ${url} (Old ID: ${currentId} -> New ID: ${expectedId})`);
+                } else {
+                    // Update the ID field to the correct normalized ID
+                    await collection.updateOne(
+                        { _id: doc._id },
+                        { $set: { [idField]: expectedId, id: expectedId, updatedAt: new Date() } }
+                    );
+                    migratedCount++;
+                }
             }
         }
+
+        console.log(`   ✨ Collection: ${collectionName} Summary:`);
+        console.log(`      ├─ Processed: ${processedCount}`);
+        console.log(`      ├─ Migrated:  ${migratedCount}`);
+        console.log(`      └─ Duplicates Deleted: ${deletedDuplicates}`);
     }
-    
-    console.log(`✨ Finished ${dbName}.${collName}: Migrated ${migrateCount} IDs, deleted ${duplicateDeletedCount} duplicates.`);
-}
 
+    private printHelp(): void {
+        console.log('\nUsage:');
+        console.log('  npx ts-node src/scripts/migrate_uppity_ids.ts --site <siteKey>');
+        console.log('\nExample:');
+        console.log('  npx ts-node src/scripts/migrate_uppity_ids.ts --site uppity');
+    }
 
-async function main() {
-    const mongoUrl = AppConfig.MONGO_URL;
-    console.log(`🔌 Connecting to MongoDB at ${mongoUrl}...`);
-    const client = new MongoClient(mongoUrl);
-    
-    try {
-        await client.connect();
-        
-        // Migrate the three target collections
-        await migrateCollection(client, 'bronze', 'uppity.html');
-        await migrateCollection(client, 'bronze', 'uppity.urls');
-        await migrateCollection(client, 'silver', 'uppity.contents');
-        
-        console.log('\n🎉 Migration completed successfully!');
-    } catch (err) {
-        console.error('❌ Migration failed with error:', err);
-    } finally {
-        await client.close();
+    public async close(): Promise<void> {
+        await this.mongo.close();
     }
 }
 
 if (require.main === module) {
-    main();
+    const args = process.argv.slice(2);
+    const siteIdx = args.indexOf('--site');
+    const siteKey = siteIdx !== -1 ? args[siteIdx + 1] : '';
+
+    (async () => {
+        const runner = new IdMigrationRunner();
+        try {
+            await runner.run(siteKey);
+        } catch (e: any) {
+            console.error(`❌ Migration failed: ${e.message}`, e);
+            process.exit(1);
+        } finally {
+            await runner.close();
+        }
+    })();
 }

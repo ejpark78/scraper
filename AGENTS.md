@@ -34,6 +34,7 @@
 3. **Robust Error Handling**: Never use empty catch blocks. Always log error contexts and close DB/Redis connections in finally blocks.
 4. **Centralized Config**: Access 'process.env' ONLY within dedicated config files. Inject configuration via constructor.
 5. **Agent-Friendly Docstrings**: Start every source, script, and automation file with a header docstring/comment detailing design context, constraints, and dependencies to prevent refactoring loops. Update it when behavior changes.
+6. **No Superficial Patches (땜질식 해결 금지)**: Never implement superficial patches (e.g., custom regex exclusions or hardcoded parameters to hide symptoms) when errors occur. Always trace the data flow, investigate database/state coordination, find the true root cause, and implement a robust structural/architectural solution.
 
 ## 🔓 Pre-Approved Commands
 The following commands/scripts are pre-approved and exempt from Rule 1's and Rule 2's consent loops:

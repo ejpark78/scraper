@@ -69,7 +69,20 @@ export const descriptor: SiteDescriptor = {
       const crypto = require('crypto');
       let normalized = url;
       try {
-        normalized = decodeURIComponent(url);
+        normalized = decodeURIComponent(url).trim();
+      } catch {}
+      try {
+        const parsed = new URL(normalized);
+        parsed.protocol = 'https:';
+        if (parsed.hostname.startsWith('www.')) {
+          parsed.hostname = parsed.hostname.substring(4);
+        }
+        let cleanPath = parsed.pathname.replace(/\/$/, '');
+        if (/\/\d+$/.test(cleanPath)) {
+          cleanPath = cleanPath.replace(/\/\d+$/, '');
+        }
+        parsed.pathname = cleanPath;
+        normalized = parsed.toString();
       } catch {}
       return crypto.createHash('md5').update(normalized).digest('hex');
     },

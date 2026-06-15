@@ -79,7 +79,20 @@ export const descriptor: SiteDescriptor = {
       'signup'
     ],
     extractId: (url) => {
-      return Buffer.from(url).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+      let normalized = url.trim();
+      try {
+        normalized = decodeURIComponent(url);
+      } catch {}
+      try {
+        const parsed = new URL(normalized);
+        parsed.protocol = 'https:';
+        if (parsed.hostname.startsWith('www.')) {
+          parsed.hostname = parsed.hostname.substring(4);
+        }
+        parsed.pathname = parsed.pathname.replace(/\/$/, '');
+        normalized = parsed.toString();
+      } catch {}
+      return Buffer.from(normalized).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
     },
     urlsCollectionName: 'bronze/dailydose_ds.urls',
     scrape: async (url, tempPath) => {

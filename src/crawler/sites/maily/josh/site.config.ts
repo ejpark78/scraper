@@ -63,7 +63,20 @@ export const descriptor: SiteDescriptor = {
     urlFilter: (url: string) => /^https:\/\/maily\.so\/josh\/posts\/[a-zA-Z0-9]+$/.test(url.split('?')[0]),
     extractId: (url) => {
       const crypto = require('crypto');
-      return crypto.createHash('md5').update(url).digest('hex');
+      let normalized = url.trim();
+      try {
+        normalized = decodeURIComponent(url);
+      } catch {}
+      try {
+        const parsed = new URL(normalized);
+        parsed.protocol = 'https:';
+        if (parsed.hostname.startsWith('www.')) {
+          parsed.hostname = parsed.hostname.substring(4);
+        }
+        parsed.pathname = parsed.pathname.replace(/\/$/, '');
+        normalized = parsed.toString();
+      } catch {}
+      return crypto.createHash('md5').update(normalized).digest('hex');
     },
     urlsCollectionName: 'bronze/maily_josh.urls',
     scrape: scrapeHttpFetch,
