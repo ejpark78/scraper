@@ -446,7 +446,7 @@ app.get('/api/queues', async (req: Request, res: Response) => {
 
 app.get('/api/site-stats', async (req: Request, res: Response) => {
   try {
-    const siteStats: Record<string, { silverCount: number; meiliCount: number; htmlCount: number; urlsCount: number }> = {};
+    const siteStats: Record<string, { name: string; silverCount: number; meiliCount: number; htmlCount: number; urlsCount: number }> = {};
     await mongo.connect();
     const client = (mongo as any).client;
     if (client) {
@@ -513,7 +513,7 @@ app.get('/api/site-stats', async (req: Request, res: Response) => {
           // Index might not exist yet, treat as 0
         }
 
-        siteStats[site.key] = { silverCount, meiliCount, htmlCount, urlsCount };
+        siteStats[site.key] = { name: site.name, silverCount, meiliCount, htmlCount, urlsCount };
       }
     }
     res.json(siteStats);

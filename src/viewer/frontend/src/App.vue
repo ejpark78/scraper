@@ -139,7 +139,7 @@ const queueDeltas = ref({
 });
 const hasPreviousData = ref(false);
 const loadingQueues = ref<boolean>(false);
-const siteStats = ref<Record<string, { silverCount: number; meiliCount: number; htmlCount: number; urlsCount: number }> | null>(null);
+const siteStats = ref<Record<string, { name: string; silverCount: number; meiliCount: number; htmlCount: number; urlsCount: number }> | null>(null);
 const loadingSiteStats = ref<boolean>(false);
 const addUrlSite = ref<string>('linkedin');
 const addUrlVal = ref<string>('');
@@ -532,16 +532,12 @@ function getSiteNameFromCollection(col: string) {
   const found = collections.value.find(c => c.id === col || c.id === `silver/${col}` || col === `silver/${c.id}`);
   if (found) return found.name;
   
-  // Fallbacks
-  const lower = col.toLowerCase();
-  if (lower.includes('geeknews')) return 'GeekNews';
-  if (lower.includes('gpters')) return 'GPters';
-  if (lower.includes('pytorch')) return 'PyTorch KR';
-  if (lower.includes('linkedin')) return 'LinkedIn';
-  if (lower.includes('uppity')) return 'Uppity';
-  if (lower.includes('yozm')) return 'Yozm IT';
-  if (lower.includes('aicasebook')) return 'AICasebook';
-  return 'Database';
+  // Dynamic fallback: remove paths/extensions and perform capitalization
+  const clean = col.replace(/^silver\//, '').replace(/\.(jobs|companies|contents)$/, '');
+  return clean
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/^\w/, (first: string) => first.toUpperCase());
 }
 
 function formatCollectedDate(dateVal?: string) {
@@ -856,7 +852,7 @@ const iframeSrcDoc = computed(() => {
                   <tbody>
                     <tr v-for="(stats, siteKey) in siteStats" :key="siteKey">
                       <td style="font-weight: 600; color: #fff; text-align: left;">
-                        {{ getSiteNameFromCollection(siteKey) }} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">({{ siteKey }})</span>
+                        {{ stats.name }} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">({{ siteKey }})</span>
                       </td>
                       <td style="text-align: center; font-weight: 500;">
                         <span class="badge-priority low" style="padding: 3px 6px; font-size: 10px; background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2);">{{ stats.urlsCount ? stats.urlsCount.toLocaleString('ko-KR') : 0 }} 건</span>
