@@ -366,6 +366,8 @@ body {
   flex-direction: column;
   height: 100vh;
   position: relative;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .detail-empty {
@@ -396,12 +398,6 @@ body {
   font-size: 14px;
   max-width: 360px;
   line-height: 1.5;
-}
-
-.main-content {
-  min-width: 0;
-  overflow: hidden;
-  height: 100%;
 }
 
 .detail-content {
