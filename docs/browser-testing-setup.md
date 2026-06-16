@@ -58,12 +58,12 @@
 
 ---
 
-## 💻 2. WSL2 환경 포트 포워딩 및 호스트 연동
+## 💻 2. WSL2 환경 브라우저 연동 옵션 (택일)
 
-WSL2는 가상 머신(VM)으로 동작하므로, WSL 내부에서 실행되는 에이전트가 Windows 호스트의 크롬에 접속할 수 있도록 포트를 연결해주어야 합니다.
+WSL2는 가상 머신(VM)으로 동작하므로 아래 **[옵션 A]**와 **[옵션 B]** 중 **하나의 방법만 선택**하여 브라우저 환경을 구성합니다. 이미 옵션 A로 연동에 성공했다면 옵션 B의 크롬 설치 과정은 건너뛰어야 합니다.
 
-### 방법 A: Windows 호스트의 크롬을 연동하는 방법 (추천)
-Windows에 설치된 일반 크롬을 제어하므로 별도의 리소스를 추가로 먹지 않아 가장 부드럽게 작동합니다.
+### [옵션 A] Windows 호스트의 크롬을 연동하는 방법 (추천)
+Windows에 설치되어 있는 일반 크롬을 제어하므로 별도의 리소스를 추가로 소모하지 않으며 설정이 간단하여 가장 부드럽게 작동합니다.
 
 ```mermaid
 graph LR
@@ -102,12 +102,12 @@ curl http://localhost:9222/json/version
 
 ---
 
-### 방법 B: WSL 내부에 리눅스용 크롬 직접 설치 (WSLg 사용)
-Windows 호스트와 연동하지 않고, WSL 독립적으로 브라우저를 띄워 동작시키고 싶을 때 사용합니다. Windows 10/11의 WSLg(GUI 지원)가 활성화되어 있어야 합니다.
+### [옵션 B] WSL 내부에 리눅스용 크롬 직접 설치 (대체안)
+Windows 호스트와 포트 포워딩 연동을 하지 않고, WSL 독립적으로 브라우저를 띄워 동작시키고 싶을 때 사용합니다. 이 옵션을 사용하려면 Windows 10/11의 WSLg(GUI 지원)가 활성화되어 있어야 합니다. **(옵션 A를 사용 중이라면 본 과정은 실행하지 마세요.)**
 
 #### ① WSL 내 크롬 설치 명령어
 ```bash
-# WSL2 Ubuntu 터미널
+# WSL2 Ubuntu 터미널 내부에서 실행 (Windows 환경 실행 아님)
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 sudo apt update
 sudo apt install ./google-chrome-stable_current_amd64.deb -y
