@@ -19,14 +19,36 @@ function getTimestamp(): string {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
 }
 
-async function runBrowser() {
-    const sessionPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${AppConfig.SITE}.json`);
-    const htmlDir = path.resolve(process.cwd(), AppConfig.BROWSER_HTML_DIR);
-    const jsonDir = path.resolve(process.cwd(), AppConfig.BROWSER_JSON_DIR);
+// 🌐 URL에서 www. 접두사를 제외한 도메인명 추출 헬퍼
+function getDomain(urlStr: string): string {
+    try {
+        const parsed = new URL(urlStr);
+        return parsed.hostname.replace(/^www\./, '');
+    } catch (e) {
+        return 'unknown';
+    }
+}
 
-    // 수집 대상 폴더 생성
-    if (!fs.existsSync(htmlDir)) fs.mkdirSync(htmlDir, { recursive: true });
-    if (!fs.existsSync(jsonDir)) fs.mkdirSync(jsonDir, { recursive: true });
+async function runBrowser() {
+    let currentDomain = AppConfig.SITE === 'linkedin' ? 'linkedin.com' : AppConfig.SITE;
+    
+    // 기본 최초 진입 사이트 도메인명 세션 우선 확인
+    let sessionPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${currentDomain}.json`);
+    
+    // 만약 도메인 기반 세션 파일이 없고 기존 기존 세션 파일이 존재할 경우 폴백 로드
+    if (!fs.existsSync(sessionPath)) {
+        const fallbackPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${AppConfig.SITE}.json`);
+        if (fs.existsSync(fallbackPath)) {
+            sessionPath = fallbackPath;
+        }
+    }
+
+    const htmlBaseDir = path.resolve(process.cwd(), AppConfig.BROWSER_HTML_DIR);
+    const jsonBaseDir = path.resolve(process.cwd(), AppConfig.BROWSER_JSON_DIR);
+
+    // 수집 대상 베이스 폴더 생성
+    if (!fs.existsSync(htmlBaseDir)) fs.mkdirSync(htmlBaseDir, { recursive: true });
+    if (!fs.existsSync(jsonBaseDir)) fs.mkdirSync(jsonBaseDir, { recursive: true });
 
     console.log('🚀 [세션 브라우저 기동] 브라우저 인스턴스를 시작합니다...');
 
@@ -88,14 +110,18 @@ async function runBrowser() {
             
             // URL을 기반으로 가독성 높은 힌트 문자열 추출
             let urlHint = 'page';
+            let domain = 'unknown';
             try {
+                domain = getDomain(url);
                 const parsed = new URL(url);
                 urlHint = parsed.pathname.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
                 if (!urlHint || urlHint === '_') urlHint = 'home';
             } catch (e) {}
 
             const filename = `${timestamp}_${urlHint}.html`;
-            const savePath = path.join(htmlDir, filename);
+            const siteHtmlDir = path.join(htmlBaseDir, domain);
+            if (!fs.existsSync(siteHtmlDir)) fs.mkdirSync(siteHtmlDir, { recursive: true });
+            const savePath = path.join(siteHtmlDir, filename);
 
             fs.writeFileSync(savePath, htmlContent, 'utf-8');
             console.log(`💾 [HTML 저장] (${trigger}) ➡️ ${path.relative(process.cwd(), savePath)} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
@@ -111,6 +137,11 @@ async function runBrowser() {
         if (frame === page.mainFrame()) {
             const url = frame.url();
             if (url === 'about:blank') return;
+            
+            const domain = getDomain(url);
+            if (domain && domain !== 'unknown') {
+                currentDomain = domain;
+            }
             
             console.log(`🌐 [페이지 이동 감지] ➡️ URL: ${url}`);
             
@@ -160,7 +191,9 @@ async function runBrowser() {
                 } catch (e) {}
 
                 const filename = `${timestamp}_${apiName}.json`;
-                const savePath = path.join(jsonDir, filename);
+                const siteJsonDir = path.join(jsonBaseDir, currentDomain);
+                if (!fs.existsSync(siteJsonDir)) fs.mkdirSync(siteJsonDir, { recursive: true });
+                const savePath = path.join(siteJsonDir, filename);
 
                 fs.writeFileSync(savePath, text, 'utf-8');
                 console.log(`📡 [비동기 API 수집] ➡️ ${path.relative(process.cwd(), savePath)} (${(text.length / 1024).toFixed(1)} KB)`);
@@ -197,12 +230,13 @@ async function runBrowser() {
         if (saveTimeout) clearTimeout(saveTimeout);
 
         try {
-            const sessionDir = path.dirname(sessionPath);
+            const finalSessionPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${currentDomain}.json`);
+            const sessionDir = path.dirname(finalSessionPath);
             if (!fs.existsSync(sessionDir)) {
                 fs.mkdirSync(sessionDir, { recursive: true });
             }
-            await context.storageState({ path: sessionPath });
-            console.log(`💾 [세션 자동 갱신] 최신 토큰 정보를 성공적으로 업데이트했습니다 ➡️ ${sessionPath}`);
+            await context.storageState({ path: finalSessionPath });
+            console.log(`💾 [세션 자동 갱신] 최신 토큰 정보를 성공적으로 업데이트했습니다 ➡️ ${finalSessionPath}`);
         } catch (err: any) {
             console.error(`⚠️ [세션 갱신 실패]: ${err.message}`);
         }
@@ -215,8 +249,9 @@ async function runBrowser() {
         clearInterval(intervalId);
         if (saveTimeout) clearTimeout(saveTimeout);
         try {
-            await context.storageState({ path: sessionPath });
-            console.log(`💾 [세션 백업 완료] ➡️ ${sessionPath}`);
+            const finalSessionPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${currentDomain}.json`);
+            await context.storageState({ path: finalSessionPath });
+            console.log(`💾 [세션 백업 완료] ➡️ ${finalSessionPath}`);
         } catch (e) {}
         await browser.close();
         process.exit(0);
