@@ -402,6 +402,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .detail-header {
@@ -495,7 +497,9 @@ body {
 .tab-panes {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 28px;
+  min-width: 0;
 }
 
 .tab-pane {
@@ -505,6 +509,12 @@ body {
 
 .tab-pane.active {
   display: block;
+}
+
+.tab-pane pre {
+  max-width: 100%;
+  overflow-x: auto;
+  word-wrap: normal;
 }
 
 .hidden {
