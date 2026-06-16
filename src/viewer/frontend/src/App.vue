@@ -218,6 +218,8 @@ const renderedMarkdownHtml = computed(() => {
     const displayMd = commentMatch ? cleanedMd.substring(0, cleanedMd.indexOf(commentMatch[0])).trim() : cleanedMd;
     const metaTable = generateMetaTableMarkdown(silver, selectedDoc.value.bronze, currentCollection.value);
     return marked.parse(displayMd + '\n\n' + metaTable) as string;
+  } else if (loadingRawDetail.value) {
+    return '<div class="loading-container" style="height: 200px;"><div class="spinner"></div><div>본문을 불러오는 중...</div></div>';
   } else if (selectedDoc.value.bronze.rawHtml) {
     return '<blockquote>No markdown parsed from Silver layer yet. Showing raw HTML source instead. Use Bronze (HTML) tab for preview.</blockquote>';
   } else {
