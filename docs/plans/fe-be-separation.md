@@ -1,85 +1,78 @@
 <!--
 [Design Context]
-본 문서는 뷰어 서비스의 프론트엔드(Vue)와 백엔드(Express) 분리를 위한 상세 설계서 및 마이그레이션 계획서입니다.
+본 문서는 뷰어 서비스를 프론트엔드(Vue), 대시보드 백엔드(Express API), 그리고 에이전트 전용 MCP 도구 서버의 3개 독립 서비스로 완전 분리하는 상세 설계서 및 마이그레이션 계획서입니다.
 [Dependencies]
-- Docker Compose
-- Traefik Router
-- Vite Config
+- Docker Compose (3개 분할 서비스 구성)
+- Traefik Router (viewer-fe, viewer-api, viewer-mcp 라우팅 설정)
+- Vite Config (Proxy 및 HMR 웹소켓 연동)
 -->
 
-# 🛸 FE/BE 서비스 분리 및 HMR(핫 리로드) 마이그레이션 계획서
+# 🛸 FE / API / MCP 서비스 3단계 완전 분리 마이그레이션 계획서
 
-본 문서는 현재 하나의 단일 컨테이너(`viewer`)로 통합 작동하고 있는 프론트엔드(Vue 3)와 백엔드(Express/TS) 서버를 별개의 서비스로 분리하여 개발 편의성(HMR) 및 아키텍처 격리성을 극대화하기 위한 상세 마이그레이션 계획서입니다.
+본 계획서는 기존에 하나의 단일 컨테이너(`viewer`)에 혼합되어 있던 **프론트엔드(Vue)**, **대시보드 API 백엔드(Express)**, 그리고 **에이전트 제어용 MCP 서버**를 3개의 완벽하게 독립된 물리 서비스로 쪼개어 개발 편의성(HMR) 및 장애 격리성(Fault Isolation)을 극대화하기 위한 상세 마이그레이션 계획서입니다.
 
 ---
 
-## 📐 1. 개선 아키텍처 모델
+## 📐 1. 개선 아키텍처 모델 (Target Architecture)
 
 ```mermaid
 graph TD
-    User([사용자 브라우저]) -->|viewer.localhost| Traefik[Traefik 리버스 프록시]
+    User([사용자 브라우저 / AI 에이전트]) -->|Traefik Entrypoint| Traefik[Traefik 리버스 프록시]
     
-    %% 라우팅 규칙 정의
-    Traefik -->|① /api/* 및 Host mcp.localhost| BE[viewer-api 컨테이너 - 포트 3000]
-    Traefik -->|② 그 외 모든 경로| FE[viewer-fe 컨테이너 - 포트 5173 Dev / 80 Prod]
+    %% 라우팅 상세 규칙
+    Traefik -->|① Host: viewer.localhost| FE[viewer-fe 컨테이너 - 포트 5173 Dev / 80 Prod]
+    Traefik -->|② Host: viewer.localhost/api/*| API[viewer-api 컨테이너 - 포트 3000]
+    Traefik -->|③ Host: mcp.localhost| MCP[viewer-mcp 컨테이너 - 포트 3001]
     
-    BE --> MongoDB[(MongoDB 데이터베이스)]
-    BE --> Redis[(Redis 작업 큐)]
+    %% 백엔드 의존성
+    API --> MongoDB[(MongoDB 데이터베이스)]
+    API --> Redis[(Redis 작업 큐)]
+    
+    MCP --> MongoDB
+    MCP --> Redis
 ```
 
 ---
 
-## 🛠️ 2. 단계별 구현 절차 (Implementation Steps)
+## 🛠️ 2. 서비스별 상세 아키텍처 스펙
 
-### 1단계: 백엔드(BE) 수정 및 CORS 연동
-1.  **CORS 설정 적용**: 백엔드 서버(`src/viewer/server.ts`)에 외부 프론트엔드 출처(Vite Dev Server 포트 등)의 비동기 자원 요청을 수용할 수 있도록 CORS 미들웨어를 장착합니다.
-2.  **정적 서빙 분기**: `src/viewer/server.ts` 내의 `express.static` 및 `dist/index.html` 폴백 코드들을 프로덕션 환경(`process.env.NODE_ENV === 'production'`)에서만 동작하도록 분기 처리합니다.
-
-### 2단계: 프론트엔드(FE) 개발용 컨테이너 생성
-1.  Vite 개발 서버 환경 구동을 위해 `docker/tools/viewer-fe/Dockerfile.dev` 파일을 신규 생성합니다. (기본 CMD: `npm run dev`)
-2.  도커 컴포즈 파일에서 프론트엔드 소스 디렉터리(`src/viewer/frontend`)를 볼륨 마운트하여 소스 수정 시 즉각 HMR(Hot Module Replacement)이 발생하도록 설정합니다.
-
-### 3단계: Docker Compose 및 Traefik 라우터 설정 분리
-1.  `docker/tools/viewer/compose.yml`을 수정하여 기존 `viewer` 서비스를 두 개의 서비스로 분해합니다.
-    *   **`viewer-api`**: 백엔드 포트 `3000` 가동 및 데이터베이스/Redis 연동 담당.
-    *   **`viewer-fe`**: 프론트엔드 웹 서버 가동 담당.
-2.  **Traefik 라우팅 분기**:
-    *   `viewer-api` 레이블 규칙: `Host("viewer.localhost") && PathPrefix("/api")` 및 `Host("mcp.localhost")` 경로 처리.
-    *   `viewer-fe` 레이블 규칙: 그 외 `Host("viewer.localhost")` 기본 도메인 접속 처리.
-
-### 4단계: Vite Proxy 및 웹소켓 설정 보강
-1.  `vite.config.ts` 파일에 `server.proxy` 설정을 구성하여 로컬 브라우저 개발 시 `/api`로 향하는 요청을 내부 백엔드 컴포즈 컨테이너 포트(`viewer-api:3000`)로 프록시 전달합니다.
-2.  WSL 및 역방향 프록시 환경에서 핫 리로드 웹소켓이 끊기지 않도록 `server.hmr` 설정을 추가로 잡아줍니다.
+| 서비스명 (Service) | 역할 (Role) | 포트 (Port) | 도메인 라우팅 (Host Rule) | 개발 볼륨 마운트 (Volume) |
+| :--- | :--- | :--- | :--- | :--- |
+| **`viewer-fe`** | Vue 3 웹 화면 서빙 (HMR 지원) | `5173` | `viewer.localhost` | `src/viewer/frontend` |
+| **`viewer-api`** | 대시보드 전용 REST API & 로그 분석 | `3000` | `viewer.localhost/api/*` | 실시간 볼륨 동기화 불필요 (재빌드 경량화) |
+| **`viewer-mcp`** | 에이전트 제어용 SSE/HTTP 통신 어댑터 | `3001` | `mcp.localhost` | 실시간 볼륨 동기화 불필요 |
 
 ---
 
-## ⚖️ 3. MCP 서비스 분리 설계 대안 비교 (API vs MCP Separation)
+## 📋 3. 단계별 마이그레이션 구현 절차 (Implementation Steps)
 
-에이전트가 사용하는 MCP 채널과 사용자 대시보드 API 채널을 추가로 분리할지에 대한 아키텍처적 검토입니다.
+### 1단계: 백엔드 코드 분리 및 독자 엔트리포인트 설계
+1.  **`viewer-api` (대시보드 API)**:
+    *   `src/viewer/server.ts`에서 더 이상 `setupMcpServer`를 호출하지 않고 주석 처리/삭제하여 MCP 모듈 결합을 느슨하게 격리합니다.
+    *   프론트엔드 개발 서버(`viewer-fe:5173`)로부터의 접근을 허용하도록 CORS 정책을 보강합니다.
+2.  **`viewer-mcp` (MCP 전용 엔트리포인트 생성)**:
+    *   새로운 진입 파일인 `src/viewer/mcp-entry.ts`를 생성하여 Express와 MCP 모듈(`setupMcpServer`)만 단독 바인딩하고 독립 포트 **`3001`**에서 동작하도록 작성합니다.
+    *   `app.get('/sse')` 및 `app.post('/messages')` 전용 라우터만 열어 리소스를 가볍게 유지합니다.
 
-### 대안 ①: FE/BE 2단계 분할 (하이브리드 백엔드 구조)
-*   **구조**: 프론트엔드(`viewer-fe`)만 분리하고, 백엔드는 하나의 컨테이너(`viewer-api`)가 REST API와 MCP 서버(`/sse`)를 동시에 호스팅합니다.
-*   **특징**:
-    *   커넥션 풀 공유: MongoDB 및 Redis 커넥션 인스턴스를 하나로 공유하므로 전체 시스템 리소스 소모가 적습니다.
-    *   간단한 배포: Docker Compose 서비스 정의가 2개로 유지되므로 단순합니다.
+### 2단계: 프론트엔드(FE) 핫 리로드 설정 구축
+1.  **Vite 개발용 Dockerfile 추가**:
+    *   `docker/tools/viewer-fe/Dockerfile.dev`를 새로 만들어 노드 종속성 설치 후 개발 서버(`npm run dev`)를 가동하도록 정의합니다.
+2.  **프록시 및 HMR 매핑**:
+    *   `src/viewer/frontend/vite.config.ts` 파일에 프록시 설정을 추가하여 프론트엔드가 호출하는 `/api` 요청이 Docker 네트워크 내부의 `viewer-api:3000`으로 매핑되도록 연결합니다.
+    *   WSL 환경에서 HMR(핫 모듈 리플레이스먼트) 웹소켓 통신 포트를 포워딩할 수 있게 HMR 서버 통신 옵션을 보강합니다.
 
-### 대안 ②: FE/API/MCP 3단계 완전 분할 (마이크로서비스 구조)
-*   **구조**: 프론트엔드(`viewer-fe`), 대시보드 백엔드(`viewer-api`), MCP 도구 서버(`viewer-mcp`)의 3개 서비스로 완전히 파편화하여 분리합니다.
-*   **특징**:
-    *   장애 격리: 에이전트가 무거운 도구 호출(예: 대용량 데이터 수집/인덱싱)을 요청하여 MCP 서버 메모리가 고갈되거나 랙이 걸려도, 사용자가 보는 대시보드(`viewer-api`)는 전혀 지장을 받지 않고 안전하게 동작합니다.
-    *   보안 제어: 트래픽 규칙상 `Host("mcp.localhost")`만 허용하는 포트(`3001`)와 대시보드 API용 포트(`3000`)를 분리하므로, 외부 접근 보안 정책(IP ACL, 인증 헤더 적용 등)의 설계가 견고해집니다.
-    *   **흐름도**:
-        ```mermaid
-        graph TD
-            User([사용자 브라우저]) --> Traefik[Traefik 프록시]
-            Traefik -->|① Host: viewer.localhost| FE[viewer-fe 컨테이너]
-            Traefik -->|② Host: viewer.localhost/api/*| API[viewer-api 컨테이너 - 포트 3000]
-            Traefik -->|③ Host: mcp.localhost| MCP[viewer-mcp 컨테이너 - 포트 3001]
-            
-            API --> DB[(Database)]
-            MCP --> DB
-        ```
+### 3단계: Docker Compose 파일 분할 적용
+1.  `docker/tools/viewer/compose.yml`을 수정하여 3개의 서비스로 분해 선언합니다:
+    *   **`viewer-fe`**: `docker/tools/viewer-fe/Dockerfile.dev` 빌드, 로컬 볼륨 마운트, 포트 `5173` 배정.
+    *   **`viewer-api`**: `npx ts-node src/viewer/server.ts` 실행, 포트 `3000` 배정.
+    *   **`viewer-mcp`**: `npx ts-node src/viewer/mcp-entry.ts` 실행, 포트 `3001` 배정.
+2.  **Traefik Lables 규칙 최종 세분화**:
+    *   `viewer-fe`: `Host("viewer.localhost")`
+    *   `viewer-api`: `Host("viewer.localhost") && PathPrefix("/api")`
+    *   `viewer-mcp`: `Host("mcp.localhost")` 및 포트 `3001` 맵핑.
 
-### 의사결정 제안 (Decision Recommendation)
-로컬 리소스 자원을 아끼고 단일 백엔드 코드 베이스로 빠르게 구성하기 위해, 1차적으로 **대안 ① (하이브리드 백엔드)**을 기본 모델로 채택하되, 추후 에이전트 사용량이 증가하고 부하 테스트가 필요해지는 시점에 `viewer-mcp` 서비스를 별도의 도커 데몬 및 서비스 포트로 분리 구동할 수 있도록 백엔드 디렉터리 내에 독립적인 엔트리포인트(`src/viewer/mcp-entry.ts`) 설계 기반을 선제적으로 닦아둡니다.
-
+### 4단계: 통합 검증 및 포트 스캔 테스트
+1.  삼중 가동 후 각 도메인 채널 통신 테스트 진행:
+    *   `http://viewer.localhost` 접속 시 즉각적인 Vue 화면 로딩 및 소스 수정 시 HMR 반영 여부 확인.
+    *   `http://viewer.localhost/api/collections` 호출 시 백엔드 API 작동 여부 확인.
+    *   `http://mcp.localhost/sse` 접근 시 MCP 연결 신호 정상 응답 여부 확인.
