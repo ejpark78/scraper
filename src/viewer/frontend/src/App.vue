@@ -903,7 +903,8 @@ const iframeSrcDoc = computed(() => {
                 <span style="color: var(--text-muted); font-size: 12px;">수집 및 인덱싱 수량이 계산되지 않았습니다.</span>
                 <button @click="fetchSiteStats" class="btn-primary" style="padding: 6px 12px; font-size: 11px; height: 30px;">수량 계산하기</button>
               </div>
-              <div v-else-if="loadingSiteStats && !siteStats" class="empty-state" style="height: 100px; display: flex; justify-content: center; align-items: center;">
+              <div v-else-if="loadingSiteStats && !siteStats" class="loading-container" style="height: 120px;">
+                <div class="spinner"></div>
                 <span style="color: var(--text-muted); font-size: 12px;">데이터베이스에서 수량을 계산 중입니다. 잠시만 기다려주세요...</span>
               </div>
               <div class="queue-table-container" v-else-if="siteStats">
@@ -1116,7 +1117,10 @@ const iframeSrcDoc = computed(() => {
               </div>
             </div>
             <div class="card-body" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-              <div v-if="loadingErrors" class="empty-state" style="height:150px;">로그를 로딩 중입니다...</div>
+              <div v-if="loadingErrors" class="loading-container" style="height:150px;">
+                <div class="spinner"></div>
+                <div>로그를 로딩 중입니다...</div>
+              </div>
               <div v-else-if="errorLogs.length === 0" class="empty-state" style="height:150px;">해당 필터 조건에 부합하는 로그가 없습니다. ✨</div>
               <div v-else class="queue-table-container" style="flex: 1; overflow-y: auto;">
                 <table class="dashboard-table">
