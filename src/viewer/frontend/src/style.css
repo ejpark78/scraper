@@ -749,9 +749,10 @@ code.language-markdown {
   background: rgba(99, 102, 241, 0.1);
 }
 
-#tab-rendered img {
+.markdown-body img {
   max-width: 100%;
   height: auto;
+  border-radius: 6px;
 }
 
 /* Dashboard layout */
