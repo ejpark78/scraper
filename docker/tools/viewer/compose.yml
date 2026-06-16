@@ -3,7 +3,32 @@
 # ==============================================================================
 
 services:
-  viewer:
+  viewer-fe:
+    build:
+      context: ../../../
+      dockerfile: docker/tools/viewer-fe/Dockerfile.dev
+    image: linkedin/viewer-fe:dev
+    profiles:
+      - tools
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ../../../src/viewer/frontend:/app/src/viewer/frontend
+      - /app/src/viewer/frontend/node_modules
+    restart: unless-stopped
+    depends_on:
+      traefik:
+        condition: service_healthy
+      viewer-api:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.viewer-fe.rule=Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.viewer-fe.entrypoints=websecure"
+      - "traefik.http.routers.viewer-fe.tls=true"
+      - "traefik.http.services.viewer-fe.loadbalancer.server.port=5173"
+
+  viewer-api:
     build:
       context: ../../../
       dockerfile: docker/tools/viewer/Dockerfile
@@ -37,7 +62,39 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.viewer.rule=Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`) || Host(`mcp.localhost`)"
-      - "traefik.http.routers.viewer.entrypoints=websecure"
-      - "traefik.http.routers.viewer.tls=true"
-      - "traefik.http.services.viewer.loadbalancer.server.port=3000"
+      - "traefik.http.routers.viewer-api.rule=(Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`)) && PathPrefix(`/api`)"
+      - "traefik.http.routers.viewer-api.entrypoints=websecure"
+      - "traefik.http.routers.viewer-api.tls=true"
+      - "traefik.http.services.viewer-api.loadbalancer.server.port=3000"
+
+  viewer-mcp:
+    build:
+      context: ../../../
+      dockerfile: docker/tools/viewer/Dockerfile
+      args:
+        - BUILD_DATE
+        - VCS_REF
+    image: linkedin/viewer:latest
+    command: ["npx", "ts-node", "src/viewer/mcp-entry.ts"]
+    profiles:
+      - tools
+    environment:
+      - TZ=Asia/Seoul
+      - MONGO_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379
+      - PORT=3001
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+    depends_on:
+      traefik:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.viewer-mcp.rule=Host(`mcp.localhost`)"
+      - "traefik.http.routers.viewer-mcp.entrypoints=websecure"
+      - "traefik.http.routers.viewer-mcp.tls=true"
+      - "traefik.http.services.viewer-mcp.loadbalancer.server.port=3001"
