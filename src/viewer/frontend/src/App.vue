@@ -1174,7 +1174,6 @@ const iframeSrcDoc = computed(() => {
               {{ selectedDoc.silver.companyName || getSiteNameFromCollection(currentCollection) }}
             </span>
             <span class="meta-tag">{{ formatCollectedDate(selectedDoc.silver.publishedAt || selectedDoc.silver.updatedAt) }}</span>
-            <a v-if="originalUrl" :href="originalUrl" target="_blank" class="meta-link">Reference URL ↗</a>
           </div>
         </header>
 
