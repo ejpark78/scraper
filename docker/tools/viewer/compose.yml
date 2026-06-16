@@ -6,7 +6,7 @@ services:
   viewer-fe:
     build:
       context: ../../../
-      dockerfile: docker/tools/viewer-fe/Dockerfile.dev
+      dockerfile: docker/tools/viewer-fe/Dockerfile
     image: linkedin/viewer-fe:dev
     profiles:
       - tools
