@@ -54,7 +54,43 @@
 }
 ```
 
-*   `--autoConnect`: 실행 중인 크롬 디버깅 포트(`9222`)가 감지되면 자동으로 연결합니다.
+### 1.1 `.mcp.json` 파일의 역할
+*   **도구(Tool) 자동 등록**: 에이전트가 브라우저 제어 도구(스크린샷, DOM 조회 등)의 존재와 규격을 인지할 수 있도록 도구 서버 정보와 구동 파라미터를 명시합니다.
+*   **백그라운드 서버 실행**: 에이전트 실행 시 설정 정보를 파싱하여 내부적으로 지정된 포트 포워딩 및 프로토콜 변환 데몬을 가동합니다.
+
+| 설정 키 (Key) | 기본 값 (Value) | 상세 역할 및 의미 |
+| :--- | :--- | :--- |
+| **`command`** | `npx` | Node.js 패키지 실행기인 `npx`를 사용해 최신 도구 패키지를 즉시 실행합니다. |
+| **`args: -y`** | `-y` | `npx` 패키지 설치 시 발생하는 대화형 질문(Y/N)을 자동으로 무시하고 설치를 승인합니다. |
+| **`args: chrome-devtools-mcp`** | `chrome-devtools-mcp@latest` | 에이전트와 Chrome DevTools 프로토콜 간의 명령을 변환해 주는 공식 어댑터 서버 패키지입니다. |
+| **`args: --autoConnect`** | `--autoConnect` | 브라우저 디버깅 포트(9222/9223 등)가 열려 있다면 어댑터가 이를 자동으로 탐색해 연결합니다. |
+
+---
+
+### 1.2 MCP 아키텍처 및 제어 흐름도
+
+에이전트가 사용자의 명령에 반응해 크롬 브라우저를 제어하는 전체 데이터 흐름도입니다.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 사용자 (User)
+    participant Client as 에이전트 클라이언트 (Claude Code / CLI)
+    participant Config as .mcp.json
+    participant Server as MCP DevTools 서버 (npx 데몬)
+    participant Chrome as 구글 크롬 (9222 / 9223 포트)
+
+    User->>Client: "지금 켜져 있는 화면 캡처해줘"
+    Client->>Config: .mcp.json 설정 파일 읽기
+    Config-->>Client: 실행 정보 (npx chrome-devtools-mcp) 로드
+    Client->>Server: 백그라운드에서 MCP 서버 프로세스 시동
+    Server->>Chrome: 원격 디버깅 포트(localhost)로 웹소켓 연결 수립
+    Client->>Server: screenshot 도구 호출 요청
+    Server->>Chrome: CDP(Chrome DevTools Protocol) 캡처 명령 전달
+    Chrome-->>Server: Base64 이미지 바이너리 반환
+    Server-->>Client: 이미지 데이터를 MCP 규격 텍스트로 가공하여 전송
+    Client-->>User: 화면 캡처 결과물 출력
+```
 
 ---
 
