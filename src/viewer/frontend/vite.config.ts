@@ -5,17 +5,22 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   server: {
+    host: '0.0.0.0',
+    hmr: {
+      protocol: 'wss',
+      clientPort: 443,
+    },
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://viewer-api:3000',
         changeOrigin: true,
       },
       '/sse': {
-        target: 'http://localhost:3000',
+        target: 'http://viewer-mcp:3001',
         changeOrigin: true,
       },
       '/messages': {
-        target: 'http://localhost:3000',
+        target: 'http://viewer-mcp:3001',
         changeOrigin: true,
       },
     }
