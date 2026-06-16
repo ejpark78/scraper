@@ -14,6 +14,7 @@ services:
     image: traefik:v3.7.1
     profiles:
       - tools
+      - viewer
     command:
       - "--ping=true"
       - "--api.insecure=true"
