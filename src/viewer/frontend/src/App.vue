@@ -822,6 +822,7 @@ const iframeSrcDoc = computed(() => {
       <div v-if="currentCollection === '__dashboard__'" class="dashboard-container">
         <header class="dashboard-header">
           <div class="dashboard-title-area">
+            <button v-if="sidebarCollapsed" @click="sidebarCollapsed = false" class="sidebar-expand" title="Expand Sidebar" style="margin-right: 4px;">☰</button>
             <span class="brand-icon" style="font-size:24px;">📊</span>
             <div>
               <h2 style="font-size:18px;font-weight:700;color:#fff;margin:0;">대시보드</h2>
