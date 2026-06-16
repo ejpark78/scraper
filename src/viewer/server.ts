@@ -11,11 +11,11 @@
  */
 
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import http from 'http';
 import path from 'path';
 import { MongoDatabase } from '../database/mongo';
 import { ObjectId } from 'mongodb';
-import { setupMcpServer } from './mcp';
 import { getAllSites, getIndexName, getSiteKeyFromCollection } from '../crawler/core/SiteRegistry';
 import { MeiliSearchDatabase } from '../database/meili';
 import { AppConfig } from '../config/AppConfig';
@@ -26,6 +26,7 @@ const PORT = AppConfig.PORT;
 const redis = new Redis(AppConfig.REDIS_URL);
 redis.on('error', (err) => console.error('[Redis Error]', err));
 
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 
@@ -639,9 +640,6 @@ app.post('/api/queues/add', async (req: Request, res: Response) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-// 2. MCP (Model Context Protocol) Server Integration
-setupMcpServer(app);
 
 // --- DOCKER SOCKET LOGS GREP ERRORS IMPLEMENTATION ---
 interface DockerContainer {
