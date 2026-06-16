@@ -15,13 +15,12 @@ function askQuestion(query: string): Promise<string> {
 async function run() {
   console.log('📡 Launching browser on host (headless: false)...');
   const browser = await chromium.launch({ 
-    headless: false,
-    args: ['--start-maximized']
+    headless: false
   });
   
   const context = await browser.newContext({
     ignoreHTTPSErrors: true,
-    viewport: null
+    viewport: { width: 1280, height: 800 }
   });
   
   const page = await context.newPage();
