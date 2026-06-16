@@ -12,6 +12,9 @@ WORKDIR /app
 COPY src/viewer/frontend/package*.json ./src/viewer/frontend/
 RUN npm install --prefix src/viewer/frontend && npm cache clean --force
 
+# Copy frontend source code
+COPY src/viewer/frontend ./src/viewer/frontend
+
 # Expose Vite development port
 EXPOSE 5173
 

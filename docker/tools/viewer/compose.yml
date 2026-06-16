@@ -13,8 +13,6 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - ../../../src/viewer/frontend:/app/src/viewer/frontend
-      - /app/src/viewer/frontend/node_modules
     restart: unless-stopped
     depends_on:
       traefik:
