@@ -8,10 +8,6 @@ FROM node:22-bookworm
 
 WORKDIR /app
 
-# Install root dependencies for type checking and scripts
-COPY package*.json ./
-RUN npm ci && npm cache clean --force
-
 # Install frontend dependencies
 COPY src/viewer/frontend/package*.json ./src/viewer/frontend/
 RUN npm install --prefix src/viewer/frontend && npm cache clean --force

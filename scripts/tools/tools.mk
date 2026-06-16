@@ -46,8 +46,8 @@ up-jupyter:
 	@echo "🚀 Jupyter GUI가 실행되었습니다. https://jupyter.localhost 에 접속하세요."
 
 up-viewer:
-	$(COMPOSE) --profile tools build --no-cache viewer
-	$(COMPOSE) --profile tools up -d viewer
+	$(COMPOSE) --profile tools build --no-cache viewer-fe viewer-api viewer-mcp
+	$(COMPOSE) --profile tools up -d viewer-fe viewer-api viewer-mcp
 	@echo "🚀 Viewer GUI가 실행되었습니다. https://viewer.localhost 에 접속하세요."
 
 up-onwatch:
