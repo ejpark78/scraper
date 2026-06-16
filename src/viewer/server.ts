@@ -659,6 +659,7 @@ interface ParsedError {
   site: string;
   url: string;
   stack?: string;
+  index?: number;
 }
 
 function requestDockerSocket(path: string, method: string = 'GET'): Promise<any> {
@@ -755,7 +756,8 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
   const lines = logText.split(/\r?\n/);
   const errors: ParsedError[] = [];
   
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const trimmed = line.trim();
     if (!trimmed) continue;
     
@@ -785,7 +787,8 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
           message: ansiToHtml(parsed.error_name ? `${parsed.error_name}: ${message}` : message),
           site,
           url,
-          stack: stack ? ansiToHtml(stack) : undefined
+          stack: stack ? ansiToHtml(stack) : undefined,
+          index: i
         });
       } catch {
         errors.push({
@@ -794,7 +797,8 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
           level: 'INFO',
           message: ansiToHtml(trimmed),
           site: 'Unknown',
-          url: ''
+          url: '',
+          index: i
         });
       }
     } else {
@@ -827,7 +831,8 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
         level,
         message: ansiToHtml(trimmed),
         site,
-        url: ''
+        url: '',
+        index: i
       });
     }
   }
@@ -839,6 +844,7 @@ app.get('/api/errors', async (req: Request, res: Response) => {
     const siteFilter = (req.query.site as string) || 'All';
     const levelFilter = (req.query.level as string) || 'All';
     const serviceFilter = (req.query.service as string) || 'All';
+    const searchFilter = (req.query.search as string) || '';
     const page = parseInt(req.query.page as string) || 1;
     const limit = 30;
     
@@ -863,11 +869,28 @@ app.get('/api/errors', async (req: Request, res: Response) => {
       }
     }
     
-    allErrors.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    // Sort by timestamp descending. Tie-breaker is index descending (latest line index first).
+    allErrors.sort((a, b) => {
+      const timeA = new Date(a.timestamp).getTime() || 0;
+      const timeB = new Date(b.timestamp).getTime() || 0;
+      if (timeA !== timeB) {
+        return timeB - timeA;
+      }
+      return (b.index || 0) - (a.index || 0);
+    });
     
     let filteredErrors = allErrors;
     if (levelFilter !== 'All') {
       filteredErrors = filteredErrors.filter(err => err.level === levelFilter);
+    }
+
+    if (searchFilter) {
+      const searchLower = searchFilter.toLowerCase();
+      filteredErrors = filteredErrors.filter(err => 
+        err.message.toLowerCase().includes(searchLower) ||
+        (err.site && err.site.toLowerCase().includes(searchLower)) ||
+        (err.service && err.service.toLowerCase().includes(searchLower))
+      );
     }
 
     const siteCounts: Record<string, number> = {};

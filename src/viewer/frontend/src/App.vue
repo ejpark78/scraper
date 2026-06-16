@@ -163,6 +163,8 @@ const errorPage = ref<number>(1);
 const totalErrorPages = ref<number>(1);
 const loadingErrors = ref<boolean>(false);
 const refreshFeedback = ref<boolean>(false);
+const logSearchVal = ref<string>('');
+const logSearchQuery = ref<string>('');
 
 // Country badges list for LinkedIn Jobs
 const countries = [
@@ -286,6 +288,19 @@ watch(errorServiceFilter, () => {
 });
 
 watch(errorPage, () => {
+  fetchErrors();
+});
+
+let logSearchTimeout: any = null;
+watch(logSearchVal, (newVal) => {
+  clearTimeout(logSearchTimeout);
+  logSearchTimeout = setTimeout(() => {
+    logSearchQuery.value = newVal;
+    errorPage.value = 1;
+  }, 350);
+});
+
+watch(logSearchQuery, () => {
   fetchErrors();
 });
 
@@ -496,7 +511,7 @@ async function fetchSiteStats() {
 async function fetchErrors() {
   loadingErrors.value = true;
   try {
-    const response = await fetch(`/api/errors?site=${errorFilter.value}&level=${errorLevelFilter.value}&service=${errorServiceFilter.value}&page=${errorPage.value}`);
+    const response = await fetch(`/api/errors?site=${errorFilter.value}&level=${errorLevelFilter.value}&service=${errorServiceFilter.value}&page=${errorPage.value}&search=${encodeURIComponent(logSearchQuery.value)}`);
     const data = await response.json();
     errorLogs.value = data.errors || [];
     totalErrorLogs.value = data.totalCount || 0;
@@ -1051,9 +1066,23 @@ const iframeSrcDoc = computed(() => {
           <!-- Docker Scraper & Converter Log Center (Container Logs) -->
           <div class="queue-section-card" style="max-height: 850px; display: flex; flex-direction: column;">
             <div class="card-header" style="border-top: 2px solid #ef4444; flex-direction: column; align-items: stretch; gap: 12px; height: auto;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="color:#f87171;">📋 컨테이너 실시간 로그 (Container Logs)</h3>
-                <span class="badge-priority high">{{ totalErrorLogs.toLocaleString('ko-KR') }}</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <h3 style="color:#f87171; margin: 0;">📋 컨테이너 실시간 로그 (Container Logs)</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input 
+                    v-model="logSearchVal" 
+                    placeholder="로그 필터 검색..." 
+                    style="padding: 4px 10px; font-size: 11px; border-radius: 4px; border: 1px solid var(--border-color); background: #1e1e2e; color: #fff; width: 160px;" 
+                  />
+                  <button 
+                    @click="fetchErrors" 
+                    class="country-badge" 
+                    style="padding: 4px 10px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;"
+                  >
+                    🔄 새로고침
+                  </button>
+                  <span class="badge-priority high" style="margin-left: 4px;">{{ totalErrorLogs.toLocaleString('ko-KR') }}</span>
+                </div>
               </div>
               <!-- Service Badges Filters -->
               <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
