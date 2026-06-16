@@ -808,9 +808,9 @@ function parseErrorsFromLogText(service: string, logText: string): ParsedError[]
       }
 
       let level = 'INFO';
-      if (/ERROR|stderr|exception|TSError/i.test(trimmed)) {
+      if (/\berror\b|stderr|exception|TSError/i.test(trimmed)) {
         level = 'ERROR';
-      } else if (/WARN/i.test(trimmed)) {
+      } else if (/\bwarn\b/i.test(trimmed)) {
         level = 'WARN';
       }
       
