@@ -18,6 +18,8 @@ interface StaticSiteConfig {
   favicon: string;
   indexName: string;
   collectionName: string;
+  bronzeCollectionName?: string;
+  updateFilterKey?: string;
 }
 
 function main() {
@@ -30,7 +32,9 @@ function main() {
       name: s.name,
       favicon: s.favicon || '',
       indexName: getIndexName(s.key),
-      collectionName: s.targetLoader?.collectionName || `silver/${s.key}.contents`
+      collectionName: s.targetLoader?.collectionName || `silver/${s.key}.contents`,
+      bronzeCollectionName: s.scraper?.collectionName,
+      updateFilterKey: s.scraper?.updateFilterKey
     };
   });
 

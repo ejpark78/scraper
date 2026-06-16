@@ -92,7 +92,11 @@ function discoverSites(): void {
             collectionName: s.collectionName,
             filterField: 'id',
             buildDocument: () => ({})
-          }
+          },
+          scraper: s.bronzeCollectionName ? {
+            collectionName: s.bronzeCollectionName,
+            updateFilterKey: s.updateFilterKey || 'id',
+          } : undefined
         } as any);
       }
       console.log(`✅ [SiteRegistry] Loaded ${staticConfigs.length} site descriptors statically from config/sites.json`);
