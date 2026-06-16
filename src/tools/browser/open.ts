@@ -1,13 +1,13 @@
 /**
  * @module open
- * @description Core functionality or script runner for open.ts.
+ * @description SOLID-compliant browser automation and session management tool for dump collection.
  * @constraints
- *   - Follows strict OOP patterns and clean error handling.
+ *   - Follows strict OOP patterns, SOLID principles, and clean error handling.
  * @dependencies playwright, fs, path
- * @lastUpdated 2026-06-11
+ * @lastUpdated 2026-06-16
  */
 
-import { chromium } from 'playwright';
+import { chromium, BrowserContext, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AppConfig } from '../../config/AppConfig';
@@ -29,86 +29,250 @@ function getDomain(urlStr: string): string {
     }
 }
 
-async function runBrowser() {
-    let currentDomain = AppConfig.SITE === 'linkedin' ? 'linkedin.com' : AppConfig.SITE;
-    
-    // 기본 최초 진입 사이트 도메인명 세션 우선 확인
-    let sessionPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${currentDomain}.json`);
-    
-    // 만약 도메인 기반 세션 파일이 없고 기존 기존 세션 파일이 존재할 경우 폴백 로드
-    if (!fs.existsSync(sessionPath)) {
-        const fallbackPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${AppConfig.SITE}.json`);
-        if (fs.existsSync(fallbackPath)) {
-            sessionPath = fallbackPath;
+/**
+ * Interface for session state loader and saver.
+ */
+export interface ISessionManager {
+    loadSession(siteName: string, domainName: string): Promise<string | undefined>;
+    saveSession(context: BrowserContext, domainName: string): Promise<void>;
+}
+
+/**
+ * Interface for saving captured site data.
+ */
+export interface IDataCollector {
+    saveHtml(domain: string, filename: string, content: string): Promise<string>;
+    saveJson(domain: string, filename: string, content: string): Promise<string>;
+}
+
+/**
+ * Concrete implementation of ISessionManager using local file system.
+ */
+export class LocalSessionManager implements ISessionManager {
+    private readonly sessionDir: string;
+
+    constructor() {
+        this.sessionDir = path.resolve(process.cwd(), AppConfig.SESSION_DIR);
+        if (!fs.existsSync(this.sessionDir)) {
+            fs.mkdirSync(this.sessionDir, { recursive: true });
         }
     }
 
-    const htmlBaseDir = path.resolve(process.cwd(), AppConfig.BROWSER_HTML_DIR);
-    const jsonBaseDir = path.resolve(process.cwd(), AppConfig.BROWSER_JSON_DIR);
-
-    // 수집 대상 베이스 폴더 생성
-    if (!fs.existsSync(htmlBaseDir)) fs.mkdirSync(htmlBaseDir, { recursive: true });
-    if (!fs.existsSync(jsonBaseDir)) fs.mkdirSync(jsonBaseDir, { recursive: true });
-
-    console.log('🚀 [세션 브라우저 기동] 브라우저 인스턴스를 시작합니다...');
-
-    const browser = await chromium.launch({
-        headless: false,
-        args: ['--start-maximized', '--disable-blink-features=AutomationControlled'] // 화면 최대화 및 자동화 감지 방지
-    });
-
-    const contextOptions: any = {
-        viewport: null, // 최대화 크기 반영을 위해 null 설정
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        locale: 'en-US'
-    };
-
-    // 🔑 세션 주입 판단
-    if (fs.existsSync(sessionPath)) {
-        contextOptions.storageState = sessionPath;
-        console.log(`🔑 [세션 주입] 기존 세션 파일(${path.basename(sessionPath)})을 주입하여 기동합니다.`);
-    } else {
-        console.log(`⚠️  [로그인 안됨] 세션 파일(${path.basename(sessionPath)})이 없습니다. 브라우저 내에서 직접 로그인을 진행해 주세요.`);
+    public async loadSession(siteName: string, domainName: string): Promise<string | undefined> {
+        // 1. Domain-specific session (e.g. linkedin.com.json)
+        const domainPath = path.join(this.sessionDir, `${domainName}.json`);
+        if (fs.existsSync(domainPath)) {
+            return domainPath;
+        }
+        // 2. Fallback to site name session (e.g. linkedin.json)
+        const sitePath = path.join(this.sessionDir, `${siteName}.json`);
+        if (fs.existsSync(sitePath)) {
+            return sitePath;
+        }
+        return undefined;
     }
 
-    const context = await browser.newContext(contextOptions);
+    public async saveSession(context: BrowserContext, domainName: string): Promise<void> {
+        const sessionPath = path.join(this.sessionDir, `${domainName}.json`);
+        await context.storageState({ path: sessionPath });
+    }
+}
 
-    // 🛡️ Google OAuth 로그인 시 "This browser or app may not be secure" 에러 방지를 위한 webdriver 감지 우회
-    await context.addInitScript(() => {
-        Object.defineProperty(navigator, 'webdriver', {
-            get: () => undefined,
+/**
+ * Concrete implementation of IDataCollector using local file system.
+ */
+export class LocalDataCollector implements IDataCollector {
+    private readonly htmlBaseDir: string;
+    private readonly jsonBaseDir: string;
+
+    constructor() {
+        this.htmlBaseDir = path.resolve(process.cwd(), AppConfig.BROWSER_HTML_DIR);
+        this.jsonBaseDir = path.resolve(process.cwd(), AppConfig.BROWSER_JSON_DIR);
+        
+        if (!fs.existsSync(this.htmlBaseDir)) fs.mkdirSync(this.htmlBaseDir, { recursive: true });
+        if (!fs.existsSync(this.jsonBaseDir)) fs.mkdirSync(this.jsonBaseDir, { recursive: true });
+    }
+
+    public async saveHtml(domain: string, filename: string, content: string): Promise<string> {
+        const siteDir = path.join(this.htmlBaseDir, domain);
+        if (!fs.existsSync(siteDir)) {
+            fs.mkdirSync(siteDir, { recursive: true });
+        }
+        const savePath = path.join(siteDir, filename);
+        fs.writeFileSync(savePath, content, 'utf-8');
+        return savePath;
+    }
+
+    public async saveJson(domain: string, filename: string, content: string): Promise<string> {
+        const siteDir = path.join(this.jsonBaseDir, domain);
+        if (!fs.existsSync(siteDir)) {
+            fs.mkdirSync(siteDir, { recursive: true });
+        }
+        const savePath = path.join(siteDir, filename);
+        fs.writeFileSync(savePath, content, 'utf-8');
+        return savePath;
+    }
+}
+
+/**
+ * Orchestrator engine to run the browser, listen to navigations/responses, and dump files.
+ */
+export class ClipperEngine {
+    private currentDomain: string;
+    private lastSavedContentLength: number = 0;
+    private saveTimeout: NodeJS.Timeout | null = null;
+    private intervalId: NodeJS.Timeout | null = null;
+
+    constructor(
+        private readonly sessionManager: ISessionManager,
+        private readonly dataCollector: IDataCollector,
+        private readonly startUrl: string = 'https://www.linkedin.com'
+    ) {
+        this.currentDomain = AppConfig.SITE === 'linkedin' ? 'linkedin.com' : AppConfig.SITE;
+    }
+
+    public async run(): Promise<void> {
+        console.log('🚀 [세션 브라우저 기동] 브라우저 인스턴스를 시작합니다...');
+
+        const browser = await chromium.launch({
+            headless: false,
+            args: ['--start-maximized', '--disable-blink-features=AutomationControlled']
         });
-    });
 
-    const page = await context.newPage();
+        const contextOptions: any = {
+            viewport: null,
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            locale: 'en-US'
+        };
 
-    let lastSavedContentLength = 0;
-    let saveTimeout: NodeJS.Timeout | null = null;
+        const sessionPath = await this.sessionManager.loadSession(AppConfig.SITE, this.currentDomain);
+        if (sessionPath) {
+            contextOptions.storageState = sessionPath;
+            console.log(`🔑 [세션 주입] 기존 세션 파일(${path.basename(sessionPath)})을 주입하여 기동합니다.`);
+        } else {
+            console.log(`⚠️  [로그인 안됨] 세션 파일이 없습니다. 브라우저 내에서 직접 로그인을 진행해 주세요.`);
+        }
 
-    // 💾 페이지 HTML 및 비동기 결과물 최종 DOM 덤프 함수
-    async function saveHtmlDump(url: string, trigger: string) {
+        const context = await browser.newContext(contextOptions);
+
+        // Google OAuth 로그인 시 webdriver 감지 우회
+        await context.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+            });
+        });
+
+        const page = await context.newPage();
+
+        // Register event listeners
+        this.setupNavigationListener(page);
+        this.setupResponseListener(page);
+        this.startDomObserver(page);
+        this.setupShutdownHooks(browser, context, page);
+
+        // Go to start page
+        console.log(`📡 [이동] ${this.startUrl} 으로 이동합니다. 자유롭게 브라우징 하세요.`);
+        await page.goto(this.startUrl, { waitUntil: 'domcontentloaded' });
+
+        // Keep running until page is closed
+        await page.waitForEvent('close', { timeout: 0 });
+    }
+
+    private setupNavigationListener(page: Page): void {
+        page.on('framenavigated', (frame) => {
+            if (frame === page.mainFrame()) {
+                const url = frame.url();
+                if (url === 'about:blank') return;
+
+                const domain = getDomain(url);
+                if (domain && domain !== 'unknown') {
+                    this.currentDomain = domain;
+                }
+
+                console.log(`🌐 [페이지 이동 감지] ➡️ URL: ${url}`);
+
+                if (this.saveTimeout) clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(() => {
+                    this.triggerHtmlDump(page, url, 'framenavigated');
+                }, 1500);
+            }
+        });
+    }
+
+    private setupResponseListener(page: Page): void {
+        page.on('response', async (response) => {
+            try {
+                const url = response.url();
+                const status = response.status();
+
+                if (status < 200 || status >= 300) return;
+
+                const contentType = response.headers()['content-type'] || '';
+                if (contentType.includes('application/json') || url.includes('/api/') || url.includes('/graphql')) {
+                    const text = await response.text();
+                    try {
+                        JSON.parse(text); // Validate JSON
+                    } catch {
+                        return;
+                    }
+
+                    const timestamp = getTimestamp();
+                    let apiName = 'api';
+                    try {
+                        const parsedUrl = new URL(url);
+                        apiName = parsedUrl.pathname.split('/').filter(Boolean).pop() || 'api';
+                        const opName = parsedUrl.searchParams.get('operationName') || parsedUrl.searchParams.get('queryId');
+                        if (opName) {
+                            apiName = `${apiName}_${opName}`;
+                        }
+                    } catch {}
+
+                    const filename = `${timestamp}_${apiName}.json`;
+                    const savePath = await this.dataCollector.saveJson(this.currentDomain, filename, text);
+                    console.log(`📡 [비동기 API 수집] ➡️ ${path.relative(process.cwd(), savePath)} (${(text.length / 1024).toFixed(1)} KB)`);
+                }
+            } catch {
+                // Ignore errors from network disconnects on response reading
+            }
+        });
+    }
+
+    private startDomObserver(page: Page): void {
+        this.intervalId = setInterval(async () => {
+            try {
+                if (page.isClosed()) return;
+                const currentUrl = page.url();
+                if (!currentUrl || currentUrl === 'about:blank') return;
+
+                const currentHtml = await page.content();
+                const lengthDiff = Math.abs(currentHtml.length - this.lastSavedContentLength);
+
+                if (this.lastSavedContentLength > 0 && (lengthDiff / this.lastSavedContentLength) > 0.15) {
+                    console.log(`🔄 [비동기 데이터 갱신 감지] DOM 크기 변화가 감지되었습니다. (변화폭: ${(lengthDiff / 1024).toFixed(1)} KB)`);
+                    await this.triggerHtmlDump(page, currentUrl, 'dynamic_update');
+                }
+            } catch {
+                // Ignore errors during browser shutdown
+            }
+        }, 6000);
+    }
+
+    private async triggerHtmlDump(page: Page, url: string, trigger: string): Promise<void> {
         try {
-            if (!url || url === 'about:blank') return;
-
-            // 이미 저장 진행중인 타이머가 있으면 클리어
-            if (saveTimeout) {
-                clearTimeout(saveTimeout);
-                saveTimeout = null;
+            if (this.saveTimeout) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = null;
             }
 
-            // JS 비동기 데이터 렌더링을 위해 최대 3초 networkidle 대기
             try {
                 await page.waitForLoadState('networkidle', { timeout: 3000 });
-            } catch (e) {
-                // networkidle 대기 시간 초과되어도 저장 계속 진행
-            }
-            // 최종 JS 렌더링 보정을 위해 추가 1.5초 대기
+            } catch {}
+            
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             const htmlContent = await page.content();
             const timestamp = getTimestamp();
-            
-            // URL을 기반으로 가독성 높은 힌트 문자열 추출
+
             let urlHint = 'page';
             let domain = 'unknown';
             try {
@@ -116,156 +280,58 @@ async function runBrowser() {
                 const parsed = new URL(url);
                 urlHint = parsed.pathname.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
                 if (!urlHint || urlHint === '_') urlHint = 'home';
-            } catch (e) {}
+            } catch {}
 
             const filename = `${timestamp}_${urlHint}.html`;
-            const siteHtmlDir = path.join(htmlBaseDir, domain);
-            if (!fs.existsSync(siteHtmlDir)) fs.mkdirSync(siteHtmlDir, { recursive: true });
-            const savePath = path.join(siteHtmlDir, filename);
-
-            fs.writeFileSync(savePath, htmlContent, 'utf-8');
+            const savePath = await this.dataCollector.saveHtml(domain, filename, htmlContent);
             console.log(`💾 [HTML 저장] (${trigger}) ➡️ ${path.relative(process.cwd(), savePath)} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
 
-            lastSavedContentLength = htmlContent.length;
+            this.lastSavedContentLength = htmlContent.length;
         } catch (err: any) {
             console.error(`⚠️ [HTML 저장 실패]: ${err.message}`);
         }
     }
 
-    // 1️⃣ 네비게이션 발생 감지 (사용자가 페이지 이동 시)
-    page.on('framenavigated', (frame) => {
-        if (frame === page.mainFrame()) {
-            const url = frame.url();
-            if (url === 'about:blank') return;
-            
-            const domain = getDomain(url);
-            if (domain && domain !== 'unknown') {
-                currentDomain = domain;
+    private setupShutdownHooks(browser: any, context: BrowserContext, page: Page): void {
+        const cleanup = async (trigger: string) => {
+            if (this.intervalId) {
+                clearInterval(this.intervalId);
+                this.intervalId = null;
             }
-            
-            console.log(`🌐 [페이지 이동 감지] ➡️ URL: ${url}`);
-            
-            // 디바운스 기법 적용 (네비게이션 연속 발생 시 부하 최소화)
-            if (saveTimeout) clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                saveHtmlDump(url, 'framenavigated');
-            }, 1500);
-        }
-    });
-
-    // 2️⃣ JS로 로딩되는 비동기 API 데이터(JSON) 실시간 감지 및 수집
-    page.on('response', async (response) => {
-        try {
-            const url = response.url();
-            const status = response.status();
-
-            // 성공적인(200번대) 응답 및 유효성 확인
-            if (status < 200 || status >= 300) return;
-
-            const contentType = response.headers()['content-type'] || '';
-            
-            // JSON 및 API/GraphQL 통신 필터링
-            if (contentType.includes('application/json') || url.includes('/api/') || url.includes('/graphql')) {
-                const text = await response.text();
-                
-                // 실제로 유효한 JSON인지 검사
-                try {
-                    JSON.parse(text);
-                } catch (e) {
-                    return; // JSON이 아닌 경우 패스
-                }
-
-                const timestamp = getTimestamp();
-                let apiName = 'api';
-                
-                try {
-                    const parsedUrl = new URL(url);
-                    // 엔드포인트명 추출
-                    apiName = parsedUrl.pathname.split('/').filter(Boolean).pop() || 'api';
-                    
-                    // GraphQL 등의 경우 operationName이나 queryId를 추가하여 고유성 확보
-                    const opName = parsedUrl.searchParams.get('operationName') || parsedUrl.searchParams.get('queryId');
-                    if (opName) {
-                        apiName = `${apiName}_${opName}`;
-                    }
-                } catch (e) {}
-
-                const filename = `${timestamp}_${apiName}.json`;
-                const siteJsonDir = path.join(jsonBaseDir, currentDomain);
-                if (!fs.existsSync(siteJsonDir)) fs.mkdirSync(siteJsonDir, { recursive: true });
-                const savePath = path.join(siteJsonDir, filename);
-
-                fs.writeFileSync(savePath, text, 'utf-8');
-                console.log(`📡 [비동기 API 수집] ➡️ ${path.relative(process.cwd(), savePath)} (${(text.length / 1024).toFixed(1)} KB)`);
+            if (this.saveTimeout) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = null;
             }
-        } catch (err: any) {
-            // response.text() 읽기 도중 발생할 수 있는 네트워크 파기 건 무시
-        }
-    });
-
-    // 3️⃣ 사용자가 페이지 이동 없이 스크롤하여 추가 JS 데이터를 로드하는 경우 대응 (주기적 DOM 감시)
-    const intervalId = setInterval(async () => {
-        try {
-            if (page.isClosed()) return;
-            const currentUrl = page.url();
-            if (!currentUrl || currentUrl === 'about:blank') return;
-
-            const currentHtml = await page.content();
-            const lengthDiff = Math.abs(currentHtml.length - lastSavedContentLength);
-
-            // 이전 저장본 대비 크기가 15% 이상 달라졌다면 비동기 데이터 추가 로딩으로 판단하여 자동 갱신 저장
-            if (lastSavedContentLength > 0 && (lengthDiff / lastSavedContentLength) > 0.15) {
-                console.log(`🔄 [비동기 데이터 갱신 감지] DOM 크기 변화가 감지되었습니다. (변화폭: ${(lengthDiff / 1024).toFixed(1)} KB)`);
-                await saveHtmlDump(currentUrl, 'dynamic_update');
+            try {
+                await this.sessionManager.saveSession(context, this.currentDomain);
+                const savedPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${this.currentDomain}.json`);
+                console.log(`💾 [세션 백업 완료] (${trigger}) ➡️ ${savedPath}`);
+            } catch (err: any) {
+                console.error(`⚠️ [세션 백업 실패]: ${err.message}`);
             }
-        } catch (e) {
-            // 브라우저 종료 도중 발생하는 에러 무시
-        }
-    }, 6000);
+        };
 
-    // 🚪 탭/브라우저가 닫힐 때 세션을 자동으로 갱신 저장
-    page.on('close', async () => {
-        console.log('\n🚪 브라우저 페이지가 닫혔습니다.');
-        clearInterval(intervalId);
-        if (saveTimeout) clearTimeout(saveTimeout);
+        page.on('close', async () => {
+            console.log('\n🚪 브라우저 페이지가 닫혔습니다.');
+            await cleanup('page_close');
+            process.exit(0);
+        });
 
-        try {
-            const finalSessionPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${currentDomain}.json`);
-            const sessionDir = path.dirname(finalSessionPath);
-            if (!fs.existsSync(sessionDir)) {
-                fs.mkdirSync(sessionDir, { recursive: true });
-            }
-            await context.storageState({ path: finalSessionPath });
-            console.log(`💾 [세션 자동 갱신] 최신 토큰 정보를 성공적으로 업데이트했습니다 ➡️ ${finalSessionPath}`);
-        } catch (err: any) {
-            console.error(`⚠️ [세션 갱신 실패]: ${err.message}`);
-        }
-        process.exit(0);
-    });
-
-    // 🛑 Ctrl+C 종료 등 프로세스 중단 시 안전하게 브라우저 닫기 및 세션 백업
-    process.on('SIGINT', async () => {
-        console.log('\n🛑 [프로세스 종료 신호 감지] 브라우저 종료 및 세션을 안전하게 백업합니다...');
-        clearInterval(intervalId);
-        if (saveTimeout) clearTimeout(saveTimeout);
-        try {
-            const finalSessionPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${currentDomain}.json`);
-            await context.storageState({ path: finalSessionPath });
-            console.log(`💾 [세션 백업 완료] ➡️ ${finalSessionPath}`);
-        } catch (e) {}
-        await browser.close();
-        process.exit(0);
-    });
-
-    // 기본 최초 진입 페이지 로딩 (LinkedIn 홈)
-    console.log('📡 [이동] https://www.linkedin.com 으로 이동합니다. 브라우저를 통해 자유롭게 수집을 진행하세요.');
-    await page.goto('https://www.linkedin.com', { waitUntil: 'domcontentloaded' });
-
-    // 브라우저 닫힘 이벤트 무제한 대기
-    await page.waitForEvent('close', { timeout: 0 });
+        process.on('SIGINT', async () => {
+            console.log('\n🛑 [프로세스 종료 신호 감지] 브라우저 종료 및 세션을 백업합니다...');
+            await cleanup('sigint');
+            await browser.close();
+            process.exit(0);
+        });
+    }
 }
 
-runBrowser().catch((err) => {
+// 구동부
+const sessionManager = new LocalSessionManager();
+const dataCollector = new LocalDataCollector();
+const engine = new ClipperEngine(sessionManager, dataCollector);
+
+engine.run().catch((err) => {
     console.error(`❌ 브라우저 실행기 구동 중 심각한 오류 발생: ${err.message}`);
     process.exit(1);
 });
