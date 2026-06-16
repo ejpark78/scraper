@@ -73,11 +73,17 @@ graph LR
 ```
 
 #### ① Windows에서 크롬을 디버깅 포트로 실행
-Windows 실행 창(Win + R)이나 PowerShell에서 실행 중인 모든 크롬을 종료한 뒤 아래 명령어로 크롬을 켭니다.
-```powershell
-# Windows PowerShell에서 실행
-Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222"
-```
+Windows 실행 창(Win + R)이나 PowerShell에서 아래 명령어로 크롬을 켭니다. 
+
+*   **기본 실행 명령어 (기존 모든 크롬 창 종료 필요)**:
+    ```powershell
+    Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9222"
+    ```
+*   **포트 충돌 예방 및 독립 실행 (추천)**:
+    이미 크롬이 켜져 있거나 다른 백그라운드 프로그램(예: Lenovo Vantage 등)이 기본 포트 `9222`를 점유 중인 경우, 포트 번호를 `9223`으로 바꾸고 임시 데이터 디렉터리(`--user-data-dir`) 옵션을 추가해 완전히 독립된 프로필로 켭니다.
+    ```powershell
+    Start-Process "chrome.exe" -ArgumentList "--remote-debugging-port=9223", "--user-data-dir=$env:TEMP\chrome-debug"
+    ```
 
 #### ② WSL 내부에서 연결 상태 검증
 WSL2는 Windows의 `localhost` 포트를 자동으로 공유해 줍니다. WSL 터미널에서 접속이 잘 되는지 테스트합니다.
