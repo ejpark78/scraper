@@ -6,7 +6,7 @@ services:
   viewer-fe:
     build:
       context: ../../../
-      dockerfile: docker/tools/viewer-fe/Dockerfile
+      dockerfile: docker/tools/viewer/fe/Dockerfile
     image: linkedin/viewer-fe:dev
     profiles:
       - tools
@@ -31,7 +31,7 @@ services:
   viewer-api:
     build:
       context: ../../../
-      dockerfile: docker/tools/viewer/Dockerfile
+      dockerfile: docker/tools/viewer/api/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
@@ -70,7 +70,7 @@ services:
   viewer-mcp:
     build:
       context: ../../../
-      dockerfile: docker/tools/viewer/Dockerfile
+      dockerfile: docker/tools/viewer/mcp/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
