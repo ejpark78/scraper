@@ -10,6 +10,7 @@ services:
     image: linkedin/viewer-fe:dev
     profiles:
       - tools
+      - viewer
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
@@ -19,6 +20,11 @@ services:
         condition: service_healthy
       viewer-api:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:5173', (r) => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.viewer-fe.rule=Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`)"
@@ -37,6 +43,7 @@ services:
     command: ["npx", "ts-node", "src/viewer/server.ts"]
     profiles:
       - tools
+      - viewer
     environment:
       - TZ=Asia/Seoul
       - MONGO_URL=mongodb://mongodb:27017
@@ -76,6 +83,7 @@ services:
     command: ["npx", "ts-node", "src/viewer/mcp-entry.ts"]
     profiles:
       - tools
+      - viewer
     environment:
       - TZ=Asia/Seoul
       - MONGO_URL=mongodb://mongodb:27017
@@ -90,6 +98,11 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3001/sse', (r) => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.viewer-mcp.rule=Host(`mcp.localhost`)"
