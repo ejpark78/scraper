@@ -31,6 +31,16 @@ export class AppConfig {
     public static readonly SESSION_DIR: string = process.env.SESSION_DIR || 'data/sessions';
 
     /**
+     * Browser HTML Dump Directory Path
+     */
+    public static readonly BROWSER_HTML_DIR: string = process.env.BROWSER_HTML_DIR || 'data/browser/html';
+
+    /**
+     * Browser JSON Dump Directory Path
+     */
+    public static readonly BROWSER_JSON_DIR: string = process.env.BROWSER_JSON_DIR || 'data/browser/json';
+
+    /**
      * Crawler/Scraper Slack Interval (in seconds)
      */
     public static readonly LIST_SLACK: number = parseInt(process.env.LIST_SLACK || '3', 10);

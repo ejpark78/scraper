@@ -10,6 +10,7 @@
 import { chromium } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
+import { AppConfig } from '../../config/AppConfig';
 
 // 📅 YYYY-MM-DD_HH-mm-ss 형식의 타임스탬프 생성 헬퍼
 function getTimestamp(): string {
@@ -19,9 +20,9 @@ function getTimestamp(): string {
 }
 
 async function runBrowser() {
-    const sessionPath = path.join(process.env.SESSION_DIR || path.resolve(process.cwd(), 'data/sessions'), `${process.env.SITE || 'linkedin'}.json`);
-    const htmlDir = path.join(__dirname, '..', '..', 'data', 'browser', 'html');
-    const jsonDir = path.join(__dirname, '..', '..', 'data', 'browser', 'json');
+    const sessionPath = path.resolve(process.cwd(), AppConfig.SESSION_DIR, `${AppConfig.SITE}.json`);
+    const htmlDir = path.resolve(process.cwd(), AppConfig.BROWSER_HTML_DIR);
+    const jsonDir = path.resolve(process.cwd(), AppConfig.BROWSER_JSON_DIR);
 
     // 수집 대상 폴더 생성
     if (!fs.existsSync(htmlDir)) fs.mkdirSync(htmlDir, { recursive: true });
@@ -97,7 +98,7 @@ async function runBrowser() {
             const savePath = path.join(htmlDir, filename);
 
             fs.writeFileSync(savePath, htmlContent, 'utf-8');
-            console.log(`💾 [HTML 저장] (${trigger}) ➡️ data/browser/html/${filename} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
+            console.log(`💾 [HTML 저장] (${trigger}) ➡️ ${path.relative(process.cwd(), savePath)} (${(htmlContent.length / 1024).toFixed(1)} KB)`);
 
             lastSavedContentLength = htmlContent.length;
         } catch (err: any) {
@@ -162,7 +163,7 @@ async function runBrowser() {
                 const savePath = path.join(jsonDir, filename);
 
                 fs.writeFileSync(savePath, text, 'utf-8');
-                console.log(`📡 [비동기 API 수집] ➡️ data/browser/json/${filename} (${(text.length / 1024).toFixed(1)} KB)`);
+                console.log(`📡 [비동기 API 수집] ➡️ ${path.relative(process.cwd(), savePath)} (${(text.length / 1024).toFixed(1)} KB)`);
             }
         } catch (err: any) {
             // response.text() 읽기 도중 발생할 수 있는 네트워크 파기 건 무시
