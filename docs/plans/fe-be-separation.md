@@ -50,3 +50,36 @@ graph TD
 ### 4단계: Vite Proxy 및 웹소켓 설정 보강
 1.  `vite.config.ts` 파일에 `server.proxy` 설정을 구성하여 로컬 브라우저 개발 시 `/api`로 향하는 요청을 내부 백엔드 컴포즈 컨테이너 포트(`viewer-api:3000`)로 프록시 전달합니다.
 2.  WSL 및 역방향 프록시 환경에서 핫 리로드 웹소켓이 끊기지 않도록 `server.hmr` 설정을 추가로 잡아줍니다.
+
+---
+
+## ⚖️ 3. MCP 서비스 분리 설계 대안 비교 (API vs MCP Separation)
+
+에이전트가 사용하는 MCP 채널과 사용자 대시보드 API 채널을 추가로 분리할지에 대한 아키텍처적 검토입니다.
+
+### 대안 ①: FE/BE 2단계 분할 (하이브리드 백엔드 구조)
+*   **구조**: 프론트엔드(`viewer-fe`)만 분리하고, 백엔드는 하나의 컨테이너(`viewer-api`)가 REST API와 MCP 서버(`/sse`)를 동시에 호스팅합니다.
+*   **특징**:
+    *   커넥션 풀 공유: MongoDB 및 Redis 커넥션 인스턴스를 하나로 공유하므로 전체 시스템 리소스 소모가 적습니다.
+    *   간단한 배포: Docker Compose 서비스 정의가 2개로 유지되므로 단순합니다.
+
+### 대안 ②: FE/API/MCP 3단계 완전 분할 (마이크로서비스 구조)
+*   **구조**: 프론트엔드(`viewer-fe`), 대시보드 백엔드(`viewer-api`), MCP 도구 서버(`viewer-mcp`)의 3개 서비스로 완전히 파편화하여 분리합니다.
+*   **특징**:
+    *   장애 격리: 에이전트가 무거운 도구 호출(예: 대용량 데이터 수집/인덱싱)을 요청하여 MCP 서버 메모리가 고갈되거나 랙이 걸려도, 사용자가 보는 대시보드(`viewer-api`)는 전혀 지장을 받지 않고 안전하게 동작합니다.
+    *   보안 제어: 트래픽 규칙상 `Host("mcp.localhost")`만 허용하는 포트(`3001`)와 대시보드 API용 포트(`3000`)를 분리하므로, 외부 접근 보안 정책(IP ACL, 인증 헤더 적용 등)의 설계가 견고해집니다.
+    *   **흐름도**:
+        ```mermaid
+        graph TD
+            User([사용자 브라우저]) --> Traefik[Traefik 프록시]
+            Traefik -->|① Host: viewer.localhost| FE[viewer-fe 컨테이너]
+            Traefik -->|② Host: viewer.localhost/api/*| API[viewer-api 컨테이너 - 포트 3000]
+            Traefik -->|③ Host: mcp.localhost| MCP[viewer-mcp 컨테이너 - 포트 3001]
+            
+            API --> DB[(Database)]
+            MCP --> DB
+        ```
+
+### 의사결정 제안 (Decision Recommendation)
+로컬 리소스 자원을 아끼고 단일 백엔드 코드 베이스로 빠르게 구성하기 위해, 1차적으로 **대안 ① (하이브리드 백엔드)**을 기본 모델로 채택하되, 추후 에이전트 사용량이 증가하고 부하 테스트가 필요해지는 시점에 `viewer-mcp` 서비스를 별도의 도커 데몬 및 서비스 포트로 분리 구동할 수 있도록 백엔드 디렉터리 내에 독립적인 엔트리포인트(`src/viewer/mcp-entry.ts`) 설계 기반을 선제적으로 닦아둡니다.
+
