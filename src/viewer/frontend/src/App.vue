@@ -671,7 +671,24 @@ function escapeHtml(text: string) {
 const iframeSrcDoc = computed(() => {
   if (!selectedDoc.value) return '';
   if (loadingRaw.value) {
-    return `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:20px;text-align:center;"><h3>Loading raw HTML...</h3></body>`;
+    return `<body style="background:#0f131a;color:#9ca3af;font-family:sans-serif;padding:40px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:150px;">
+      <style>
+        .spinner {
+          width: 28px;
+          height: 28px;
+          border: 3px solid rgba(99, 102, 241, 0.1);
+          border-top: 3px solid #6366f1;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
+      <div class="spinner"></div>
+      <h3 style="margin:0;font-weight:500;font-size:14px;color:#9ca3af;">Loading raw HTML...</h3>
+    </body>`;
   }
   const bronze = selectedDoc.value.bronze;
   if (bronze.rawHtml) {
