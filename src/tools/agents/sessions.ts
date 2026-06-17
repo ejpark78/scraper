@@ -206,6 +206,8 @@ class TranscriptDumper {
         fs.writeFileSync(outPath, md, 'utf-8');
         console.log(`  ✨ Saved transcript: ${outPath}`);
 
+        this.writeWikiLog(s.id, detail.messages);
+
         if (this.adapter.baseBrainDir) {
           const srcSessionDir = path.join(this.adapter.baseBrainDir, s.id);
           if (fs.existsSync(srcSessionDir)) {
@@ -238,6 +240,125 @@ class TranscriptDumper {
         console.warn(`  ⚠️ Skipping session ${s.id} due to error: ${detailErr.message}`);
       }
     });
+  }
+
+  private writeWikiLog(sessionId: string, messages: AgentMessage[]): void {
+    const turns: { user: AgentMessage; assistant: AgentMessage | null }[] = [];
+    let currentTurn: { user: AgentMessage; assistant: AgentMessage | null } | null = null;
+
+    messages.forEach(msg => {
+      if (msg.role === 'user') {
+        if (currentTurn) {
+          turns.push(currentTurn);
+        }
+        currentTurn = { user: msg, assistant: null };
+      } else if (msg.role === 'assistant') {
+        if (!currentTurn) {
+          currentTurn = { user: { role: 'user', content: 'N/A', toolCalls: [], stepIndex: msg.stepIndex - 1 }, assistant: msg };
+        } else {
+          currentTurn.assistant = msg;
+        }
+      }
+    });
+    if (currentTurn) {
+      turns.push(currentTurn);
+    }
+
+    let wikiContent = '';
+
+    turns.forEach((turn, idx) => {
+      const userReq = turn.user.content.trim();
+      const assistantAns = turn.assistant ? turn.assistant.content.trim() : 'N/A';
+      const stepIdx = turn.user.stepIndex;
+
+      let category = 'General';
+      let summary = userReq.split('\n')[0].substring(0, 60);
+      if (!summary) summary = `Turn ${idx + 1}`;
+      let tags = '#general';
+      const touchedFiles: string[] = [];
+
+      const commands: string[] = [];
+      const toolCalls = turn.assistant ? turn.assistant.toolCalls : [];
+      toolCalls.forEach(call => {
+        if (call.name === 'run_command') {
+          const cmd = String(call.arguments.CommandLine || '');
+          commands.push(cmd);
+          if (cmd.includes('commit')) {
+            category = 'Git/Commit';
+          }
+        } else {
+          commands.push(`${call.name}(${JSON.stringify(call.arguments)})`);
+        }
+
+        const fileArg = String(call.arguments.TargetFile || call.arguments.AbsolutePath || '');
+        if (fileArg) {
+          const relPath = path.relative(this.workspaceRoot, fileArg);
+          if (!relPath.startsWith('..') && !path.isAbsolute(relPath)) {
+            touchedFiles.push(relPath);
+          }
+        }
+      });
+
+      if (category === 'General' && touchedFiles.length > 0) {
+        if (touchedFiles.some(f => f.includes('.agents') || f.includes('AGENTS.md'))) {
+          category = 'Doc/Rules';
+          tags = '#doc #rules';
+        } else if (touchedFiles.some(f => f.includes('src/crawler/sites/'))) {
+          category = 'Crawler/Dev';
+          tags = '#crawler #dev';
+        } else if (touchedFiles.some(f => f.includes('src/viewer/frontend/'))) {
+          category = 'Frontend/Dev';
+          tags = '#frontend #dev';
+        } else if (touchedFiles.some(f => f.includes('src/database/'))) {
+          category = 'DB/Migration';
+          tags = '#db #migration';
+        } else if (touchedFiles.some(f => f.endsWith('.ts') || f.endsWith('.js'))) {
+          category = 'Refactor';
+          tags = '#refactor';
+        }
+      }
+
+      const filesList = touchedFiles.length > 0 
+        ? touchedFiles.map(f => `* [${path.basename(f)}](${f})`).join('\n')
+        : 'None';
+
+      const datetime = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+      let learnings = 'N/A';
+      const learningHeaderMatch = assistantAns.match(/(?:##?\s*(?:Troubleshooting|Learnings|💡\s*Troubleshooting|배운\s*점|학습\s*내용)[\s\S]*)/i);
+      if (learningHeaderMatch) {
+        learnings = learningHeaderMatch[0].trim();
+      }
+
+      let implementation = 'Performed requested updates.';
+      if (touchedFiles.length > 0) {
+        implementation = `Modified files: ${touchedFiles.map(f => `\`${f}\``).join(', ')}.`;
+      }
+
+      if (idx > 0) {
+        wikiContent += `\n---\n\n`;
+      }
+
+      wikiContent += `# 📌 Turn: [${category}] ${summary}\n`;
+      wikiContent += `- **Tags**: ${tags}\n`;
+      wikiContent += `- **Related Files**:\n${filesList.split('\n').map(l => '  ' + l).join('\n')}\n`;
+      wikiContent += `- **Date**: ${datetime}\n\n`;
+      wikiContent += `## 🗣️ User Request\n> ${userReq.replace(/\n/g, '\n> ')}\n\n`;
+      wikiContent += `## 🗣️ Agent Answer\n> ${assistantAns.replace(/\n/g, '\n> ')}\n\n`;
+      wikiContent += `## 🛠️ Action Taken & Implementation Details\n- ${implementation}\n\n`;
+      wikiContent += `### 💻 Executed CLI Commands\n`;
+      if (commands.length > 0) {
+        wikiContent += commands.map(c => `- \`${c}\``).join('\n') + '\n';
+      } else {
+        wikiContent += `- None\n`;
+      }
+      wikiContent += `\n## 💡 Troubleshooting / Learnings (LLM Knowledge Base)\n- ${learnings.replace(/\n/g, '\n  ')}\n`;
+    });
+
+    const destPath = path.join(this.workspaceRoot, 'data', 'agents', `${sessionId}.md`);
+    fs.mkdirSync(path.dirname(destPath), { recursive: true });
+    fs.writeFileSync(destPath, wikiContent, 'utf-8');
+    console.log(`  ✨ Saved unified wiki transcript: ${destPath}`);
   }
 }
 
