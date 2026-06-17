@@ -208,9 +208,8 @@ class TranscriptDumper {
 
         this.writeWikiLog(s.id, detail.messages);
 
-        if (this.adapter.baseBrainDir) {
-          const srcSessionDir = path.join(this.adapter.baseBrainDir, s.id);
-          if (fs.existsSync(srcSessionDir)) {
+        const srcSessionDir = detail.sessionDir || (this.adapter.baseBrainDir ? path.join(this.adapter.baseBrainDir, s.id) : '');
+        if (srcSessionDir && fs.existsSync(srcSessionDir)) {
             fs.cpSync(srcSessionDir, destSessionDir, {
               recursive: true,
               filter: (src) => {
@@ -235,7 +234,6 @@ class TranscriptDumper {
 
             console.log(`  ✨ Copied all raw session assets and logs to: ${destSessionDir}`);
           }
-        }
       } catch (detailErr: any) {
         console.warn(`  ⚠️ Skipping session ${s.id} due to error: ${detailErr.message}`);
       }

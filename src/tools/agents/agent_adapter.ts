@@ -42,6 +42,7 @@ export interface SessionDetail {
   session: AgentSession;
   messages: AgentMessage[];
   taskLogs?: { id: string; localPath: string }[];
+  sessionDir?: string;
 }
 
 export interface AgentAdapter {
@@ -80,23 +81,32 @@ class AgyAdapter implements AgentAdapter {
   getName(): string { return 'agy'; }
 
   getSessions(all: boolean): AgentSession[] {
-    if (!fs.existsSync(this.baseBrainDir)) {
-      throw new Error(`agy brain directory not found: ${this.baseBrainDir}`);
-    }
+    const cliBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
+    const ideBrainDir = path.join(os.homedir(), '.gemini/antigravity-ide/brain');
+    const dirs: { name: string; fullPath: string; mtime: number }[] = [];
 
-    const dirs = fs.readdirSync(this.baseBrainDir)
-      .map(name => ({
-        name,
-        fullPath: path.join(this.baseBrainDir, name),
-        mtime: fs.statSync(path.join(this.baseBrainDir, name)).mtimeMs,
-      }))
-      .filter(item => {
-        try { return fs.statSync(item.fullPath).isDirectory() && item.name !== 'scratch' && item.name !== '.system_generated'; }
-        catch { return false; }
-      })
-      .sort((a, b) => b.mtime - a.mtime);
+    [cliBrainDir, ideBrainDir].forEach(baseDir => {
+      if (fs.existsSync(baseDir)) {
+        try {
+          fs.readdirSync(baseDir).forEach(name => {
+            const fullPath = path.join(baseDir, name);
+            try {
+              if (fs.statSync(fullPath).isDirectory() && name !== 'scratch' && name !== '.system_generated') {
+                dirs.push({
+                  name,
+                  fullPath,
+                  mtime: fs.statSync(fullPath).mtimeMs,
+                });
+              }
+            } catch { /* skip */ }
+          });
+        } catch { /* skip */ }
+      }
+    });
 
-    if (dirs.length === 0) throw new Error('No agy sessions found.');
+    if (dirs.length === 0) throw new Error('No agy sessions found in cli or ide brain directories.');
+
+    dirs.sort((a, b) => b.mtime - a.mtime);
 
     const selected = all ? dirs : [dirs[0]];
     return selected.map(d => ({
@@ -114,10 +124,22 @@ class AgyAdapter implements AgentAdapter {
   }
 
   getSessionDetail(sessionId: string): SessionDetail {
-    const logPath = path.join(this.baseBrainDir, sessionId, '.system_generated/logs/transcript_full.jsonl');
+    const cliBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
+    const ideBrainDir = path.join(os.homedir(), '.gemini/antigravity-ide/brain');
+    let logPath = '';
+    let foundBaseDir = '';
 
-    if (!fs.existsSync(logPath)) {
-      throw new Error(`Transcript log not found for session ${sessionId}: ${logPath}`);
+    for (const baseDir of [cliBrainDir, ideBrainDir]) {
+      const p = path.join(baseDir, sessionId, '.system_generated/logs/transcript_full.jsonl');
+      if (fs.existsSync(p)) {
+        logPath = p;
+        foundBaseDir = baseDir;
+        break;
+      }
+    }
+
+    if (!logPath) {
+      throw new Error(`Transcript log not found for session ${sessionId} in cli or ide directories.`);
     }
 
     const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
@@ -146,7 +168,7 @@ class AgyAdapter implements AgentAdapter {
             const taskId = taskMatch[0];
             const resultIdx = content.indexOf('finished with result:');
             if (resultIdx !== -1) {
-              const logFile = path.join(this.baseBrainDir, sessionId, '.system_generated', 'tasks', `${taskId}.log`);
+              const logFile = path.join(foundBaseDir, sessionId, '.system_generated', 'tasks', `${taskId}.log`);
               let taskResult = '';
               if (fs.existsSync(logFile)) {
                 taskResult = fs.readFileSync(logFile, 'utf-8');
@@ -191,7 +213,7 @@ class AgyAdapter implements AgentAdapter {
       cost: 0,
     };
 
-    return { session, messages };
+    return { session, messages, sessionDir: path.join(foundBaseDir, sessionId) };
   }
 }
 
