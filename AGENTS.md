@@ -25,6 +25,9 @@
 9. **No Unapproved Concurrent Background Tasks**: To prevent race conditions and database/system state corruption, the agent MUST NOT launch or run multiple background commands/tasks in parallel without explicit user approval for each command. Wait for any active background tasks to fully finish and verify their exit status before requesting permission for any subsequent commands.
 10. **Defer Data Mutations to User**: To prevent unintended data corruption or conflict, the agent MUST NOT execute or request approval to run commands that perform major persistent data mutations, database seeding, index resetting, or reindexing (e.g. `meili-manager.ts --reset`). Instead, the agent must explain the required execution steps and command lines clearly in the chat, requesting that the USER run them manually.
 11. **Collaborative Deferral of Environment Controls (Pair Programming)**: For operational task executions such as container rebuilds, service restarts, image cleaning, and complex runtime deployments, the agent should act as a collaborative pair programming partner. Instead of running these commands directly, the agent should prioritize explaining the purpose and command lines clearly, requesting that the USER run them (e.g. `make up-viewer` or custom docker build commands) manually.
+12. **Korean Language for AI Processing & Responses**: All AI processing logs, status messages, and chat responses must be written in Korean.
+13. **No Out-of-Scope Modifications**: Do not modify files outside the scope explicitly requested by the user.
+14. **No Speculative Fixes**: Speculative or guessing-based code modifications are strictly prohibited. If the root cause of an issue is unknown, ask the user for clarification.
 
 
 ## ⚠️ Security Rules
