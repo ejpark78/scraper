@@ -130,12 +130,15 @@ class AgyAdapter implements AgentAdapter {
     let foundBaseDir = '';
 
     for (const baseDir of [cliBrainDir, ideBrainDir]) {
-      const p = path.join(baseDir, sessionId, '.system_generated/logs/transcript_full.jsonl');
-      if (fs.existsSync(p)) {
-        logPath = p;
-        foundBaseDir = baseDir;
-        break;
+      for (const logName of ['transcript_full.jsonl', 'transcript.jsonl']) {
+        const p = path.join(baseDir, sessionId, '.system_generated/logs', logName);
+        if (fs.existsSync(p)) {
+          logPath = p;
+          foundBaseDir = baseDir;
+          break;
+        }
       }
+      if (logPath) break;
     }
 
     if (!logPath) {
