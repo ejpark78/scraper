@@ -1,4 +1,8 @@
-# 🚨 Failure Detection & Isolation Rules (FailureHandlingRule.md)
+---
+trigger: always_on
+---
+
+# 🚨 Failure Detection & Isolation Rules
 
 This document defines the rules for systematically detecting and isolating exception cases across the scraper and converter pipelines.
 

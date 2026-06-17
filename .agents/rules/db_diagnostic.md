@@ -1,4 +1,8 @@
-# 🚨 DB Diagnostic & Safety Rules (DBDiagnosticRule.md)
+---
+trigger: always_on
+---
+
+# 🚨 DB Diagnostic & Safety Rules
 
 This document defines the rules for the agent to safely and effectively diagnose databases (MongoDB, Redis, etc.) in both local and container environments.
 

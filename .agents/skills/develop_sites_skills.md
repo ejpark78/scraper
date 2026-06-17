@@ -1,4 +1,4 @@
-# 🛠️ Site Development & Crawler Architecture Rules (DevelopSitesSkills.md)
+# Skill: Site Development & Crawler Architecture Rules
 
 This document defines the overall architecture, operation methods, common utility rules, and development standards to comply with when adding new sites to the `src/crawler` subsystem.
 

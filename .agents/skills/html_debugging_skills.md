@@ -1,4 +1,4 @@
-# 💡 HTML Crawler & Parser Debugging (HtmlDebuggingSkills.md)
+# Skill: HTML Crawler & Parser Debugging
 
 This document defines the skills and CLI instructions for analyzing crawler logs and debugging HTML parsers and converters.
 

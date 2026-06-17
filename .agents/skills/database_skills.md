@@ -1,4 +1,4 @@
-# 💡 DB Index & Schema Diagnostics (DatabaseSkills.md)
+# Skill: DB Index & Schema Diagnostics
 
 This document defines the skills and CLI instructions for diagnosing MongoDB index mismatches and schema consistency across collections.
 
