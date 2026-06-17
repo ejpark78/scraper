@@ -73,7 +73,7 @@ class SysInfoDumper {
 
   private getMongoConnectivity(): string {
     try {
-      const output = execSync('docker exec scraper-mongodb-1 mongosh --eval "db.adminCommand({ping: 1})" --quiet', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      const output = execSync('docker compose -p scraper exec -T mongodb mongosh --eval "db.adminCommand({ping: 1})" --quiet', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       return output.includes('ok: 1') ? 'Connected (Active)' : 'Disconnected';
     } catch {
       return 'Disconnected/Unavailable';
@@ -82,7 +82,7 @@ class SysInfoDumper {
 
   private getRedisConnectivity(): string {
     try {
-      const output = execSync('docker exec scraper-redis-1 redis-cli ping', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      const output = execSync('docker compose -p scraper exec -T redis redis-cli ping', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       return output.trim() === 'PONG' ? 'Connected (Active)' : 'Disconnected';
     } catch {
       return 'Disconnected/Unavailable';
