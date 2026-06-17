@@ -1,5 +1,5 @@
 {
-  "name": "linkedin",
+  "name": "scraper",
   "version": "1.0.0",
   "description": "",
   "main": "src/get_html.js",

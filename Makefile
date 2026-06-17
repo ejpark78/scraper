@@ -13,7 +13,7 @@
 
 include scripts/environments.mk
 
-COMPOSE := docker compose -p linkedin
+COMPOSE := docker compose -p scraper
 export COMPOSE
 
 # RUN_USER and others are now defined in environments.mk

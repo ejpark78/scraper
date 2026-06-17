@@ -63,7 +63,7 @@ class SysInfoDumper {
 
   private getDockerStatus(): string {
     try {
-      const output = execSync('docker compose -p linkedin ps --format json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      const output = execSync('docker compose -p scraper ps --format json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       const services = JSON.parse(`[${output.trim().split('\n').join(',')}]`) as DockerServiceInfo[];
       return services.map((s: DockerServiceInfo) => `${s.Service}:${s.State}`).join(', ');
     } catch {
@@ -73,7 +73,7 @@ class SysInfoDumper {
 
   private getMongoConnectivity(): string {
     try {
-      const output = execSync('docker exec linkedin-mongodb-1 mongosh --eval "db.adminCommand({ping: 1})" --quiet', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      const output = execSync('docker exec scraper-mongodb-1 mongosh --eval "db.adminCommand({ping: 1})" --quiet', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       return output.includes('ok: 1') ? 'Connected (Active)' : 'Disconnected';
     } catch {
       return 'Disconnected/Unavailable';
@@ -82,7 +82,7 @@ class SysInfoDumper {
 
   private getRedisConnectivity(): string {
     try {
-      const output = execSync('docker exec linkedin-redis-1 redis-cli ping', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      const output = execSync('docker exec scraper-redis-1 redis-cli ping', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       return output.trim() === 'PONG' ? 'Connected (Active)' : 'Disconnected';
     } catch {
       return 'Disconnected/Unavailable';
@@ -380,14 +380,14 @@ class ContextDumper {
     let gitDirty = 'Clean';
 
     try {
-      const out = execSync('docker compose -p linkedin ps mongodb --format json 2>/dev/null', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      const out = execSync('docker compose -p scraper ps mongodb --format json 2>/dev/null', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       if (out.includes('"running"')) mongoStatus = 'Connected (Active)';
     } catch {
       // Ignore
     }
 
     try {
-      const out = execSync('docker compose -p linkedin ps redis --format json 2>/dev/null', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      const out = execSync('docker compose -p scraper ps redis --format json 2>/dev/null', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       if (out.includes('"running"')) redisStatus = 'Connected (Active)';
     } catch {
       // Ignore

@@ -11,7 +11,7 @@ services:
     build:
       context: ../../../
       dockerfile: docker/tools/gmail/Dockerfile
-    image: linkedin/gmail:latest
+    image: scraper/gmail:latest
     profiles:
       - gmail
     environment:

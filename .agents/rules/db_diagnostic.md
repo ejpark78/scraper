@@ -13,7 +13,7 @@ This document defines the rules for the agent to safely and effectively diagnose
 1. **No Direct Host Port Access**:
    - Infrastructure service ports (MongoDB, Redis, Meilisearch, etc.) must not be directly exposed to the host machine.
    - All database access and CLI queries must be executed within the Docker network context.
-   * **Allowed Example**: `docker compose -p linkedin exec -T mongodb mongosh ...`
+   * **Allowed Example**: `docker compose -p scraper exec -T mongodb mongosh ...`
    * **Prohibited Example**: Attempting to connect directly from the host terminal using `mongosh mongodb://localhost:27017`
 
 2. **Connection Leak Prevention**:
@@ -28,7 +28,7 @@ This document defines the rules for the agent to safely and effectively diagnose
    - When verifying metadata or identifier (ID) consistency, **always exclude large fields** from the query projection.
    * **Recommended Query**:
      ```bash
-     docker compose -p linkedin exec -T mongodb mongosh bronze --eval "db['uppity.html'].findOne({}, {rawHtml: 0})"
+     docker compose -p scraper exec -T mongodb mongosh bronze --eval "db['uppity.html'].findOne({}, {rawHtml: 0})"
      ```
 
 2. **No Large Record Dumps**:
@@ -36,5 +36,5 @@ This document defines the rules for the agent to safely and effectively diagnose
    - To verify document storage status or distribution of states, use `countDocuments` or `aggregate` to output statistical summaries only.
    * **Recommended Query**:
      ```bash
-     docker compose -p linkedin exec -T mongodb mongosh bronze --eval "db['uppity.urls'].countDocuments({status: 'failed'})"
+     docker compose -p scraper exec -T mongodb mongosh bronze --eval "db['uppity.urls'].countDocuments({status: 'failed'})"
      ```

@@ -11,7 +11,7 @@ If the collection indexes in MongoDB mismatch the descriptors declared in `site.
 ### 1.1 Executing the Sync Script
 Run the following command to synchronize indexes and output a status report:
 ```bash
-docker compose -p linkedin run --rm \
+docker compose -p scraper run --rm \
   -v $(pwd):/app -v /app/node_modules \
   worker npx ts-node src/scripts/sync-indexes.ts
 ```
@@ -29,7 +29,7 @@ You can cross-verify whether fields are correctly mapped for different crawlers 
 
 ### 2.1 Printing the Schema Mapping Report
 ```bash
-docker compose -p linkedin run --rm \
+docker compose -p scraper run --rm \
   -v $(pwd):/app -v /app/node_modules \
   worker npx ts-node src/scripts/show_collection_columns.ts
 ```
@@ -45,13 +45,13 @@ Use these one-line commands to quickly check database status from outside the co
 
 - **Check document counts for a site's html and urls collections**:
   ```bash
-  docker compose -p linkedin exec -T mongodb mongosh bronze --eval "print('html count:', db['uppity.html'].countDocuments(), 'urls count:', db['uppity.urls'].countDocuments())"
+  docker compose -p scraper exec -T mongodb mongosh bronze --eval "print('html count:', db['uppity.html'].countDocuments(), 'urls count:', db['uppity.urls'].countDocuments())"
   ```
 - **Inspect metadata for one failed record**:
   ```bash
-  docker compose -p linkedin exec -T mongodb mongosh bronze --eval "db['uppity.urls'].findOne({status: 'failed'}, {rawHtml: 0})"
+  docker compose -p scraper exec -T mongodb mongosh bronze --eval "db['uppity.urls'].findOne({status: 'failed'}, {rawHtml: 0})"
   ```
 - **Find a document by a specific MD5 ID**:
   ```bash
-  docker compose -p linkedin exec -T mongodb mongosh bronze --eval "db['uppity.urls'].findOne({id: '887e626b6b08089a95df068adbd103d5'})"
+  docker compose -p scraper exec -T mongodb mongosh bronze --eval "db['uppity.urls'].findOne({id: '887e626b6b08089a95df068adbd103d5'})"
   ```

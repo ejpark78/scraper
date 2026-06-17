@@ -7,7 +7,7 @@ services:
     build:
       context: ../../../
       dockerfile: docker/tools/viewer/fe/Dockerfile
-    image: linkedin/viewer-fe:dev
+    image: scraper/viewer-fe:dev
     profiles:
       - tools
       - viewer
@@ -39,7 +39,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/viewer:latest
+    image: scraper/viewer:latest
     command: ["npx", "ts-node", "src/viewer/server.ts"]
     profiles:
       - tools
@@ -79,7 +79,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/viewer:latest
+    image: scraper/viewer:latest
     command: ["npx", "ts-node", "src/viewer/mcp-entry.ts"]
     profiles:
       - tools

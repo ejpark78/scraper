@@ -11,8 +11,8 @@ Quickly filter and audit error stacks from runtime container logs.
 ### 1.1 Running `grep-errors`
 Parse and audit error logs and converter failures across containers:
 ```bash
-docker compose -p linkedin logs --no-color scraper converter | \
-  docker compose -p linkedin run --rm -T \
+docker compose -p scraper logs --no-color scraper converter | \
+  docker compose -p scraper run --rm -T \
   -v ./src/scripts:/app/src/scripts \
   worker npx ts-node src/scripts/grep-errors.ts
 ```
@@ -29,7 +29,7 @@ When body text is missing or Turndown conversion results are corrupted, use the 
 ### 2.1 Analyzing a Local HTML Test File
 Analyze test fixtures or manually saved HTML files to inspect valid tags and content candidates:
 ```bash
-docker compose -p linkedin run --rm \
+docker compose -p scraper run --rm \
   -v $(pwd):/app -v /app/node_modules \
   worker npx ts-node src/scripts/debug_html.ts --file tests/sites/yozm/fixtures/article.html
 ```
@@ -38,7 +38,7 @@ docker compose -p linkedin run --rm \
 ### 2.2 Directly Debugging a MongoDB Document
 Run debugging analysis on a document already stored in the `bronze` database:
 ```bash
-docker compose -p linkedin run --rm \
+docker compose -p scraper run --rm \
   -v $(pwd):/app -v /app/node_modules \
   worker npx ts-node src/scripts/debug_html.ts --site yozm --id 3800
 ```

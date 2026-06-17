@@ -10,9 +10,9 @@ When taking on a task, identify the developmental context and activate/reference
 
 | Development Context | Target Skill File | Key Rules & Focus |
 |:---|:---|:---|
-| **Site Crawlers & Pipeline** | [.agents/skills/DevelopSitesSkills.md](file:///.agents/skills/DevelopSitesSkills.md) | Bronze ➡️ Silver pipeline stages, extending base classes, `IConverter` implementation, saving DB connections in `finally` blocks. |
-| **Database & Indices** | [.agents/skills/DatabaseSkills.md](file:///.agents/skills/DatabaseSkills.md) | MongoDB & Redis schema rules, mandatory database indexes, query performance, and indexing standards. |
-| **HTML/Scraping Debugging** | [.agents/skills/HtmlDebuggingSkills.md](file:///.agents/skills/HtmlDebuggingSkills.md) | Using `HtmlDebugger` utility, dumping raw vs minified HTML, and troubleshooting extraction issues. |
+| **Site Crawlers & Pipeline** | [.agents/skills/develop_sites_skills.md](file:///.agents/skills/develop_sites_skills.md) | Bronze ➡️ Silver pipeline stages, extending base classes, `IConverter` implementation, saving DB connections in `finally` blocks. |
+| **Database & Indices** | [.agents/skills/database_skills.md](file:///.agents/skills/database_skills.md) | MongoDB & Redis schema rules, mandatory database indexes, query performance, and indexing standards. |
+| **HTML/Scraping Debugging** | [.agents/skills/html_debugging_skills.md](file:///.agents/skills/html_debugging_skills.md) | Using `HtmlDebugger` utility, dumping raw vs minified HTML, and troubleshooting extraction issues. |
 | **Global Environment & Orchestration** | **This Document (`SKILL.md`)** | Orchestrating services, Docker networks, CLI diagnostics, testing workflows, and general agent behavior. |
 
 ---
@@ -26,7 +26,7 @@ graph TD
     subgraph Host Network
         Traefik[Traefik Reverse Proxy]
     end
-    subgraph Docker Network: linkedin-net
+    subgraph Docker Network: scraper-net
         Scraper[Scraper Worker]
         Converter[Converter Worker]
         Viewer[Viewer Frontend & Server]
@@ -60,7 +60,7 @@ To ensure consistency and avoid library or runtime mismatches (especially for br
 ### 3.1 Docker-Centric Development & Debugging
 - **Never** run scraping or transformation scripts directly on the host. Always run them inside containers with volume mounting:
   ```bash
-  docker compose -p linkedin run --rm --user $(id -u):$(id -g) -v $(pwd):/app -v /app/node_modules worker npx ts-node src/crawler/cli-list.ts --site geeknews
+  docker compose -p scraper run --rm --user $(id -u):$(id -g) -v $(pwd):/app -v /app/node_modules worker npx ts-node src/crawler/cli-list.ts --site geeknews
   ```
 - **Volume Mount Guideline**: When mounting the workspace (`-v $(pwd):/app`), the host's `node_modules` must not overwrite the container's version. Always append `-v /app/node_modules` to preserve the container's built dependencies.
 

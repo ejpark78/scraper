@@ -10,7 +10,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/worker:latest
+    image: scraper/worker:latest
     profiles:
       - runtime
     environment:
@@ -38,7 +38,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/scraper:latest
+    image: scraper/scraper:latest
     profiles:
       - worker
     command: ["npx", "ts-node", "src/crawler/workers/ScraperWorker.ts"]
@@ -70,7 +70,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/converter:latest
+    image: scraper/converter:latest
     profiles:
       - worker
     command: ["npx", "ts-node", "src/crawler/workers/ConverterWorker.ts"]
@@ -101,7 +101,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/indexer:latest
+    image: scraper/indexer:latest
     profiles:
       - worker
     command: ["npx", "ts-node", "src/crawler/workers/IndexerWorker.ts"]

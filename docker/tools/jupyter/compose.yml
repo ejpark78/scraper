@@ -16,7 +16,7 @@ services:
       args:
         - BUILD_DATE
         - VCS_REF
-    image: linkedin/jupyter:latest
+    image: scraper/jupyter:latest
     profiles:
       - jupyter
     depends_on:
