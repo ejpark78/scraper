@@ -209,7 +209,7 @@ export class BaseRefreshUrls {
 
         // Load existing urls set
         const existingIds = new Set<string>();
-        const cursorIds = urlsColl.find({}, { projection: { [idField]: 1 }, maxTimeMS: 60000 });
+        const cursorIds = urlsColl.find({}, { projection: { [idField]: 1, id: 1 }, maxTimeMS: 60000 });
         for await (const doc of cursorIds) {
             const idVal = doc[idField] || doc.id;
             if (idVal) existingIds.add(String(idVal));
@@ -341,7 +341,7 @@ export class BaseRefreshUrls {
                 }
                 return {
                     updateOne: {
-                        filter: { [idField]: u.id },
+                        filter: { id: u.id },
                         update: { $set: updateFields },
                         upsert: true,
                     }
