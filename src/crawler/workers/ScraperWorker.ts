@@ -126,7 +126,8 @@ class ScraperWorker {
       payload = { site: 'linkedin', url: payloadRaw, attempt: 1 };
     }
 
-    const { site, url, scraperSlack } = payload;
+    let { site, url, scraperSlack } = payload;
+    url = UrlUtils.stripTrackingParams(url);
     await Logger.contextStorage.run({ site, url }, async () => {
     const desc = getSite(site);
 

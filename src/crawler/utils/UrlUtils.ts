@@ -103,9 +103,10 @@ export class UrlUtils {
             }
             const result = clean.toString();
             const splitIdx = result.indexOf('$%');
-            return splitIdx !== -1 ? result.substring(0, splitIdx) : result;
+            const trimmedResult = splitIdx !== -1 ? result.substring(0, splitIdx) : result;
+            return trimmedResult.replace(/(?:%[0-9A-Fa-f]{2}|[가-힣]+)+$/, '');
         } catch {
-            return url;
+            return url.replace(/(?:%[0-9A-Fa-f]{2}|[가-힣]+)+$/, '');
         }
     }
 

@@ -25,7 +25,9 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
     protected extractId(url: string): string {
         // e.g. https://news.hada.io/topic?id=32402 -> 32402
         if (url.includes('id=')) {
-            return url.split('id=').pop()!.split('&')[0];
+            const rawId = url.split('id=').pop()!.split('&')[0];
+            const numMatch = rawId.match(/^\d+/);
+            return numMatch ? numMatch[0] : rawId;
         }
         // fallback to MD5 hash if not standard ID url
         const crypto = require('crypto');
