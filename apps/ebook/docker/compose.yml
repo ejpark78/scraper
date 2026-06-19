@@ -1,8 +1,8 @@
 services:
   ebook:
     build:
-      context: ../../../
-      dockerfile: apps/ebook/docker/Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     image: scraper/ebook:latest
     profiles:
       - ebook

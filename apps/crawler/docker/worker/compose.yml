@@ -45,7 +45,6 @@ services:
     profiles:
       - worker
       - crawler
-    command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - JSON_LOG=true
@@ -79,7 +78,6 @@ services:
     profiles:
       - worker
       - crawler
-    command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/ConverterWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
@@ -112,7 +110,6 @@ services:
     profiles:
       - worker
       - crawler
-    command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/IndexerWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}

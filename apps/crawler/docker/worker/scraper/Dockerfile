@@ -11,9 +11,9 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 ARG BUILD_DATE
 ARG VCS_REF
 
-LABEL org.opencontainers.image.title="LinkedIn Scraper Worker"
+LABEL org.opencontainers.image.title="Scraper Worker"
 LABEL org.opencontainers.image.description="Playwright-based background scraper worker for details queue"
-LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
+LABEL org.opencontainers.image.source="https://github.com/ejpark/scraper"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 LABEL org.opencontainers.image.revision="${VCS_REF}"
 LABEL org.opencontainers.image.licenses="MIT"
@@ -33,7 +33,4 @@ RUN npm ci && npm cache clean --force
 # Copy source files
 COPY . .
 
-# Precreate data and config directories
-RUN mkdir -p data config
-
-CMD ["npx", "ts-node", "apps/crawler/src/workers/ScraperWorker.ts"]
+CMD ["npx", "ts-node", "src/workers/ScraperWorker.ts"]

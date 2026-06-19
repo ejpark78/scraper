@@ -9,8 +9,8 @@
 services:
   gmail:
     build:
-      context: ../../../../
-      dockerfile: apps/crawler/docker/gmail/Dockerfile
+      context: ..
+      dockerfile: docker/gmail/Dockerfile
     image: scraper/gmail:latest
     profiles:
       - gmail

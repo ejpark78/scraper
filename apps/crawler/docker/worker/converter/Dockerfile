@@ -9,9 +9,9 @@ FROM node:22-bookworm-slim
 ARG BUILD_DATE
 ARG VCS_REF
 
-LABEL org.opencontainers.image.title="LinkedIn Converter Worker"
+LABEL org.opencontainers.image.title="Converter Worker"
 LABEL org.opencontainers.image.description="Lightweight converter worker for HTML-to-Markdown processing"
-LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
+LABEL org.opencontainers.image.source="https://github.com/ejpark/scraper"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 LABEL org.opencontainers.image.revision="${VCS_REF}"
 LABEL org.opencontainers.image.licenses="MIT"
@@ -28,4 +28,4 @@ RUN npm ci && npm cache clean --force
 # Copy source files
 COPY . .
 
-CMD ["npx", "ts-node", "apps/crawler/src/workers/ConverterWorker.ts"]
+CMD ["npx", "ts-node", "src/workers/ConverterWorker.ts"]
