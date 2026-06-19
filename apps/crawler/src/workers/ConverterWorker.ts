@@ -11,7 +11,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import Redis from 'ioredis';
-import { MongoDatabase } from '@wiki/database';
+import { MongoDatabase } from '../../../../packages/database/mongo';
 import { UrlUtils, NamingUtils, Logger, FormatUtils } from '../utils';
 import { getSite } from '../core/SiteRegistry';
 import { TargetLoader } from './TargetLoader';
