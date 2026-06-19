@@ -43,6 +43,23 @@
 5. **Agent-Friendly Docstrings**: Start every source, script, and automation file with a header docstring/comment detailing design context, constraints, and dependencies to prevent refactoring loops. Update it when behavior changes.
 6. **No Superficial Patches**: Never implement superficial patches (e.g., custom regex exclusions or hardcoded parameters to hide symptoms) when errors occur. Always trace the data flow, investigate database/state coordination, find the true root cause, and implement a robust structural/architectural solution.
 
+## 📝 Documentation Lifecycle Rules
+
+에이전트는 모든 설계 및 기능 변경 작업을 수행할 때 아래의 **문서화 수명 주기(Documentation Lifecycle)**를 준수해야 합니다.
+
+1. **문서화 수명 주기 순서**:
+   $$\text{Specs (명세)} \longrightarrow \text{ADR (의사결정)} \longrightarrow \text{Plans (계획)} \longrightarrow \text{Code / Reviews (코드/리뷰)} \longrightarrow \text{Walkthrough (결과보고)}$$
+
+2. **디렉토리 표준 및 명명 규칙**:
+   - **`docs/specs/`**: 기능적 파이프라인, 비즈니스 요구사항, 입출력 데이터 규격을 기술합니다. (신규 파이프라인 개발 전 필수 작성)
+   - **`docs/adr/`**: 아키텍처 변경이나 기술 스택 결정 이력을 기록합니다. (`0003-title.md` 형식으로 순차 번호 부여)
+   - **`docs/plans/`**: 실제 코드의 수정 범위 및 CLI 테스트 상세 계획을 작성합니다.
+   - **`docs/reviews/`**: 코드 작성 완료 후 타입 안정성, 예외 처리 등을 리뷰합니다. (**계획서와 1:1로 동일한 파일명 매핑** 필수, 예: `docs/reviews/integrate-ebook-service.md`)
+   - **`docs/tests/`**: 수동 검증 단계 및 통합 테스트 케이스 시나리오를 정의합니다.
+   - **`docs/issues/`**: 개발/운영 중 발생한 중대 장애 분석, 디버깅 과정 및 원인 파악과 조치 결과를 기록합니다. (단순 일회성 오류가 아닌 반복 장애/트러블슈팅 지식 보관용)
+   - **`CHANGELOG.md`**: 프로젝트 루트의 단일 파일로 릴리즈 버전 및 마일스톤 단위의 전체 변경 이력을 통합 관리합니다. (개별 changelog 폴더 분할은 지양)
+
+
 ## 🔓 Pre-Approved Commands
 The following commands/scripts are pre-approved and exempt from Rule 1's and Rule 2's consent loops:
 - `git ls-files` (Read-only project codebase mapping to minimize token/API usage)
