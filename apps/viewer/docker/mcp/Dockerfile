@@ -22,17 +22,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install && npm cache clean --force
 
-# Install frontend dependencies using cache layers
-COPY src/frontend/package*.json ./src/frontend/
-RUN npm install --prefix src/frontend && npm cache clean --force
-
 # Copy source files
 COPY . .
-
-# Generate static sites config JSON (commented out as apps/crawler is out of context)
-# RUN TS_NODE_PROJECT=tsconfig.json npx ts-node -r tsconfig-paths/register --project tsconfig.json apps/crawler/src/scripts/generate-sites-config.ts
-
-# Build the frontend assets
-RUN npm --prefix src/frontend run build
 
 CMD ["npx", "ts-node", "src/mcp/mcp-entry.ts"]

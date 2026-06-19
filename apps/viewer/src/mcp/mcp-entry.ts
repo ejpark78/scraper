@@ -8,7 +8,7 @@
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import { MongoDatabase } from './database/mongo';
+import { MongoDatabase } from '../database/mongo';
 import { setupMcpServer } from './mcp';
 
 const app = express();
