@@ -19,4 +19,4 @@ RUN uv pip install --system -r pyproject.toml
 # Copy source
 COPY . .
 
-CMD ["python", "process.py"]
+CMD ["tail", "-f", "/dev/null"]
