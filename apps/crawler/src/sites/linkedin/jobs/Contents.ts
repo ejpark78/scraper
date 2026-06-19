@@ -13,7 +13,7 @@ import { BasePipeline } from '../../core/BasePipeline';
 import { LinkedInMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
 import { UrlUtils } from '../../utils';
-import { AppConfig } from '../../config/AppConfig';
+import { AppConfig } from '../../../config/AppConfig';
 import { descriptor, JobMeta } from './site.config';
 
 export class LinkedInJobsContents extends BasePipeline<JobMeta> {

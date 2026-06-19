@@ -13,7 +13,7 @@ import { BasePipeline } from '../../core/BasePipeline';
 import { CompanyMarkdownConverter } from './Converter';
 import { CompanyMeta } from './site.config';
 import { LinkedInCrawler } from '../Crawler';
-import { AppConfig } from '../../config/AppConfig';
+import { AppConfig } from '../../../config/AppConfig';
 
 export class LinkedInCompanyContents extends BasePipeline<CompanyMeta> {
     private readonly converter: CompanyMarkdownConverter;
