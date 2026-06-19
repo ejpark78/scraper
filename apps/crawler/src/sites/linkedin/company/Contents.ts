@@ -9,11 +9,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { BasePipeline } from '../../../core/BasePipeline';
+import { BasePipeline } from '../../core/BasePipeline';
 import { CompanyMarkdownConverter } from './Converter';
 import { CompanyMeta } from './site.config';
 import { LinkedInCrawler } from '../Crawler';
-import { AppConfig } from '../../../config/AppConfig';
+import { AppConfig } from '../../config/AppConfig';
 
 export class LinkedInCompanyContents extends BasePipeline<CompanyMeta> {
     private readonly converter: CompanyMarkdownConverter;
@@ -44,7 +44,7 @@ export class LinkedInCompanyContents extends BasePipeline<CompanyMeta> {
     }
 
     protected async saveResults(meta: CompanyMeta, id: string, tempHtmlPath: string, redisInstance?: any): Promise<{ targetDirName: string }> {
-        const { MongoDatabase } = require('../../../../database/mongo');
+        const { MongoDatabase } = require('../../../database/mongo');
         const mongo = MongoDatabase.getInstance();
         const config = require('./site.config').descriptor;
 

@@ -12,16 +12,16 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 
 const pathMap: Record<string, string> = {
-  aicasebook: 'src/crawler/sites/aicasebook/List.ts',
-  dailydose_ds: 'src/crawler/sites/dailydoseofds/List.ts',
-  geeknews: 'src/crawler/sites/geeknews/List.ts',
-  gpters_news: 'src/crawler/sites/gpters/news/List.ts',
-  gpters_newsletter: 'src/crawler/sites/gpters/newsletter/List.ts',
-  linkedin_jobs: 'src/crawler/sites/linkedin/jobs/List.ts',
-  maily_josh: 'src/crawler/sites/maily/josh/List.ts',
-  pytorch_kr: 'src/crawler/sites/pytorch_kr/List.ts',
-  uppity: 'src/crawler/sites/uppity/List.ts',
-  yozm: 'src/crawler/sites/yozm/List.ts',
+  aicasebook: 'src/sites/aicasebook/List.ts',
+  dailydose_ds: 'src/sites/dailydoseofds/List.ts',
+  geeknews: 'src/sites/geeknews/List.ts',
+  gpters_news: 'src/sites/gpters/news/List.ts',
+  gpters_newsletter: 'src/sites/gpters/newsletter/List.ts',
+  linkedin_jobs: 'src/sites/linkedin/jobs/List.ts',
+  maily_josh: 'src/sites/maily/josh/List.ts',
+  pytorch_kr: 'src/sites/pytorch_kr/List.ts',
+  uppity: 'src/sites/uppity/List.ts',
+  yozm: 'src/sites/yozm/List.ts',
 };
 
 let siteKey = '';

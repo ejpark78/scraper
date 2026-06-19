@@ -10,7 +10,7 @@
 
 import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { MailyJoshConverter } from './Converter';
-import { scrapeHttpFetch } from '../../../utils/scraper';
+import { scrapeHttpFetch } from '../../utils/scraper';
 
 export interface MailyJoshMeta {
   id: string;

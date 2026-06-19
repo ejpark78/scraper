@@ -7,7 +7,7 @@
  * @lastUpdated 2026-06-15
  */
 
-import { MongoDatabase } from '../../database/mongo';
+import { MongoDatabase } from '../database/mongo';
 import Redis from 'ioredis';
 import { getSite } from './SiteRegistry';
 import { AppConfig } from '../config/AppConfig';

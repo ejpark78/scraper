@@ -8,7 +8,7 @@
  * @lastUpdated 2026-06-11
  */
 
-import { MongoDatabase } from '../../database/mongo';
+import { MongoDatabase } from '../database/mongo';
 import Redis from 'ioredis';
 import * as cheerio from 'cheerio';
 import { getSite } from './SiteRegistry';

@@ -119,7 +119,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
         // Download images from rawHtml and replace URLs in markdown
         let updatedMarkdown = meta.rawContent;
         try {
-            const { downloadImages } = await import('../../utils/imageDownloader');
+            const { downloadImages } = await import('../utils/imageDownloader');
             const { updatedMarkdown: newMarkdown } = await downloadImages({
                 htmlContent: rawHtml,
                 markdown: meta.rawContent,
@@ -136,7 +136,7 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
         }
 
         try {
-            const { MongoDatabase } = require('../../../database/mongo');
+            const { MongoDatabase } = require('../../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw HTML) 저장

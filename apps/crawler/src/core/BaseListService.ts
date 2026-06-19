@@ -8,7 +8,7 @@
  */
 
 import Redis from 'ioredis';
-import { MongoDatabase } from '../../database/mongo';
+import { MongoDatabase } from '../database/mongo';
 import { AppConfig } from '../config/AppConfig';
 
 export interface BaseListConfig {

@@ -11,9 +11,9 @@ import { chromium, Browser } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 import { descriptor, Config } from './site.config';
-import { HtmlMinifier, DateUtils, UrlUtils, Logger } from '../../../utils';
-import { MongoDatabase } from '../../../../database/mongo';
-import { AppConfig } from '../../../config/AppConfig';
+import { HtmlMinifier, DateUtils, UrlUtils, Logger } from '../../utils';
+import { MongoDatabase } from '../../../database/mongo';
+import { AppConfig } from '../../config/AppConfig';
 import Redis from 'ioredis';
 
 export class LinkedInList {

@@ -9,11 +9,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { BasePipeline } from '../../../core/BasePipeline';
+import { BasePipeline } from '../../core/BasePipeline';
 import { LinkedInMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
-import { UrlUtils } from '../../../utils';
-import { AppConfig } from '../../../config/AppConfig';
+import { UrlUtils } from '../../utils';
+import { AppConfig } from '../../config/AppConfig';
 import { descriptor, JobMeta } from './site.config';
 
 export class LinkedInJobsContents extends BasePipeline<JobMeta> {
@@ -44,7 +44,7 @@ export class LinkedInJobsContents extends BasePipeline<JobMeta> {
     }
 
     protected async saveResults(meta: JobMeta, id: string, tempHtmlPath: string, redisInstance?: any): Promise<{ targetDirName: string }> {
-        const { MongoDatabase } = require('../../../../database/mongo');
+        const { MongoDatabase } = require('../../../database/mongo');
         const mongo = MongoDatabase.getInstance();
 
         // Save to Bronze Collection

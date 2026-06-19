@@ -64,13 +64,13 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
   }
 
   protected async saveResults(meta: AiCasebookMeta, id: string, tempHtmlPath: string): Promise<{ targetDirName: string }> {
-    const { MongoDatabase } = require('../../../database/mongo');
+    const { MongoDatabase } = require('../../database/mongo');
     const dbInstance = MongoDatabase.getInstance();
     const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
     // Download images locally
     try {
-      const { downloadImages } = await import('../../utils/imageDownloader');
+      const { downloadImages } = await import('../utils/imageDownloader');
       const { updatedMarkdown } = await downloadImages({
         htmlContent: rawHtml,
         markdown: meta.rawContent,

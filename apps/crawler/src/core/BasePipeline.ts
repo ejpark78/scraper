@@ -133,7 +133,7 @@ export abstract class BasePipeline<TMeta> {
         if (cacheSet.size === 0) {
             try {
                 console.log(`🔍 [DB Cache] Redis 캐시가 비어있거나 연결할 수 없어 MongoDB를 스캔합니다...`);
-                const { MongoDatabase } = require('../../database/mongo');
+                const { MongoDatabase } = require('../database/mongo');
                 const dbInstance = MongoDatabase.getInstance();
                 
                 if (this.getDomainName() === '채용공고') {
@@ -229,7 +229,7 @@ export abstract class BasePipeline<TMeta> {
         } else {
             // DB 기반 회사 정보 URL 동적 로드
             try {
-                const { MongoDatabase } = require('../../database/mongo');
+                const { MongoDatabase } = require('../database/mongo');
                 const dbInstance = MongoDatabase.getInstance();
                 const companyUrlsColl = await dbInstance.getCollection('bronze/linkedin.company_urls');
                 
@@ -367,7 +367,7 @@ export abstract class BasePipeline<TMeta> {
 
         // 🔌 MongoDB 및 Redis 연결 종료 처리
         try {
-            const { MongoDatabase } = require('../../database/mongo');
+            const { MongoDatabase } = require('../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
             await dbInstance.close();
         } catch (e) {}

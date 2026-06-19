@@ -9,7 +9,7 @@
 
 import type { SiteDescriptor } from '../../core/SiteRegistry';
 import { UppityConverter } from './Converter';
-import { scrapeHttpFetch } from '../../utils/scraper';
+import { scrapeHttpFetch } from '../utils/scraper';
 
 export const SECTIONS = [
     { slug: 'economy-news', name: '머니뉴스' },

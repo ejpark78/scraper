@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { GeekNewsConverter } from './Converter';
-import { HtmlMinifier } from '../../utils';
+import { HtmlMinifier } from '../utils';
 import { descriptor, GeekNewsMeta } from './site.config';
 
 export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
@@ -78,7 +78,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
 
         // Download images locally
         try {
-            const { downloadImages } = await import('../../utils/imageDownloader');
+            const { downloadImages } = await import('../utils/imageDownloader');
             const { updatedMarkdown } = await downloadImages({
                 htmlContent: rawHtml,
                 markdown: meta.rawContent,
@@ -96,7 +96,7 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
 
         // ⚡ [MongoDB 적재] ⚡
         try {
-            const { MongoDatabase } = require('../../../database/mongo');
+            const { MongoDatabase } = require('../../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw HTML) 저장

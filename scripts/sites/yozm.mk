@@ -22,18 +22,16 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [Yozm] Starting list scraping (PAGE: $(PAGE))..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) $(WORKSPACE_MOUNT) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) worker npx ts-node --project /app/tsconfig.json src/cli-list.ts --site yozm --page "$(PAGE)"
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) -e PAGE=$(PAGE) -e LIST_SLACK=$(LIST_SLACK) worker npx ts-node src/cli-list.ts --site yozm --page "$(PAGE)"
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
-	@echo "🔄 [Yozm] Refreshing target queue URLs..."
+	@echo "🔄 [YOZM] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) $(WORKSPACE_MOUNT) worker npx ts-node --project /app/tsconfig.json src/cli-refresh-urls.ts --site yozm
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/cli-refresh-urls.ts --site yozm
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
-	@echo "✨ [Yozm] Processing Silver Layer missing items..."
+	@echo "✨ [YOZM] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) $(WORKSPACE_MOUNT) worker npx ts-node --project /app/tsconfig.json src/cli-refresh-silver.ts --site yozm
-
-
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/cli-refresh-silver.ts --site yozm

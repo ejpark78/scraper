@@ -129,7 +129,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
             }
             const htmlContent = (fieldsMap.content || parsedJson.shortContent || '').replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
 
-            const { downloadImages } = await import('../../../utils/imageDownloader');
+            const { downloadImages } = await import('../../utils/imageDownloader');
             const { updatedMarkdown: newMarkdown } = await downloadImages({
                 htmlContent,
                 markdown: meta.rawContent,
@@ -146,7 +146,7 @@ export class GptersContents extends BasePipeline<GptersMeta> {
         }
 
         try {
-            const { MongoDatabase } = require('../../../../database/mongo');
+            const { MongoDatabase } = require('../../../database/mongo');
             const dbInstance = MongoDatabase.getInstance();
 
             // 1. Bronze Layer (Raw JSON) 저장

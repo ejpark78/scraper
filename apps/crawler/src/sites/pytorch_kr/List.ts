@@ -7,7 +7,7 @@
  * @lastUpdated 2026-06-11
  */
 
-import { MongoDatabase } from '../../../database/mongo';
+import { MongoDatabase } from '../../database/mongo';
 import { BaseListService } from '../../core/BaseListService';
 import { descriptor, PyTorchListDocument } from './site.config';
 

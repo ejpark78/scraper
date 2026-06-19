@@ -10,8 +10,8 @@
 import { chromium, Browser, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
-import { HtmlMinifier } from '../../utils';
-import { AppConfig } from '../../config/AppConfig';
+import { HtmlMinifier } from '../utils';
+import { AppConfig } from '../config/AppConfig';
 
 // ⚙️ LinkedIn Playwright 스크래퍼 및 인증 통합 OOP 엔진 (TypeScript)
 

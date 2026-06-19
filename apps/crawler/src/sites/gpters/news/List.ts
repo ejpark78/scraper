@@ -7,7 +7,7 @@
  * @lastUpdated 2026-06-11
  */
 
-import { BaseListService } from '../../../../crawler/core/BaseListService';
+import { BaseListService } from '../../../core/BaseListService';
 import { descriptor } from './site.config';
 
 class GptersList extends BaseListService {

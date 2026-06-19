@@ -11,7 +11,7 @@
 
 import type { SiteDescriptor } from '../../core/SiteRegistry';
 import { DailyDoseDSConverter } from './Converter';
-import { scrapeHttpFetch } from '../../utils/scraper';
+import { scrapeHttpFetch } from '../utils/scraper';
 
 export interface DailyDoseDSMeta {
     id: string;

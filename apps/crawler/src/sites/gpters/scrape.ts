@@ -93,7 +93,7 @@ query getPost($id: ID!) {
     const body = await response.text().catch(() => '');
     throw new Error(`GPTERS GraphQL HTTP status ${response.status} for ID ${id}: ${body.slice(0, 200)}`);
   }
-  const resJson = await response.json();
+  const resJson = await response.json() as any;
   const post = resJson.data?.post;
   if (!post) {
     throw new Error(`GPTERS post ID ${id} not found in GraphQL response`);
