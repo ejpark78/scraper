@@ -59,6 +59,10 @@
    - **`docs/issues/`**: 개발/운영 중 발생한 중대 장애 분석, 디버깅 과정 및 원인 파악과 조치 결과를 기록합니다. (단순 일회성 오류가 아닌 반복 장애/트러블슈팅 지식 보관용, 템플릿: [issues_template.md](file:///home/ejpark/workspace/scraper/docs/templates/issues_template.md))
    - **`CHANGELOG.md`**: 프로젝트 루트의 단일 파일로 릴리즈 버전 및 마일스톤 단위의 전체 변경 이력을 통합 관리합니다. (개별 changelog 폴더 분할은 지양)
 
+3. **코드 리뷰 작성 강제 및 자가 검증**:
+    - 코드(Makefile, Dockerfile 등 설정 파일 포함) 수정이 수반되면 반드시 `docs/reviews/` 하위에 계획서와 1:1로 매핑되는 리뷰 문서를 작성하여 커밋해야 합니다.
+    - 에이전트는 작업을 마치고 완료를 보고하기 전에 **"코드를 수정해두고 리뷰 문서를 누락하지 않았는지"** 반드시 되돌아보는 자가 검증 루프(Self-Inspection)를 돌려야 합니다. 리뷰 작성이 누락된 상태에서는 최종 Done 보고를 할 수 없습니다.
+
 
 ## 🔓 Pre-Approved Commands
 The following commands/scripts are pre-approved and exempt from Rule 1's and Rule 2's consent loops:

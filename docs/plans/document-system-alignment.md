@@ -21,6 +21,10 @@
 ### 4. Makefile 스크립트 실행 경로 수정
 - **`[MODIFY]`** `scripts/utils/browser.mk`, `scripts/utils/meili.mk`, `scripts/utils/mongo.mk`, `scripts/utils/tests.mk`, `scripts/utils/worker.mk`: 레거시 `src/scripts` 경로를 모노레포 구조에 맞는 `apps/crawler/src/scripts`로 일괄 수정
 
+### 5. AGENTS.md 내 자가 검증 규칙 보강
+- **`[MODIFY]`** `AGENTS.md`: "Documentation Lifecycle Rules" 섹션에 코드/설정 변경 시 리뷰 문서 강제 작성 및 자가 검증 의무화 조항 명문화
+
+
 
 ---
 
