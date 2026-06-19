@@ -14,6 +14,7 @@ services:
     working_dir: /app
     profiles:
       - runtime
+      - crawler
     environment:
       - MONGO_URL=mongodb://mongodb:27017
       - REDIS_URL=redis://redis:6379
@@ -43,6 +44,7 @@ services:
     working_dir: /app
     profiles:
       - worker
+      - crawler
     command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
@@ -76,6 +78,7 @@ services:
     working_dir: /app
     profiles:
       - worker
+      - crawler
     command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/ConverterWorker.ts"]
     environment:
       - TZ=Asia/Seoul
@@ -108,6 +111,7 @@ services:
     working_dir: /app
     profiles:
       - worker
+      - crawler
     command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/IndexerWorker.ts"]
     environment:
       - TZ=Asia/Seoul
