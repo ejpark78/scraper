@@ -13,7 +13,7 @@ import Redis from 'ioredis';
 import * as cheerio from 'cheerio';
 import { getSite } from './SiteRegistry';
 import { UrlUtils } from '../utils/UrlUtils';
-import { AppConfig } from '../../../../packages/config/AppConfig';
+import { AppConfig } from '../config/AppConfig';
 
 export interface RefreshUrlsConfig {
     site: string;

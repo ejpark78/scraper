@@ -6,7 +6,7 @@
 
 import { MongoDatabase } from '../database/mongo';
 import { MongoClient } from 'mongodb';
-import { AppConfig } from '../../../../packages/config/AppConfig';
+import { AppConfig } from '../config/AppConfig';
 
 async function main() {
     const mongoUrl = AppConfig.MONGO_URL;

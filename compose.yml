@@ -12,9 +12,9 @@
 # ==============================================================================
 
 include:
-  - docker/worker/compose.yml
-  - docker/tools/viewer/compose.yml
-  - docker/tools/gmail/compose.yml
+  - apps/crawler/docker/worker/compose.yml
+  - apps/viewer/docker/compose.yml
+  - apps/crawler/docker/gmail/compose.yml
   - docker/tools/cronicle/compose.yml
   - docker/tools/dozzle/compose.yml
   - docker/tools/jupyter/compose.yml
@@ -25,4 +25,4 @@ include:
   - docker/infra/mongodb/compose.yml
   - docker/infra/meilisearch/compose.yml
   - docker/infra/redis/compose.yml
-  - docker/gateway/traefik/compose.yml
+  - docker/infra/traefik/compose.yml

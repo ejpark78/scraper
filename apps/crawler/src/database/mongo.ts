@@ -105,7 +105,7 @@ export class MongoDatabase {
                 }
             };
 
-            const { getAllSites } = require('../crawler/core/SiteRegistry');
+            const { getAllSites } = require('../core/SiteRegistry');
             const sites = getAllSites();
 
             for (const site of sites) {

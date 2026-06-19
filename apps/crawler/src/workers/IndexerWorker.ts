@@ -8,8 +8,8 @@
  */
 
 import Redis from 'ioredis';
-import { MongoDatabase } from '../../../../packages/database/mongo';
-import { MeiliSearchDatabase } from '../../../../packages/database/meili';
+import { MongoDatabase } from '../database/mongo';
+import { MeiliSearchDatabase } from '../database/meili';
 import { Logger } from '../utils';
 import { getSite, getIndexName } from '../core/SiteRegistry';
 

@@ -12,7 +12,7 @@ import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { LinkedInMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
 import { UrlUtils } from '../../../utils';
-import { AppConfig } from '../../../../../../packages/config/AppConfig';
+import { AppConfig } from '../../../config/AppConfig';
 import { NamingUtils } from '../../../utils';
 
 import * as fs from 'fs';

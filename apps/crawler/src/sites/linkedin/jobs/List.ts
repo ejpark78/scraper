@@ -13,7 +13,7 @@ import * as path from 'path';
 import { descriptor, Config } from './site.config';
 import { HtmlMinifier, DateUtils, UrlUtils, Logger } from '../../../utils';
 import { MongoDatabase } from '../../../../database/mongo';
-import { AppConfig } from '../../../../../../packages/config/AppConfig';
+import { AppConfig } from '../../../config/AppConfig';
 import Redis from 'ioredis';
 
 export class LinkedInList {

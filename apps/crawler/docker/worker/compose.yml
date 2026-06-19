@@ -6,11 +6,12 @@ services:
   worker:
     build:
       context: ../../
-      dockerfile: docker/worker/base/Dockerfile
+      dockerfile: Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
     image: scraper/worker:latest
+    working_dir: /app
     profiles:
       - runtime
     environment:
@@ -34,14 +35,15 @@ services:
   scraper:
     build:
       context: ../../
-      dockerfile: docker/worker/scraper/Dockerfile
+      dockerfile: Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
     image: scraper/scraper:latest
+    working_dir: /app
     profiles:
       - worker
-    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/crawler/src/workers/ScraperWorker.ts"]
+    command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - JSON_LOG=true
@@ -66,14 +68,15 @@ services:
   converter:
     build:
       context: ../../
-      dockerfile: docker/worker/converter/Dockerfile
+      dockerfile: Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
     image: scraper/converter:latest
+    working_dir: /app
     profiles:
       - worker
-    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/crawler/src/workers/ConverterWorker.ts"]
+    command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/ConverterWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
@@ -97,14 +100,15 @@ services:
   indexer:
     build:
       context: ../../
-      dockerfile: docker/worker/indexer/Dockerfile
+      dockerfile: Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
     image: scraper/indexer:latest
+    working_dir: /app
     profiles:
       - worker
-    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/crawler/src/workers/IndexerWorker.ts"]
+    command: ["npx", "ts-node", "--project", "/app/tsconfig.json", "src/workers/IndexerWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
@@ -128,8 +132,8 @@ services:
 
   ebook:
     build:
-      context: ../../
-      dockerfile: docker/worker/ebook/Dockerfile
+      context: ../../../../
+      dockerfile: apps/crawler/docker/worker/ebook/Dockerfile
     image: scraper/ebook:latest
     profiles:
       - ebook

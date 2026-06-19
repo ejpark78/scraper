@@ -20,19 +20,19 @@ WORKDIR /app
 
 # Install root dependencies using cache layers
 COPY package*.json ./
-RUN npm ci && npm cache clean --force
+RUN npm install && npm cache clean --force
 
 # Install frontend dependencies using cache layers
-COPY apps/viewer/frontend/package*.json ./apps/viewer/frontend/
-RUN npm install --prefix apps/viewer/frontend && npm cache clean --force
+COPY frontend/package*.json ./frontend/
+RUN npm install --prefix frontend && npm cache clean --force
 
 # Copy source files
 COPY . .
 
-# Generate static sites config JSON
-RUN TS_NODE_PROJECT=tsconfig.json npx ts-node -r tsconfig-paths/register --project tsconfig.json apps/crawler/src/scripts/generate-sites-config.ts
+# Generate static sites config JSON (commented out as apps/crawler is out of context)
+# RUN TS_NODE_PROJECT=tsconfig.json npx ts-node -r tsconfig-paths/register --project tsconfig.json apps/crawler/src/scripts/generate-sites-config.ts
 
 # Build the frontend assets
-RUN npm --prefix apps/viewer/frontend run build
+RUN npm --prefix frontend run build
 
 CMD ["tail", "-f", "/dev/null"]

@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { DateUtils, FormatUtils } from '../utils';
-import { AppConfig } from '../../../../packages/config/AppConfig';
+import { AppConfig } from '../config/AppConfig';
 
 export abstract class BasePipeline<TMeta> {
     // 🔒 동시 워커 간 중복 수집 타겟 선점 방지용 인메모리 뮤텍스 셋

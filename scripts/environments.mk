@@ -17,11 +17,11 @@ export RUN_USER
 
 # Centrally managed Workspace mount paths
 WORKSPACE_DIR    ?= $(shell pwd)
-WORKSPACE_MOUNT  ?= -v $(WORKSPACE_DIR):/app
+WORKSPACE_MOUNT  ?= -v $(WORKSPACE_DIR)/apps/crawler:/app -v /app/node_modules
 export WORKSPACE_DIR WORKSPACE_MOUNT
 
 # Dynamic Environment Variable string construction
 # Note: We use a function-like approach to collect active variables
 # Since Makefile doesn't have easy array/map, we define the common set
-ENV_COMMON        = -e LIST_SLACK=$(LIST_SLACK) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e AUTH=$(AUTH) -e CHUNK_SIZE=$(CHUNK_SIZE) -e ERROR_RESET=$(ERROR_RESET) -e RESET=$(RESET)
+ENV_COMMON        = -e LIST_SLACK=$(LIST_SLACK) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e AUTH=$(AUTH) -e CHUNK_SIZE=$(CHUNK_SIZE) -e ERROR_RESET=$(ERROR_RESET) -e RESET=$(RESET) -e TS_NODE_PROJECT=/app/tsconfig.json
 export ENV_COMMON

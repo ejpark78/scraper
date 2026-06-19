@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import Redis from 'ioredis';
-import { MongoDatabase } from '../../../../packages/database/mongo';
+import { MongoDatabase } from '../database/mongo';
 import { Logger } from '../utils';
 import { getSite } from '../core/SiteRegistry';
 

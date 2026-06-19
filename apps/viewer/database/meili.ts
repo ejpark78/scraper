@@ -1,12 +1,7 @@
 /**
  * @file meili.ts
- * @description Meilisearch database adapter implementing the Singleton pattern.
+ * @description Meilisearch database adapter implementing the Singleton pattern for apps/viewer.
  * Uses native fetch API to interface with the Meilisearch HTTP REST API.
- * 
- * Rules Complied:
- * - Centralized Config: Uses AppConfig.
- * - Strict OOP: Implemented as a singleton with explicit types.
- * - Robust Error Handling: Returns clean diagnostics and rejects failed requests.
  */
 
 import { AppConfig } from '../config/AppConfig';
@@ -60,7 +55,6 @@ export class MeiliSearchDatabase {
                 throw new Error(`Meilisearch API error (${response.status}): ${text}`);
             }
 
-            // GET/POST to some endpoints return empty but valid body
             if (response.status === 204) {
                 return {} as T;
             }
@@ -92,7 +86,6 @@ export class MeiliSearchDatabase {
         try {
             await this.request(`/indexes/${indexName}`, 'GET');
         } catch (e) {
-            // Index doesn't exist, create it with primaryKey 'id'
             await this.request('/indexes', 'POST', { uid: indexName, primaryKey: 'id' });
         }
     }
@@ -102,10 +95,7 @@ export class MeiliSearchDatabase {
      */
     public async addDocuments(indexName: string, documents: any[]): Promise<void> {
         if (documents.length === 0) return;
-        // Clean and prepare documents for Meilisearch
         const cleanedDocs = documents.map(doc => {
-            // Document must have a primary key field named 'id'
-            // Ensure ID satisfies Meilisearch requirements: ^[a-zA-Z0-9-_]+$
             const safeId = String(doc.id || doc._id || '').replace(/[^a-zA-Z0-9-_]/g, '_');
             return {
                 ...doc,
@@ -146,10 +136,7 @@ export class MeiliSearchDatabase {
      * Setup index settings (Searchable, Filterable, Sortable)
      */
     public async updateSettings(indexName: string, settings: MeiliIndexSettings): Promise<void> {
-        // First ensure index exists by triggering index creation (if not exists)
         await this.ensureIndex(indexName);
-
-        // Apply settings
         await this.request(`/indexes/${indexName}/settings`, 'PATCH', settings);
     }
 

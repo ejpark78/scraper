@@ -7,7 +7,7 @@
  * @lastUpdated 2026-06-11
  */
 
-import { MongoDatabase } from '../../../../packages/database/mongo';
+import { MongoDatabase } from '../database/mongo';
 import { getSite } from '../core/SiteRegistry';
 
 export class TargetLoader {

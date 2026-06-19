@@ -6,7 +6,7 @@ services:
   viewer-fe:
     build:
       context: ../../../
-      dockerfile: docker/tools/viewer/fe/Dockerfile
+      dockerfile: apps/viewer/docker/fe/Dockerfile
     image: scraper/viewer-fe:dev
     profiles:
       - tools
@@ -34,13 +34,13 @@ services:
 
   viewer-api:
     build:
-      context: ../../../
-      dockerfile: docker/tools/viewer/api/Dockerfile
+      context: ../
+      dockerfile: docker/api/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
     image: scraper/viewer:latest
-    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/viewer/server.ts"]
+    command: ["npx", "ts-node", "server.ts"]
     profiles:
       - tools
       - viewer
@@ -74,13 +74,13 @@ services:
 
   viewer-mcp:
     build:
-      context: ../../../
-      dockerfile: docker/tools/viewer/mcp/Dockerfile
+      context: ../
+      dockerfile: docker/mcp/Dockerfile
       args:
         - BUILD_DATE
         - VCS_REF
     image: scraper/viewer:latest
-    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/viewer/mcp-entry.ts"]
+    command: ["npx", "ts-node", "mcp-entry.ts"]
     profiles:
       - tools
       - viewer

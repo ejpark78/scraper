@@ -16,8 +16,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { MeiliSearchDatabase } from '../database/meili';
-import { getIndexName, getSiteKeyFromCollection } from '../crawler/core/SiteRegistry';
+import { MeiliSearchDatabase } from './database/meili';
+import { getIndexName, getSiteKeyFromCollection } from './crawler/core/SiteRegistry';
 
 function registerMcpHandlers(server: Server) {
   // MCP: List tools

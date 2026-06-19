@@ -10,7 +10,7 @@
 import { MongoDatabase } from '../../database/mongo';
 import Redis from 'ioredis';
 import { getSite } from './SiteRegistry';
-import { AppConfig } from '../../../../packages/config/AppConfig';
+import { AppConfig } from '../config/AppConfig';
 
 export interface RefreshConvertConfig {
     site: string;

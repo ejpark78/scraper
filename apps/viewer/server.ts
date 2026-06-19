@@ -14,11 +14,11 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import http from 'http';
 import path from 'path';
-import { MongoDatabase } from '../database/mongo';
+import { MongoDatabase } from './database/mongo';
 import { ObjectId } from 'mongodb';
-import { getAllSites, getIndexName, getSiteKeyFromCollection } from '../crawler/core/SiteRegistry';
-import { MeiliSearchDatabase } from '../database/meili';
-import { AppConfig } from '../config/AppConfig';
+import { getAllSites, getIndexName, getSiteKeyFromCollection } from './crawler/core/SiteRegistry';
+import { MeiliSearchDatabase } from './database/meili';
+import { AppConfig } from './config/AppConfig';
 import Redis from 'ioredis';
 
 const app = express();

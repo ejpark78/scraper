@@ -1,7 +1,7 @@
 import { MongoDatabase } from '../database/mongo';
 import Redis from 'ioredis';
-import { getAllSites } from '../crawler/core/SiteRegistry';
-import { AppConfig } from '../../../../packages/config/AppConfig';
+import { getAllSites } from '../core/SiteRegistry';
+import { AppConfig } from '../config/AppConfig';
 
 async function diagnose() {
     const sites = getAllSites();
