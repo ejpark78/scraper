@@ -9,7 +9,7 @@
 
 import type { SiteDescriptor } from '../../core/SiteRegistry';
 import { YozmConverter } from './Converter';
-import { scrapeHttpFetch } from '../utils/scraper';
+import { scrapeHttpFetch } from '../../utils/scraper';
 
 export const SITEMAP_URL = 'https://yozm.wishket.com/magazine/sitemap-news.xml';
 
