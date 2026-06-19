@@ -7,7 +7,23 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [1.1.0] - 2026-06-19
+
+### Added
+- **Ebook Parser & Sync Pipeline**: Added `apps/ebook` service using Python 3.13 and `uv` to process book PDFs, and created a TypeScript CLI synchronization script (`sync-ebooks.ts`) in `apps/crawler` to load chapters into MongoDB (`silver.contents`) and Meilisearch (`contents`).
+
+### Changed
+- **Monorepo Restructuring**: Transitioned the single-app repository into a modern monorepo layout:
+  - Main scraper logic shifted to `apps/crawler`.
+  - Frontend dashboard and server decoupled to `apps/viewer`.
+  - Created shared packages `packages/database` and `packages/config`.
+- **Docker Profiles for Ebook**: Equipped the `ebook` service container with a specific docker compose profile (`ebook`), isolating resources and allowing on-demand CLI executions.
+
+### Fixed
+- **TypeScript Import Resolution**: Resolved `MODULE_NOT_FOUND` compiler errors by migrating relative imports post-monorepo restructure and implementing `tsconfig-paths` in Docker runner commands.
+
 ## [1.0.0] - 2026-06-19
+
 
 ### Added
 - **Retroactive Noise Cleansing Script**: Added `clean_legacy_noise_ids.ts` to automatically scan all site collections in MongoDB, prune malformed IDs containing Korean trailing particles, and re-schedule clean URLs for re-crawling.
