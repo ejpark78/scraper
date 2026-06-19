@@ -30,6 +30,12 @@ interface DockerServiceInfo {
 }
 
 class SysInfoDumper {
+  private readonly outputBase: string;
+
+  constructor(outputBase: string) {
+    this.outputBase = outputBase;
+  }
+
   public run(): void {
     try {
       const info = {
@@ -40,11 +46,11 @@ class SysInfoDumper {
         redis: this.getRedisConnectivity()
       };
 
-      const transcriptsAgyDir = path.join(__dirname, '../../data/agents/agy');
+      const transcriptsAgyDir = path.join(this.outputBase, 'agy');
       fs.mkdirSync(transcriptsAgyDir, { recursive: true });
       const destPath = path.join(transcriptsAgyDir, 'sysinfo_cache.json');
       fs.writeFileSync(destPath, JSON.stringify(info, null, 2), 'utf-8');
-      console.log(`✨ System status cached at data/agents/agy: ${destPath}`);
+      console.log(`✨ System status cached at ${transcriptsAgyDir}: ${destPath}`);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       console.error('❌ Error dumping sysinfo:', errMsg);
@@ -94,13 +100,15 @@ class SysInfoDumper {
 // 2. Transcript Dumper
 // ==============================================================================
 class TranscriptDumper {
+  private readonly outputBase: string;
   private readonly workspaceRoot: string = path.resolve(__dirname, '../..');
   private readonly adapter: AgentAdapter;
   private readonly allMode: boolean;
   private readonly agentName: string;
 
-  constructor(agentName: string, allMode = false) {
+  constructor(agentName: string, outputBase: string, allMode = false) {
     this.agentName = agentName;
+    this.outputBase = outputBase;
     this.adapter = createAdapter(agentName);
     this.allMode = allMode;
   }
@@ -198,7 +206,7 @@ class TranscriptDumper {
 
         const md = this.buildTranscript(s.id, s.title || s.id, detail.messages, taskLogs);
 
-        const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir);
+        const outDir = path.join(this.outputBase, this.agentName, info.dateDir);
         const destSessionDir = path.join(outDir, info.tag);
         fs.mkdirSync(destSessionDir, { recursive: true });
 
@@ -353,7 +361,7 @@ class TranscriptDumper {
       wikiContent += `\n## 💡 Troubleshooting / Learnings (LLM Knowledge Base)\n- ${learnings.replace(/\n/g, '\n  ')}\n`;
     });
 
-    const destPath = path.join(this.workspaceRoot, 'data', 'agents', `${sessionId}.md`);
+    const destPath = path.join(this.outputBase, `${sessionId}.md`);
     fs.mkdirSync(path.dirname(destPath), { recursive: true });
     fs.writeFileSync(destPath, wikiContent, 'utf-8');
     console.log(`  ✨ Saved unified wiki transcript: ${destPath}`);
@@ -365,10 +373,12 @@ class TranscriptDumper {
 // ==============================================================================
 class ContextDumper {
   private readonly agentName: string;
+  private readonly outputBase: string;
   private readonly allMode: boolean;
 
-  constructor(agentName: string, allMode = false) {
+  constructor(agentName: string, outputBase: string, allMode = false) {
     this.agentName = agentName;
+    this.outputBase = outputBase;
     this.allMode = allMode;
   }
 
@@ -507,7 +517,7 @@ class ContextDumper {
         if (!info) return;
         console.log(`  -> ${info.tag} (${s.title})`);
 
-        const brainDumpPath = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag, 'brain_dump.md');
+        const brainDumpPath = path.join(this.outputBase, this.agentName, info.dateDir, info.tag, 'brain_dump.md');
         if (!fs.existsSync(brainDumpPath)) {
           console.log(`  ⏭️  Skip (no brain_dump.md): ${info.tag}`);
           return;
@@ -516,7 +526,7 @@ class ContextDumper {
         try {
           const detail = adapter.getSessionDetail(s.id);
           const md = this.buildContextMemory(detail.session, detail.messages);
-          const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
+          const outDir = path.join(this.outputBase, this.agentName, info.dateDir, info.tag);
           fs.mkdirSync(outDir, { recursive: true });
           fs.writeFileSync(path.join(outDir, 'context_memory.md'), md, 'utf-8');
           console.log(`  ✨ Saved: ${outDir}/context_memory.md`);
@@ -538,10 +548,12 @@ class ContextDumper {
 // ==============================================================================
 class BrainDumper {
   private readonly agentName: string;
+  private readonly outputBase: string;
   private readonly allMode: boolean;
 
-  constructor(agentName: string, allMode = false) {
+  constructor(agentName: string, outputBase: string, allMode = false) {
     this.agentName = agentName;
+    this.outputBase = outputBase;
     this.allMode = allMode;
   }
 
@@ -594,7 +606,7 @@ class BrainDumper {
           const detail = adapter.getSessionDetail(s.id);
           const md = this.buildBrainDump(detail.session, detail.messages);
 
-          const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
+          const outDir = path.join(this.outputBase, this.agentName, info.dateDir, info.tag);
           fs.mkdirSync(outDir, { recursive: true });
           const outPath = path.join(outDir, 'brain_dump.md');
           fs.writeFileSync(outPath, md, 'utf-8');
@@ -619,9 +631,9 @@ class SessionPruner {
   private readonly baseBrainDir: string;
   private readonly transcriptsDir: string;
 
-  constructor() {
+  constructor(outputBase: string) {
     this.baseBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
-    this.transcriptsDir = path.join(__dirname, '../../data/agents');
+    this.transcriptsDir = outputBase;
   }
 
   public run(): void {
@@ -700,26 +712,38 @@ if (require.main === module) {
   const agentFlag = args.find(a => a.startsWith('--agent='));
   const agents = agentFlag ? parseAgentsFromArg(agentFlag.split('=')[1]) : ['agy'];
 
+  // Parse output directory option
+  let outputBase = path.join(__dirname, '../../data/agents');
+  const outputFlag = args.find(a => a.startsWith('--output='));
+  if (outputFlag) {
+    outputBase = outputFlag.split('=')[1];
+  } else {
+    const outputIdx = args.indexOf('--output');
+    if (outputIdx !== -1 && outputIdx + 1 < args.length) {
+      outputBase = args[outputIdx + 1];
+    }
+  }
+
   if (runAllDumps || hasSysinfo) {
     console.log('🤖 Running Sysinfo Dumper...');
-    new SysInfoDumper().run();
+    new SysInfoDumper(outputBase).run();
   }
 
   for (const agentName of agents) {
     try {
       if (runAllDumps || hasTranscript) {
         console.log(`📝 Running Transcript Dumper for ${agentName}...`);
-        new TranscriptDumper(agentName, allMode).dumpAll();
+        new TranscriptDumper(agentName, outputBase, allMode).dumpAll();
       }
       
       if (runAllDumps || hasBrain) {
         console.log(`🧠 Running Brain Dumper for ${agentName}...`);
-        new BrainDumper(agentName, allMode).dump();
+        new BrainDumper(agentName, outputBase, allMode).dump();
       }
 
       if (runAllDumps || hasContext) {
         console.log(`🧠 Running Context Dumper for ${agentName}...`);
-        new ContextDumper(agentName, allMode).dump();
+        new ContextDumper(agentName, outputBase, allMode).dump();
       }
     } catch (err: any) {
       console.error(`❌ Error during dump execution for ${agentName}:`, err.message);
@@ -728,7 +752,7 @@ if (require.main === module) {
   }
 
   if (hasPrune) {
-    new SessionPruner().run();
+    new SessionPruner(outputBase).run();
   }
 
   if (process.exitCode !== 1) {
