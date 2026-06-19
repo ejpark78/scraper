@@ -10,8 +10,8 @@
 import { chromium, Browser, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
-import { HtmlMinifier } from '../utils';
-import { AppConfig } from '../config/AppConfig';
+import { HtmlMinifier } from '../../utils';
+import { AppConfig } from '../../config/AppConfig';
 
 // ⚙️ LinkedIn Playwright 스크래퍼 및 인증 통합 OOP 엔진 (TypeScript)
 
@@ -42,25 +42,25 @@ export class LinkedInCrawler implements ICrawler {
                 'main section'
             ];
 
-            let container: HTMLElement | null = null;
+            let container: any = null;
             for (const sel of selectors) {
-                const el = document.querySelector(sel) as HTMLElement | null;
+                const el = (document as any).querySelector(sel);
                 if (el) {
-                    container = (el.closest('[class*="scroll"]') || el.closest('[class*="list"]') || el) as HTMLElement;
+                    container = (el.closest('[class*="scroll"]') || el.closest('[class*="list"]') || el) as any;
                     break;
                 }
             }
 
-            const scrollTarget = container || window;
+            const scrollTarget = container || (window as any);
             
             await new Promise<void>((resolve) => {
                 let totalHeight = 0;
                 const distance = 120;
                 const timer = setInterval(() => {
-                    const scrollHeight = (scrollTarget instanceof Window) ? document.body.scrollHeight : scrollTarget.scrollHeight;
+                    const scrollHeight = (scrollTarget === (window as any)) ? (document as any).body.scrollHeight : scrollTarget.scrollHeight;
                     
-                    if (scrollTarget instanceof Window) {
-                        window.scrollBy(0, distance);
+                    if (scrollTarget === (window as any)) {
+                        (window as any).scrollBy(0, distance);
                     } else {
                         scrollTarget.scrollBy(0, distance);
                     }
@@ -168,7 +168,7 @@ export class LinkedInCrawler implements ICrawler {
                 try {
                     // 🛡️ Playwright의 물리적 마우스 가로채기(Overlay interception) 타임아웃 오류를 완벽히 차단하기 위해 DOM 자바스크립트 직접 클릭 발송
                     await page.evaluate((selector) => {
-                        const el = document.querySelector(selector) as HTMLElement | null;
+                        const el = (document as any).querySelector(selector);
                         if (el) el.click();
                     }, showMoreSelector);
                     await new Promise(resolve => setTimeout(resolve, 1000));
