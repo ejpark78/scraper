@@ -29,26 +29,26 @@ list:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [LinkedIn Jobs] Starting job list scraping..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/sites/linkedin/jobs/List.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node apps/crawler/src/sites/linkedin/jobs/List.ts
 
 company: PRIORITY := high
 company:
 	@echo "──────────────────────────────────────────────────"
 	@echo "📡 [LinkedIn Company] Starting company scraping..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_USER) $(ENV_COMMON) worker npx ts-node src/crawler/sites/linkedin/company/Contents.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_USER) $(ENV_COMMON) worker npx ts-node apps/crawler/src/sites/linkedin/company/Contents.ts
 
 
 refresh-urls:
 	@echo "──────────────────────────────────────────────────"
 	@echo "🔄 [LinkedIn Jobs] Refreshing target queue URLs..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-urls.ts --site linkedin
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node apps/crawler/src/cli-refresh-urls.ts --site linkedin
 
 refresh-silver:
 	@echo "──────────────────────────────────────────────────"
 	@echo "✨ [LinkedIn Jobs] Processing Silver Layer missing items..."
 	@echo "──────────────────────────────────────────────────"
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-silver.ts --site linkedin
-	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node src/crawler/cli-refresh-silver.ts --site linkedin_company
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node apps/crawler/src/cli-refresh-silver.ts --site linkedin
+	$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npx ts-node apps/crawler/src/cli-refresh-silver.ts --site linkedin_company
 

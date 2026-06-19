@@ -32,6 +32,8 @@
 ### 7. docs/reviews/ 하위 아티팩트 복사 및 보존 규칙 수립
 - **`[NEW]`** `docs/reviews/document-system-alignment.task.md`, `docs/reviews/document-system-alignment.walkthrough.md`: 에이전트 전용 아티팩트 내용을 실제 프로젝트 디렉토리에 `{plan-name}.task.md` 및 `{plan-name}.walkthrough.md` 형태로 복사하여 보존
 - **`[MODIFY]`** `AGENTS.md`: "Documentation Lifecycle Rules" 및 "Engineering Rules"에 버그픽스(Bugfix) 발생 시의 구조적 해결 원칙 및 이력 명시 의무화 반영
+- **`[MODIFY]`** `scripts/sites/*.mk`: 9개 사이트별 하위 Makefile 내의 레거시 `src/crawler/` 실행 경로를 모노레포 구조에 맞는 `apps/crawler/src/`로 일괄 버그픽스
+
 
 
 
