@@ -45,10 +45,14 @@
 - **`ScraperWorker.ts`, `ConverterWorker.ts`, `IndexerWorker.ts`, `TargetLoader.ts`**:
   - 기존 레거시 및 별칭(alias) 대신 환경에 구애받지 않고 컴파일이 보장되는 물리적 상대경로(`../../../../packages/database/mongo` 및 `meili`)로 데이터베이스 임포트 경로를 일괄 수정하여 빌드 타임 및 도커 런타임 오류 차단 완료 (완료)
 
-- **`AGENTS.md` (물리 보존 룰)**:
+- **`AGENTS.md` (물리 보존 및 버그픽스 룰)**:
   - `docs/reviews/` 하위에 각 계획과 매핑되는 `{plan-name}.task.md` 및 `{plan-name}.walkthrough.md` 복사본 영구 보존 조항 신설 완료 (완료)
+  - `Engineering & Architecture Rules` 하위 6번 규칙(No Superficial Patches)에 버그 해결 시 **구조적 패치 지침 및 CHANGELOG/리뷰 문서 내 'Bugfix' 명시 의무화** 수칙 보강 완료 (완료)
 - **`document-system-alignment.task.md` & `document-system-alignment.walkthrough.md`**:
   - 이번 작업에 대한 할 일 목록과 결과 보고서를 `docs/reviews/` 하위에 물리적 파일로 안전하게 복사 및 생성 완료 (완료)
+- **`CHANGELOG.md` (버그픽스 명문화)**:
+  - `[1.1.0]` 릴리즈 이력의 수정(Fixed) 섹션을 버그 해결 내역에 맞춰 **"Fixed (Bugfixes)"**로 선언하고, 4개 Worker와 5개 Makefile의 에러 버그 해결 내용을 구체적으로 기재 완료 (완료)
+
 
 ---
 

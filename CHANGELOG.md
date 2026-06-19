@@ -19,8 +19,9 @@ and this project adheres to Semantic Versioning.
   - Created shared packages `packages/database` and `packages/config`.
 - **Docker Profiles for Ebook**: Equipped the `ebook` service container with a specific docker compose profile (`ebook`), isolating resources and allowing on-demand CLI executions.
 
-### Fixed
-- **TypeScript Import Resolution**: Resolved `MODULE_NOT_FOUND` compiler errors by migrating relative imports post-monorepo restructure and implementing `tsconfig-paths` in Docker runner commands.
+### Fixed (Bugfixes)
+- **Bugfix: Resolved TypeScript Compilation and Module Resolution Errors**: Fixed critical run-time `MODULE_NOT_FOUND` compiler errors in `ScraperWorker.ts`, `ConverterWorker.ts`, `IndexerWorker.ts`, and `TargetLoader.ts` by migrating to environment-agnostic physical relative paths (`../../../../packages/database/...`).
+- **Bugfix: Fixed Scripts Entrypoints in Makefiles**: Restructured legacy `src/scripts` paths inside `browser.mk`, `meili.mk`, `mongo.mk`, `tests.mk`, and `worker.mk` to use the updated monorepo directory `apps/crawler/src/scripts`.
 
 ## [1.0.0] - 2026-06-19
 

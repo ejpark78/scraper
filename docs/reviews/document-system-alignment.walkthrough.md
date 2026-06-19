@@ -16,11 +16,12 @@
 ### 4. 변경 이력
 * [CHANGELOG.md](file:///home/ejpark/workspace/scraper/CHANGELOG.md): `[1.1.0]` 릴리즈 버전의 모노레포 개편 작업 이력을 최신화했습니다.
 
-### 5. 에이전트 자가 검증 규칙 반영
-* [AGENTS.md](file:///home/ejpark/workspace/scraper/AGENTS.md): "Documentation Lifecycle Rules" 섹션에 코드 및 설정 파일 수정 시 리뷰 문서 작성을 의무화하고, 답변 제출 전 자가 검증(Self-Inspection)을 강제하는 신규 조항(3항)을 반영했습니다.
+### 5. 에이전트 자가 검증 및 버그픽스 규칙 반영
+* [AGENTS.md](file:///home/ejpark/workspace/scraper/AGENTS.md): "Documentation Lifecycle Rules" 섹션에 코드 및 설정 파일 수정 시 리뷰 문서 작성을 의무화하고, 답변 제출 전 자가 검증(Self-Inspection)을 강제하는 신규 조항(3항)을 반영했습니다. 또한 "Engineering Rules"의 6번 규칙(No Superficial Patches)을 보강하여, 버그 해결 시 **구조적 패치 지침 및 CHANGELOG/리뷰 문서 내 'Bugfix' 명시 의무화** 수칙을 명문화했습니다.
 
 ### 6. Scraper/Converter/Indexer Worker & TargetLoader 모듈 참조 수정
 * [ScraperWorker.ts](file:///home/ejpark/workspace/scraper/apps/crawler/src/workers/ScraperWorker.ts), [ConverterWorker.ts](file:///home/ejpark/workspace/scraper/apps/crawler/src/workers/ConverterWorker.ts), [IndexerWorker.ts](file:///home/ejpark/workspace/scraper/apps/crawler/src/workers/IndexerWorker.ts), [TargetLoader.ts](file:///home/ejpark/workspace/scraper/apps/crawler/src/workers/TargetLoader.ts): 모노레포 환경에서 해석 오류를 발생시키는 레거시 상대경로 및 별칭(alias) 대신, 도커 환경에 독립적인 물리적 상대경로(`../../../../packages/database/...`)로 임포트 경로를 수정하여 빌드 타임 및 런타임 `MODULE_NOT_FOUND` 오류를 해결했습니다.
+
 
 ### 7. 코드 리뷰 진행 및 문서화
 * [document-system-alignment.md](file:///home/ejpark/workspace/scraper/docs/reviews/document-system-alignment.md): 수정이 일어난 5개의 Makefile, `AGENTS.md` 파일 변경, 그리고 백그라운드 Worker들의 임포트 에러 수정 사항이 정합성 있게 조치되었는지 교차 검증하고 결과를 문서화했습니다.
