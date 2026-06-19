@@ -134,19 +134,3 @@ services:
     deploy:
       replicas: 1
 
-  ebook:
-    build:
-      context: ../../../../
-      dockerfile: apps/crawler/docker/worker/ebook/Dockerfile
-    image: scraper/ebook:latest
-    profiles:
-      - ebook
-    environment:
-      - TZ=Asia/Seoul
-      - MONGO_URL=mongodb://mongodb:27017
-    volumes:
-      - ${HOST_PROJECT_PATH:-.}/apps/ebook:/app
-      - ${HOST_PROJECT_PATH:-.}/data/ebook:/app/data
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-    restart: "no"

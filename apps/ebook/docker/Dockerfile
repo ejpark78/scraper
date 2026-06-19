@@ -11,12 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy lock files and project configs
-COPY apps/ebook/pyproject.toml apps/ebook/uv.lock ./
+COPY pyproject.toml uv.lock .
 
 # Install dependencies globally inside container
 RUN uv pip install --system -r pyproject.toml
 
 # Copy source
-COPY apps/ebook/ ./
+COPY . .
 
 CMD ["python", "process.py"]
