@@ -98,7 +98,7 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'geeknews.html',
     filter: (id) => ({ topicId: id }),
     statusCollection: 'bronze/geeknews.urls',
-    completedSetKey: 'completed_news',
+    completedSetKey: 'sites:geeknews:completed',
   },
 
   targetLoader: {

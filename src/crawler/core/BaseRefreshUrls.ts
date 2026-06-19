@@ -23,7 +23,11 @@ export interface RefreshUrlsConfig {
 }
 
 export class BaseRefreshUrls {
-    constructor(protected config: RefreshUrlsConfig) {}
+    constructor(protected config: RefreshUrlsConfig) {
+        if (!this.config.cacheSetKey || this.config.cacheSetKey.startsWith('completed_')) {
+            this.config.cacheSetKey = `sites:${this.config.site}:completed`;
+        }
+    }
 
     public async run(): Promise<void> {
         const { site, displayName, cacheSetKey, legacyQueue } = this.config;
@@ -48,7 +52,7 @@ export class BaseRefreshUrls {
             console.log(`📥 Loaded ${completedIds.length} already completed ${displayName} IDs.`);
 
             const priority = AppConfig.PRIORITY;
-            const perSiteQueueKey = `scrape_queue:${site}:${priority}`;
+            const perSiteQueueKey = `sites:${site}:scrape:${priority}`;
             const existingQueueUrls = new Set<string>();
 
             if (legacyQueue) {
@@ -205,7 +209,7 @@ export class BaseRefreshUrls {
 
         const urlsColl = await mongo.getCollection(urlsCollection);
         const priority = AppConfig.PRIORITY;
-        const perSiteQueueKey = `scrape_queue:${site}:${priority}`;
+        const perSiteQueueKey = `sites:${site}:scrape:${priority}`;
 
         // Load existing urls set
         const existingIds = new Set<string>();

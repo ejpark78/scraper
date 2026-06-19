@@ -93,7 +93,7 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'maily_josh.html',
     filter: (id) => ({ id }),
     statusCollection: 'bronze/maily_josh.urls',
-    completedSetKey: 'completed_maily_josh',
+    completedSetKey: 'sites:maily_josh:completed',
   },
 
   targetLoader: {

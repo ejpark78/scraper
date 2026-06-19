@@ -69,7 +69,7 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'aicasebook.html',
     filter: (id) => ({ id }),
     statusCollection: 'bronze/aicasebook.urls',
-    completedSetKey: 'completed_aicasebook',
+    completedSetKey: 'sites:aicasebook:completed',
   },
 
   targetLoader: {

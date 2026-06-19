@@ -345,7 +345,9 @@ interface AddQueueRequest {
 // Queue dashboard API endpoints
 app.get('/api/queues', async (req: Request, res: Response) => {
   try {
-    const keys = await redis.keys('scrape_queue*');
+    const scrapeQueueKeys = await redis.keys('scrape_queue*');
+    const siteQueueKeys = await redis.keys('sites:*:scrape:*');
+    const keys = Array.from(new Set([...scrapeQueueKeys, ...siteQueueKeys]));
     const queues: QueueInfo[] = [];
     
     keys.sort();
@@ -556,7 +558,9 @@ app.get('/api/site-stats', async (req: Request, res: Response) => {
 
 app.post('/api/queues/clear', async (req: Request, res: Response) => {
   try {
-    const keys = await redis.keys('scrape_queue*');
+    const scrapeQueueKeys = await redis.keys('scrape_queue*');
+    const siteQueueKeys = await redis.keys('sites:*:scrape:*');
+    const keys = Array.from(new Set([...scrapeQueueKeys, ...siteQueueKeys]));
     const keysToClear = [...keys];
     
     const activeProcessingExists = await redis.exists('active_processing');
@@ -604,7 +608,7 @@ app.post('/api/queues/add', async (req: Request, res: Response) => {
       return res.status(400).json({ error: `Unsupported or non-scraped site: ${site}` });
     }
     
-    const queueName = `scrape_queue:${site}:${priority}`;
+    const queueName = `sites:${site}:scrape:${priority}`;
     const payload = JSON.stringify({
       site,
       url,

@@ -107,7 +107,7 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'pytorch_kr.html',
     filter: (id) => ({ $or: [{ topicId: id }, { id: id }] }),
     statusCollection: 'bronze/pytorch_kr.urls',
-    completedSetKey: 'completed_news',
+    completedSetKey: 'sites:pytorch_kr:completed',
   },
 
   targetLoader: {

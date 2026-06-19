@@ -9,9 +9,9 @@ import Redis from 'ioredis';
 const SITE_KEY = 'maily_josh';
 const MONGO_COLLECTION = `bronze/${SITE_KEY}.urls` as const;
 const REDIS_QUEUE_KEYS = [
-    `scrape_queue:${SITE_KEY}:high`,
-    `scrape_queue:${SITE_KEY}:medium`,
-    `scrape_queue:${SITE_KEY}:low`,
+    `sites:${SITE_KEY}:scrape:high`,
+    `sites:${SITE_KEY}:scrape:medium`,
+    `sites:${SITE_KEY}:scrape:low`,
     'scrape_queue'
 ];
 

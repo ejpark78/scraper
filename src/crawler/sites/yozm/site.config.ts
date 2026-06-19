@@ -66,7 +66,7 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'yozm.html',
     filter: (id) => ({ id }),
     statusCollection: 'bronze/yozm.urls',
-    completedSetKey: 'completed_yozm',
+    completedSetKey: 'sites:yozm:completed',
   },
 
   targetLoader: {

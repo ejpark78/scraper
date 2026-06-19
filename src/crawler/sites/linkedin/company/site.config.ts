@@ -73,7 +73,7 @@ export const descriptor: SiteDescriptor = {
     converter: new CompanyMarkdownConverter(),
     targetCollection: 'linkedin.companies',
     filter: (id) => ({ companyId: id }),
-    completedSetKey: 'completed_jobs',
+    completedSetKey: 'sites:linkedin_company:completed',
   },
 
   targetLoader: {

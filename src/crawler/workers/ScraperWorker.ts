@@ -61,7 +61,7 @@ class QueueManager {
   }
 
   private buildQueues(priority: string): string[] {
-    return this.scrapeSiteKeys.map(key => `scrape_queue:${key}:${priority}`);
+    return this.scrapeSiteKeys.map(key => `sites:${key}:scrape:${priority}`);
   }
 
   public getActiveQueues(): string[] {
@@ -343,7 +343,7 @@ class ScraperWorker {
             priority: priority,
           });
 
-          await this.redis.rpush(`scrape_queue:${site}:${priority}`, redisPayload);
+          await this.redis.rpush(`sites:${site}:scrape:${priority}`, redisPayload);
           await urlsColl.updateOne({ id }, {
             $set: {
               id,
@@ -383,7 +383,7 @@ class ScraperWorker {
         priority,
         ...(scraperSlack !== undefined ? { scraperSlack } : {}),
       };
-      const targetQueue = `scrape_queue:${site}:${priority}`;
+      const targetQueue = `sites:${site}:scrape:${priority}`;
 
       if (priority === 'high') {
         await this.redis.lpush(targetQueue, JSON.stringify(retryTask));

@@ -109,7 +109,7 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'gpters_newsletter.html',
     filter: (id) => ({ id }),
     statusCollection: 'bronze/gpters_newsletter.urls',
-    completedSetKey: 'completed_gpters_newsletter',
+    completedSetKey: 'sites:gpters_newsletter:completed',
   },
 
   targetLoader: {

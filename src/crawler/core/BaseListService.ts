@@ -25,6 +25,10 @@ export abstract class BaseListService {
 
     constructor(config: BaseListConfig) {
         this.config = config;
+        // Automatically upgrade legacy completion cache keys to the unified namespace layout
+        if (!this.config.cacheSetKey || this.config.cacheSetKey.startsWith('completed_')) {
+            this.config.cacheSetKey = `sites:${this.config.site}:completed`;
+        }
     }
 
     async init(): Promise<void> {
@@ -122,7 +126,7 @@ export abstract class BaseListService {
                 payload.scraperSlack = scraperSlackVal;
             }
 
-            await this.redis.rpush(`scrape_queue:${site}:${priority}`, JSON.stringify(payload));
+            await this.redis.rpush(`sites:${site}:scrape:${priority}`, JSON.stringify(payload));
             await urlsColl.updateOne({ id }, { $set: { pushedToRedis: true } });
             console.log(`🚀 [${displayName} List] Queued (Force Overwrite: ${overwrite}): [ID: ${id}] ${title} -> ${url}`);
             return true;

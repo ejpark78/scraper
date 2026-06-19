@@ -115,7 +115,7 @@ export const descriptor: SiteDescriptor = {
     converter: new DailyDoseDSConverter(),
     targetCollection: 'dailydose_ds.html',
     filter: (id) => ({ id }),
-    completedSetKey: 'completed_news',
+    completedSetKey: 'sites:dailydose_ds:completed',
   },
 
   targetLoader: {

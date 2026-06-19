@@ -41,7 +41,9 @@ export class QueueClearer {
         const redis = new Redis(this.config.redisUrl);
 
         try {
-            const keys = await redis.keys('scrape_queue*');
+            const scrapeQueueKeys = await redis.keys('scrape_queue*');
+            const siteQueueKeys = await redis.keys('sites:*:scrape:*');
+            const keys = Array.from(new Set([...scrapeQueueKeys, ...siteQueueKeys]));
             const keysToClear = [...keys];
             
             const activeProcessingExists = await redis.exists('active_processing');
@@ -91,7 +93,9 @@ export class QueueDumper {
         const redis = new Redis(this.config.redisUrl);
 
         try {
-            const keys = await redis.keys('scrape_queue*');
+            const scrapeQueueKeys = await redis.keys('scrape_queue*');
+            const siteQueueKeys = await redis.keys('sites:*:scrape:*');
+            const keys = Array.from(new Set([...scrapeQueueKeys, ...siteQueueKeys]));
             if (keys.length === 0) {
                 console.log('ℹ️ [QueueDumper] No active scrape queues found in Redis.');
                 return;
@@ -174,7 +178,9 @@ export class QueueStatusChecker {
         const redis = new Redis(this.config.redisUrl);
 
         try {
-            const keys = await redis.keys('scrape_queue*');
+            const scrapeQueueKeys = await redis.keys('scrape_queue*');
+            const siteQueueKeys = await redis.keys('sites:*:scrape:*');
+            const keys = Array.from(new Set([...scrapeQueueKeys, ...siteQueueKeys]));
             if (keys.length === 0) {
                 console.log('ℹ️ [QueueStatus] No active scrape queues found in Redis.');
                 return;

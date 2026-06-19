@@ -89,7 +89,7 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'gpters.html',
     filter: (id) => ({ $or: [{ postId: id }, { id: id }] }),
     statusCollection: 'bronze/gpters.urls',
-    completedSetKey: 'completed_news',
+    completedSetKey: 'sites:gpters:completed',
   },
 
   targetLoader: {

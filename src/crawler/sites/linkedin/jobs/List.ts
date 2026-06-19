@@ -454,7 +454,7 @@ export class LinkedInList {
                         attempt: 1,
                         priority: priority
                     };
-                    await redis.rpush(`scrape_queue:linkedin:${priority}`, JSON.stringify(scrapeTask));
+                    await redis.rpush(`sites:linkedin:scrape:${priority}`, JSON.stringify(scrapeTask));
                     await jobUrlsColl.updateOne(
                         { jobId: job.jobId },
                         { $set: { pushedToRedis: true } }

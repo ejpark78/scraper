@@ -242,7 +242,7 @@ export const descriptor: SiteDescriptor = {
     filter: (id) => ({ jobId: id }),
     statusCollection: 'bronze/linkedin.job_urls',
     statusFilterField: 'jobId',
-    completedSetKey: 'completed_jobs',
+    completedSetKey: 'sites:linkedin_jobs:completed',
   },
 
   targetLoader: {

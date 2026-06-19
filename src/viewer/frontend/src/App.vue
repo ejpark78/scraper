@@ -870,7 +870,7 @@ const iframeSrcDoc = computed(() => {
                   ({{ queueDeltas.scraping > 0 ? '+' : '' }}{{ queueDeltas.scraping.toLocaleString('ko-KR') }})
                 </span>
               </span>
-              <span class="metric-sub">scrape_queue:* 합계</span>
+              <span class="metric-sub">수집 큐 합계</span>
             </div>
             <div class="metric-card">
               <span class="metric-label">변환 대기 중 (Converting)</span>
@@ -1017,7 +1017,7 @@ const iframeSrcDoc = computed(() => {
                       </thead>
                       <tbody>
                         <tr v-for="q in queueData.queues" :key="q.name">
-                          <td style="font-weight: 600; color: #fff;">{{ q.name.replace('scrape_queue:', '') }}</td>
+                          <td style="font-weight: 600; color: #fff;">{{ q.name.replace('scrape_queue:', '').replace('sites:', '') }}</td>
                           <td>
                             <span :class="['badge-priority', q.name.split(':').pop() || 'low']" style="font-size: 10px; padding: 2px 6px;">{{ q.length.toLocaleString('ko-KR') }}</span>
                           </td>

@@ -176,7 +176,7 @@ export const descriptor: SiteDescriptor = {
     targetCollection: 'uppity.html',
     filter: (id) => ({ id }),
     statusCollection: 'bronze/uppity.urls',
-    completedSetKey: 'completed_uppity',
+    completedSetKey: 'sites:uppity:completed',
   },
 
   targetLoader: {
