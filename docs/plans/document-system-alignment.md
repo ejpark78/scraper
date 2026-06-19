@@ -25,6 +25,10 @@
 ### 5. AGENTS.md 내 자가 검증 규칙 보강
 - **`[MODIFY]`** `AGENTS.md`: "Documentation Lifecycle Rules" 섹션에 코드/설정 변경 시 리뷰 문서 강제 작성 및 자가 검증 의무화 조항 명문화
 
+### 6. Scraper/Converter Worker 데이터베이스 임포트 오류 수정
+- **`[MODIFY]`** `apps/crawler/src/workers/ScraperWorker.ts`, `apps/crawler/src/workers/ConverterWorker.ts`: 레거시 상대경로 `../../database/mongo`를 모노레포 표준 패키지 별칭인 `@wiki/database`로 변경
+
+
 
 
 ---

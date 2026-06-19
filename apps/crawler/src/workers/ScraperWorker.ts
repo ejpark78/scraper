@@ -16,7 +16,7 @@ import Redis from 'ioredis';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MongoDatabase } from '../../database/mongo';
+import { MongoDatabase } from '@wiki/database';
 import { UrlUtils, Logger } from '../utils';
 const { stripTrackingParams, isBinaryUrl, extractDomainUrl } = UrlUtils;
 import { getSite, getAllSites } from '../core/SiteRegistry';
