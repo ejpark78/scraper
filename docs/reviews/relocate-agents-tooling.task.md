@@ -11,4 +11,4 @@
 - [x] **[Bugfix]** `agents.mk` 내 ts-node 실행 시 tsconfig 명시적 로딩 처리
 - [x] `make agents-dump` 정상 실행 및 검증 (성공)
 - [x] `docs/reviews/relocate-agents-tooling.md` 리뷰 문서 작성
-- [ ] Git commit 수행 (`scripts/agents/commit-changes.sh`)
+- [x] Git commit 수행 (`scripts/agents/commit-changes.sh` 완료)
