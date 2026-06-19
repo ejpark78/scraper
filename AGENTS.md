@@ -54,13 +54,14 @@
    - **`docs/specs/`**: 기능적 파이프라인, 비즈니스 요구사항, 입출력 데이터 규격을 기술합니다. (신규 파이프라인 개발 전 필수 작성, 템플릿: [specs_template.md](file:///home/ejpark/workspace/scraper/docs/templates/specs_template.md) / 요구사항 정의 템플릿: [prd_template.md](file:///home/ejpark/workspace/scraper/docs/templates/prd_template.md))
    - **`docs/adr/`**: 아키텍처 변경이나 기술 스택 결정 이력을 기록합니다. (`0003-title.md` 형식으로 순차 번호 부여, 템플릿: [adr_template.md](file:///home/ejpark/workspace/scraper/docs/templates/adr_template.md))
    - **`docs/plans/`**: 실제 코드의 수정 범위 및 CLI 테스트 상세 계획을 작성합니다. (템플릿: [plans_template.md](file:///home/ejpark/workspace/scraper/docs/templates/plans_template.md))
-   - **`docs/reviews/`**: 코드 작성 완료 후 타입 안정성, 예외 처리 등을 리뷰합니다. (**계획서와 1:1로 동일한 파일명 매핑** 필수, 예: `docs/reviews/integrate-ebook-service.md`)
+   - **`docs/reviews/`**: 코드 작성 완료 후 타입 안정성, 예외 처리 등을 리뷰합니다. (**계획서와 1:1로 동일한 파일명 매핑** 필수, 예: `docs/reviews/integrate-ebook-service.md`). 또한 협업 투명성을 위해 에이전트 아티팩트 목록과 결과보고서를 `{plan-name}.task.md` 및 `{plan-name}.walkthrough.md` 형태로 이 디렉토리에 복사하여 영구 보존합니다.
    - **`docs/tests/`**: 수동 검증 단계 및 통합 테스트 케이스 시나리오를 정의합니다. (템플릿: [tests_template.md](file:///home/ejpark/workspace/scraper/docs/templates/tests_template.md))
    - **`docs/issues/`**: 개발/운영 중 발생한 중대 장애 분석, 디버깅 과정 및 원인 파악과 조치 결과를 기록합니다. (단순 일회성 오류가 아닌 반복 장애/트러블슈팅 지식 보관용, 템플릿: [issues_template.md](file:///home/ejpark/workspace/scraper/docs/templates/issues_template.md))
    - **`CHANGELOG.md`**: 프로젝트 루트의 단일 파일로 릴리즈 버전 및 마일스톤 단위의 전체 변경 이력을 통합 관리합니다. (개별 changelog 폴더 분할은 지양)
 
 3. **코드 리뷰 작성 강제 및 자가 검증**:
-    - 코드(Makefile, Dockerfile 등 설정 파일 포함) 수정이 수반되면 반드시 `docs/reviews/` 하위에 계획서와 1:1로 매핑되는 리뷰 문서를 작성하여 커밋해야 합니다.
+    - 코드(Makefile, Dockerfile 등 설정 파일 포함) 수정이 수반되면 반드시 `docs/reviews/` 하위에 계획서와 1:1로 매핑되는 리뷰 문서(`{plan-name}.md`), 할 일 목록 복사본(`{plan-name}.task.md`), 결과보고서 복사본(`{plan-name}.walkthrough.md`)을 세트로 작성하여 커밋해야 합니다.
+
     - 에이전트는 작업을 마치고 완료를 보고하기 전에 **"코드를 수정해두고 리뷰 문서를 누락하지 않았는지"** 반드시 되돌아보는 자가 검증 루프(Self-Inspection)를 돌려야 합니다. 리뷰 작성이 누락된 상태에서는 최종 Done 보고를 할 수 없습니다.
 
 
