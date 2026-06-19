@@ -7,4 +7,4 @@
 - [x] 기존 `apps/crawler/docker/worker/ebook` 디렉토리 삭제
 - [x] 신규 compose config 검증 (`docker compose config` 완료)
 - [x] `docs/reviews/move-ebook-docker-configs.md` 리뷰 문서 작성
-- [ ] Git commit 수행 (`scripts/agents/commit-changes.sh`)
+- [x] Git commit 수행 (`scripts/agents/commit-changes.sh` 완료)
