@@ -23,7 +23,7 @@ async function scrapePytorchKr(url: string, tempPath: string): Promise<void> {
   if (!response.ok) {
     throw new Error(`PyTorch KR JSON API HTTP status ${response.status} when scraping ${url}`);
   }
-  const data = await response.json();
+  const data = (await response.json()) as any;
   const title: string = data.title || 'Unknown Title';
   const createdAt: string = data.created_at || '';
   const cooked: string = data.post_stream?.posts?.[0]?.cooked || '';
