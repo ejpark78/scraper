@@ -156,7 +156,7 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
             });
             if (!response.ok) return null;
 
-            const data = await response.json();
+            const data = (await response.json()) as any;
             const title: string = data.title || 'Unknown Title';
             const createdAt: string = data.created_at || '';
             const cooked: string = data.post_stream?.posts?.[0]?.cooked || '';
