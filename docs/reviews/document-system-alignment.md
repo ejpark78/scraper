@@ -38,9 +38,13 @@
   - `src/scripts/queue.ts` ➡️ `apps/crawler/src/scripts/queue.ts` (완료)
   - `src/scripts/grep-errors.ts` ➡️ `apps/crawler/src/scripts/grep-errors.ts` (완료)
   - `src/scripts/fix-urls.ts` ➡️ `apps/crawler/src/scripts/fix-urls.ts` (완료)
+- **`AGENTS.md`**:
+  - 에이전트 개발 프로세스 강제를 위한 "코드 리뷰 작성 강제 및 자가 검증" 조항 명문화 완료 (완료)
 
 ---
 
 ## 4. 종합 의견 (Conclusion)
 * 모노레포 개편 작업 이후 잔존해 있던 총 5개의 Makefile 스크립트 실행 경로가 정상 수정되었음을 최종 확인했습니다.
+* `AGENTS.md`에 에이전트 자가 검증 및 코드 리뷰 강제 규칙을 새겨, 향후 동일한 수명 주기 누락이 재발하지 않도록 시스템 장치를 마련하였습니다.
 * `sync-ebooks.ts` 관련 수집/동기화 specs 사양서가 정의되었고, 전체 프로젝트 로드맵(`GOAL.md`) 및 릴리즈 1.1.0 이력(`CHANGELOG.md`)이 올바르게 기록되어 문서화 생명주기 정합성이 충족되었습니다.
+
