@@ -82,3 +82,23 @@ Every code change must adhere to the following strict engineering guidelines:
 3. **No Silent Failures**: Every `catch` block must log the error context using a dedicated logging utility (like `Logger.warn`).
 4. **Centralized Config**: Never reference `process.env` directly in application logic. Inject configurations via the `AppConfig` class constructor.
 5. **Git Commit Automation**: After making valid modifications, always run `scripts/agents/commit-changes.sh` immediately to record progress.
+
+---
+
+## 🔄 5. AI-Assisted Coding SDLC Lifecycle Workflow
+
+에이전트는 단순히 프롬프트 기반으로 코드를 Speculate(추측)하여 작성하는 **Vibe Coding**을 엄격히 배제하며, 아래의 엔지니어링 생명 주기를 필수 준수합니다.
+
+```text
+기획 (PRD/요구사항) ➡️ 설계 (Specs/ADR) ➡️ 계획 (Plans) ➡️ 검증 (Tests) ➡️ 배포 (Prod)
+```
+
+1. **요구사항 확인**: 사용자가 제시한 기획 의도(PRD)를 파악합니다.
+2. **사양 및 기술 결정 (Specs/ADR)**:
+   - 구현 전, [docs/specs/](file:///home/ejpark/workspace/scraper/docs/specs/)에 데이터 입출력 명세와 파이프라인 명세를 작성합니다.
+   - 구조적 설계 분기가 있을 경우 [docs/adr/](file:///home/ejpark/workspace/scraper/docs/adr/)에 비교 근거를 기록합니다.
+3. **구현 계획 수립 (Plans)**:
+   - [docs/plans/](file:///home/ejpark/workspace/scraper/docs/plans/) 하위에 구체적으로 생성/수정할 파일들과 CLI 테스트 명령어 계획을 작성하여 **사용자의 승인**을 받습니다.
+4. **검증 (Tests)**:
+   - [docs/tests/](file:///home/ejpark/workspace/scraper/docs/tests/)에 수동/자동 테스트 시나리오를 설계하고 실제 통과 결과를 [docs/reviews/](file:///home/ejpark/workspace/scraper/docs/reviews/) 리포트에 기록하여 검증을 완료합니다.
+
