@@ -41,7 +41,7 @@ services:
     image: scraper/scraper:latest
     profiles:
       - worker
-    command: ["npx", "ts-node", "src/crawler/workers/ScraperWorker.ts"]
+    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/crawler/src/workers/ScraperWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - JSON_LOG=true
@@ -73,7 +73,7 @@ services:
     image: scraper/converter:latest
     profiles:
       - worker
-    command: ["npx", "ts-node", "src/crawler/workers/ConverterWorker.ts"]
+    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/crawler/src/workers/ConverterWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
@@ -104,7 +104,7 @@ services:
     image: scraper/indexer:latest
     profiles:
       - worker
-    command: ["npx", "ts-node", "src/crawler/workers/IndexerWorker.ts"]
+    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/crawler/src/workers/IndexerWorker.ts"]
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
@@ -125,3 +125,20 @@ services:
       retries: 3
     deploy:
       replicas: 1
+
+  ebook:
+    build:
+      context: ../../
+      dockerfile: docker/worker/ebook/Dockerfile
+    image: scraper/ebook:latest
+    profiles:
+      - ebook
+    environment:
+      - TZ=Asia/Seoul
+      - MONGO_URL=mongodb://mongodb:27017
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/apps/ebook:/app
+      - ${HOST_PROJECT_PATH:-.}/data/ebook:/app/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: "no"

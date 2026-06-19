@@ -40,7 +40,7 @@ services:
         - BUILD_DATE
         - VCS_REF
     image: scraper/viewer:latest
-    command: ["npx", "ts-node", "src/viewer/server.ts"]
+    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/viewer/server.ts"]
     profiles:
       - tools
       - viewer
@@ -80,7 +80,7 @@ services:
         - BUILD_DATE
         - VCS_REF
     image: scraper/viewer:latest
-    command: ["npx", "ts-node", "src/viewer/mcp-entry.ts"]
+    command: ["npx", "ts-node", "-r", "tsconfig-paths/register", "apps/viewer/mcp-entry.ts"]
     profiles:
       - tools
       - viewer

@@ -11,8 +11,16 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "*database/mongo": ["packages/database/mongo.ts"],
+      "*database/meili": ["packages/database/meili.ts"],
+      "*config/AppConfig": ["packages/config/AppConfig.ts"],
+      "@wiki/database": ["packages/database/index.ts"],
+      "@wiki/config": ["packages/config/index.ts"]
+    }
   },
-  "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist", "src/viewer/frontend"]
+  "include": ["src/**/*", "tests/**/*", "packages/**/*", "apps/**/*"],
+  "exclude": ["node_modules", "dist", "src/viewer/frontend", "apps/viewer/frontend", "apps/ebook"]
 }

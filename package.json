@@ -8,6 +8,10 @@
     "viewer": "ts-node src/viewer/server.ts"
   },
   "keywords": [],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -37,6 +41,7 @@
     "@types/node": "^25.9.2",
     "@types/turndown": "^5.0.6",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3",
     "yaml-lint": "^1.7.0"
   }

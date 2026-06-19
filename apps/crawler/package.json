@@ -1,0 +1,8 @@
+{
+  "name": "@wiki/crawler",
+  "version": "1.0.0",
+  "dependencies": {
+    "@wiki/database": "*",
+    "@wiki/config": "*"
+  }
+}

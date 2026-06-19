@@ -23,16 +23,16 @@ COPY package*.json ./
 RUN npm ci && npm cache clean --force
 
 # Install frontend dependencies using cache layers
-COPY src/viewer/frontend/package*.json ./src/viewer/frontend/
-RUN npm install --prefix src/viewer/frontend && npm cache clean --force
+COPY apps/viewer/frontend/package*.json ./apps/viewer/frontend/
+RUN npm install --prefix apps/viewer/frontend && npm cache clean --force
 
 # Copy source files
 COPY . .
 
 # Generate static sites config JSON
-RUN npx ts-node src/scripts/generate-sites-config.ts
+RUN TS_NODE_PROJECT=tsconfig.json npx ts-node -r tsconfig-paths/register --project tsconfig.json apps/crawler/src/scripts/generate-sites-config.ts
 
 # Build the frontend assets
-RUN npm --prefix src/viewer/frontend run build
+RUN npm --prefix apps/viewer/frontend run build
 
 CMD ["tail", "-f", "/dev/null"]

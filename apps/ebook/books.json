@@ -1,0 +1,103 @@
+{
+  "AI Engineering.pdf": {
+    "chapters": [
+      {"title": "Chapter 1. Introduction to Building AI Applications with Foundation Models", "start": 25, "end": 73},
+      {"title": "Chapter 2. Understanding Foundation Models", "start": 73, "end": 137},
+      {"title": "Chapter 3. Evaluation Methodology", "start": 137, "end": 183},
+      {"title": "Chapter 4. Evaluate AI Systems", "start": 183, "end": 235},
+      {"title": "Chapter 5. Prompt Engineering", "start": 235, "end": 277},
+      {"title": "Chapter 6. RAG and Agents", "start": 277, "end": 331},
+      {"title": "Chapter 7. Finetuning", "start": 331, "end": 387},
+      {"title": "Chapter 8. Dataset Engineering", "start": 387, "end": 429},
+      {"title": "Chapter 9. Inference Optimization", "start": 429, "end": 473},
+      {"title": "Chapter 10. AI Engineering Architecture and User Feedback", "start": 473, "end": 519},
+      {"title": "Epilogue", "start": 519, "end": 521}
+    ]
+  },
+  "AI-Assisted Programming - Tom Taulli.pdf": {
+    "chapters": [
+      {"title": "Chapter 1. New World for Developers", "start": 21, "end": 41},
+      {"title": "Chapter 2. How AI Coding Technology Works", "start": 41, "end": 63},
+      {"title": "Chapter 3. Prompt Engineering", "start": 63, "end": 81},
+      {"title": "Chapter 4. GitHub Copilot", "start": 81, "end": 103},
+      {"title": "Chapter 5. Other AI-Assisted Programming Tools", "start": 103, "end": 123},
+      {"title": "Chapter 6. ChatGPT and Other General-Purpose LLMs", "start": 123, "end": 151},
+      {"title": "Chapter 7. Ideas, Planning, and Requirements", "start": 151, "end": 173},
+      {"title": "Chapter 8. Coding", "start": 173, "end": 199},
+      {"title": "Chapter 9. Debugging, Testing, and Deployment", "start": 199, "end": 213},
+      {"title": "Chapter 10. Takeaways", "start": 213, "end": 225}
+    ]
+  },
+  "Beyond Vibe Coding - Addy Osmani.pdf": {
+    "chapters": [
+      {"title": "Preface", "start": 5, "end": 13},
+      {"title": "1. Introduction: What Is Vibe Coding?", "start": 13, "end": 66},
+      {"title": "2. The Art of the Prompt: Communicating Effectively with AI", "start": 66, "end": 102},
+      {"title": "3. The 70% Problem: AI-Assisted Workflows That Actually Work", "start": 102, "end": 121},
+      {"title": "4. Beyond the 70%: Maximizing Human Contribution", "start": 121, "end": 143},
+      {"title": "5. Understanding Generated Code: Review, Refine, Own", "start": 143, "end": 157},
+      {"title": "6. AI-Driven Prototyping: Tools and Techniques", "start": 157, "end": 174},
+      {"title": "7. Building Web Applications with AI", "start": 174, "end": 202},
+      {"title": "8. Security, Maintainability, and Reliability", "start": 202, "end": 244},
+      {"title": "9. The Ethical Implications of Vibe Coding", "start": 244, "end": 266},
+      {"title": "10. Autonomous Background Coding Agents", "start": 266, "end": 292},
+      {"title": "11. Beyond Code Generation: The Future of AI-Augmented Development", "start": 292, "end": 387}
+    ]
+  },
+  "Building Applications with AI Agents.pdf": {
+    "chapters": [
+      {"title": "Chapter 1. Introduction to Agents", "start": 23, "end": 39},
+      {"title": "Chapter 2. Designing Agent Systems", "start": 39, "end": 63},
+      {"title": "Chapter 3. User Experience Design for Agentic Systems", "start": 63, "end": 93},
+      {"title": "Chapter 4. Tool Use", "start": 93, "end": 111},
+      {"title": "Chapter 5. Orchestration", "start": 111, "end": 137},
+      {"title": "Chapter 6. Knowledge and Memory", "start": 137, "end": 157},
+      {"title": "Chapter 7. Learning in Agentic Systems", "start": 157, "end": 185},
+      {"title": "Chapter 8. From One Agent to Many", "start": 185, "end": 227},
+      {"title": "Chapter 9. Validation and Measurement", "start": 227, "end": 245},
+      {"title": "Chapter 10. Monitoring in Production", "start": 245, "end": 265},
+      {"title": "Chapter 11. Improvement Loops", "start": 265, "end": 293},
+      {"title": "Chapter 12. Protecting Agentic Systems", "start": 293, "end": 319},
+      {"title": "Chapter 13. Human-Agent Collaboration", "start": 319, "end": 337},
+      {"title": "Glossary", "start": 337, "end": 355}
+    ]
+  },
+  "Generative AI on Kubernetes.pdf": {
+    "chapters": [
+      {"title": "Introduction", "start": 21, "end": 37},
+      {"title": "Part I - Chapter 1. Deploying Models", "start": 39, "end": 69},
+      {"title": "Part I - Chapter 2. Model Data", "start": 69, "end": 115},
+      {"title": "Part II - Chapter 3. Kubernetes and GPUs", "start": 117, "end": 155},
+      {"title": "Part II - Chapter 4. Running in Production", "start": 155, "end": 189},
+      {"title": "Part II - Chapter 5. Model Observability", "start": 189, "end": 213},
+      {"title": "Part III - Chapter 6. Model Customization", "start": 215, "end": 241},
+      {"title": "Part III - Chapter 7. Job Scheduling Optimization", "start": 241, "end": 295},
+      {"title": "Part IV - Chapter 8. AI-Driven Applications", "start": 297, "end": 337},
+      {"title": "Part IV - Chapter 9. Running Agentic Applications in Production", "start": 337, "end": 404}
+    ]
+  },
+  "Learning LangChain.pdf": {
+    "chapters": [
+      {"title": "Chapter 1. LLM Fundamentals with LangChain", "start": 29, "end": 51},
+      {"title": "Chapter 2. RAG Part I: Indexing Your Data", "start": 51, "end": 85},
+      {"title": "Chapter 3. RAG Part II: Chatting with Your Data", "start": 85, "end": 123},
+      {"title": "Chapter 4. Using LangGraph to Add Memory to Your Chatbot", "start": 123, "end": 143},
+      {"title": "Chapter 5. Cognitive Architectures with LangGraph", "start": 143, "end": 163},
+      {"title": "Chapter 6. Agent Architecture", "start": 163, "end": 183},
+      {"title": "Chapter 7. Agents II", "start": 183, "end": 199},
+      {"title": "Chapter 8. Patterns to Make the Most of LLMs", "start": 199, "end": 219},
+      {"title": "Chapter 9. Deployment: Launching Your AI Application into Production", "start": 219, "end": 243},
+      {"title": "Chapter 10. Testing: Evaluation, Monitoring, and Continuous Improvement", "start": 243, "end": 279},
+      {"title": "Chapter 11. Building with LLMs", "start": 279, "end": 297}
+    ]
+  },
+  "simplicity - Dave Thomas.pdf": {
+    "chapters": [
+      {"title": "1. An Approach to Simplicity", "start": 16, "end": 19},
+      {"title": "Part I. Simplify What You Do Simplify How You Do It", "start": 19, "end": 73},
+      {"title": "Part II. Simplify Your Environment", "start": 73, "end": 111},
+      {"title": "Part III. Simplify Your Interactions", "start": 111, "end": 140},
+      {"title": "Part IV. Simplify Your Code", "start": 140, "end": 190}
+    ]
+  }
+}

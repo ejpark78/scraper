@@ -5,3 +5,9 @@ data/
 data/sessions/
 node_modules/
 notebooks/.*
+
+# Python
+**/__pycache__/
+*.pyc
+.venv/
+.pytest_cache/

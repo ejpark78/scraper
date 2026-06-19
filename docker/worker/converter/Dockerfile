@@ -28,4 +28,4 @@ RUN npm ci && npm cache clean --force
 # Copy source files
 COPY . .
 
-CMD ["npx", "ts-node", "src/crawler/workers/ConverterWorker.ts"]
+CMD ["npx", "ts-node", "apps/crawler/src/workers/ConverterWorker.ts"]

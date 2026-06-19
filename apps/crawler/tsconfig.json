@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "paths": {
+      "*database/mongo": ["../../packages/database/mongo.ts"],
+      "*database/meili": ["../../packages/database/meili.ts"],
+      "*config/AppConfig": ["../../packages/config/AppConfig.ts"],
+      "@wiki/database": ["../../packages/database/index.ts"],
+      "@wiki/config": ["../../packages/config/index.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

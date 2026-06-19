@@ -36,4 +36,4 @@ COPY . .
 # Precreate data and config directories
 RUN mkdir -p data config
 
-CMD ["npx", "ts-node", "src/crawler/workers/ScraperWorker.ts"]
+CMD ["npx", "ts-node", "apps/crawler/src/workers/ScraperWorker.ts"]
