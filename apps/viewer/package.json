@@ -2,10 +2,10 @@
   "name": "@wiki/viewer",
   "version": "1.0.0",
   "description": "Express & Model Context Protocol (MCP) Server for LinkedIn Clipper Dashboard",
-  "main": "server.ts",
+  "main": "src/api/server.ts",
   "scripts": {
-    "start": "ts-node server.ts",
-    "mcp": "ts-node mcp-entry.ts"
+    "start": "ts-node src/api/server.ts",
+    "mcp": "ts-node src/mcp/mcp-entry.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.1",

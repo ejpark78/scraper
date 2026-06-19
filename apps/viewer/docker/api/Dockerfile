@@ -9,9 +9,9 @@ FROM node:22-bookworm
 ARG BUILD_DATE
 ARG VCS_REF
 
-LABEL org.opencontainers.image.title="LinkedIn Viewer API"
-LABEL org.opencontainers.image.description="Document explorer API server for LinkedIn Clipper"
-LABEL org.opencontainers.image.source="https://github.com/ejpark/linkedin"
+LABEL org.opencontainers.image.title="Scraper Viewer API"
+LABEL org.opencontainers.image.description="Document explorer API server for Scraper"
+LABEL org.opencontainers.image.source="https://github.com/ejpark/scraper"
 LABEL org.opencontainers.image.created="${BUILD_DATE}"
 LABEL org.opencontainers.image.revision="${VCS_REF}"
 LABEL org.opencontainers.image.licenses="MIT"
@@ -23,8 +23,8 @@ COPY package*.json ./
 RUN npm install && npm cache clean --force
 
 # Install frontend dependencies using cache layers
-COPY frontend/package*.json ./frontend/
-RUN npm install --prefix frontend && npm cache clean --force
+COPY src/frontend/package*.json ./src/frontend/
+RUN npm install --prefix src/frontend && npm cache clean --force
 
 # Copy source files
 COPY . .
@@ -33,6 +33,6 @@ COPY . .
 # RUN TS_NODE_PROJECT=tsconfig.json npx ts-node -r tsconfig-paths/register --project tsconfig.json apps/crawler/src/scripts/generate-sites-config.ts
 
 # Build the frontend assets
-RUN npm run build --prefix frontend
+RUN npm run build --prefix src/frontend
 
-CMD ["npx", "ts-node", "server.ts"]
+CMD ["npx", "ts-node", "src/api/server.ts"]
