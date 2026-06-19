@@ -12,4 +12,4 @@
 - [x] 신규 백엔드 이미지 빌드 검증 (`docker compose build` 완료)
 - [x] 신규 컨테이너 실행 검증 (`docker compose up` 완료 - Healthy 검증 성공)
 - [x] `docs/reviews/decouple-fe-be-services.md` 리뷰 문서 작성
-- [ ] Git commit 수행 (`scripts/agents/commit-changes.sh`)
+- [x] Git commit 수행 (`scripts/agents/commit-changes.sh` 완료)
