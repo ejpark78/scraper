@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
-import { DateUtils, UrlUtils, NamingUtils } from '../../utils';
+import { DateUtils, UrlUtils, NamingUtils } from '../../../utils';
 import { IConverter } from '../../../core/IConverter';
 
 import { JobMeta } from './site.config';
