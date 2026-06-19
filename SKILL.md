@@ -93,7 +93,7 @@ Every code change must adhere to the following strict engineering guidelines:
 기획 (PRD/요구사항) ➡️ 설계 (Specs/ADR) ➡️ 계획 (Plans) ➡️ 검증 (Tests) ➡️ 배포 (Prod)
 ```
 
-1. **요구사항 확인**: 사용자가 제시한 기획 의도(PRD)를 파악합니다.
+1. **요구사항 확인**: 사용자가 제시한 기획 의도(PRD)를 파악합니다. 필요 시 대화를 통해 기획안을 구체화하고 [prd_template.md](file:///home/ejpark/workspace/scraper/docs/templates/prd_template.md) 양식에 맞춰 요구 사양을 먼저 역작성하여 합의하는 프로세스를 가질 수 있습니다.
 2. **사양 및 기술 결정 (Specs/ADR)**:
    - 구현 전, [docs/specs/](file:///home/ejpark/workspace/scraper/docs/specs/)에 데이터 입출력 명세와 파이프라인 명세를 작성합니다.
    - 구조적 설계 분기가 있을 경우 [docs/adr/](file:///home/ejpark/workspace/scraper/docs/adr/)에 비교 근거를 기록합니다.
