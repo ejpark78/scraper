@@ -8,12 +8,12 @@
  */
 
 import { URLSearchParams } from 'url';
-import type { SiteDescriptor } from '../../core/SiteRegistry';
+import type { SiteDescriptor } from '../../../core/SiteRegistry';
 import { LinkedInMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
-import { UrlUtils } from '../../utils';
+import { UrlUtils } from '../../../utils';
 import { AppConfig } from '../../../config/AppConfig';
-import { NamingUtils } from '../../utils';
+import { NamingUtils } from '../../../utils';
 
 import * as fs from 'fs';
 import * as path from 'path';
