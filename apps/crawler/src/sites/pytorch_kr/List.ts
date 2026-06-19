@@ -49,7 +49,7 @@ class PyTorchKRList extends BaseListService {
             throw new Error(`Failed to fetch PyTorch KR index. Status: ${response.status}`);
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as any;
         const topics = data.topic_list?.topics || [];
         console.log(`🔍 [PyTorch KR List] Found ${topics.length} topics on index page.`);
 
