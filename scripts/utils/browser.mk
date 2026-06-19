@@ -7,13 +7,13 @@
 SITE ?= linkedin
 
 login:
-	SITE=$(SITE) npx ts-node src/crawler/sites/linkedin/Crawler.ts login
+	SITE=$(SITE) npx ts-node apps/crawler/src/sites/linkedin/Crawler.ts login
 
 open:
-	SITE=$(SITE) npx ts-node src/tools/browser/open.ts
+	SITE=$(SITE) npx ts-node apps/crawler/src/tools/browser/open.ts
 
 inspect-layout:
-	npx ts-node src/scripts/inspect-layout.ts
+	npx ts-node apps/crawler/src/scripts/inspect-layout.ts
 
 logout:
 	rm -f data/sessions/$(SITE).json

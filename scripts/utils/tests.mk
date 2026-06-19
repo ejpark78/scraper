@@ -25,7 +25,7 @@ extract:
 		echo "❌ Error: SITE and ID variables must be specified. (e.g. make extract SITE=yozm ID=3800)"; \
 		exit 1; \
 	fi
-	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules worker npx ts-node src/scripts/extract_article.ts --site $(SITE) --id $(ID)
+	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules worker npx ts-node apps/crawler/src/scripts/extract_article.ts --site $(SITE) --id $(ID)
 
 debug:
 	@if [ -z "$(FILE)" ] && ([ -z "$(SITE)" ] || [ -z "$(ID)" ]); then \
@@ -35,8 +35,8 @@ debug:
 		exit 1; \
 	fi
 	@if [ -n "$(FILE)" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules worker npx ts-node src/scripts/debug_html.ts --file $(FILE); \
+		$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules worker npx ts-node apps/crawler/src/scripts/debug_html.ts --file $(FILE); \
 	else \
-		$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules worker npx ts-node src/scripts/debug_html.ts --site $(SITE) --id $(ID); \
+		$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules worker npx ts-node apps/crawler/src/scripts/debug_html.ts --site $(SITE) --id $(ID); \
 	fi
 

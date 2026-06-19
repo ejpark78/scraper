@@ -34,9 +34,9 @@ restore:
 
 index:
 	@echo "🐳 Running index synchronization via volume-mounted temporary container..."
-	$(COMPOSE) run --rm $(WORKSPACE_MOUNT) -T viewer npx ts-node src/scripts/sync-indexes.ts
+	$(COMPOSE) run --rm $(WORKSPACE_MOUNT) -T viewer npx ts-node apps/crawler/src/scripts/sync-indexes.ts
 
 show-columns:
 	@echo "🔍 Mapping MongoDB Collection Columns..."
-	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules worker npx ts-node src/scripts/show_collection_columns.ts
+	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules worker npx ts-node apps/crawler/src/scripts/show_collection_columns.ts
 

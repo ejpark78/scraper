@@ -6,15 +6,15 @@
 
 refresh-index:
 	@echo "🐳 Syncing MongoDB Silver documents to Meilisearch index (Upsert mode)..."
-	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules -T worker npx ts-node src/scripts/meili-manager.ts $(if $(SITE),--site $(SITE),)
+	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules -T worker npx ts-node apps/crawler/src/scripts/meili-manager.ts $(if $(SITE),--site $(SITE),)
 
 reset-index:
 	@echo "🐳 Clearing index and rebuilding all Meilisearch documents (Clean Rebuild mode)..."
-	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules -T worker npx ts-node src/scripts/meili-manager.ts --clean $(if $(SITE),--site $(SITE),)
+	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules -T worker npx ts-node apps/crawler/src/scripts/meili-manager.ts --clean $(if $(SITE),--site $(SITE),)
 
 reindex:
 	@echo "🐳 Resetting and rebuilding Meilisearch index for SITE=$(SITE)..."
-	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules -T worker npx ts-node src/scripts/meili-manager.ts --clean $(if $(SITE),--site $(SITE),)
+	$(COMPOSE) run --rm $(RUN_USER) $(WORKSPACE_MOUNT) -v /app/node_modules -T worker npx ts-node apps/crawler/src/scripts/meili-manager.ts --clean $(if $(SITE),--site $(SITE),)
 
 status:
 	@echo "🐳 Checking Meilisearch index statistics..."

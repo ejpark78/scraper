@@ -18,6 +18,10 @@
 ### 3. Ebook 파이프라인 사양 구체화
 - **`[NEW]`** `docs/specs/integrate-ebook-service.md`: `specs_template.md` 양식에 근거하여 파이썬 파서의 동작, 데이터 동기화(`sync-ebooks.ts`) 흐름, DB 적재 사양을 기록
 
+### 4. Makefile 스크립트 실행 경로 수정
+- **`[MODIFY]`** `scripts/utils/browser.mk`, `scripts/utils/meili.mk`, `scripts/utils/mongo.mk`, `scripts/utils/tests.mk`, `scripts/utils/worker.mk`: 레거시 `src/scripts` 경로를 모노레포 구조에 맞는 `apps/crawler/src/scripts`로 일괄 수정
+
+
 ---
 
 ## Verification Plan
