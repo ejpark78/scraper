@@ -4,7 +4,7 @@
 # Last Updated: 2026-06-11
 # ==============================================================================
 
-FROM mcr.microsoft.com/playwright:v1.60.0-jammy
+FROM mcr.microsoft.com/playwright:v1.61.0-jammy
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
