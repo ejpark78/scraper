@@ -40,7 +40,7 @@ class SysInfoDumper {
         redis: this.getRedisConnectivity()
       };
 
-      const transcriptsAgyDir = path.join(__dirname, '../../../data/agents/agy');
+      const transcriptsAgyDir = path.join(__dirname, '../../data/agents/agy');
       fs.mkdirSync(transcriptsAgyDir, { recursive: true });
       const destPath = path.join(transcriptsAgyDir, 'sysinfo_cache.json');
       fs.writeFileSync(destPath, JSON.stringify(info, null, 2), 'utf-8');
@@ -94,7 +94,7 @@ class SysInfoDumper {
 // 2. Transcript Dumper
 // ==============================================================================
 class TranscriptDumper {
-  private readonly workspaceRoot: string = path.resolve(__dirname, '../../..');
+  private readonly workspaceRoot: string = path.resolve(__dirname, '../..');
   private readonly adapter: AgentAdapter;
   private readonly allMode: boolean;
   private readonly agentName: string;
@@ -198,7 +198,7 @@ class TranscriptDumper {
 
         const md = this.buildTranscript(s.id, s.title || s.id, detail.messages, taskLogs);
 
-        const outDir = path.join(__dirname, '..', '..', '..', 'data', 'agents', this.agentName, info.dateDir);
+        const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir);
         const destSessionDir = path.join(outDir, info.tag);
         fs.mkdirSync(destSessionDir, { recursive: true });
 
@@ -394,7 +394,7 @@ class ContextDumper {
     }
 
     try {
-      const mk = path.join(__dirname, '../../../scripts/utils/pipeline.mk');
+      const mk = path.join(__dirname, '../../scripts/utils/pipeline.mk');
       if (fs.existsSync(mk)) {
         const m = fs.readFileSync(mk, 'utf-8').match(/SCALE\s*\?=\s*(\d+)/);
         if (m) scale = m[1];
@@ -404,8 +404,8 @@ class ContextDumper {
     }
 
     try {
-      gitBranch = execSync('git rev-parse --abbrev-ref HEAD 2>/dev/null', { cwd: path.join(__dirname, '../../..'), stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
-      const statusOut = execSync('git status --porcelain 2>/dev/null', { cwd: path.join(__dirname, '../../..'), stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+      gitBranch = execSync('git rev-parse --abbrev-ref HEAD 2>/dev/null', { cwd: path.join(__dirname, '../..'), stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
+      const statusOut = execSync('git status --porcelain 2>/dev/null', { cwd: path.join(__dirname, '../..'), stdio: ['pipe', 'pipe', 'ignore'] }).toString();
       if (statusOut) gitDirty = `(+${statusOut.split('\n').filter(Boolean).length}개 변경)`;
     } catch {
       // Ignore
@@ -507,7 +507,7 @@ class ContextDumper {
         if (!info) return;
         console.log(`  -> ${info.tag} (${s.title})`);
 
-        const brainDumpPath = path.join(__dirname, '..', '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag, 'brain_dump.md');
+        const brainDumpPath = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag, 'brain_dump.md');
         if (!fs.existsSync(brainDumpPath)) {
           console.log(`  ⏭️  Skip (no brain_dump.md): ${info.tag}`);
           return;
@@ -516,7 +516,7 @@ class ContextDumper {
         try {
           const detail = adapter.getSessionDetail(s.id);
           const md = this.buildContextMemory(detail.session, detail.messages);
-          const outDir = path.join(__dirname, '..', '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
+          const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
           fs.mkdirSync(outDir, { recursive: true });
           fs.writeFileSync(path.join(outDir, 'context_memory.md'), md, 'utf-8');
           console.log(`  ✨ Saved: ${outDir}/context_memory.md`);
@@ -594,7 +594,7 @@ class BrainDumper {
           const detail = adapter.getSessionDetail(s.id);
           const md = this.buildBrainDump(detail.session, detail.messages);
 
-          const outDir = path.join(__dirname, '..', '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
+          const outDir = path.join(__dirname, '..', '..', 'data', 'agents', this.agentName, info.dateDir, info.tag);
           fs.mkdirSync(outDir, { recursive: true });
           const outPath = path.join(outDir, 'brain_dump.md');
           fs.writeFileSync(outPath, md, 'utf-8');
@@ -621,7 +621,7 @@ class SessionPruner {
 
   constructor() {
     this.baseBrainDir = path.join(os.homedir(), '.gemini/antigravity-cli/brain');
-    this.transcriptsDir = path.join(__dirname, '../../../data/agents');
+    this.transcriptsDir = path.join(__dirname, '../../data/agents');
   }
 
   public run(): void {

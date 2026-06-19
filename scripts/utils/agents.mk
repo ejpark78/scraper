@@ -20,33 +20,33 @@ AGENTS_FLAG = --agent=$(AGENTS)
         commit
 
 dump:
-	@npx ts-node apps/crawler/src/tools/agents/sessions.ts --all-targets --all $(AGENTS_FLAG)
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --all-targets --all $(AGENTS_FLAG)
 	@$(MAKE) -f scripts/utils/agents.mk compress-rules
 
 dump-transcripts:
-	@npx ts-node apps/crawler/src/tools/agents/sessions.ts --transcript --all $(AGENTS_FLAG)
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --transcript --all $(AGENTS_FLAG)
 
 dump-context:
-	@npx ts-node apps/crawler/src/tools/agents/sessions.ts --context --all $(AGENTS_FLAG)
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --context --all $(AGENTS_FLAG)
 
 dump-brain:
-	@npx ts-node apps/crawler/src/tools/agents/sessions.ts --brain --all $(AGENTS_FLAG)
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --brain --all $(AGENTS_FLAG)
 
 dump-sysinfo:
-	@npx ts-node apps/crawler/src/tools/agents/sessions.ts --sysinfo
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --sysinfo
 
 compress-rules:
-	@npx ts-node apps/crawler/src/tools/agents/sessions.ts --context --all $(AGENTS_FLAG)
-	@npx ts-node apps/crawler/src/tools/agents/rules.ts --compress
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --context --all $(AGENTS_FLAG)
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts --compress
 
 lint-rules:
-	@npx ts-node apps/crawler/src/tools/agents/rules.ts --lint
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts --lint
 
 usage:
-	@npx ts-node apps/crawler/src/tools/agents/usage.ts
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/usage.ts
 
 prune:
-	@npx ts-node apps/crawler/src/tools/agents/sessions.ts --prune
+	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --prune
 
 commit:
 	@bash scripts/agents/commit-changes.sh

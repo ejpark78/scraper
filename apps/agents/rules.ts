@@ -15,7 +15,7 @@ import * as path from 'path';
 // 1. Rule Compressor
 // ==============================================================================
 class RuleCompressor {
-  private readonly rulesDir = path.join(__dirname, '../../../.agents/rules');
+  private readonly rulesDir = path.join(__dirname, '../../.agents/rules');
 
   public run(): void {
     try {
@@ -35,7 +35,7 @@ class RuleCompressor {
       });
 
       // Write to data/agents/agy/
-      const transcriptsAgyDir = path.join(__dirname, '../../../data/agents/agy');
+      const transcriptsAgyDir = path.join(__dirname, '../../data/agents/agy');
       fs.mkdirSync(transcriptsAgyDir, { recursive: true });
       const destPath = path.join(transcriptsAgyDir, 'rules_compact.txt');
       fs.writeFileSync(destPath, compressedText.trim(), 'utf-8');
@@ -71,7 +71,7 @@ interface BadLinkItem {
 }
 
 class RulesLinter {
-  private readonly transcriptsDir = path.join(__dirname, '../../../data/agents');
+  private readonly transcriptsDir = path.join(__dirname, '../../data/agents');
 
   public run(): void {
     try {
@@ -124,7 +124,7 @@ class RulesLinter {
       let match;
       while ((match = absoluteLinkPattern.exec(line)) !== null) {
         badLinks.push({
-          file: path.relative(path.join(__dirname, '../../..'), filePath),
+          file: path.relative(path.join(__dirname, '../..'), filePath),
           line: index + 1,
           text: match[0]
         });
