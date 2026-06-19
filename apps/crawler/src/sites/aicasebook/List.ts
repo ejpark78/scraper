@@ -44,7 +44,7 @@ class AiCasebookList extends BaseListService {
                 const seen = new Set<string>();
                 return els
                     .map((el) => {
-                        const anchor = el as HTMLAnchorElement;
+                        const anchor = el as any;
                         const href = anchor.href;
                         const match = href.match(/\/setup\/(\d+)/);
                         if (!match) return null;
