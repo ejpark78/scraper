@@ -56,3 +56,20 @@ Ports are intentionally not exposed to the host for security. Target them inside
 ```bash
 docker compose -p scraper exec -T mongodb mongosh bronze --eval "db['uppity.html'].countDocuments()"
 ```
+
+---
+
+## 5. Malformed Noise IDs in DB (Trailing Korean Particles)
+### Symptom:
+Articles failed to crawl with HTTP 400 Bad Request error because trailing Korean particles (e.g. `를`, `에` or `%EB%A5%BC`) are appended to the scraped URLs.
+
+### Resolution:
+1. Run the legacy noise cleaning migration script to prune malformed IDs and schedule clean re-crawling:
+   ```bash
+   docker compose -p scraper run --rm -v $(pwd)/src:/app/src worker npx ts-node src/scripts/clean_legacy_noise_ids.ts
+   ```
+2. Check MongoDB directly to ensure no malformed IDs remain:
+   ```bash
+   docker compose -p scraper exec -T mongodb mongosh bronze --eval "db['geeknews.urls'].find({id: /.*[가-힣%].*/})"
+   ```
+

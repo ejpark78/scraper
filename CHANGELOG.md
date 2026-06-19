@@ -9,6 +9,9 @@ and this project adheres to Semantic Versioning.
 
 ## [1.0.0] - 2026-06-19
 
+### Added
+- **Retroactive Noise Cleansing Script**: Added `clean_legacy_noise_ids.ts` to automatically scan all site collections in MongoDB, prune malformed IDs containing Korean trailing particles, and re-schedule clean URLs for re-crawling.
+
 ### Changed
 - **Redis Namespace Refactoring**: Restructured all active scraper queues and completion caches into a unified, site-centric layout:
   - Sc scraper queues: `sites:${siteKey}:scrape:${priority}`

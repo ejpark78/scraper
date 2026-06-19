@@ -24,3 +24,10 @@ Before merging any pull request or committing changes, verify the implementation
 - [ ] **Unified Redis Namespace**: No custom queue strings. Queues match `sites:${siteKey}:scrape:${priority}` and cache sets match `sites:${siteKey}:completed`.
 - [ ] **Fixed Length IDs**: Document IDs are unique and fixed-length (MD5 or equivalent), avoiding URL parameter length errors.
 - [ ] **Migration Safety**: If ID mapping algorithm changes, MongoDB records are migrated using migration scripts before deploying.
+
+---
+
+## 4. Data Migration & Retroactive Recovery Checks
+- [ ] **State Restoration**: Verify that recovering documents sets `status: 'new'` and `pushedToRedis: false` to allow re-crawling.
+- [ ] **Collisions Avoided**: Confirm that migration script checks if the target clean ID already exists before attempting upsert.
+- [ ] **Dry Run Validation**: Scripts performing data mutations support dry-run outputs or are thoroughly run in test database profiles.

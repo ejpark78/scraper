@@ -45,3 +45,11 @@ To prevent Linux filesystem length limitations (`ENAMETOOLONG` max 255 chars), *
 ## 4. Cache & Queue Redis Key Schema
 - **Queues**: `sites:${siteKey}:scrape:${priority}` (where priority = `high` | `medium` | `low`)
 - **Completion Caches**: `sites:${siteKey}:completed` (Redis Set holding completed IDs)
+
+---
+
+## 5. URL Noise Cleansing Protocol
+- **Noise Type**: Trailing Korean particles (`를`, `에`, `은`, `는` 등) and URL-encoded equivalents (e.g. `%EB%A5%BC`, `%EC%97%90`) resulting from parser errors on body extracts.
+- **Normalization Action**: Applied inside `UrlUtils.stripTrackingParams(url)` using regular expression `/(?:%[0-9A-Fa-f]{2}|[가-힣]+)+$/`.
+- **Retroactive Cleansing**: Managed via `src/scripts/clean_legacy_noise_ids.ts` to prune malformed IDs from DB and queue them again in clean form.
+
