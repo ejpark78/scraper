@@ -86,7 +86,7 @@ gm-%:
 
 # agent utils
 agents-%:
-	@$(MAKE) -f scripts/utils/agents.mk $*
+	@$(MAKE) -f scripts/agents/agents.mk $*
 
 # meili utils
 ms-%:

@@ -8,7 +8,7 @@ SCALE         ?= 1
 SCRIPTS_MOUNT ?= -v ./apps/crawler/src/scripts:/app/apps/crawler/src/scripts
 
 restart:
-	SCALE=$(SCALE) $(COMPOSE) up -d --build worker scraper converter
+	SCALE=$(SCALE) $(COMPOSE) up -d --build worker scraper converter indexer
 
 clear-queue:
 	$(COMPOSE) run --rm $(RUN_USER) $(SCRIPTS_MOUNT) worker npx ts-node apps/crawler/src/scripts/queue.ts --clear

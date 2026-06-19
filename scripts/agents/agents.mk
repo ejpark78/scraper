@@ -1,5 +1,5 @@
 # ==============================================================================
-# 🤖 Agent Infrastructure Management Makefile (scripts/agents.mk)
+# 🤖 Agent Infrastructure Management Makefile (scripts/agents/agents.mk)
 # ==============================================================================
 # Design Context: Router for managing agent transcripts, contexts, and usage diagnostics.
 # Constraints:    Requires execute permissions on all helper scripts in scripts/agents/.
@@ -21,7 +21,7 @@ AGENTS_FLAG = --agent=$(AGENTS)
 
 dump:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --all-targets --all $(AGENTS_FLAG)
-	@$(MAKE) -f scripts/utils/agents.mk compress-rules
+	@$(MAKE) -f scripts/agents/agents.mk compress-rules
 
 dump-transcripts:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --transcript --all $(AGENTS_FLAG)
