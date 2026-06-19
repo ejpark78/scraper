@@ -42,8 +42,9 @@
   - 에이전트 개발 프로세스 강제를 위한 "코드 리뷰 작성 강제 및 자가 검증" 조항 명문화 완료 (완료)
 - **`GOAL.md`**:
   - 기존 구축 완료된 수집 엔진들(Tasks 1, 2, 3)을 마일스톤상 완료(`✅ Completed`)로 표시하고, 차후 개발 과제인 시맨틱 통합 검색 및 LLM 분석 리포팅을 핵심 미래 목표로 현행화 완료 (완료)
-- **`ScraperWorker.ts`, `ConverterWorker.ts`, `IndexerWorker.ts`**:
+- **`ScraperWorker.ts`, `ConverterWorker.ts`, `IndexerWorker.ts`, `TargetLoader.ts`**:
   - 기존 레거시 및 별칭(alias) 대신 환경에 구애받지 않고 컴파일이 보장되는 물리적 상대경로(`../../../../packages/database/mongo` 및 `meili`)로 데이터베이스 임포트 경로를 일괄 수정하여 빌드 타임 및 도커 런타임 오류 차단 완료 (완료)
+
 - **`AGENTS.md` (물리 보존 룰)**:
   - `docs/reviews/` 하위에 각 계획과 매핑되는 `{plan-name}.task.md` 및 `{plan-name}.walkthrough.md` 복사본 영구 보존 조항 신설 완료 (완료)
 - **`document-system-alignment.task.md` & `document-system-alignment.walkthrough.md`**:

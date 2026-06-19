@@ -25,8 +25,9 @@
 ### 5. AGENTS.md 내 자가 검증 규칙 보강
 - **`[MODIFY]`** `AGENTS.md`: "Documentation Lifecycle Rules" 섹션에 코드/설정 변경 시 리뷰 문서 강제 작성 및 자가 검증 의무화 조항 명문화
 
-### 6. Scraper/Converter/Indexer Worker 데이터베이스 임포트 오류 수정
-- **`[MODIFY]`** `apps/crawler/src/workers/ScraperWorker.ts`, `apps/crawler/src/workers/ConverterWorker.ts`, `apps/crawler/src/workers/IndexerWorker.ts`: 레거시 및 별칭(alias) 경로 대신 환경에 구애받지 않는 물리적 상대경로(`../../../../packages/database/mongo` 및 `meili`)로 데이터베이스 임포트 경로를 수정하여 빌드 안정성 확보
+### 6. Scraper/Converter/Indexer/TargetLoader Worker 데이터베이스 임포트 오류 수정
+- **`[MODIFY]`** `apps/crawler/src/workers/ScraperWorker.ts`, `apps/crawler/src/workers/ConverterWorker.ts`, `apps/crawler/src/workers/IndexerWorker.ts`, `apps/crawler/src/workers/TargetLoader.ts`: 레거시 및 별칭(alias) 경로 대신 환경에 구애받지 않는 물리적 상대경로(`../../../../packages/database/mongo` 및 `meili`)로 데이터베이스 임포트 경로를 수정하여 빌드 안정성 확보
+
 
 ### 7. docs/reviews/ 하위 아티팩트 복사 및 보존 규칙 수립
 - **`[NEW]`** `docs/reviews/document-system-alignment.task.md`, `docs/reviews/document-system-alignment.walkthrough.md`: 에이전트 전용 아티팩트 내용을 실제 프로젝트 디렉토리에 `{plan-name}.task.md` 및 `{plan-name}.walkthrough.md` 형태로 복사하여 보존
