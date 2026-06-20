@@ -472,15 +472,15 @@ async function addUrlQueue() {
           </div>
           
           <!-- Date Filter Control -->
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-            <button @click="moveWeek(-1)" class="btn-secondary" style="padding: 4px 10px; font-size: 11px; height: 28px;">◀ 이전 주</button>
-            <div style="display: flex; align-items: center; gap: 4px; background: #1e1e2e; border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 6px;">
-              <input type="date" v-model="startDateInput" style="background: transparent; border: none; color: #fff; font-size: 11px; outline: none; cursor: pointer;" />
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0;">
+            <button @click="moveWeek(-1)" class="btn-secondary" style="padding: 4px 12px; font-size: 11px; height: 28px; flex-shrink: 0;">◀ 이전 주</button>
+            <div style="display: flex; align-items: center; gap: 6px; background: #1e1e2e; border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 8px; flex-shrink: 0; min-height: 28px;">
+              <input type="date" v-model="startDateInput" style="background: transparent; border: none; color: #fff; font-size: 11px; outline: none; cursor: pointer; width: 120px; color-scheme: dark; font-family: monospace;" />
               <span style="color: var(--text-muted); font-size: 11px;">~</span>
-              <input type="date" v-model="endDateInput" style="background: transparent; border: none; color: #fff; font-size: 11px; outline: none; cursor: pointer;" />
+              <input type="date" v-model="endDateInput" style="background: transparent; border: none; color: #fff; font-size: 11px; outline: none; cursor: pointer; width: 120px; color-scheme: dark; font-family: monospace;" />
             </div>
-            <button @click="fetchCrawlStats" class="btn-primary" style="padding: 4px 12px; font-size: 11px; height: 28px; font-weight: 600;">조회</button>
-            <button @click="moveWeek(1)" class="btn-secondary" style="padding: 4px 10px; font-size: 11px; height: 28px;">다음 주 ▶</button>
+            <button @click="fetchCrawlStats" class="btn-primary" style="padding: 4px 14px; font-size: 11px; height: 28px; font-weight: 600; flex-shrink: 0;">조회</button>
+            <button @click="moveWeek(1)" class="btn-secondary" style="padding: 4px 12px; font-size: 11px; height: 28px; flex-shrink: 0;">다음 주 ▶</button>
           </div>
         </div>
 
@@ -578,13 +578,13 @@ async function addUrlQueue() {
 
       <!-- Site Content Stats (MongoDB vs Meilisearch Index Compare) -->
       <div class="queue-section-card">
-        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
-          <h3 style="margin: 0;">📦 사이트별 콘텐츠 수집 및 인덱싱 현황</h3>
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; flex-wrap: wrap; gap: 8px;">
+          <h3 style="margin: 0; flex-shrink: 1;">📦 사이트별 콘텐츠 수집 및 인덱싱 현황</h3>
           <button 
             @click="fetchSiteStats" 
             class="btn-secondary" 
             :disabled="loadingSiteStats"
-            style="padding: 4px 10px; font-size: 11px; display: flex; align-items: center; gap: 4px; height: 26px;"
+            style="padding: 4px 12px; font-size: 11px; display: flex; align-items: center; gap: 4px; height: 26px; flex-shrink: 0; white-space: nowrap; width: auto;"
           >
             <span>🔄 {{ loadingSiteStats ? '조회 중...' : '수량 조회/새로고침' }}</span>
           </button>
