@@ -4,7 +4,7 @@
 ROOT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 
 # Fallbacks for variables if not called from root Makefile
-COMPOSE ?= docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
+COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
 
 .PHONY: up down
 

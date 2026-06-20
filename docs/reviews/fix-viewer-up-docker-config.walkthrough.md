@@ -2,6 +2,7 @@
 
 ## 작업 결과 요약
 - `apps/viewer/Makefile`의 `COMPOSE` 구문에서 중복 지정되어 `include` 블록의 올바른 병합을 방해하던 `-f compose.yml` 플래그를 제거하였습니다.
+- 추가로 부모 Makefile에서 `export COMPOSE`되는 값이 우선 처리되는 것을 막기 위해 `COMPOSE ?=` 대신 `COMPOSE :=` 강제 대입 연산자를 사용하도록 설정했습니다.
 - 이로 인해 루트의 `compose.yml`이 정상 파싱되고, `include`된 `traefik`, `mongodb`, `redis` 등 인프라 서비스와 `viewer` 서비스들이 온전하게 인식됩니다.
 
 ## 변경 파일

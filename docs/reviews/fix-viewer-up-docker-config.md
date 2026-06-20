@@ -18,6 +18,6 @@
 ```diff
  # Fallbacks for variables if not called from root Makefile
 -COMPOSE ?= docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml -f compose.yml
-+COMPOSE ?= docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
++COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
 ```
-- **의견**: 루트 `compose.yml`의 `include` 구문에서 이미 `apps/viewer/compose.yml`을 상대 경로로 가져오므로, `-f compose.yml`을 추가로 지정하면 Docker Compose가 작업 디렉토리를 머지하는 과정에서 하위의 종속성(`traefik` 등)을 누락시키는 버그를 완벽하게 회피하게 됩니다.
+- **의견**: 루트 `compose.yml`의 `include` 구문에서 이미 `apps/viewer/compose.yml`을 상대 경로로 가져오므로, `-f compose.yml`을 추가로 지정하면 Docker Compose가 작업 디렉토리를 머지하는 과정에서 하위의 종속성(`traefik` 등)을 누락시키는 버그를 완벽하게 회피하게 됩니다. 추가적으로 상위 `Makefile`에서 `COMPOSE`를 `export`하기 때문에 조건부 대입(`?=`) 대신 강제 대입(`:=`)을 사용하여 확실하게 덮어쓰도록 했습니다.

@@ -11,7 +11,7 @@
 ### 1. Viewer App Configuration
 - **`[MODIFY]`** `apps/viewer/Makefile`: `COMPOSE` 변수 정의 부분 변경
   ```makefile
-  COMPOSE ?= docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
+  COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
   ```
 
 ---
