@@ -7,4 +7,4 @@
 - [x] 호스트 로컬 상에서 `npx ts-node apps/crawler/src/scripts/generate-sites-config.ts` 실행하여 `config/sites.json` 수동 생성 및 결과 확인
 - [x] 코드 리뷰 문서 (`038-fix-sites-config-generation-path.review.md`) 작성
 - [x] 결과보고서 (`038-fix-sites-config-generation-path.walkthrough.md`) 작성
-- [ ] 자동 커밋 스크립트 실행
+- [x] 자동 커밋 스크립트 실행
