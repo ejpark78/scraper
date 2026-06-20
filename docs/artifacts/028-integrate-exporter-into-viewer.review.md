@@ -36,3 +36,11 @@
 - [x] Vue Router 의존성 주입 및 동작 설계 여부
 - [x] 디렉토리 트래버스 취약점 대응 조치 여부
 - [x] 코드 내 `any` 타이핑 지양 규칙 만족 여부
+
+---
+
+## 4. 버그 수정 내역 (Bugfix)
+* **[Bugfix] Exporter 설정 폼 입력 필드 및 버튼 잘림 현상 수정**:
+  - **증상**: Joplin 또는 Obsidian 연동 설정이 확장될 때 설정 카드 내부의 `Joplin API 웹클리퍼 토큰` 등의 입력 필드가 카드 외부로 밀려 잘리는 현상 발생.
+  - **원인**: `.queue-section-card`에 적용된 CSS 속성 `overflow: hidden` 및 고정 크기로 인해 스크롤 처리가 되지 않았음.
+  - **해결**: [ExporterView.vue](file:///home/ejpark/workspace/scraper/apps/viewer/src/frontend/src/views/ExporterView.vue) 내 좌측 설정 폼 카드 엘리먼트에 `overflow-y: auto` 스타일을 추가하여 내용이 길어지더라도 스크롤을 통해 모든 입력 필드와 하단 실행 단추가 정상 노출 및 작동하도록 수정 완료.

@@ -32,5 +32,8 @@
   - [ ] 메인 영역에 `<router-view>` 적용
 
 ## 3. 테스트 및 빌드 검증
-- [ ] Frontend static assets 빌드 테스트
-- [ ] Docker 환경 빌드 및 통합 실행 검증
+- [x] Frontend static assets 빌드 테스트
+- [x] Docker 환경 빌드 및 통합 실행 검증
+
+## 4. 추가 다듬기 및 버그 픽 (Bugfix)
+- [x] ExporterView의 입력 폼 카드 영역에 세로 스크롤(`overflow-y: auto`) 적용하여 토큰 입력 필드가 잘려 보이지 않도록 수정

@@ -147,7 +147,7 @@ async function startExport() {
 
     <div class="dashboard-content" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px;">
       <!-- Left Panel: Settings Form -->
-      <div class="queue-section-card" style="display: flex; flex-direction: column; gap: 16px; padding: 20px;">
+      <div class="queue-section-card" style="display: flex; flex-direction: column; gap: 16px; padding: 20px; overflow-y: auto;">
         <h3 style="margin: 0; color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">⚙️ 내보내기 설정</h3>
         
         <!-- Book Selection -->
