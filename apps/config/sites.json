@@ -1,0 +1,108 @@
+[
+  {
+    "key": "aicasebook",
+    "name": "AI Casebook",
+    "favicon": "https://aicasebook.dev/favicon.ico",
+    "indexName": "aicasebook",
+    "collectionName": "silver/aicasebook.contents",
+    "bronzeCollectionName": "bronze/aicasebook.html",
+    "updateFilterKey": "id"
+  },
+  {
+    "key": "dailydose_ds",
+    "name": "Daily Dose of DS",
+    "favicon": "https://www.dailydoseofds.com/favicon.ico",
+    "indexName": "dailydose_ds",
+    "collectionName": "silver/dailydose_ds.contents",
+    "bronzeCollectionName": "bronze/dailydose_ds.html",
+    "updateFilterKey": "id"
+  },
+  {
+    "key": "ebook",
+    "name": "Ebook",
+    "favicon": "",
+    "indexName": "ebook",
+    "collectionName": "silver/ebook.contents"
+  },
+  {
+    "key": "geeknews",
+    "name": "GeekNews",
+    "favicon": "https://news.hada.io/favicon.ico",
+    "indexName": "geeknews",
+    "collectionName": "silver/geeknews.contents",
+    "bronzeCollectionName": "bronze/geeknews.html",
+    "updateFilterKey": "topicId"
+  },
+  {
+    "key": "gpters",
+    "name": "GPTers News",
+    "favicon": "https://gpters.org/favicon.ico",
+    "indexName": "gpters",
+    "collectionName": "silver/gpters.contents",
+    "bronzeCollectionName": "bronze/gpters.html",
+    "updateFilterKey": "postId"
+  },
+  {
+    "key": "gpters_newsletter",
+    "name": "GPTers Newsletter",
+    "favicon": "https://gpters.org/favicon.ico",
+    "indexName": "gpters_newsletter",
+    "collectionName": "silver/gpters_newsletter.contents",
+    "bronzeCollectionName": "bronze/gpters_newsletter.html",
+    "updateFilterKey": "id"
+  },
+  {
+    "key": "linkedin_company",
+    "name": "LinkedIn Company",
+    "favicon": "https://www.linkedin.com/favicon.ico",
+    "indexName": "linkedin_company",
+    "collectionName": "silver/linkedin.companies",
+    "bronzeCollectionName": "bronze/linkedin.companies",
+    "updateFilterKey": "companyId"
+  },
+  {
+    "key": "linkedin",
+    "name": "LinkedIn Jobs",
+    "favicon": "https://www.linkedin.com/favicon.ico",
+    "indexName": "linkedin_jobs",
+    "collectionName": "silver/linkedin.jobs",
+    "bronzeCollectionName": "bronze/linkedin.jobs",
+    "updateFilterKey": "jobId"
+  },
+  {
+    "key": "maily_josh",
+    "name": "조쉬의 뉴스레터 (Maily)",
+    "favicon": "https://maily.so/favicon.ico",
+    "indexName": "maily_josh",
+    "collectionName": "silver/maily_josh.contents",
+    "bronzeCollectionName": "bronze/maily_josh.html",
+    "updateFilterKey": "id"
+  },
+  {
+    "key": "pytorch_kr",
+    "name": "PyTorch KR",
+    "favicon": "https://discuss.pytorch.kr/uploads/default/optimized/1X/a15555c82ffc1409ffc05e1adbe5f9cf8e1cc385_2_32x32.png",
+    "indexName": "pytorch_kr",
+    "collectionName": "silver/pytorch_kr.contents",
+    "bronzeCollectionName": "bronze/pytorch_kr.html",
+    "updateFilterKey": "id"
+  },
+  {
+    "key": "uppity",
+    "name": "Uppity",
+    "favicon": "https://uppity.co.kr/favicon.ico",
+    "indexName": "uppity",
+    "collectionName": "silver/uppity.contents",
+    "bronzeCollectionName": "bronze/uppity.html",
+    "updateFilterKey": "id"
+  },
+  {
+    "key": "yozm",
+    "name": "요즘IT",
+    "favicon": "https://yozm.wishket.com/favicon.ico",
+    "indexName": "yozm",
+    "collectionName": "silver/yozm.contents",
+    "bronzeCollectionName": "bronze/yozm.html",
+    "updateFilterKey": "id"
+  }
+]
