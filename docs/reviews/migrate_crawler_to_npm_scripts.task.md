@@ -16,5 +16,10 @@
   - 큐/에러 처리, 빌드/재기동 단축 타겟, 그리고 `gmail-sync` 타겟까지 전담 관리하는 전용 메이크파일 신규 작성 및 확장 완료
 - [x] 레거시 중복 Makefile 파일 및 폴더 영구 삭제 완료 (`scripts/sites/`, `scripts/utils/worker.mk` 및 `scripts/tools/gmail.mk` 삭제)
 
+- [x] 루트 `Makefile` 내 `run-scrape` 및 `PAGE`, `LIST_SLACK` 기본값 정의 삭제 완료
+- [x] `apps/crawler/Makefile` 내부로 `run-scrape` 로직 및 `PAGE`, `LIST_SLACK` 변수 선언 이관 완료
+- [x] 각 개별 사이트별 타겟(`gpt-%` 등)이 `apps/crawler/Makefile`의 `run-scrape`를 직접 호출하도록 포워딩 매핑 업데이트 완료
+
 ## 🟨 미진행/보류 작업 (Pending Tasks)
 - 없음
+

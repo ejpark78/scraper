@@ -8,9 +8,12 @@
 - **인터페이스 보존:** 루트 [Makefile](file:///home/ejpark/workspace/scraper/Makefile)의 공통 래퍼 규칙을 다듬어, 이전과 동일한 명령(`make yz-list PAGE=2`, `make clear-queue`, `make gm-sync` 등)으로 도커 내부의 npm 스크립트를 올바르게 전파하여 기동하게 지원.
 - **레거시 정리:** 불필요해진 `scripts/sites/`, `scripts/utils/worker.mk` 및 `scripts/tools/gmail.mk`를 완전히 삭제하여 프로젝트 형상 구조 단순화.
 
+- **로직 이관 및 루트 단순화:** 루트 `Makefile` 내에 정의되어 있던 `run-scrape` 로직과 `PAGE`, `LIST_SLACK` 기본값 정의 또한 `apps/crawler/Makefile` 내부로 이관 완료하였으며, 루트 Makefile의 각 사이트별 타겟은 전달받은 파라미터를 그대로 포함하여 `apps/crawler/Makefile`의 `run-scrape` 타겟을 직접 호출하도록 정비하였습니다.
 
 ## 📈 품질 검증 및 변경 로그 (Changelog)
 
 - **스크립트 표준화:** 각 사이트별 수집/복구 커맨드를 ts-node와 표준 `--` 인자 꼬리 전파 방식으로 통합 완료.
 - **CLI 호환성:** 외부 스케줄러(Cronicle 등)나 인간 개발자가 치던 make 타겟 구조 변경 없이 동작이 완벽 호환됨.
 - **격리 검증:** `apps/crawler/` 단독 디렉토리 내에서도 독립 빌드 및 큐 관리가 유연하게 동작함.
+- **루트 간소화:** 불필요한 공통 변수 및 조건문 빌드 분기를 내부 메이크파일로 위임하여 루트 `Makefile`을 극도로 슬림화하였습니다.
+

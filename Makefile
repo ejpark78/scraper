@@ -39,46 +39,31 @@ refresh-silver: gpt-refresh-silver gn-refresh-silver ddds-refresh-silver pk-refr
 
 # sites
 gpt-%:
-	@$(MAKE) run-scrape SITE=gpters CMD=$*
+	@$(MAKE) -C apps/crawler run-scrape SITE=gpters CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 gn-%:
-	@$(MAKE) run-scrape SITE=geeknews CMD=$*
+	@$(MAKE) -C apps/crawler run-scrape SITE=geeknews CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 ddds-%:
-	@$(MAKE) run-scrape SITE=dailydoseofds CMD=$*
+	@$(MAKE) -C apps/crawler run-scrape SITE=dailydoseofds CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 pk-%:
-	@$(MAKE) run-scrape SITE=pytorch_kr CMD=$*
+	@$(MAKE) -C apps/crawler run-scrape SITE=pytorch_kr CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 ab-%:
-	@$(MAKE) run-scrape SITE=aicasebook CMD=$*
+	@$(MAKE) -C apps/crawler run-scrape SITE=aicasebook CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 up-%:
-	@$(MAKE) run-scrape SITE=uppity CMD=$*
+	@$(MAKE) -C apps/crawler run-scrape SITE=uppity CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 mj-%:
-	@$(MAKE) run-scrape SITE=maily_josh CMD=$*
+	@$(MAKE) -C apps/crawler run-scrape SITE=maily_josh CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 yz-%:
-	@$(MAKE) run-scrape SITE=yozm CMD=$*
+	@$(MAKE) -C apps/crawler run-scrape SITE=yozm CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 li-%:
-	@$(MAKE) run-scrape SITE=linkedin CMD=$*
-
-PAGE       ?= 1
-LIST_SLACK ?= 2
-
-run-scrape:
-	@if [ "$(CMD)" = "list" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):list -- --page "$(PAGE)" --list-slack "$(LIST_SLACK)"; \
-	elif [ "$(CMD)" = "refresh-urls" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):refresh-urls; \
-	elif [ "$(CMD)" = "refresh-silver" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):refresh-silver; \
-	else \
-		echo "Unknown command: $(CMD)"; \
-		exit 1; \
-	fi
+	@$(MAKE) -C apps/crawler run-scrape SITE=linkedin CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
 
 # tests
 test-%:

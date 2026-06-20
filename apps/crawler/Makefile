@@ -7,7 +7,7 @@ export HOST_PROJECT_PATH = $(shell cd ../.. && pwd)
 COMPOSE  ?= docker compose -p scraper -f ../../compose.yml
 RUN_USER ?= --user $$(id -u):$$(id -g)
 
-.PHONY: rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status
+.PHONY: rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status run-scrape
 
 # infra management
 SCALE         ?= 1
@@ -16,6 +16,22 @@ rebuild:
 
 restart:
 	SCALE=$(SCALE) $(COMPOSE) up -d worker scraper converter indexer
+
+# run-scrape (moved from root Makefile)
+PAGE       ?= 1
+LIST_SLACK ?= 2
+
+run-scrape:
+	@if [ "$(CMD)" = "list" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):list -- --page "$(PAGE)" --list-slack "$(LIST_SLACK)"; \
+	elif [ "$(CMD)" = "refresh-urls" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):refresh-urls; \
+	elif [ "$(CMD)" = "refresh-silver" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):refresh-silver; \
+	else \
+		echo "Unknown command: $(CMD)"; \
+		exit 1; \
+	fi
 
 # gmail tools
 gmail-sync:

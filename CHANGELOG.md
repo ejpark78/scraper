@@ -7,6 +7,12 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [1.2.0] - 2026-06-20
+
+### Changed
+- **Crawler Scripts Migration (NPM Scripts)**: `scripts/sites/` 하위의 사이트별 Makefile 9개와 `worker.mk`, `gmail.mk` 등을 모두 제거하고, 27개의 크롤링 커맨드 및 Gmail/Queue 관련 스크립트를 `apps/crawler/package.json`의 npm 스크립트로 통합 완료.
+- **Makefile Restructuring**: 루트 `Makefile`의 스파게티성 `run-scrape` 로직 및 `PAGE`, `LIST_SLACK` 기본값 정의를 `apps/crawler/Makefile` 내부로 완벽히 이전 및 이격. 루트 Makefile은 이를 중계 호출(Forwarding)하는 미니멀한 래퍼 구조로 재정렬.
+
 ## [1.1.0] - 2026-06-19
 
 ### Added
