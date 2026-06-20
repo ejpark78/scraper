@@ -113,10 +113,25 @@ class HTMLToMarkdownConverter:
                     print(f"Error extracting image {idx}: {e}")
 
     def _merge_broken_sentences(self, soup: BeautifulSoup):
-        """Cleans up structural layout breakages within paragraph elements."""
+        """Cleans up structural layout breakages and run-on words in HTML."""
         # Replace <br> tags within paragraph/text tags with space to join lines
         for br in soup.find_all("br"):
             br.replace_with(" ")
+
+        # Ensure text elements wrapped in inline style tags (e.g. <i>, <span>, <b>) have trailing/leading spaces preserved 
+        # so they don't stick to neighboring words when stripped/converted.
+        for tag in soup.find_all(["i", "span", "b", "strong", "em", "a"]):
+            text = tag.string
+            if text:
+                # Add tiny spaces to boundary if it borders text to prevent run-ons,
+                # but only if there isn't one already.
+                new_text = text
+                if not text.startswith(" ") and tag.previous_sibling and isinstance(tag.previous_sibling, str) and not tag.previous_sibling.endswith(" "):
+                    new_text = " " + new_text
+                if not text.endswith(" ") and tag.next_sibling and isinstance(tag.next_sibling, str) and not tag.next_sibling.startswith(" "):
+                    new_text = new_text + " "
+                if new_text != text:
+                    tag.string.replace_with(new_text)
 
         # Look at adjacent <p> tags
         p_tags = soup.find_all("p")
@@ -138,9 +153,10 @@ class HTMLToMarkdownConverter:
             ends_with_punctuation = re.search(r"[.?!:»]$", curr_text)
             starts_with_lowercase = re.match(r"^[a-z0-9]", next_text)
 
-            # Check if they are actually adjacent text lines by checking parent nodes and styling
+            # Check if they are adjacent text lines by checking parent nodes
             if not ends_with_punctuation and starts_with_lowercase:
-                # Merge next_p's content into curr_p
+                # Add a space between merged paragraph elements to prevent run-on words
+                curr_p.append(" ")
                 for child in list(next_p.children):
                     curr_p.append(child)
                 # Clear next_p so it doesn't render
@@ -148,6 +164,10 @@ class HTMLToMarkdownConverter:
 
     def _cleanup_markdown(self, markdown_text: str) -> str:
         """Removes duplicate empty lines or unnecessary mid-sentence line breaks in Markdown text."""
+        # Replace instances where markdownify might leave raw newlines inside a paragraph block
+        # Normalizing spaces first
+        markdown_text = re.sub(r'(?<!\n)\n(?!\n)', ' ', markdown_text)
+
         # Split text into lines
         lines = markdown_text.splitlines()
         cleaned_lines = []
@@ -184,7 +204,7 @@ class HTMLToMarkdownConverter:
                 ends_with_sentence = re.search(r"[.?!:;]$", curr_strip)
 
                 if not ends_with_sentence and not is_md_structure:
-                    # Merge lines with a space
+                    # Merge lines with a space and ensure no double spaces
                     merged_line = merged_line + " " + lines[i + 1].strip()
                     i += 1
                 else:
@@ -196,6 +216,8 @@ class HTMLToMarkdownConverter:
         # Reconstruct markdown text
         result = "\n".join(cleaned_lines)
         
+        # Replace multiple consecutive spaces with a single space
+        result = re.sub(r" {2,}", " ", result)
         # Replace multiple consecutive blank lines with a single blank line
         result = re.sub(r"\n{3,}", "\n\n", result)
         return result
