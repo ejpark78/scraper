@@ -43,7 +43,7 @@
 * **[Bugfix] Exporter 설정 폼 입력 필드 및 버튼 잘림 현상 수정**:
   - **증상**: Joplin 또는 Obsidian 연동 설정이 확장될 때 설정 카드 내부의 `Joplin API 웹클리퍼 토큰` 등의 입력 필드가 카드 외부로 밀려 잘리는 현상 발생.
   - **원인**: `.queue-section-card`에 적용된 CSS 속성 `overflow: hidden` 및 고정 크기로 인해 스크롤 처리가 되지 않았음.
-  - **해결**: [ExporterView.vue](file:///home/ejpark/workspace/scraper/apps/viewer/src/frontend/src/views/ExporterView.vue) 내 좌측 설정 폼 카드 엘리먼트에 `overflow-y: auto` 스타일을 추가하여 내용이 길어지더라도 스크롤을 통해 모든 입력 필드와 하단 실행 단추가 정상 노출 및 작동하도록 수정 완료.
+  - **해결**: [ExporterView.vue](file:///home/ejpark/workspace/scraper/apps/viewer/src/frontend/src/views/ExporterView.vue) 내 좌측 설정 폼 카드 엘리먼트에 `overflow-y: auto` 및 `min-height: 615px` 스타일을 추가하여 내용이 길어지더라도 스크롤을 통해 모든 입력 필드와 하단 실행 단추가 항상 고정 노출 및 작동하도록 수정 완료.
 * **[Bugfix] Exporter 책 선택 목록(서적 데이터)이 빈 화면으로 출력되는 현상 수정**:
   - **증상**: Exporter 화면 진입 시 "1. 대상 서적 선택" 드롭다운이 비어 있어 책을 선택할 수 없음.
   - **원인**: 백엔드 `viewer-api` 컨테이너 내부의 `/app/data` 디렉터리가 호스트의 `./data` 디렉터리와 마운트가 누락되어 스캔할 도서 목록이 빈 상태로 응답되었음.

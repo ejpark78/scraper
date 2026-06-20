@@ -13,7 +13,7 @@
   * 기존 `App.vue`에 집중되어 있던 1,200줄 규모의 비대 코드를 `DashboardView.vue`, `DocumentView.vue` 컴포넌트로 깔끔하게 리팩토링 및 분리하였습니다.
   * 수집된 도서를 Joplin 또는 Obsidian으로 쉽게 노트를 생성할 수 있도록 GUI 폼 설정을 지닌 `ExporterView.vue` 컴포넌트를 새롭게 구현하였습니다.
   * `App.vue` 레이아웃에서 라우터 링크를 연결하여 페이지 전환 구조로 전환하였습니다.
-  * **[Bugfix]**: Exporter 설정 카드 높이가 토큰 입력 필드의 확장으로 인해 잘려 보이는 레이아웃 버그를 `overflow-y: auto` 스타일 주입을 통해 수정 완료하였습니다.
+  * **[Bugfix]**: Exporter 설정 카드 높이가 토큰 입력 필드의 확장으로 인해 잘려 보이는 레이아웃 버그를 `overflow-y: auto` 스타일 주입 및 최소 높이 `615px` 지정을 통해 수정 완료하였습니다.
   * **[Bugfix]**: `viewer-api` 서비스 컨테이너에 `/app/data` 볼륨 마운트가 누락되어 서적 데이터가 로딩되지 않던 문제를 `apps/viewer/compose.yml` 볼륨 정의 추가를 통해 해결하였습니다.
 
 ---

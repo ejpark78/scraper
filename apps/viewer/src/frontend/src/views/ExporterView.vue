@@ -145,9 +145,9 @@ async function startExport() {
       </div>
     </header>
 
-    <div class="dashboard-content" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; min-height: 580px;">
+    <div class="dashboard-content" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; min-height: 675px;">
       <!-- Left Panel: Settings Form -->
-      <div class="queue-section-card" style="display: flex; flex-direction: column; padding: 20px; height: 100%; box-sizing: border-box; min-height: 520px;">
+      <div class="queue-section-card" style="display: flex; flex-direction: column; padding: 20px; height: 100%; box-sizing: border-box; min-height: 615px;">
         <h3 style="margin: 0; color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 16px;">⚙️ 내보내기 설정</h3>
         
         <!-- Scrollable settings options -->
