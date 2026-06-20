@@ -15,9 +15,12 @@
   - `gpt-%`, `gn-%`, `ddds-%`, `pk-%`, `ab-%`, `up-%`, `mj-%`, `yz-%`, `li-%` 사이트별 직접 맵 타겟 제거
   - `test-%`, `extract`, `debug` 등 상세 호출 룰 제거
   - `rebuild`, `restart`, `clear-queue`, `grep-errors`, `dump-queue`, `fix-urls`, `get-queue-status` 개별 타겟 제거 및 병합 포워딩 설정
-  - `gm-%` 및 모든 크롤러 타겟에 대해 변수 자동 상속을 활용한 대통합 포워딩 룰 구성:
+  - `gm-%` 및 모든 크롤러 타겟에 대해 변수 자동 상속을 활용한 대통합 포워딩 룰 구성(문법 에러 방지를 위해 패턴 규칙인 `test-%`는 일반 규칙과 분리):
     ```makefile
-    list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug test-%:
+    list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug:
+    	@$(MAKE) -C apps/crawler $@
+
+    test-%:
     	@$(MAKE) -C apps/crawler $@
 
     gm-%:
@@ -34,8 +37,14 @@
   - `test-%` 동적 라우팅 타겟 추가
     ```makefile
     test-%:
-    	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE="$(RECURSIVE_SCRAPE)" -e SITE="$(SITE)" worker npm run test:$*
+    	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SITE=$(SITE) worker npm run test:$*
     ```
+
+### 3. Ebook App Configuration
+- **`[MODIFY]`** `apps/ebook/pyproject.toml`:
+  - `[project.scripts]` 섹션을 추가하여 `ebook-process = "src.process:main"` CLI 엔트리포인트를 맵핑
+- **`[NEW]`** `apps/ebook/src/__init__.py`:
+  - 모듈 상대 경로 임포트 보장을 위한 빈 패키지 마커 파일 생성
 
 ---
 

@@ -23,7 +23,10 @@
 -gpt-%:
 -	@$(MAKE) -C apps/crawler run-scrape SITE=gpters CMD=$* ...
 +# crawler app forwarding
-+list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug test-%:
++list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug:
++	@$(MAKE) -C apps/crawler $@
++
++test-%:
 +	@$(MAKE) -C apps/crawler $@
 +
 +gm-%:
@@ -32,7 +35,7 @@
 +gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
 +	@$(MAKE) -C apps/crawler $@
 ```
-- **의견**: GNU Make의 CLI 변수 자동 상속 동작을 활용하여 `extract`, `debug`, `test-%` 및 기타 인프라/큐 명령까지 포함한 모든 크롤러 타겟을 단 하나의 포워딩 룰로 통합 대정리하였습니다. 이로 인해 루트 메이크파일의 구조적 복잡성이 대폭 해소되었습니다.
+- **의견**: GNU Make 문법 규칙에 따라 패턴 규칙(`test-%`)을 일반 타겟들과 분리하여 `혼합된 묵시적 규칙과 일반적 규칙` 빌드 에러를 안전하게 방지하였습니다.
 
 ### 2. apps/crawler/Makefile
 ```diff
@@ -44,3 +47,7 @@
 +	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SITE=$(SITE) worker npm run test:$*
 ```
 - **의견**: 크롤러 서브 모듈 내에 사이트 관련 빌드/실행 책임을 모두 모았으며, `test-%` 와일드카드 라우팅을 추가하여 향후 추가되는 테스트 스크립트도 별도 Makefile 수정 없이 손쉽게 실행할 수 있게 되었습니다.
+
+### 3. apps/ebook Config
+- **의견**: `apps/ebook/pyproject.toml`에 `[project.scripts]` 섹션을 생성하여 `ebook-process` 엔트리포인트를 추가했습니다. 이와 더불어 `src` 폴더에 빈 `__init__.py` 패키지 마커를 배치해 상대 임포트 경로가 가상환경 상에서 정상 기능하도록 안전망을 설계했습니다.
+

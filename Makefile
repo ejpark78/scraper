@@ -17,7 +17,6 @@ COMPOSE := docker compose -p scraper
 export COMPOSE
 
 # RUN_USER and others are now defined in environments.mk
-
 .PHONY: *
 
 lint:
@@ -28,7 +27,10 @@ lint:
 -include scripts/tools/tools.mk
 
 # crawler app forwarding
-list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug test-%:
+list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug:
+	@$(MAKE) -C apps/crawler $@
+
+test-%:
 	@$(MAKE) -C apps/crawler $@
 
 gm-%:
@@ -56,6 +58,3 @@ ebook-%:
 # viewer utils
 viewer-%:
 	@$(MAKE) -C apps/viewer $*
-
-
-
