@@ -216,8 +216,8 @@ def main():
             if html_file.exists():
                 html2md_converter.convert(html_file)
             else:
-                # Check if it resides in output/book_title directory
-                alt_path = Path(args.output) / args.html2md
+                # Check if it resides in data directory
+                alt_path = Path(args.data) / args.html2md
                 if alt_path.exists():
                     html2md_converter.convert(alt_path)
                 else:

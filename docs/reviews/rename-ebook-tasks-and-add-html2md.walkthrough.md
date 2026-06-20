@@ -1,25 +1,37 @@
-# 🚶 Walkthrough - Rename Ebook Tasks and Add html2md
+# 🚀 Walkthrough: Rename Ebook Tasks and Add html2md
 
-## 1. 수행 내용
-- **태스크 명칭 변경**:
-  - `make md` ➡️ `make pdf2md`
-  - `make html` ➡️ `make pdf2html`
-  - `make translate` ➡️ `make translate_md`
-- **html2md 구현**:
-  - `make html2md HTML="<path_to_html>"` 형태로 작동.
-  - HTML 내 base64 이미지 데이터를 PNG 파일로 디코딩하여 `images/` 하위 경로에 저장하고 마크다운에 상대 경로로 자동 전환 처리.
-  - 이미지 파일명 생성 시 공백 문자를 언더스코어(`_`)로 보정 처리.
-  - 마크다운 변환 시 최상단 CSS 텍스트 유출을 막기 위해 `<style>`, `<script>` 태그를 사전에 `decompose`로 완전 박멸.
-  - 단락 내에서 불필요하게 줄바꿈된 행들을 감지하여 자연스러운 하나의 문장으로 이어주는 문장 복원 필터 작성.
+이 문서는 태스크 완료 후 최종 결과 검증 과정을 설명하는 결과 보고서(Walkthrough)입니다.
 
-## 2. 검증 과정 및 결과
-- **테스트 환경**: Docker compose `ebook` 컨테이너 환경
-- **실행 명령어**:
+## 1. 검증 대상 및 환경
+- **환경**: Docker compose `ebook` 서비스 컨테이너 기반 실행
+- **검증 데이터**: `data/ebook/output/Beyond Vibe Coding/1. Introduction What Is Vibe Coding.pdf`
+
+## 2. 검증 절차 및 결과
+
+### 1) 빌드 수행
+- `make -C apps/ebook build`를 실행하여 Python virtualenv 및 라이브러리(`beautifulsoup4`, `markdownify`, `lxml`)가 패키징된 최신 Docker 이미지를 생성했습니다.
+
+### 2) PDF ➡️ HTML 변환 테스트 (pdf2html)
+- 명령어:
   ```bash
-  make -C apps/ebook html2md HTML="data/output/Beyond Vibe Coding/1. Introduction What Is Vibe Coding.html" OUTPUT="data/output"
+  make -C apps/ebook pdf2html PDF="output/Beyond Vibe Coding/1. Introduction What Is Vibe Coding.pdf"
   ```
-- **검증 결과**:
-  - `data/ebook/output/Beyond Vibe Coding/images/` 폴더에 `1._Introduction_What_Is_Vibe_Coding_img_1.png` 등 추출 완료.
-  - 마크다운 문서 최상단에 CSS 노출 현상 완전 소멸.
-  - 이미지 참조 경로가 `![image](images/1._Introduction_What_Is_Vibe_Coding_img_1.png)`로 정상 변환.
-  - 줄바꿈으로 끊겼던 영문 문장이 한 문단으로 복원 완료.
+- 결과:
+  - `page.get_text("dict")` 정보를 수집하여 페이지당 median font size 산출 및 제목 임계값(`heading_threshold`) 설정.
+  - 이중 쓰기로 작성된 그림자 텍스트와 좌표가 겹치는 중복 문자열을 감지하여 필터링 완료.
+  - HTML 엔티티 코드가 아닌 깨끗한 유니코드 일반 문자 기반 구조 생성 성공.
+  - `✓ Saved HTML: 1. Introduction What Is Vibe Coding.html` 정상 저장.
+
+### 3) HTML ➡️ Markdown 변환 테스트 (html2md)
+- 명령어:
+  ```bash
+  make -C apps/ebook html2md HTML="output/Beyond Vibe Coding/1. Introduction What Is Vibe Coding.html"
+  ```
+- 결과:
+  - `<style>`, `<script>`, `<div class="page-separator">` 등 레이아웃 파편 완벽 디컴포즈(제거).
+  - base64로 박혀있던 이미지를 디코딩하여 `images/` 하위에 고유 파일명(공백 치환)으로 저장하고, 마크다운 이미지 링크로 정상 전환.
+  - 마크다운 문단 정리 규칙을 통해 영어 단어 잘림/띄어쓰기 뭉침 현상 복원.
+  - HTML 엔티티가 최종 디코딩된 깔끔한 GFM(GitHub Flavored Markdown) 파일이 `1. Introduction What Is Vibe Coding.md`로 생성됨.
+
+## 3. 최종 산출물 확인
+- 최종 마크다운 프리뷰 시 중복 텍스트나 깨짐 없이 고품질의 콘텐츠 레이아웃이 복원되었음을 검증 완료했습니다.

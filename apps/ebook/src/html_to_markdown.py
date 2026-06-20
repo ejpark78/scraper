@@ -1,8 +1,8 @@
 """HTML to Markdown Converter Module.
 
-This script parses HTML files, including complex elements like tables and images,
-separates embedded base64 images into standalone image files, resolves layout breaks,
-and converts the structural HTML into standard GitHub Flavored Markdown (GFM).
+This script parses structured XHTML files, separates embedded base64 images into
+standalone image files, and converts the clean XHTML structures into standard
+GitHub Flavored Markdown (GFM).
 """
 
 import base64
@@ -23,7 +23,7 @@ class CustomMarkdownConverter(markdownify.MarkdownConverter):
 
 
 class HTMLToMarkdownConverter:
-    """Converter class to parse HTML, extract images, merge broken sentences, and generate Markdown."""
+    """Converter class to parse clean XHTML, extract images, and generate Markdown."""
 
     def __init__(self, output_dir: str | Path):
         self.output_dir = Path(output_dir)
@@ -39,21 +39,20 @@ class HTMLToMarkdownConverter:
 
         soup = BeautifulSoup(html_content, "lxml")
 
-        # Remove <style> and <script> tags entirely so their inner CSS/JS text is not converted to markdown
+        # 1. Remove <style> and <script> tags entirely so their inner CSS/JS text is not converted to markdown
         for tag in soup(["style", "script"]):
             tag.decompose()
 
-        # Remove page separators (e.g. <div class="page-separator">Page 2</div>)
+        # 2. Remove page separators (e.g. <div class="page-separator">Page 2</div>)
         for separator in soup.find_all(class_="page-separator"):
             separator.decompose()
 
-        # 1. Extract Base64 Images to files
+        # 3. Extract Base64 Images to files
         self._extract_base64_images(soup, html_path)
 
-        # 2. Merge structurally broken paragraphs/lines before markdown conversion
-        self._merge_broken_sentences(soup)
+        import html
 
-        # 3. Convert to Markdown using CustomMarkdownConverter
+        # 4. Convert to Markdown using CustomMarkdownConverter
         # This guarantees standard Markdown output and keeps image/table tags intact
         markdown_text = CustomMarkdownConverter(
             heading_style=markdownify.ATX,
@@ -62,7 +61,10 @@ class HTMLToMarkdownConverter:
             wrap=False
         ).convert(str(soup))
 
-        # Post-process markdown text to clean up any remaining line break issues
+        # Decode HTML entities into proper Unicode characters
+        markdown_text = html.unescape(markdown_text)
+
+        # 5. Clean up markdown text layout
         markdown_text = self._cleanup_markdown(markdown_text)
 
         # Output Markdown file path (same path, .md suffix)
@@ -81,7 +83,6 @@ class HTMLToMarkdownConverter:
         images_dir = parent_dir / "images"
         images_dir.mkdir(parents=True, exist_ok=True)
 
-        # BeautifulSoup find_all is case-insensitive by default for HTML tags
         img_tags = soup.find_all("img")
         for idx, img in enumerate(img_tags):
             src = img.get("src", "").strip()
@@ -112,62 +113,8 @@ class HTMLToMarkdownConverter:
                 except Exception as e:
                     print(f"Error extracting image {idx}: {e}")
 
-    def _merge_broken_sentences(self, soup: BeautifulSoup):
-        """Cleans up structural layout breakages and run-on words in HTML."""
-        # Replace <br> tags within paragraph/text tags with space to join lines
-        for br in soup.find_all("br"):
-            br.replace_with(" ")
-
-        # Ensure text elements wrapped in inline style tags (e.g. <i>, <span>, <b>) have trailing/leading spaces preserved 
-        # so they don't stick to neighboring words when stripped/converted.
-        for tag in soup.find_all(["i", "span", "b", "strong", "em", "a"]):
-            text = tag.string
-            if text:
-                # Add tiny spaces to boundary if it borders text to prevent run-ons,
-                # but only if there isn't one already.
-                new_text = text
-                if not text.startswith(" ") and tag.previous_sibling and isinstance(tag.previous_sibling, str) and not tag.previous_sibling.endswith(" "):
-                    new_text = " " + new_text
-                if not text.endswith(" ") and tag.next_sibling and isinstance(tag.next_sibling, str) and not tag.next_sibling.startswith(" "):
-                    new_text = new_text + " "
-                if new_text != text:
-                    tag.string.replace_with(new_text)
-
-        # Look at adjacent <p> tags
-        p_tags = soup.find_all("p")
-        for i in range(len(p_tags) - 1):
-            curr_p = p_tags[i]
-            next_p = p_tags[i + 1]
-            
-            if not curr_p or not next_p:
-                continue
-
-            curr_text = curr_p.get_text().strip()
-            next_text = next_p.get_text().strip()
-
-            if not curr_text or not next_text:
-                continue
-
-            # If the current paragraph doesn't end with a sentence-ending punctuation (., ?, !, :, etc.)
-            # and the next paragraph starts with a lowercase letter, merge them to avoid broken paragraphs.
-            ends_with_punctuation = re.search(r"[.?!:»]$", curr_text)
-            starts_with_lowercase = re.match(r"^[a-z0-9]", next_text)
-
-            # Check if they are adjacent text lines by checking parent nodes
-            if not ends_with_punctuation and starts_with_lowercase:
-                # Add a space between merged paragraph elements to prevent run-on words
-                curr_p.append(" ")
-                for child in list(next_p.children):
-                    curr_p.append(child)
-                # Clear next_p so it doesn't render
-                next_p.decompose()
-
     def _cleanup_markdown(self, markdown_text: str) -> str:
         """Removes duplicate empty lines or unnecessary mid-sentence line breaks in Markdown text."""
-        # Replace instances where markdownify might leave raw newlines inside a paragraph block
-        # Normalizing spaces first
-        markdown_text = re.sub(r'(?<!\n)\n(?!\n)', ' ', markdown_text)
-
         # Split text into lines
         lines = markdown_text.splitlines()
         cleaned_lines = []
