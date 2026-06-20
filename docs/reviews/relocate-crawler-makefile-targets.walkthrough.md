@@ -6,6 +6,7 @@
 - 파이썬 이북 프로젝트(`apps/ebook/pyproject.toml`)에 `poethepoet` 라이브러리를 의존성에 추가하고 `[tool.poe.tasks]` 스크립트들을 등록하여 npm scripts와 완벽하게 대칭되는 방식으로 단축 명령어들을 구성하였습니다. 이때 상대 임포트 경로가 비정상 처리되지 않도록 단독 파일 실행이 아닌 `python -m src.process` 모듈 실행 방식을 채택했습니다.
 - 이와 연계하여 `apps/ebook/Makefile` 내의 실행 구문들도 `uv run poe <task>` 형태로 리팩토링하여 로컬 가상환경 및 도커 컴포즈 상에서 실행 일관성을 확보했습니다. 또한, 프로파일 제한 및 캐시 손상 문제를 예방하고자 `make build` 동작 시 `--no-cache` 옵션을 동반해 `ebook` 서비스를 직접 빌드하도록 조치했습니다.
 - `apps/ebook/Makefile`의 `html` 타겟 및 `apps/ebook/src/process.py` 스크립트를 개선하여 `PDF` 변수가 전달되지 않았을 때 `output` 하위 디렉토리 내의 모든 `.pdf` 문서를 일괄 HTML 변환하는 플로우를 구성했습니다. 또한 CLI 옵션 지정 충돌 오류를 막고자 메이크 변수 `OUTPUT`을 활용하여 경로를 입력받게끔 개선하였습니다.
+- 변환 대상 HTML 저장 경로를 입력 PDF가 위치한 경로와 완벽하게 일치(`pdf_path.with_suffix(".html")`)하도록 개선하여, 하위 폴더(`Beyond Vibe Coding` 등) 구조가 결과물 디렉토리 내에서도 온전히 보존되도록 구현하였습니다.
 - 루트 `Makefile`에는 대통합 포워딩 룰만 남겨두어, 사용자가 루트 디렉토리에서 기존 명령어(`make gpt-list`, `make test-recursive SITE=yozm`, `make clear-queue`, `make debug SITE=yozm ID=3800`)를 입력하더라도 문제 없이 `apps/crawler/Makefile`로 완벽하게 포워딩되어 동일하게 실행됩니다.
 
 ## 변경 파일
@@ -14,6 +15,7 @@
 - `[MODIFY]` [apps/ebook/pyproject.toml](file:///home/ejpark/workspace/scraper/apps/ebook/pyproject.toml)
 - `[MODIFY]` [apps/ebook/Makefile](file:///home/ejpark/workspace/scraper/apps/ebook/Makefile)
 - `[MODIFY]` [apps/ebook/src/process.py](file:///home/ejpark/workspace/scraper/apps/ebook/src/process.py)
+- `[MODIFY]` [apps/ebook/src/pdf_to_html.py](file:///home/ejpark/workspace/scraper/apps/ebook/src/pdf_to_html.py)
 - `[NEW]` [apps/ebook/src/__init__.py](file:///home/ejpark/workspace/scraper/apps/ebook/src/__init__.py)
 
 ## 검증 결과
@@ -21,4 +23,4 @@
 - `apps/ebook` 디렉토리 내에서 `uv run poe summary` 명령어와 같이 npm scripts처럼 CLI를 통해 래핑 동작이 잘 수행되는 구조가 마련되었습니다.
 - `make ebook-summary` (또는 `apps/ebook` 내 `make summary`) 호출 시 도커 컨테이너 내부에서도 `uv run poe summary` 규칙을 타서 에러 없이 정상적으로 서머리를 출력합니다.
 - `make ebook-build` 호출 시 프로파일 제한 및 캐시 손상 우려와 무관하게 `ebook` 이미지 무캐시 빌드가 정상 작동합니다.
-- `make ebook-html OUTPUT=data/output` 호출 시 메이크 옵션 파싱 에러 없이 `data/output` 디렉토리 하위의 모든 pdf 문서에 대한 일괄 HTML 변환 배치 루프가 작동합니다.
+- `make ebook-html OUTPUT=data/output` 호출 시 메이크 옵션 파싱 에러 없이 `data/output` 디렉토리 하위의 모든 pdf 문서에 대한 일괄 HTML 변환 배치 루프가 작동하며, 변환 결과가 각 PDF와 동일한 폴더 내부에 정확하게 안착합니다.

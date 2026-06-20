@@ -71,7 +71,7 @@ class HTMLConverter:
         html_pages.append("</div>\n</body>\n</html>")
         doc.close()
 
-        output_path = self.output_dir / f"{pdf_path.stem}.html"
+        output_path = pdf_path.with_suffix(".html")
         output_path.write_text("\n".join(html_pages), encoding="utf-8")
         print(f"  ✓ Saved HTML: {output_path.name}")
         return output_path

@@ -52,6 +52,8 @@
   - `OUTPUT ?= output` 변수를 선언하고, `html` 타겟 호출 시 `--output "$(OUTPUT)"`을 덧붙이도록 개선하여 CLI 옵션 전달 오버헤드 해소
 - **`[MODIFY]`** `apps/ebook/src/process.py`:
   - `--html` 인자를 선택적으로 허용하도록 변경하고, 비어있거나 "all"인 경우 `output` 내의 모든 PDF를 찾아 일괄 변환하는 기능 구현
+- **`[MODIFY]`** `apps/ebook/src/pdf_to_html.py`:
+  - HTML 파일 저장 시 지정된 단일 출력 디렉토리가 아닌 입력 PDF의 기존 서브 디렉토리 구조를 보존하여 입력 PDF와 동일한 부모 경로에 HTML을 저장하도록 수정
 
 ---
 
