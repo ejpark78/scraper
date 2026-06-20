@@ -67,13 +67,13 @@ li-%:
 
 # tests
 test-%:
-	@$(MAKE) -f scripts/utils/tests.mk $*
+	@$(MAKE) -C apps/crawler test-$* RECURSIVE_SCRAPE="$(RECURSIVE_SCRAPE)" SITE="$(SITE)"
 
 extract:
-	@$(MAKE) -f scripts/utils/tests.mk extract SITE=$(SITE) ID=$(ID)
+	@$(MAKE) -C apps/crawler extract SITE=$(SITE) ID=$(ID)
 
 debug:
-	@$(MAKE) -f scripts/utils/tests.mk debug FILE=$(FILE) SITE=$(SITE) ID=$(ID)
+	@$(MAKE) -C apps/crawler debug FILE=$(FILE) SITE=$(SITE) ID=$(ID)
 
 # db utils
 mongo-%:

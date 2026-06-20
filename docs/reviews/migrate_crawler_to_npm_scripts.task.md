@@ -14,11 +14,13 @@
   - `gm-%` (Gmail sync) 타겟 역시 `apps/crawler/Makefile` 내부의 `gmail-$*` 타겟으로 위임 포워딩 연동 완료
 - [x] `apps/crawler/Makefile` 생성 및 확장 완료 ([Makefile](file:///home/ejpark/workspace/scraper/apps/crawler/Makefile))
   - 큐/에러 처리, 빌드/재기동 단축 타겟, 그리고 `gmail-sync` 타겟까지 전담 관리하는 전용 메이크파일 신규 작성 및 확장 완료
-- [x] 레거시 중복 Makefile 파일 및 폴더 영구 삭제 완료 (`scripts/sites/`, `scripts/utils/worker.mk` 및 `scripts/tools/gmail.mk` 삭제)
+- [x] 레거시 중복 Makefile 파일 및 폴더 영구 삭제 완료 (`scripts/sites/`, `scripts/utils/worker.mk`, `scripts/tools/gmail.mk` 및 `scripts/utils/tests.mk` 삭제)
 
 - [x] 루트 `Makefile` 내 `run-scrape` 및 `PAGE`, `LIST_SLACK` 기본값 정의 삭제 완료
 - [x] `apps/crawler/Makefile` 내부로 `run-scrape` 로직 및 `PAGE`, `LIST_SLACK` 변수 선언 이관 완료
 - [x] 각 개별 사이트별 타겟(`gpt-%` 등)이 `apps/crawler/Makefile`의 `run-scrape`를 직접 호출하도록 포워딩 매핑 업데이트 완료
+- [x] `tests.mk` 내의 테스트 및 디버깅 유틸 타겟들을 `apps/crawler/Makefile` 및 npm script로 이전 완료
+
 
 ## 🟨 미진행/보류 작업 (Pending Tasks)
 - 없음

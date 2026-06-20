@@ -22,6 +22,7 @@
   - `run-scrape` 동적 분기 라우터 타겟, 파라미터 변수, 큐/에러 처리, 빌드/재기동 단축 타겟, 그리고 `gmail-sync` 타겟까지 전담 관리하는 전용 메이크파일 신규 작성 및 확장
 - **`[DELETE]`** `scripts/utils/worker.mk`
 - **`[DELETE]`** `scripts/tools/gmail.mk`
+- **`[DELETE]`** `scripts/utils/tests.mk`
 - **`[DELETE]`** `scripts/sites/gpters.mk`
 - **`[DELETE]`** `scripts/sites/geeknews.mk`
 - **`[DELETE]`** `scripts/sites/dailydoseofds.mk`

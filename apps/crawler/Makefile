@@ -7,7 +7,7 @@ export HOST_PROJECT_PATH = $(shell cd ../.. && pwd)
 COMPOSE  ?= docker compose -p scraper -f ../../compose.yml
 RUN_USER ?= --user $$(id -u):$$(id -g)
 
-.PHONY: rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status run-scrape
+.PHONY: rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status run-scrape test-urls test-mcp test-recursive test-sites extract debug
 
 # infra management
 SCALE         ?= 1
@@ -31,6 +31,39 @@ run-scrape:
 	else \
 		echo "Unknown command: $(CMD)"; \
 		exit 1; \
+	fi
+
+# tests (forward to npm scripts)
+test-urls:
+	$(COMPOSE) run --rm $(RUN_USER) worker npm run test:urls
+
+test-mcp:
+	$(COMPOSE) run --rm $(RUN_USER) viewer npm run test:mcp
+
+test-recursive:
+	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SITE=$(SITE) worker npm run test:recursive
+
+test-sites:
+	$(COMPOSE) run --rm $(RUN_USER) worker npm run test:sites
+
+extract:
+	@if [ -z "$(SITE)" ] || [ -z "$(ID)" ]; then \
+		echo "❌ Error: SITE and ID variables must be specified. (e.g. make extract SITE=yozm ID=3800)"; \
+		exit 1; \
+	fi
+	$(COMPOSE) run --rm $(RUN_USER) worker npm run extract:article -- --site $(SITE) --id $(ID)
+
+debug:
+	@if [ -z "$(FILE)" ] && ([ -z "$(SITE)" ] || [ -z "$(ID)" ]); then \
+		echo "❌ Error: Either FILE, or SITE and ID variables must be specified."; \
+		echo "Usage 1: make debug FILE=tests/sites/yozm/fixtures/3800.html"; \
+		echo "Usage 2: make debug SITE=yozm ID=3800"; \
+		exit 1; \
+	fi
+	@if [ -n "$(FILE)" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) worker npm run debug:html -- --file $(FILE); \
+	else \
+		$(COMPOSE) run --rm $(RUN_USER) worker npm run debug:html -- --site $(SITE) --id $(ID); \
 	fi
 
 # gmail tools
