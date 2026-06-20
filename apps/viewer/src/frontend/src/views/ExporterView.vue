@@ -13,7 +13,6 @@ const emit = defineEmits<{
 const availableBooks = ref<string[]>([]);
 const loadingBooks = ref<boolean>(false);
 const selectedBook = ref<string>('');
-const customPath = ref<string>('');
 
 const exportTarget = ref<'joplin' | 'obsidian'>('joplin');
 
@@ -112,9 +111,9 @@ async function uploadImageToJoplin(apiUrl: string, token: string, bookPath: stri
 }
 
 async function startExport() {
-  const bookPath = customPath.value.trim() || selectedBook.value;
+  const bookPath = selectedBook.value;
   if (!bookPath) {
-    alert('내보낼 서적을 선택하거나 경로를 직접 입력해주세요.');
+    alert('내보낼 서적을 선택해주세요.');
     return;
   }
 
@@ -291,8 +290,7 @@ async function startExport() {
             <select v-else v-model="selectedBook" class="form-select" style="width: 100%;">
               <option v-for="book in availableBooks" :key="book" :value="book">{{ book }}</option>
             </select>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">또는 아래에 전체 경로를 직접 지정할 수 있습니다:</div>
-            <input type="text" v-model="customPath" placeholder="/app/data/ebook/output/서적폴더명" class="form-input-text" style="width: 100%;">
+
           </div>
 
           <!-- Target Platform Tabs -->
