@@ -142,7 +142,7 @@ class HTMLConverter:
                         import re
                         img_counter += 1
                         
-                        images_dir = self.output_dir / "images"
+                        images_dir = pdf_path.parent / "images"
                         images_dir.mkdir(parents=True, exist_ok=True)
                         
                         safe_stem = re.sub(r"\s+", "_", pdf_path.stem)
@@ -155,10 +155,10 @@ class HTMLConverter:
         html_pages.append("</div>\n</body>\n</html>")
         doc.close()
  
-        output_path = self.output_dir / f"{pdf_path.stem}.html"
+        output_path = pdf_path.with_suffix('.html')
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text("\n".join(html_pages), encoding="utf-8")
-        print(f"  ✓ Saved HTML: {output_path.name}")
+        print(f"  ✓ Saved HTML: {output_path}")
         return output_path
 
 

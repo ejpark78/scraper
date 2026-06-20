@@ -67,8 +67,8 @@ class HTMLToMarkdownConverter:
         # 5. Clean up markdown text layout
         markdown_text = self._cleanup_markdown(markdown_text)
 
-        # Output Markdown file path (in output_dir)
-        md_path = self.output_dir / f"{html_path.stem}.md"
+        # Output Markdown file path (alongside the input HTML)
+        md_path = html_path.with_suffix('.md')
         md_path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(md_path, "w", encoding="utf-8") as f:
@@ -79,7 +79,7 @@ class HTMLToMarkdownConverter:
 
     def _extract_base64_images(self, soup: BeautifulSoup, html_path: Path):
         """Finds all base64-encoded images in the HTML, saves them to an 'images' folder, and updates the src."""
-        images_dir = self.output_dir / "images"
+        images_dir = html_path.parent / "images"
         images_dir.mkdir(parents=True, exist_ok=True)
 
         img_tags = soup.find_all("img")
