@@ -34,9 +34,7 @@
 
 ### [출력 예시 가이드]
 
-## 1. Introduction to Regularization 
-## 1. Introduction to Regularization 
-섹션 타이틀
+## 1. Introduction to Regularization (1. 정규화란?)
 
 Standard *deep learning* models often suffer from **overfitting** when trained on small datasets. To mitigate this, regularization techniques like `dropout` are applied:
 * It reduces co-dependency between neurons.
@@ -53,13 +51,6 @@ Standard *deep learning* models often suffer from **overfitting** when trained o
 * 이는 뉴런 간의 상호 의존성을 줄여줍니다.
 * 이는 일종의 앙상블 학습으로 기능합니다.
 
-![image](images/1._Introduction_What_Is_Vibe_Coding_page_2_img_1.png)
-
-| Method | Description | Effect |
-| :--- | :--- | :--- |
-| Dropout | Randomly deactivates neurons | Reduces co-dependency |
-| Weight Decay | Adds penalty to loss function | Keeps weights small |
-
 > **[용어 해설]**
 > * **Overfitting (과적합):** 모델이 학습 데이터에만 지나치게 최적화되어, 새로운 미지의 데이터(Test data)에 대한 일반화 성능이 떨어지는 현상.
 > * **Regularization (정규화):** 모델의 복잡도에 패널티를 부여하여 과적합을 방지하고 일반화 성능을 높이는 기법.
@@ -67,10 +58,8 @@ Standard *deep learning* models often suffer from **overfitting** when trained o
 
 ---
 
-**[2 - 원문 (Original Text)] **
 Another common approach is **weight decay**, which adds a penalty proportional to the magnitude of the weights to the `loss function`. This constraints the model from learning overly complex patterns.
 
-**[2 - 번역문 (Translated Text)] **
 또 다른 흔한 접근 방식은 **가중치 감쇠(weight decay)**로, 가중치의 크기에 비례하는 패널티를 `손실 함수(loss function)`에 추가하는 것입니다. 이는 모델이 과도하게 복잡한 패턴을 학습하는 것을 제한합니다.
 
 > **[용어 해설]**
