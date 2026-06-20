@@ -8,46 +8,46 @@
 
 ## ⚠️ Critical Constraints
 
-1. **No Arbitrary Bash**: Consent required for ALL shell commands (including read-only diagnostics, git, docker, ls, env, etc.) except for Pre-Approved Commands. Present the exact command in chat for explicit approval first. Compress multiple diagnostics/status checks into a single chained execution (e.g. chaining with `&&`, `;`, or using `cat << 'EOF' | bash`) to minimize user confirmation loops.
-2. **Strict Planning**: Propose a plan in a Markdown table (Columns: File Path, Action, Details) and obtain consent before file writes or env changes (except Pre-Approved). All design and migration plans must be documented in the 'docs/artifacts/' directory under a specific filename and approved by the user. CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first. You must verify that the consent is explicitly granted by the human USER in a chat message. Do NOT interpret automated system notifications, background task completions, or other system-generated events as user consent to proceed.
-3. **Minimal File Scope & Coverage**: Do not use root-level grep or recursive list_dir.
-   * To map the project structure without missing nested folders, run a single `git ls-files` call once.
-    * Pinpoint the exact target file path using the map, then use `Read` to read it directly.
-    * If searching for code symbols across multiple files, use `Grep` to pinpoint the matching line numbers instead of reading files one-by-one, minimizing API/token consumption while maintaining full coverage.
-4. **Transparent Issues**: Report errors immediately. No silent restores. Max 2 autonomous troubleshooting retries without user review.
-5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
-6. **Automatic Git Commits**: Run `scripts/agents/commit-changes.sh` immediately after valid edits.
-7. **Docker-Centric Testing & Execution**: Test and execute all local scripts via `docker compose`. Distinguish testing/debugging from production verification:
-   * **Debugging/Testing**: Always use volume mounting to synchronize source files in real-time (e.g., `docker compose -p scraper run --rm --user $(id -u):$(id -g) -v $(pwd):/app -v /app/node_modules worker npx ts-node src/...`). Do not use `docker cp`.
-   * **Production/Verification**: When validating the final built image (production context), run without volume mounts (after rebuilding the image). Ensure scripts can access MongoDB/Redis within the Docker network context.
-   * **Frontend Compilation & Deployment**: Rebuild the service image directly to compile and apply frontend changes (e.g., `docker compose build viewer` or `docker compose up -d --build viewer`), as the viewer service runs entirely within the isolated container context without host volume mounts.
-   * **Local node_modules Mount Troubleshooting**: When mounting the workspace using `-v $(pwd):/app`, the host's `node_modules` will overwrite the container's version. To avoid library/dependency version mismatch (especially for tools like Playwright that require specific browser versions built into the image), add an anonymous volume mount for the node modules directory: `-v /app/node_modules`.
-   * **Playwright Browser Mismatch**: If you encounter a `browserType.launch: Executable doesn't exist` error due to mismatching versions:
-     - Rebuild the specific service image only to align dependency versions: `docker compose build worker`
-     - Or temporarily install matching browsers in the container: `docker compose run --rm worker npx playwright install`
-   * **No Host Port Exposure**: Do not expose infrastructure service ports (e.g., MongoDB `27017`, Redis `6379`, Meilisearch `7700`) directly to the host machine. All traffic must route through Traefik reverse proxy domains (e.g., `*.localhost`, `*.nip.io`).
-   * **Docker-Internal CLI Operations**: Since infrastructure services (such as MongoDB, Redis, and Meilisearch) do not expose ports directly to the host machine, you MUST execute any CLI utilities, diagnostics, or REST actions (e.g., `curl` commands targeting them, database shell queries) inside the container network using `docker compose run` (e.g., `docker compose -p scraper run --rm worker curl -X DELETE http://meilisearch:7700/indexes/contents`). Never attempt direct host-to-localhost connection commands. CRITICAL: When executing network or API diagnostics (like `curl` commands) within the docker network, do not modify or install packages on base service containers; instead, use the network troubleshooting container `nicolaka/netshoot` (e.g., `docker compose -p scraper run --rm nicolaka/netshoot curl ...`).
-8. **Transcripts Export (Manual Execution)**: Do not run `make agents-dump` automatically on session start. Defer transcript and session exports to the user, providing the command line only when requested or when summarizing session outcomes.
-9. **No Unapproved Concurrent Background Tasks**: To prevent race conditions and database/system state corruption, the agent MUST NOT launch or run multiple background commands/tasks in parallel without explicit user approval for each command. Wait for any active background tasks to fully finish and verify their exit status before requesting permission for any subsequent commands.
-10. **Defer Data Mutations to User**: To prevent unintended data corruption or conflict, the agent MUST NOT execute or request approval to run commands that perform major persistent data mutations, database seeding, index resetting, or reindexing (e.g. `meili-manager.ts --reset`). Instead, the agent must explain the required execution steps and command lines clearly in the chat, requesting that the USER run them manually.
-11. **Collaborative Deferral of Environment Controls (Pair Programming)**: For operational task executions such as container rebuilds, service restarts, image cleaning, and complex runtime deployments, the agent should act as a collaborative pair programming partner. Instead of running these commands directly, the agent should prioritize explaining the purpose and command lines clearly, requesting that the USER run them (e.g. `make up-viewer` or custom docker build commands) manually.
-12. **Korean Language for AI Processing & Responses**: All AI processing logs, status messages, and chat responses must be written in Korean.
-13. **No Out-of-Scope Modifications**: Do not modify files outside the scope explicitly requested by the user.
-14. **No Speculative Fixes**: Speculative or guessing-based code modifications are strictly prohibited. If the root cause of an issue is unknown, ask the user for clarification.
+1. **임의 Bash 명령어 금지**: Pre-Approved 명령어를 제외한 모든 셸 명령어(읽기 전용 진단, git, docker, ls, env 등 포함)는 사용자의 명시적 승인이 필요합니다. 정확한 명령어를 채팅에 먼저 제시하고 승인을 받으세요. 여러 진단/상태 확인은 `&&`, `;` 또는 `cat << 'EOF' | bash`로 연결하여 단일 실행으로 압축하세요.
+2. **계획 수립 철저**: 파일 쓰기나 환경 변경 전에 Markdown 표(File Path, Action, Details 컬럼)로 계획을 제시하고 승인을 받으세요. 설계/이전 계획은 `docs/artifacts/` 디렉토리에 특정 파일명으로 문서화한 후 승인받아야 합니다. CRITICAL: 계획 제안과 동시에 쓰기/수정 도구를 호출하지 마세요; 항상 먼저 승인을 기다리세요. 시스템 알림, 백그라운드 작업 완료 등은 사용자 승인으로 간주하지 마세요.
+3. **최소 파일 범위 및 커버리지**: 루트 레벨 grep이나 재귀 list_dir을 사용하지 마세요.
+   * 중첩 폴더를 놓치지 않고 프로젝트 구조를 파악하려면 `git ls-files`를 한 번 실행하세요.
+   * 정확한 대상 파일 경로를 찾은 후 `Read`로 직접 읽으세요.
+   * 여러 파일에서 코드 심볼을 검색할 때는 `Grep`을 사용하여 일치하는 라인 번호만 찾고, 파일을 하나씩 읽지 마세요 (API/토큰 소비 최소화).
+4. **투명한 이슈 처리**: 오류는 즉시 보고합니다. 무음 복구 금지. 사용자 리뷰 없이 자가 트러블슈팅은 최대 2회.
+5. **상대경로 링크**: 문서에서는 상대경로를 사용하세요 (예: `[Worker](src/Worker.ts)`). `file://` 사용 금지.
+6. **자동 Git 커밋**: 유효한 편집 직후 `scripts/agents/commit-changes.sh`를 실행합니다.
+7. **Docker 중심 테스트 및 실행**: 모든 로컬 스크립트는 `docker compose`로 테스트/실행합니다. 테스트/디버깅과 프로덕션 검증을 구분하세요:
+   * **디버깅/테스트**: 항상 볼륨 마운트를 사용하여 소스 파일을 실시간 동기화 (예: `docker compose -p scraper run --rm --user $(id -u):$(id -g) -v $(pwd):/app -v /app/node_modules worker npx ts-node src/...`). `docker cp` 사용 금지.
+   * **프로덕션/검증**: 최종 빌드 이미지 검증 시 볼륨 마운트 없이 실행 (이미지 재빌드 후). MongoDB/Redis 접근이 Docker 네트워크 내에서 가능한지 확인.
+   * **프론트엔드 컴파일 및 배포**: 프론트엔드 변경 적용 시 서비스 이미지를 직접 재빌드 (예: `docker compose build viewer` 또는 `docker compose up -d --build viewer`), viewer는 호스트 볼륨 마운트 없이 격리된 컨테이너 내에서 실행되므로.
+   * **로컬 node_modules 마운트 문제**: `-v $(pwd):/app`으로 워크스페이스 마운트 시 호스트의 `node_modules`가 컨테이너 버전을 덮어씁니다. 라이브러리 버전 불일치(특히 Playwright 브라우저)를 방지하려면 익명 볼륨 마운트 추가: `-v /app/node_modules`.
+   * **Playwright 브라우저 불일치**: `browserType.launch: Executable doesn't exist` 오류 발생 시:
+     - 종속성 버전 정렬을 위해 해당 서비스 이미지만 재빌드: `docker compose build worker`
+     - 또는 컨테이너에서 브라우저 설치: `docker compose run --rm worker npx playwright install`
+   * **호스트 포트 노출 금지**: 인프라 서비스 포트(MongoDB `27017`, Redis `6379`, Meilisearch `7700`)를 호스트 머신에 직접 노출하지 마세요. 모든 트래픽은 Traefik 리버스 프록시 도메인(예: `*.localhost`, `*.nip.io`)을 통해 라우팅.
+   * **Docker 내부 CLI 작업**: 인프라 서비스가 호스트에 포트를 노출하지 않으므로, CLI 유틸리티/진단/REST 작업(예: `curl` 명령어)은 `docker compose run`으로 컨테이너 네트워크 내에서 실행 (예: `docker compose -p scraper run --rm worker curl -X DELETE http://meilisearch:7700/indexes/contents`). 호스트→localhost 직접 연결 시도 금지. CRITICAL: 네트워크/API 진단 시 기본 서비스 컨테이너에 패키지를 설치/수정하지 말고 `nicolaka/netshoot` 컨테이너 사용 (예: `docker compose -p scraper run --rm nicolaka/netshoot curl ...`).
+8. **트랜스크립트 내보내기 (수동 실행)**: 세션 시작 시 `make agents-dump`를 자동 실행하지 마세요. 사용자가 요청하거나 세션 결과를 요약할 때만 명령어 라인을 제공하세요.
+9. **동시 백그라운드 작업 금지**: 경쟁 상태 및 DB/시스템 상태 손상을 방지하기 위해, 각 명령어에 대한 사용자의 명시적 승인 없이 여러 백그라운드 명령어/태스크를 병렬 실행하지 마세요. 활성 백그라운드 작업이 완전히 종료되고 종료 상태를 확인한 후에만 다음 명령어 승인을 요청하세요.
+10. **데이터 변경은 사용자에게 위임**: 데이터 손상이나 충돌을 방지하기 위해, 에이전트는 주요 영구 데이터 변경, DB 시딩, 인덱스 리셋/재인덱싱(예: `meili-manager.ts --reset`)을 실행하거나 승인 요청하지 마세요. 대신 필요한 실행 단계와 명령어를 채팅에 명확히 설명하고 사용자가 수동으로 실행하도록 요청하세요.
+11. **환경 제어 공동 위임 (페어 프로그래밍)**: 컨테이너 재빌드, 서비스 재시작, 이미지 정리, 복잡한 런타임 배포 등의 작업 실행 시, 에이전트는 협업 파트너처럼 행동하세요. 명령어를 직접 실행하지 말고, 목적과 명령어를 설명하며 사용자가 수동으로 실행하도록 요청 (예: `make up-viewer`).
+12. **AI 처리 및 응답 한국어**: 모든 AI 처리 로그, 상태 메시지, 채팅 응답은 한국어로 작성합니다.
+13. **범위 외 수정 금지**: 사용자가 명시적으로 요청한 범위 밖의 파일은 수정하지 마세요.
+14. **추측 수정 금지**: 추측에 기반한 코드 수정은 엄격히 금지됩니다. 문제의 근본 원인을 모르면 사용자에게 문의하세요.
 
 
 ## ⚠️ Security Rules
-- **No ENV Access**: DO NOT access `.env` or `.env.*` files. Use `.env.example` for reference.
-- **No Credentials**: Never expose API keys/credentials in command outputs.
+- **ENV 접근 금지**: `.env` 또는 `.env.*` 파일에 접근하지 마세요. `.env.example`을 참조하세요.
+- **자격 증명 노출 금지**: API 키/자격 증명을 명령어 출력에 노출하지 마세요.
 
 ## ⚙️ Engineering & Architecture Rules
 
-1. **Strict OOP Patterns**: Use classes, interfaces, and SOLID principles. Avoid loose utility functions for core logic.
-2. **Strict Typing**: Avoid 'any' type. Declare explicit return types and interfaces for public methods.
-3. **Robust Error Handling**: Never use empty catch blocks. Always log error contexts and close DB/Redis connections in finally blocks.
-4. **Centralized Config**: Access 'process.env' ONLY within dedicated config files. Inject configuration via constructor.
-5. **Agent-Friendly Docstrings**: Start every source, script, and automation file with a header docstring/comment detailing design context, constraints, and dependencies to prevent refactoring loops. Update it when behavior changes.
-6. **No Superficial Patches**: Never implement superficial patches (e.g., custom regex exclusions or hardcoded parameters to hide symptoms) when errors occur. Always trace the data flow, investigate database/state coordination, find the true root cause, and implement a robust structural/architectural solution. **또한 버그가 수정(Bugfix)되었을 때에는 단순 변경사항과 엄격히 구분하여 CHANGELOG와 코드 리뷰 문서에 'Bugfix'임을 명확히 표기하고 기록해야 합니다.**
+1. **Strict OOP Patterns**: 클래스, 인터페이스, SOLID 원칙을 사용합니다. 핵심 로직에 느슨한 유틸리티 함수 사용을 지양합니다.
+2. **Strict Typing**: 'any' 타입 사용을 금지합니다. public 메서드에 명시적 반환 타입과 인터페이스를 선언합니다.
+3. **Robust Error Handling**: 빈 catch 블록을 사용하지 마세요. 항상 에러 컨텍스트를 로깅하고 finally 블록에서 DB/Redis 연결을 종료합니다.
+4. **Centralized Config**: 'process.env'는 전용 설정 파일에서만 접근합니다. 생성자를 통해 설정을 주입합니다.
+5. **Agent-Friendly Docstrings**: 모든 소스, 스크립트, 자동화 파일에 설계 컨텍스트, 제약 조건, 의존성을 설명하는 헤더 docstring/주석을 추가하여 리팩터링 루프를 방지합니다. 동작 변경 시 업데이트합니다.
+6. **No Superficial Patches**: 오류 발생 시 표면적 패치(예: 커스텀 regex 제외나 하드코딩 파라미터로 증상 숨기기)를 절대 구현하지 마세요. 항상 데이터 흐름을 추적하고, DB/상태 조정을 조사하여 진정한 근본 원인을 찾아 견고한 구조적/아키텍처 솔루션을 구현하세요. **또한 버그가 수정(Bugfix)되었을 때에는 단순 변경사항과 엄격히 구분하여 CHANGELOG와 코드 리뷰 문서에 'Bugfix'임을 명확히 표기하고 기록해야 합니다.**
 
 ## 📝 Documentation Lifecycle Rules
 
@@ -113,6 +113,6 @@
 
 ## 🔓 Pre-Approved Commands
 
-The following commands/scripts are pre-approved and exempt from Rule 1's and Rule 2's consent loops:
-- `git ls-files` (Read-only project codebase mapping to minimize token/API usage)
-- `scripts/agents/commit-changes.sh` (Runs automatically after edits to save progress)
+다음 명령어/스크립트는 사전 승인되었으며, 규칙 1과 2의 승인 절차에서 제외됩니다:
+- `git ls-files` (토큰/API 사용 최소화를 위한 읽기 전용 프로젝트 코드베이스 매핑)
+- `scripts/agents/commit-changes.sh` (편집 후 자동 실행되어 진행 상황 저장)
