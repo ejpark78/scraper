@@ -13,11 +13,9 @@ export async function exportToJoplin(
     throw new Error('Joplin API 토큰이 제공되지 않았습니다.');
   }
 
-  let rootFolder;
   let bookFolder;
   try {
-    rootFolder = await getOrCreateRootFolder(token);
-    bookFolder = await createBookFolder(book.title, rootFolder.id, token);
+    bookFolder = await createBookFolder(book.title, token);
   } catch (error) {
     throw new Error(`Joplin에 연결할 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${JOPLIN_API_URL})에 접근 가능한지 확인해주세요.`);
   }
@@ -47,38 +45,7 @@ export async function exportToJoplin(
   }
 }
 
-async function getOrCreateRootFolder(token: string): Promise<{ id: string }> {
-  const response = await fetch(`${JOPLIN_API_URL}/folders?token=${encodeURIComponent(token)}`);
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`폴더 조회 실패: ${response.statusText}\n${errorText}`);
-  }
-  
-  const data = (await response.json()) as { items: Array<{ id: string; title: string }> };
-  const rootFolder = data.items.find((f: any) => f.title === 'Wikidocs');
-  
-  if (rootFolder) {
-    return { id: rootFolder.id };
-  }
-  
-  const createResponse = await fetch(`${JOPLIN_API_URL}/folders?token=${encodeURIComponent(token)}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ title: 'Wikidocs' }),
-  });
-  
-  if (!createResponse.ok) {
-    const errorText = await createResponse.text();
-    throw new Error(`루트 폴더 생성 실패: ${createResponse.statusText}\n${errorText}`);
-  }
-  
-  return (await createResponse.json()) as { id: string };
-}
-
-async function createBookFolder(title: string, parentId: string, token: string): Promise<{ id: string }> {
+async function createBookFolder(title: string, token: string): Promise<{ id: string }> {
   const response = await fetch(`${JOPLIN_API_URL}/folders?token=${encodeURIComponent(token)}`, {
     method: 'POST',
     headers: {
@@ -86,7 +53,7 @@ async function createBookFolder(title: string, parentId: string, token: string):
     },
     body: JSON.stringify({
       title: sanitizeFilename(title),
-      parent_id: parentId,
+      // parent_id를 생략하면 Joplin 루트에 생성됩니다.
     }),
   });
 

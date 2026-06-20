@@ -12,6 +12,7 @@ and this project adheres to Semantic Versioning.
 ### Added
 - **Joplin/Obsidian Exporter Web Integration**: `apps/exporter` 코드를 `apps/viewer` 내로 완전히 마이그레이션하고 백엔드 Express Router (`/api/exporter/*`) 및 프론트엔드 Exporter 뷰 (`ExporterView.vue`)를 새로 구현하여 웹 대시보드 상에서 간편하게 내보내기 조작이 가능하도록 통합.
 - **Frontend Vue Router Migration**: 기존 `App.vue`에 집중되었던 1,200줄의 코드를 `DashboardView.vue`, `DocumentView.vue`, `ExporterView.vue` 컴포넌트로 깔끔하게 리팩토링 및 격리 분리하고, `vue-router@4`를 도입하여 다중 페이지 아키텍처로 개편.
+- **Joplin 루트 직접 폴더 생성**: 사용자의 편의성에 맞추어 `Wikidocs` 루트 폴더 래퍼를 생성하는 대신, Joplin 최상위 루트 노트북 디렉토리에 바로 서적 폴더가 생성되도록 내보내기 디렉터리 경로 개선 완료.
 
 ### Fixed (Bugfixes)
 - **Bugfix: Exporter 설정 카드 높이 잘림 문제 해결**: Joplin 또는 Obsidian 연동 설정 필드가 활성화될 때 설정 폼 카드의 스크롤이 불가하여 `Joplin API 웹클리퍼 토큰` 입력란 및 하단 버튼이 뷰포트에서 잘려 보이지 않는 레이아웃 버그를 `.queue-section-card`에 `overflow-y: auto` 스타일 주입 및 최소 높이를 `615px`로 상향 조정하여 수정 완료.
