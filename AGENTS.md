@@ -6,7 +6,7 @@
 
 ---
 
-## ⚠️ Critical Constraints
+## ⚠️ 주요 제약 사항 (Critical Constraints)
 
 1. **임의 Bash 명령어 금지**: Pre-Approved 명령어를 제외한 모든 셸 명령어(읽기 전용 진단, git, docker, ls, env 등 포함)는 사용자의 명시적 승인이 필요합니다. 정확한 명령어를 채팅에 먼저 제시하고 승인을 받으세요. 여러 진단/상태 확인은 `&&`, `;` 또는 `cat << 'EOF' | bash`로 연결하여 단일 실행으로 압축하세요.
 2. **계획 수립 철저**: 파일 쓰기나 환경 변경 전에 Markdown 표(File Path, Action, Details 컬럼)로 계획을 제시하고 승인을 받으세요. 설계/이전 계획은 `docs/artifacts/` 디렉토리에 특정 파일명으로 문서화한 후 승인받아야 합니다. CRITICAL: 계획 제안과 동시에 쓰기/수정 도구를 호출하지 마세요; 항상 먼저 승인을 기다리세요. 시스템 알림, 백그라운드 작업 완료 등은 사용자 승인으로 간주하지 마세요.
@@ -36,11 +36,11 @@
 14. **추측 수정 금지**: 추측에 기반한 코드 수정은 엄격히 금지됩니다. 문제의 근본 원인을 모르면 사용자에게 문의하세요.
 
 
-## ⚠️ Security Rules
+## ⚠️ 보안 규칙 (Security Rules)
 - **ENV 접근 금지**: `.env` 또는 `.env.*` 파일에 접근하지 마세요. `.env.example`을 참조하세요.
 - **자격 증명 노출 금지**: API 키/자격 증명을 명령어 출력에 노출하지 마세요.
 
-## ⚙️ Engineering & Architecture Rules
+## ⚙️ 엔지니어링 및 아키텍처 규칙 (Engineering & Architecture Rules)
 
 1. **Strict OOP Patterns**: 클래스, 인터페이스, SOLID 원칙을 사용합니다. 핵심 로직에 느슨한 유틸리티 함수 사용을 지양합니다.
 2. **Strict Typing**: 'any' 타입 사용을 금지합니다. public 메서드에 명시적 반환 타입과 인터페이스를 선언합니다.
@@ -111,7 +111,7 @@
 2. **AGENTS.md 유지보수**: AGENTS.md는 100줄 이내 유지. 불필요한 예제/중복 발견 시 정리
 3. **Compact 정기 정리**: 10세션마다 또는 아티팩트 50개 초과 시 `make agents-squash` 권장
 
-## 🔓 Pre-Approved Commands
+## 🔓 사전 승인 명령어 (Pre-Approved Commands)
 
 다음 명령어/스크립트는 사전 승인되었으며, 규칙 1과 2의 승인 절차에서 제외됩니다:
 - `git ls-files` (토큰/API 사용 최소화를 위한 읽기 전용 프로젝트 코드베이스 매핑)
