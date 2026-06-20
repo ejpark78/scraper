@@ -7,12 +7,16 @@ requires-python = ">=3.13"
 dependencies = [
     "pymupdf>=1.27.2.3",
     "poethepoet>=0.32.2",
+    "markdownify>=0.14.1",
+    "beautifulsoup4>=4.13.3",
+    "lxml>=5.3.1",
 ]
 
 [tool.poe.tasks]
 summary = "python -m src.process --summary"
 analyze = "python -m src.process --analyze"
 split = "python -m src.process --split"
-md = "python -m src.process --md"
-html = "python -m src.process --html"
-translate = "python -m src.process --translate"
+pdf2md = "python -m src.process --pdf2md"
+pdf2html = "python -m src.process --pdf2html"
+translate_md = "python -m src.process --translate-md"
+html2md = "python -m src.process --html2md"

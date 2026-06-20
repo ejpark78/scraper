@@ -12,6 +12,7 @@ from pathlib import Path
 from .split_chapter import ChapterSplitter, BookProfile, ChapterDef, get_book_title
 from .pdf_to_markdown import ChapterConverter
 from .pdf_to_html import HTMLConverter
+from .html_to_markdown import HTMLToMarkdownConverter
 from .pdf_translator import PDFTranslator
 from .pdf_analyzer import PDFAnalyzer
 
@@ -124,6 +125,7 @@ def load_books_config(books_json_path: Path) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Ebook PDF Process Pipeline.")
+    parser = argparse.ArgumentParser(description="Ebook PDF Process Pipeline.")
     parser.add_argument("--data", default="data", help="Input directory of PDFs")
     parser.add_argument("--output", default="output", help="Output directory")
     
@@ -131,11 +133,12 @@ def main():
     parser.add_argument("--summary", action="store_true", help="Print summary of all PDFs")
     parser.add_argument("--analyze", help="Analyze specified PDF structure interactively")
     parser.add_argument("--split", action="store_true", help="Split PDFs into chapter PDFs")
-    parser.add_argument("--md", action="store_true", help="Convert split chapter PDFs to markdown")
-    parser.add_argument("--html", nargs="?", const="all", help="Directly convert specified PDF (or all PDFs if empty/all) to HTML")
+    parser.add_argument("--pdf2md", action="store_true", help="Convert split chapter PDFs to markdown")
+    parser.add_argument("--pdf2html", nargs="?", const="all", help="Directly convert specified PDF (or all PDFs if empty/all) to HTML")
+    parser.add_argument("--html2md", nargs="?", const="all", help="Convert specified HTML (or all HTMLs if empty/all) to Markdown")
     
     # Translation options
-    parser.add_argument("--translate", help="Translate PDF path")
+    parser.add_argument("--translate-md", help="Translate PDF path")
     parser.add_argument("--translate-pages", help="Page range for translation (e.g., '10-20')")
     parser.add_argument("--translate-out", help="Output filepath base name")
 
@@ -155,9 +158,9 @@ def main():
         sys.exit(0)
 
     # 3. Direct HTML Mode
-    if args.html is not None:
+    if args.pdf2html is not None:
         html_converter = HTMLConverter(args.output)
-        if args.html == "all" or args.html == "":
+        if args.pdf2html == "all" or args.pdf2html == "":
             output_dir = Path(args.output)
             pdf_files = list(output_dir.glob("**/*.pdf"))
             if not pdf_files:
@@ -167,23 +170,23 @@ def main():
                 print(f"Converting {pdf_file.name} to HTML...")
                 html_converter.convert(pdf_file)
         else:
-            pdf_file = Path(args.html)
+            pdf_file = Path(args.pdf2html)
             if pdf_file.exists():
                 html_converter.convert(pdf_file)
             else:
                 # Check if it resides in the data directory
-                alt_path = Path(args.data) / args.html
+                alt_path = Path(args.data) / args.pdf2html
                 if alt_path.exists():
                     html_converter.convert(alt_path)
                 else:
-                    print(f"File not found: {args.html}")
+                    print(f"File not found: {args.pdf2html}")
                     sys.exit(1)
         sys.exit(0)
 
     # 4. Translation Mode
-    if args.translate:
+    if args.translate_md:
         if not args.translate_pages or not args.translate_out:
-            print("Error: --translate requires both --translate-pages (e.g., '10-20') and --translate-out", file=sys.stderr)
+            print("Error: --translate-md requires both --translate-pages (e.g., '10-20') and --translate-out", file=sys.stderr)
             sys.exit(1)
         
         try:
@@ -193,11 +196,37 @@ def main():
             sys.exit(1)
 
         translator = PDFTranslator()
-        translator.translate_pdf(args.translate, start, end, Path(args.translate_out))
+        translator.translate_pdf(args.translate_md, start, end, Path(args.translate_out))
         sys.exit(0)
 
-    # 5. Split and/or Convert to MD Modes
-    if args.split or args.md:
+    # 5. HTML to Markdown Mode
+    if args.html2md is not None:
+        html2md_converter = HTMLToMarkdownConverter(args.output)
+        if args.html2md == "all" or args.html2md == "":
+            output_dir = Path(args.output)
+            html_files = list(output_dir.glob("**/*.html"))
+            if not html_files:
+                print(f"No HTML files found in {args.output}")
+                sys.exit(0)
+            for html_file in html_files:
+                print(f"Converting {html_file.name} to Markdown...")
+                html2md_converter.convert(html_file)
+        else:
+            html_file = Path(args.html2md)
+            if html_file.exists():
+                html2md_converter.convert(html_file)
+            else:
+                # Check if it resides in output/book_title directory
+                alt_path = Path(args.output) / args.html2md
+                if alt_path.exists():
+                    html2md_converter.convert(alt_path)
+                else:
+                    print(f"File not found: {args.html2md}")
+                    sys.exit(1)
+        sys.exit(0)
+
+    # 6. Split and/or Convert to MD Modes
+    if args.split or args.pdf2md:
         data_path = Path(args.data)
         output_path = Path(args.output)
         books_cfg = load_books_config(Path("books.json"))
@@ -258,7 +287,7 @@ def main():
                         if ch_path.exists():
                             chapter_pdfs.append(ch_path)
 
-            if args.md:
+            if args.pdf2md:
                 print("Converting split chapters to markdown...")
                 converter = ChapterConverter(output_path)
                 for ch_pdf in chapter_pdfs:
