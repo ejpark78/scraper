@@ -156,7 +156,8 @@ function discoverSites(): void {
 discoverSites();
 
 export function getSite(key: string): SiteDescriptor | undefined {
-  return registry.get(key);
+  const normalizedKey = key === 'dailydoseofds' ? 'dailydose_ds' : key;
+  return registry.get(normalizedKey);
 }
 
 export function getAllSites(): SiteDescriptor[] {
