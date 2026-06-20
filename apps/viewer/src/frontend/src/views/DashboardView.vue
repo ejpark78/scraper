@@ -665,9 +665,9 @@ async function addUrlQueue() {
 
       <!-- Queues Tables Monitor -->
       <div class="queue-section-card">
-        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <h3>📥 대기 큐 모니터 (Active Queues)</h3>
-          <span class="meta-tag">총 {{ totalAllQueuesCount.toLocaleString('ko-KR') }} 건 대기 중</span>
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; flex-wrap: wrap; gap: 8px;">
+          <h3 style="margin: 0; flex-shrink: 1;">📥 대기 큐 모니터 (Active Queues)</h3>
+          <span class="meta-tag" style="flex-shrink: 0; white-space: nowrap;">총 {{ totalAllQueuesCount.toLocaleString('ko-KR') }} 건 대기 중</span>
         </div>
         <div class="card-body">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
