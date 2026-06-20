@@ -20,6 +20,7 @@ import { getAllSites, getIndexName, getSiteKeyFromCollection } from '../core/Sit
 import { MeiliSearchDatabase } from '../database/meili';
 import { AppConfig } from '../config/AppConfig';
 import Redis from 'ioredis';
+import exporterRouter from './routes/exporter';
 
 const app = express();
 const PORT = AppConfig.PORT;
@@ -46,6 +47,8 @@ app.use((req: Request, res: Response, next) => {
 });
 
 const mongo = MongoDatabase.getInstance();
+
+app.use('/api/exporter', exporterRouter);
 
 // 1. HTTP REST API
 app.get('/api/collections', async (req: Request, res: Response) => {
