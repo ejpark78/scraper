@@ -68,6 +68,9 @@ def main():
                 if search_dir.exists():
                     pdf_files.extend(list(search_dir.glob("**/*.pdf")))
             
+            # Exclude raw/ directory contents
+            pdf_files = [p for p in pdf_files if "raw" not in p.resolve().parts]
+            
             # Deduplicate by absolute path resolved
             pdf_files = list({p.resolve(): p for p in pdf_files}.values())
             
@@ -116,6 +119,9 @@ def main():
             for search_dir in [Path(args.data), Path(args.output)]:
                 if search_dir.exists():
                     html_files.extend(list(search_dir.glob("**/*.html")))
+            
+            # Exclude raw/ directory contents
+            html_files = [p for p in html_files if "raw" not in p.resolve().parts]
             
             # Deduplicate by absolute path resolved
             html_files = list({p.resolve(): p for p in html_files}.values())
