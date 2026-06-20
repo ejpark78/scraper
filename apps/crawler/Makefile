@@ -18,6 +18,44 @@ rebuild:
 restart:
 	SCALE=$(SCALE) $(COMPOSE) up -d worker scraper converter indexer
 
+# sites grouped targets
+list: RECURSIVE_SCRAPE=true
+list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list 
+
+refresh-urls: RECURSIVE_SCRAPE=true
+refresh-urls: gpt-refresh-urls gn-refresh-urls ddds-refresh-urls pk-refresh-urls ab-refresh-urls up-refresh-urls mj-refresh-urls yz-refresh-urls 
+
+refresh-silver: RECURSIVE_SCRAPE=true
+refresh-silver: gpt-refresh-silver gn-refresh-silver ddds-refresh-silver pk-refresh-silver ab-refresh-silver up-refresh-silver mj-refresh-silver yz-refresh-silver
+
+# sites
+gpt-%:
+	@$(MAKE) run-scrape SITE=gpters CMD=$*
+
+gn-%:
+	@$(MAKE) run-scrape SITE=geeknews CMD=$*
+
+ddds-%:
+	@$(MAKE) run-scrape SITE=dailydoseofds CMD=$*
+
+pk-%:
+	@$(MAKE) run-scrape SITE=pytorch_kr CMD=$*
+
+ab-%:
+	@$(MAKE) run-scrape SITE=aicasebook CMD=$*
+
+up-%:
+	@$(MAKE) run-scrape SITE=uppity CMD=$*
+
+mj-%:
+	@$(MAKE) run-scrape SITE=maily_josh CMD=$*
+
+yz-%:
+	@$(MAKE) run-scrape SITE=yozm CMD=$*
+
+li-%:
+	@$(MAKE) run-scrape SITE=linkedin CMD=$*
+
 # run-scrape (moved from root Makefile)
 PAGE       ?= 1
 LIST_SLACK ?= 2
@@ -46,6 +84,9 @@ test-recursive:
 
 test-sites:
 	$(COMPOSE) run --rm $(RUN_USER) worker npm run test:sites
+
+test-%:
+	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SITE=$(SITE) worker npm run test:$*
 
 extract:
 	@if [ -z "$(SITE)" ] || [ -z "$(ID)" ]; then \

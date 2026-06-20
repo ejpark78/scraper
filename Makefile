@@ -27,53 +27,19 @@ lint:
 -include scripts/utils/docker.mk
 -include scripts/tools/tools.mk
 
-# sites grouped targets
-list: RECURSIVE_SCRAPE=true
-list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list 
+# sites & crawler forwarding
+list refresh-urls refresh-silver:
+	@$(MAKE) -C apps/crawler $@
 
-refresh-urls: RECURSIVE_SCRAPE=true
-refresh-urls: gpt-refresh-urls gn-refresh-urls ddds-refresh-urls pk-refresh-urls ab-refresh-urls up-refresh-urls mj-refresh-urls yz-refresh-urls 
+gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
+	@$(MAKE) -C apps/crawler $@
 
-refresh-silver: RECURSIVE_SCRAPE=true
-refresh-silver: gpt-refresh-silver gn-refresh-silver ddds-refresh-silver pk-refresh-silver ab-refresh-silver up-refresh-silver mj-refresh-silver yz-refresh-silver
-
-# sites
-gpt-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=gpters CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-gn-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=geeknews CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-ddds-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=dailydoseofds CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-pk-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=pytorch_kr CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-ab-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=aicasebook CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-up-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=uppity CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-mj-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=maily_josh CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-yz-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=yozm CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-li-%:
-	@$(MAKE) -C apps/crawler run-scrape SITE=linkedin CMD=$* ENV_COMMON="$(ENV_COMMON)" RUN_USER="$(RUN_USER)"
-
-# tests
+# tests & utils forwarding
 test-%:
-	@$(MAKE) -C apps/crawler test-$* RECURSIVE_SCRAPE="$(RECURSIVE_SCRAPE)" SITE="$(SITE)"
+	@$(MAKE) -C apps/crawler $@ RECURSIVE_SCRAPE="$(RECURSIVE_SCRAPE)" SITE="$(SITE)"
 
-extract:
-	@$(MAKE) -C apps/crawler extract SITE=$(SITE) ID=$(ID)
-
-debug:
-	@$(MAKE) -C apps/crawler debug FILE=$(FILE) SITE=$(SITE) ID=$(ID)
+extract debug:
+	@$(MAKE) -C apps/crawler $@ SITE="$(SITE)" ID="$(ID)" FILE="$(FILE)"
 
 # db utils
 mongo-%:
