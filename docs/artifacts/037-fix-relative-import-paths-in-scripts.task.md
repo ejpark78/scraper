@@ -12,4 +12,4 @@
 - [x] 컴파일 및 런타임 오류 해결 여부 수동 검증 및 결과 확인
 - [x] 코드 리뷰 문서 (`037-fix-relative-import-paths-in-scripts.review.md`) 작성
 - [x] 결과보고서 (`037-fix-relative-import-paths-in-scripts.walkthrough.md`) 작성
-- [ ] 자동 커밋 스크립트 실행
+- [x] 자동 커밋 스크립트 실행
