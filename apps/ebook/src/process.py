@@ -125,7 +125,7 @@ def load_books_config(books_json_path: Path) -> dict:
 def main():
     parser = argparse.ArgumentParser(description="Ebook PDF Process Pipeline.")
     parser.add_argument("--data", default="data", help="Input directory of PDFs")
-    parser.add_argument("--output", default="output", help="Output directory")
+    parser.add_argument("--output", default="data/output", help="Output directory")
     
     # Modes
     parser.add_argument("--summary", action="store_true", help="Print summary of all PDFs")

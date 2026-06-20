@@ -37,3 +37,6 @@ translate:
 		exit 1; \
 	fi
 	$(COMPOSE) run --rm ebook uv run poe translate "$(PDF)" --translate-pages "$(RANGE)" --translate-out "$(OUT)"
+
+shell:
+	$(COMPOSE) run --rm ebook bash
