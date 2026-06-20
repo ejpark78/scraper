@@ -898,7 +898,7 @@ code.language-markdown {
   border-radius: 12px;
   display: flex;
   flex-direction: column;
-  max-height: 400px;
+  flex-shrink: 0; /* Prevent vertical squeezing in flex layouts */
 }
 
 .card-header {

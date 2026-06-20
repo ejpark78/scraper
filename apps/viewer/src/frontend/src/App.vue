@@ -569,6 +569,7 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
+  flex-shrink: 0; /* Prevent visual squeezing in flex containers */
 }
 
 .card-header {
