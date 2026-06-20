@@ -28,9 +28,9 @@ pdf2md:
 
 pdf2html:
 	@if [ -z "$(PDF)" ]; then \
-		$(COMPOSE) run --rm ebook uv run poe pdf2html --output "$(OUTPUT)"; \
+		$(COMPOSE) run --rm ebook uv run poe pdf2html --path "$(OUTPUT)"; \
 	else \
-		$(COMPOSE) run --rm ebook uv run poe pdf2html "$(PDF)" --output "$(OUTPUT)"; \
+		$(COMPOSE) run --rm ebook uv run poe pdf2html "$(PDF)" --path "$(OUTPUT)"; \
 	fi
 
 translate_md:
@@ -42,9 +42,9 @@ translate_md:
 
 html2md:
 	@if [ -z "$(HTML)" ]; then \
-		$(COMPOSE) run --rm ebook uv run poe html2md --output "$(OUTPUT)"; \
+		$(COMPOSE) run --rm ebook uv run poe html2md --path "$(OUTPUT)"; \
 	else \
-		$(COMPOSE) run --rm ebook uv run poe html2md "$(HTML)" --output "$(OUTPUT)"; \
+		$(COMPOSE) run --rm ebook uv run poe html2md "$(HTML)" --path "$(OUTPUT)"; \
 	fi
 
 translate_batch:

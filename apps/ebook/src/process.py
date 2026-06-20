@@ -11,8 +11,8 @@ from .commands import COMMANDS
 
 def main():
     parser = argparse.ArgumentParser(description="Ebook PDF Process Pipeline.")
-    parser.add_argument("--data", default="data", help="Input directory of PDFs")
-    parser.add_argument("--output", default="output", help="Output directory")
+    parser.add_argument("--raw-pdf", default="data/raw", help="Directory of raw PDF files")
+    parser.add_argument("--path", default="output", help="Working path for inputs and outputs")
 
     for cmd in COMMANDS:
         cmd.add_arguments(parser)

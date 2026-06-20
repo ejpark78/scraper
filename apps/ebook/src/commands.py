@@ -23,9 +23,10 @@ def load_books_config(books_json_path: Path) -> dict:
     return {}
 
 
-def _collect_files(data_dir: str, output_dir: str, suffix: str) -> list[Path]:
+def _collect_files(suffix: str, *dirs: str) -> list[Path]:
     files = []
-    for search_dir in [Path(data_dir), Path(output_dir)]:
+    for d in dirs:
+        search_dir = Path(d)
         if search_dir.exists():
             files.extend(list(search_dir.glob(f"**/*.{suffix}")))
     files = [p for p in files if "raw" not in p.resolve().parts]
@@ -79,7 +80,7 @@ class SummaryCommand(EbookCommand):
                             help="Print summary of all PDFs")
 
     def execute(self, args: Namespace) -> None:
-        PDFAnalyzer().dump_all_summaries(args.data)
+        PDFAnalyzer().dump_all_summaries(args.path)
         sys.exit(0)
 
 
@@ -111,18 +112,18 @@ class Pdf2HtmlCommand(EbookCommand):
                             help="Directly convert specified PDF (or all PDFs if empty/all) to HTML")
 
     def execute(self, args: Namespace) -> None:
-        converter = HTMLConverter(args.output)
+        converter = HTMLConverter(args.path)
         raw = args.pdf2html
         if raw == "all" or raw == "":
-            pdf_files = _collect_files(args.data, args.output, "pdf")
+            pdf_files = _collect_files("pdf", args.path)
             if not pdf_files:
-                print(f"No PDF files found in {args.data} or {args.output}")
+                print(f"No PDF files found in {args.path}")
                 sys.exit(0)
             for pdf_file in pdf_files:
                 print(f"Converting {pdf_file.name} to HTML...")
                 converter.convert(pdf_file)
         else:
-            pdf_file = _resolve_file_arg(raw, args.data)
+            pdf_file = _resolve_file_arg(raw, args.path)
             if pdf_file:
                 converter.convert(pdf_file)
             else:
@@ -159,8 +160,14 @@ class TranslateCommand(EbookCommand):
                   file=sys.stderr)
             sys.exit(1)
 
-        PDFTranslator().translate_pdf(
-            args.translate_md, start, end, Path(args.translate_out))
+        pdf_path = _resolve_file_arg(args.translate_md, args.path)
+        out_path = Path(args.translate_out)
+        if not out_path.is_absolute():
+            out_path = Path(args.path) / out_path
+        if pdf_path is None:
+            print(f"File not found: {args.translate_md}", file=sys.stderr)
+            sys.exit(1)
+        PDFTranslator().translate_pdf(str(pdf_path), start, end, out_path)
         sys.exit(0)
 
 
@@ -176,18 +183,18 @@ class Html2MdCommand(EbookCommand):
                             help="Convert specified HTML (or all HTMLs if empty/all) to Markdown")
 
     def execute(self, args: Namespace) -> None:
-        converter = HTMLToMarkdownConverter(args.output)
+        converter = HTMLToMarkdownConverter(args.path)
         raw = args.html2md
         if raw == "all" or raw == "":
-            html_files = _collect_files(args.data, args.output, "html")
+            html_files = _collect_files("html", args.path)
             if not html_files:
-                print(f"No HTML files found in {args.data} or {args.output}")
+                print(f"No HTML files found in {args.path}")
                 sys.exit(0)
             for html_file in html_files:
                 print(f"Converting {html_file.name} to Markdown...")
                 converter.convert(html_file)
         else:
-            html_file = _resolve_file_arg(raw, args.data)
+            html_file = _resolve_file_arg(raw, args.path)
             if html_file:
                 converter.convert(html_file)
             else:
@@ -213,16 +220,16 @@ class SplitOrPdf2MdCommand(EbookCommand):
                             help="Convert split chapter PDFs to markdown")
 
     def execute(self, args: Namespace) -> None:
-        data_path = Path(args.data)
-        output_path = Path(args.output)
+        raw_pdf_path = Path(args.raw_pdf)
+        output_path = Path(args.path)
         books_cfg = load_books_config(Path("books.json"))
 
-        pdf_files = list(data_path.glob("*.pdf"))
+        pdf_files = list(raw_pdf_path.glob("*.pdf"))
         if not pdf_files:
-            print(f"No PDF files found in {args.data}")
+            print(f"No PDF files found in {args.raw_pdf}")
             sys.exit(0)
 
-        splitter = ChapterSplitter(args.data, args.output)
+        splitter = ChapterSplitter(args.raw_pdf, args.path)
 
         for pdf in pdf_files:
             pdf_name = pdf.name
