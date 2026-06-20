@@ -34,7 +34,6 @@ def sanitize_filename(name: str) -> str:
 
 def get_book_title(pdf_name: str) -> str:
     name = pdf_name.replace('.pdf', '')
-    name = re.sub(r'\s*[-–—]\s*(Tom Taulli|Addy Osmani|Dave Thomas).*$', '', name)
     return name.strip()
 
 

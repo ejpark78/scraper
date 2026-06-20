@@ -4,7 +4,7 @@ ROOT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
 
 RUN_USER ?= --user $$(id -u):$$(id -g)
-OUTPUT ?= output
+OUTPUT ?= data/output
 
 .PHONY: build summary analyze split pdf2md pdf2html translate_md html2md translate_batch shell test
 
@@ -12,7 +12,7 @@ build:
 	$(COMPOSE) build --no-cache ebook
 
 summary:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe summary
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe summary --path "$(OUTPUT)"
 
 analyze:
 	@if [ -z "$(PDF)" ]; then \
@@ -22,10 +22,10 @@ analyze:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze "$(PDF)"
 
 split:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --path "$(OUTPUT)"
 
 pdf2md:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe pdf2md
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe pdf2md --path "$(OUTPUT)"
 
 pdf2html:
 	@if [ -z "$(PDF)" ]; then \
