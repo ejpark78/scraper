@@ -7,6 +7,9 @@
         "chrome-devtools-mcp@latest",
         "--autoConnect"
       ]
+    },
+    "viewer-mcp": {
+      "url": "https://mcp.localhost/sse"
     }
   }
 }
