@@ -38,7 +38,7 @@ function main() {
     };
   });
 
-  const configDir = path.resolve(__dirname, '..', '..', 'config');
+  const configDir = path.resolve(__dirname, '..', '..', '..', 'config');
   if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir, { recursive: true });
   }
