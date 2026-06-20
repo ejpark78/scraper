@@ -27,19 +27,15 @@ lint:
 -include scripts/utils/docker.mk
 -include scripts/tools/tools.mk
 
-# sites & crawler forwarding
-list refresh-urls refresh-silver:
+# crawler app forwarding
+list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug test-%:
 	@$(MAKE) -C apps/crawler $@
+
+gm-%:
+	@$(MAKE) -C apps/crawler gmail-$*
 
 gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
 	@$(MAKE) -C apps/crawler $@
-
-# tests & utils forwarding
-test-%:
-	@$(MAKE) -C apps/crawler $@ RECURSIVE_SCRAPE="$(RECURSIVE_SCRAPE)" SITE="$(SITE)"
-
-extract debug:
-	@$(MAKE) -C apps/crawler $@ SITE="$(SITE)" ID="$(ID)" FILE="$(FILE)"
 
 # db utils
 mongo-%:
@@ -60,14 +56,6 @@ ebook-%:
 # viewer utils
 viewer-%:
 	@$(MAKE) -C apps/viewer $*
-
-# crawler infra, queue & tools forwarding
-SCALE         ?= 1
-rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status:
-	@$(MAKE) -C apps/crawler $@ SCALE=$(SCALE)
-
-gm-%:
-	@$(MAKE) -C apps/crawler gmail-$*
 
 
 

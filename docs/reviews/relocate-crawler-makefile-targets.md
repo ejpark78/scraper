@@ -22,21 +22,17 @@
 -
 -gpt-%:
 -	@$(MAKE) -C apps/crawler run-scrape SITE=gpters CMD=$* ...
-+# sites & crawler forwarding
-+list refresh-urls refresh-silver:
++# crawler app forwarding
++list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug test-%:
 +	@$(MAKE) -C apps/crawler $@
-+
-+gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
-+	@$(MAKE) -C apps/crawler $@
-+
-+# crawler infra, queue & tools forwarding
-+rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status:
-+	@$(MAKE) -C apps/crawler $@ SCALE=$(SCALE)
 +
 +gm-%:
 +	@$(MAKE) -C apps/crawler gmail-$*
++
++gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
++	@$(MAKE) -C apps/crawler $@
 ```
-- **의견**: 기존의 지저분한 사이트 매핑 로직들과 더불어 `rebuild`, `restart`, `clear-queue` 등 다양한 인프라 제어/큐 관리 타겟들이 하나의 병합 포워딩 규칙으로 리팩토링되어, 루트 메이크파일의 유지 보수 비용을 획기적으로 줄이고 가독성을 크게 개선했습니다.
+- **의견**: GNU Make의 CLI 변수 자동 상속 동작을 활용하여 `extract`, `debug`, `test-%` 및 기타 인프라/큐 명령까지 포함한 모든 크롤러 타겟을 단 하나의 포워딩 룰로 통합 대정리하였습니다. 이로 인해 루트 메이크파일의 구조적 복잡성이 대폭 해소되었습니다.
 
 ### 2. apps/crawler/Makefile
 ```diff

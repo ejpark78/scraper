@@ -15,26 +15,16 @@
   - `gpt-%`, `gn-%`, `ddds-%`, `pk-%`, `ab-%`, `up-%`, `mj-%`, `yz-%`, `li-%` 사이트별 직접 맵 타겟 제거
   - `test-%`, `extract`, `debug` 등 상세 호출 룰 제거
   - `rebuild`, `restart`, `clear-queue`, `grep-errors`, `dump-queue`, `fix-urls`, `get-queue-status` 개별 타겟 제거 및 병합 포워딩 설정
-  - `gm-%` 포워딩 구문 단순화
-  - `apps/crawler/Makefile`로 위의 타겟들을 투명하게 전달해 주는 포워딩 규칙 추가:
+  - `gm-%` 및 모든 크롤러 타겟에 대해 변수 자동 상속을 활용한 대통합 포워딩 룰 구성:
     ```makefile
-    list refresh-urls refresh-silver:
+    list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug test-%:
     	@$(MAKE) -C apps/crawler $@
-
-    gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
-    	@$(MAKE) -C apps/crawler $@
-
-    test-%:
-    	@$(MAKE) -C apps/crawler $@ RECURSIVE_SCRAPE="$(RECURSIVE_SCRAPE)" SITE="$(SITE)"
-
-    extract debug:
-    	@$(MAKE) -C apps/crawler $@ SITE="$(SITE)" ID="$(ID)" FILE="$(FILE)"
-
-    rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status:
-    	@$(MAKE) -C apps/crawler $@ SCALE=$(SCALE)
 
     gm-%:
     	@$(MAKE) -C apps/crawler gmail-$*
+
+    gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
+    	@$(MAKE) -C apps/crawler $@
     ```
 
 ### 2. Crawler Makefile
