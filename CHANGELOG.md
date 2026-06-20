@@ -7,6 +7,14 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [1.5.0] - 2026-06-21
+
+### Changed
+- **apps/ebook 리팩토링 (Phase 1~3)**: 중복 코드 제거, 일관성 개선, 테스트/린터 인프라를 전면 도입.
+  - **Phase 1 (클린업)**: `EXCLUDE_TITLES`를 `src/constants.py` 중앙 상수로 분리 (`pdf_analyzer.py`, `pdf_to_markdown.py`에서 중복 제거); `process.py`의 중복 `ArgumentParser` 제거; 파일 탐색 로직을 `_collect_files()` / `_resolve_file_arg()` 헬퍼로 추출 (`--pdf2html` / `--html2md` 중복 제거).
+  - **Phase 2 (일관성)**: `HTMLConverter` / `HTMLToMarkdownConverter`가 output 디렉토리에 결과를 저장하도록 수정 (기존 source 옆 저장); `pdf_translator.py` 모듈 레벨 상수 제거 (Docker 호환성을 위해 생성자 기본값만 유지); `pyproject.toml`에 누락 의존성(`google-generativeai`, `openai`, `python-dotenv`, `pytest`) 및 `[tool.ruff]` / `[tool.pytest]` 설정 추가; `translate_batch` Poe task 및 Make target 추가.
+  - **Phase 3 (품질)**: `tests/test_text_cleaner.py` (23개), `tests/test_splitter_utils.py` (7개), `tests/test_column_detector.py` (4개) 총 30개 단위 테스트 작성 (pytest); `README.md` 신규 작성.
+
 ## [1.4.5] - 2026-06-20
 
 ### Changed

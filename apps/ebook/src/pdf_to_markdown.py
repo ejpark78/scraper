@@ -7,15 +7,11 @@ from pathlib import Path
 import re
 import fitz
 
+from .constants import EXCLUDE_TITLES
+
 # ═══════════════════════════════════════════════════════════════
 # TextCleaner & Layout Helpers
 # ═══════════════════════════════════════════════════════════════
-
-EXCLUDE_TITLES = [
-    "cover", "copyright", "table of contents", "contents",
-    "index", "about the author", "about the authors", "colophon",
-    "foreword",
-]
 
 
 class TextCleaner:

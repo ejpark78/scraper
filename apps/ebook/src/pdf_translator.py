@@ -10,15 +10,11 @@ import time
 import urllib.request
 import fitz
 
-OLLAMA_URL = "http://localhost:11434/api"
-MODEL = "gemma4:31b-cloud"
-BATCH_SIZE = 20
-
 
 class PDFTranslator:
     """PDF batch translator using local or remote Ollama models."""
 
-    def __init__(self, ollama_url: str = OLLAMA_URL, model: str = MODEL, batch_size: int = BATCH_SIZE):
+    def __init__(self, ollama_url: str = "http://localhost:11434/api", model: str = "gemma4:31b-cloud", batch_size: int = 20):
         self.ollama_url = ollama_url
         self.model = model
         self.batch_size = batch_size

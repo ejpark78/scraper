@@ -1,7 +1,7 @@
 [project]
 name = "ebook"
 version = "0.1.0"
-description = "Add your description here"
+description = "Ebook PDF processing pipeline: split, convert, translate, and analyze PDFs."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -10,6 +10,10 @@ dependencies = [
     "markdownify>=0.14.1",
     "beautifulsoup4>=4.13.3",
     "lxml>=5.3.1",
+    "google-generativeai>=0.8.4",
+    "openai>=1.70.0",
+    "python-dotenv>=1.1.0",
+    "pytest>=8.3.5",
 ]
 
 [tool.poe.tasks]
@@ -20,3 +24,19 @@ pdf2md = "python -m src.process --pdf2md"
 pdf2html = "python -m src.process --pdf2html"
 translate_md = "python -m src.process --translate-md"
 html2md = "python -m src.process --html2md"
+translate_batch = "python -m src.translate_batch"
+test = "pytest tests/ -v"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "S"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

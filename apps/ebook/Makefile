@@ -5,7 +5,7 @@ COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_D
 
 OUTPUT ?= output
 
-.PHONY: build summary analyze split pdf2md pdf2html translate_md html2md shell
+.PHONY: build summary analyze split pdf2md pdf2html translate_md html2md translate_batch shell test
 
 build:
 	$(COMPOSE) build --no-cache ebook
@@ -47,5 +47,15 @@ html2md:
 		$(COMPOSE) run --rm ebook uv run poe html2md "$(HTML)" --output "$(OUTPUT)"; \
 	fi
 
+translate_batch:
+	@if [ -z "$(INPUT_DIR)" ]; then \
+		echo "Usage: make translate_batch INPUT_DIR=<dir> [PROVIDER=gemini] [MODEL=...]"; \
+		exit 1; \
+	fi
+	$(COMPOSE) run --rm -e GEMINI_API_KEY -e OPENAI_API_KEY ebook uv run poe translate_batch --input-dir "$(INPUT_DIR)" $(PROVIDER:%=--provider %) $(MODEL:%=--model %)
+
 shell:
 	$(COMPOSE) run --rm ebook bash
+
+test:
+	$(COMPOSE) run --rm ebook uv run poe test

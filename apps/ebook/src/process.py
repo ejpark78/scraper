@@ -24,8 +24,29 @@ def load_books_config(books_json_path: Path) -> dict:
     return {}
 
 
+def _collect_files(data_dir: str, output_dir: str, suffix: str) -> list[Path]:
+    """Collect files with given suffix from data/output dirs, excluding raw/ and deduplicating."""
+    files = []
+    for search_dir in [Path(data_dir), Path(output_dir)]:
+        if search_dir.exists():
+            files.extend(list(search_dir.glob(f"**/*.{suffix}")))
+    files = [p for p in files if "raw" not in p.resolve().parts]
+    files = list({p.resolve(): p for p in files}.values())
+    return files
+
+
+def _resolve_file_arg(name: str, data_dir: str) -> Path | None:
+    """Resolve a file argument: try as-is, then under data_dir."""
+    p = Path(name)
+    if p.exists():
+        return p
+    alt = Path(data_dir) / name
+    if alt.exists():
+        return alt
+    return None
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Ebook PDF Process Pipeline.")
     parser = argparse.ArgumentParser(description="Ebook PDF Process Pipeline.")
     parser.add_argument("--data", default="data", help="Input directory of PDFs")
     parser.add_argument("--output", default="output", help="Output directory")
@@ -62,18 +83,7 @@ def main():
     if args.pdf2html is not None:
         html_converter = HTMLConverter(args.output)
         if args.pdf2html == "all" or args.pdf2html == "":
-            # Search both data directory and output directory recursively
-            pdf_files = []
-            for search_dir in [Path(args.data), Path(args.output)]:
-                if search_dir.exists():
-                    pdf_files.extend(list(search_dir.glob("**/*.pdf")))
-            
-            # Exclude raw/ directory contents
-            pdf_files = [p for p in pdf_files if "raw" not in p.resolve().parts]
-            
-            # Deduplicate by absolute path resolved
-            pdf_files = list({p.resolve(): p for p in pdf_files}.values())
-            
+            pdf_files = _collect_files(args.data, args.output, "pdf")
             if not pdf_files:
                 print(f"No PDF files found in {args.data} or {args.output}")
                 sys.exit(0)
@@ -81,17 +91,12 @@ def main():
                 print(f"Converting {pdf_file.name} to HTML...")
                 html_converter.convert(pdf_file)
         else:
-            pdf_file = Path(args.pdf2html)
-            if pdf_file.exists():
+            pdf_file = _resolve_file_arg(args.pdf2html, args.data)
+            if pdf_file:
                 html_converter.convert(pdf_file)
             else:
-                # Check if it resides in the data directory
-                alt_path = Path(args.data) / args.pdf2html
-                if alt_path.exists():
-                    html_converter.convert(alt_path)
-                else:
-                    print(f"File not found: {args.pdf2html}")
-                    sys.exit(1)
+                print(f"File not found: {args.pdf2html}")
+                sys.exit(1)
         sys.exit(0)
 
     # 4. Translation Mode
@@ -114,18 +119,7 @@ def main():
     if args.html2md is not None:
         html2md_converter = HTMLToMarkdownConverter(args.output)
         if args.html2md == "all" or args.html2md == "":
-            # Search both data directory and output directory recursively
-            html_files = []
-            for search_dir in [Path(args.data), Path(args.output)]:
-                if search_dir.exists():
-                    html_files.extend(list(search_dir.glob("**/*.html")))
-            
-            # Exclude raw/ directory contents
-            html_files = [p for p in html_files if "raw" not in p.resolve().parts]
-            
-            # Deduplicate by absolute path resolved
-            html_files = list({p.resolve(): p for p in html_files}.values())
-            
+            html_files = _collect_files(args.data, args.output, "html")
             if not html_files:
                 print(f"No HTML files found in {args.data} or {args.output}")
                 sys.exit(0)
@@ -133,17 +127,12 @@ def main():
                 print(f"Converting {html_file.name} to Markdown...")
                 html2md_converter.convert(html_file)
         else:
-            html_file = Path(args.html2md)
-            if html_file.exists():
+            html_file = _resolve_file_arg(args.html2md, args.data)
+            if html_file:
                 html2md_converter.convert(html_file)
             else:
-                # Check if it resides in data directory
-                alt_path = Path(args.data) / args.html2md
-                if alt_path.exists():
-                    html2md_converter.convert(alt_path)
-                else:
-                    print(f"File not found: {args.html2md}")
-                    sys.exit(1)
+                print(f"File not found: {args.html2md}")
+                sys.exit(1)
         sys.exit(0)
 
     # 6. Split and/or Convert to MD Modes

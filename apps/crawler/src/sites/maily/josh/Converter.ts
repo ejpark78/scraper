@@ -10,7 +10,7 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../../core/IConverter';
-import { DateUtils } from '../../utils/DateUtils';
+import { DateUtils } from '../../../utils/DateUtils';
 
 import { MailyJoshMeta } from './site.config';
 
