@@ -8,7 +8,7 @@ OUTPUT ?= output
 .PHONY: build summary analyze split md html translate shell
 
 build:
-	$(COMPOSE) build ebook
+	$(COMPOSE) build --no-cache ebook
 
 summary:
 	$(COMPOSE) run --rm ebook uv run poe summary
