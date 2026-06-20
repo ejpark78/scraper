@@ -55,6 +55,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOST_PROJECT_PATH:-.}/data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     depends_on:
       traefik:

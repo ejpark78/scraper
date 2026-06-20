@@ -7,6 +7,12 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [1.4.1] - 2026-06-20
+
+### Fixed (Bugfixes)
+- **Bugfix: 브라우저 직접 내보내기(Direct Export) 지원**: Docker 내부망에서의 Joplin/Obsidian 포트 접근 보안 제약 및 방화벽 한계를 극복하기 위해, 백엔드 서버 대신 프론트엔드(브라우저)에서 사용자의 로컬 루프백(`127.0.0.1`) 포트로 직접 `fetch` 요청을 전송하여 문서를 내보내도록 통신 주체를 브라우저 단으로 전면 리팩토링 및 개선 완료.
+- **GET /api/exporter/book-content API 추가**: 프론트엔드에서 일괄적으로 서적 내용을 읽을 수 있도록 전체 챕터 마크다운 내용을 묶어서 반환하는 백엔드 API 신설.
+
 ## [1.4.0] - 2026-06-20
 
 ### Added
@@ -18,6 +24,7 @@ and this project adheres to Semantic Versioning.
 ### Fixed (Bugfixes)
 - **Bugfix: Exporter 설정 카드 높이 잘림 문제 해결**: Joplin 또는 Obsidian 연동 설정 필드가 활성화될 때 설정 폼 카드의 스크롤이 불가하여 `Joplin API 웹클리퍼 토큰` 입력란 및 하단 버튼이 뷰포트에서 잘려 보이지 않는 레이아웃 버그를 `.queue-section-card`에 `overflow-y: auto` 스타일 주입 및 최소 높이를 `615px`로 상향 조정하여 수정 완료.
 - **Bugfix: viewer-api 컨테이너 내 /app/data 볼륨 마운트 누락 수정**: 웹 Exporter 화면에서 "1. 대상 서적 선택" 드롭다운 목록이 비어 있는 원인을 분석하여, `viewer-api` 서비스 볼륨 설정에 호스트의 `./data`가 누락된 것을 식별하고 `apps/viewer/compose.yml` 파일에 볼륨 바인딩 설정을 추가하여 해결 완료.
+- **Bugfix: Docker 컨테이너 내 host.docker.internal 게이트웨이 해석 에러 해결**: 리눅스 Docker 환경 내의 `viewer-api` 컨테이너가 호스트에 실행 중인 Joplin에 연결할 수 있도록 `apps/viewer/compose.yml` 서비스 내역에 `extra_hosts: ["host.docker.internal:host-gateway"]` 네트워크 설정을 정밀 보완 완료.
 
 ## [1.3.0] - 2026-06-20
 

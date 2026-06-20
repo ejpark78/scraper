@@ -18,11 +18,11 @@ const customPath = ref<string>('');
 const exportTarget = ref<'joplin' | 'obsidian'>('joplin');
 
 // Joplin connection settings
-const joplinUrl = ref<string>('http://host.docker.internal:41184');
+const joplinUrl = ref<string>('http://127.0.0.1:41184');
 const joplinToken = ref<string>('');
 
 // Obsidian connection settings
-const obsidianUrl = ref<string>('http://host.docker.internal:27123');
+const obsidianUrl = ref<string>('http://127.0.0.1:27123');
 const obsidianKey = ref<string>('');
 
 // Action Status
@@ -78,6 +78,11 @@ function clearLog() {
   exportLog.value = [];
 }
 
+// Helper to sanitize filename (same logic as backend)
+function sanitizeFilename(name: string): string {
+  return name.replace(/[\\/:*?"<>|]/g, '_');
+}
+
 async function startExport() {
   const bookPath = customPath.value.trim() || selectedBook.value;
   if (!bookPath) {
@@ -87,34 +92,112 @@ async function startExport() {
 
   exporting.value = true;
   clearLog();
-  addLog('info', `📖 "${bookPath}" 내보내기 작업 요청 시작...`);
+  addLog('info', `📖 "${bookPath}" 도서 데이터 로드 중...`);
+
+  let book;
+  try {
+    const response = await fetch(`/api/exporter/book-content?pathName=${encodeURIComponent(bookPath)}`);
+    if (!response.ok) {
+      const errorText = await response.json();
+      throw new Error(errorText.error || '도서 데이터 로드 실패');
+    }
+    book = await response.json();
+    addLog('info', `📚 "${book.title}" 도서 로드 완료. (총 ${book.chapters.length}개 챕터)`);
+  } catch (err: any) {
+    addLog('error', `❌ 도서 로드 에러: ${err.message}`);
+    exporting.value = false;
+    return;
+  }
 
   try {
-    const payload = {
-      target: exportTarget.value,
-      pathName: bookPath,
-      token: exportTarget.value === 'joplin' ? joplinToken.value.trim() : undefined,
-      key: exportTarget.value === 'obsidian' ? obsidianKey.value.trim() : undefined,
-    };
+    if (exportTarget.value === 'joplin') {
+      const token = joplinToken.value.trim();
+      const apiUrl = joplinUrl.value.trim();
+      if (!token) throw new Error('Joplin API 토큰을 입력해주세요.');
 
-    // Override Env parameters dynamic post to backend
-    // Since backend requests Joplin / Obsidian REST API, we must pass API keys.
-    const response = await fetch('/api/exporter/export', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+      addLog('info', `🔗 Joplin 연결 확인 및 폴더 생성 시도...`);
+      let folderId = '';
+      try {
+        const folderRes = await fetch(`${apiUrl}/folders?token=${encodeURIComponent(token)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: sanitizeFilename(book.title) }),
+        });
+        if (!folderRes.ok) {
+          const errText = await folderRes.text();
+          throw new Error(`폴더 생성 실패 (${folderRes.status}): ${errText}`);
+        }
+        const folderData = await folderRes.json();
+        folderId = folderData.id;
+        addLog('success', `📁 Joplin에 "${book.title}" 폴더 생성 완료 (ID: ${folderId})`);
+      } catch (err: any) {
+        throw new Error(`Joplin에 연결할 수 없습니다: ${err.message}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${apiUrl})에 접근 가능한지 확인해주세요.`);
+      }
 
-    const result = await response.json();
-    if (response.ok && result.success) {
-      addLog('success', `✅ 내보내기 성공: ${result.message}`);
+      for (let i = 0; i < book.chapters.length; i++) {
+        const chapter = book.chapters[i];
+        const progress = `[${i + 1}/${book.chapters.length}]`;
+        addLog('info', `${progress} 📝 Joplin에 "${chapter.title}" 노트 생성 중...`);
+
+        const noteRes = await fetch(`${apiUrl}/notes?token=${encodeURIComponent(token)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: sanitizeFilename(chapter.title),
+            body: chapter.content,
+            parent_id: folderId,
+          }),
+        });
+
+        if (!noteRes.ok) {
+          const errText = await noteRes.text();
+          addLog('error', `❌ ${progress} "${chapter.title}" 생성 실패: ${errText}`);
+        } else {
+          addLog('success', `✅ ${progress} "${chapter.title}" 생성 완료`);
+        }
+      }
+      addLog('success', `🎉 Joplin 내보내기 작업이 성공적으로 완료되었습니다!`);
+
     } else {
-      addLog('error', `❌ 내보내기 실패: ${result.error || '알 수 없는 에러가 발생했습니다.'}`);
+      // Obsidian 내보내기
+      const apiKey = obsidianKey.value.trim();
+      const apiUrl = obsidianUrl.value.trim();
+      if (!apiKey) throw new Error('Obsidian REST API 키를 입력해주세요.');
+
+      const folderName = sanitizeFilename(book.title);
+      addLog('info', `🔗 Obsidian 연결 확인 및 파일 전송 시도...`);
+
+      for (let i = 0; i < book.chapters.length; i++) {
+        const chapter = book.chapters[i];
+        const progress = `[${i + 1}/${book.chapters.length}]`;
+        const filename = `${sanitizeFilename(chapter.title)}.md`;
+        const filePath = `/${folderName}/${filename}`;
+
+        addLog('info', `${progress} 📝 Obsidian에 "${filePath}" 생성 중...`);
+        try {
+          const fileRes = await fetch(`${apiUrl}/vault${filePath}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'text/markdown',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: chapter.content,
+          });
+
+          if (!fileRes.ok) {
+            const errText = await fileRes.text();
+            addLog('error', `❌ ${progress} "${chapter.title}" 생성 실패 (${fileRes.status}): ${errText}`);
+          } else {
+            addLog('success', `✅ ${progress} "${chapter.title}" 생성 완료`);
+          }
+        } catch (err: any) {
+          throw new Error(`Obsidian에 연결할 수 없습니다: ${err.message}\nObsidian Local REST API가 활성화되어 있고 API URL(${apiUrl}) 및 Key가 올바른지 확인해주세요.`);
+        }
+      }
+      addLog('success', `🎉 Obsidian 내보내기 작업이 성공적으로 완료되었습니다!`);
     }
   } catch (err: any) {
-    addLog('error', `❌ 네트워크 통신 오류: ${err.message}`);
+    addLog('error', `❌ 내보내기 실패: ${err.message}`);
   } finally {
     exporting.value = false;
   }

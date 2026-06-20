@@ -48,6 +48,10 @@
   - **증상**: Exporter 화면 진입 시 "1. 대상 서적 선택" 드롭다운이 비어 있어 책을 선택할 수 없음.
   - **원인**: 백엔드 `viewer-api` 컨테이너 내부의 `/app/data` 디렉터리가 호스트의 `./data` 디렉터리와 마운트가 누락되어 스캔할 도서 목록이 빈 상태로 응답되었음.
   - **해결**: [apps/viewer/compose.yml](file:///home/ejpark/workspace/scraper/apps/viewer/compose.yml) 파일의 `viewer-api` 서비스 볼륨 마운트 설정에 `- ${HOST_PROJECT_PATH:-.}/data:/app/data` 항목을 추가하여 정상 노출되도록 조치 완료.
+* **[Bugfix] Joplin 연동 시 fetch failed (host.docker.internal) 에러 수정**:
+  - **증상**: 내보내기 요청 시 백엔드 컨테이너가 호스트의 Joplin에 연결하지 못하고 `Joplin에 연결할 수 없습니다: fetch failed` 예외 발생.
+  - **원인**: 리눅스 Docker 환경 하에서 컨테이너 네트워크가 호스트의 `127.0.0.1`에 바인딩된 Joplin 포트(`41184`)로의 게이트웨이 도메인(`host.docker.internal`)을 찾지 못함.
+  - **해결**: [apps/viewer/compose.yml](file:///home/ejpark/workspace/scraper/apps/viewer/compose.yml) 파일의 `viewer-api` 정의 하단에 `extra_hosts: ["host.docker.internal:host-gateway"]` 매핑 설정을 주입하여 호스트와의 원격 통신 연동 문제를 영구 해결 완료.
 * **[개선] Joplin 최상위 루트로 폴더 직접 생성하도록 디렉토리 정렬**:
   - **기존**: `Wikidocs` 루트 폴더를 중간 래퍼로 항상 생성하여 서적 폴더들이 해당 폴더 내에 강제 매핑되었음.
   - **개선**: 불필요한 중간 뎁스 래퍼를 배제하기 위해 [joplin.ts](file:///home/ejpark/workspace/scraper/apps/viewer/src/exporter/export/joplin.ts) 파일에서 `getOrCreateRootFolder` 로직을 제거하고, `createBookFolder` 시 `parent_id` 지정을 배제하여 최상위 루트 노트북으로 바로 서적 이름(예: `Beyond Vibe Coding`) 폴더를 생성하도록 경로 단순화 완료.

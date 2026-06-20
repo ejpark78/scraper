@@ -100,4 +100,33 @@ router.post('/export', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/exporter/book-content
+ * 특정 서적의 전체 마크다운 파일 내용(WikiDocsBook 구조)을 반환합니다.
+ */
+router.get('/book-content', (req: Request, res: Response) => {
+  try {
+    const { pathName } = req.query;
+    if (!pathName || typeof pathName !== 'string') {
+      return res.status(400).json({ error: '서적 폴더명(pathName)을 입력해주세요.' });
+    }
+
+    const booksDir = getBooksDirectory();
+    const sanitizedPathName = path.basename(pathName);
+    const resolvedPath = path.join(booksDir, sanitizedPathName);
+
+    if (!fs.existsSync(resolvedPath)) {
+      return res.status(404).json({ error: `해당 서적 폴더가 존재하지 않습니다: ${sanitizedPathName}` });
+    }
+
+    console.log(`[Exporter API] Loading book content from: ${resolvedPath}`);
+    const book = loadBookFromDirectory(resolvedPath);
+    res.json(book);
+  } catch (error: any) {
+    console.error('[Exporter API] Failed to load book content:', error);
+    res.status(500).json({ error: error.message || 'Failed to load book content' });
+  }
+});
+
 export default router;
+
