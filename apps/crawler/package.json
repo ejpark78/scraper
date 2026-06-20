@@ -38,6 +38,7 @@
     "queue:dump": "ts-node src/scripts/queue.ts --dump",
     "queue:fix-urls": "ts-node src/scripts/fix-urls.ts",
     "log:grep-errors": "ts-node src/scripts/grep-errors.ts",
+    "config:generate": "ts-node src/scripts/generate-sites-config.ts",
     "test:urls": "ts-node ../../tests/sites/linkedin/UrlManager.test.ts",
     "test:mcp": "ts-node ../../tests/sites/linkedin/McpClient.test.ts",
     "test:recursive": "ts-node ../../tests/recursive/RecursiveScrape.test.ts",

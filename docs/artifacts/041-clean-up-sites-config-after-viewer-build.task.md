@@ -4,4 +4,6 @@
 
 ## 할 일 목록
 - [x] `apps/viewer/Makefile` 내 `build` 타겟 명령어에 `rm -f` 정비 명령어 추가
-- [x] 자동 커밋 스크립트 실행
+- [x] `apps/crawler/package.json` 에 `config:generate` 스크립트 정의 이식
+- [x] `apps/viewer/Makefile` 에서 `npm run` 방식으로 스크립트 실행 치환
+- [ ] 자동 커밋 스크립트 실행
