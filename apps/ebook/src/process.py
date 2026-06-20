@@ -161,10 +161,17 @@ def main():
     if args.pdf2html is not None:
         html_converter = HTMLConverter(args.output)
         if args.pdf2html == "all" or args.pdf2html == "":
-            output_dir = Path(args.output)
-            pdf_files = list(output_dir.glob("**/*.pdf"))
+            # Search both data directory and output directory recursively
+            pdf_files = []
+            for search_dir in [Path(args.data), Path(args.output)]:
+                if search_dir.exists():
+                    pdf_files.extend(list(search_dir.glob("**/*.pdf")))
+            
+            # Deduplicate by absolute path resolved
+            pdf_files = list({p.resolve(): p for p in pdf_files}.values())
+            
             if not pdf_files:
-                print(f"No PDF files found in {args.output}")
+                print(f"No PDF files found in {args.data} or {args.output}")
                 sys.exit(0)
             for pdf_file in pdf_files:
                 print(f"Converting {pdf_file.name} to HTML...")
@@ -203,10 +210,17 @@ def main():
     if args.html2md is not None:
         html2md_converter = HTMLToMarkdownConverter(args.output)
         if args.html2md == "all" or args.html2md == "":
-            output_dir = Path(args.output)
-            html_files = list(output_dir.glob("**/*.html"))
+            # Search both data directory and output directory recursively
+            html_files = []
+            for search_dir in [Path(args.data), Path(args.output)]:
+                if search_dir.exists():
+                    html_files.extend(list(search_dir.glob("**/*.html")))
+            
+            # Deduplicate by absolute path resolved
+            html_files = list({p.resolve(): p for p in html_files}.values())
+            
             if not html_files:
-                print(f"No HTML files found in {args.output}")
+                print(f"No HTML files found in {args.data} or {args.output}")
                 sys.exit(0)
             for html_file in html_files:
                 print(f"Converting {html_file.name} to Markdown...")

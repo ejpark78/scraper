@@ -83,6 +83,7 @@ class HTMLConverter:
 
             seen_texts = set()
             
+            img_counter = 0
             for block in page_dict.get("blocks", []):
                 if block.get("type") == 0:  # Text block
                     block_text_parts = []
@@ -138,8 +139,19 @@ class HTMLConverter:
                     image_bytes = block.get("image")
                     ext = block.get("ext", "png")
                     if image_bytes:
-                        base64_str = base64.b64encode(image_bytes).decode("utf-8")
-                        html_pages.append(f'<img src="data:image/{ext};base64,{base64_str}" alt="image" />')
+                        import re
+                        img_counter += 1
+                        
+                        output_path = pdf_path.with_suffix(".html")
+                        images_dir = output_path.parent / "images"
+                        images_dir.mkdir(parents=True, exist_ok=True)
+                        
+                        safe_stem = re.sub(r"\s+", "_", pdf_path.stem)
+                        img_filename = f"{safe_stem}_page_{idx + 1}_img_{img_counter}.{ext}"
+                        img_file_path = images_dir / img_filename
+                        
+                        img_file_path.write_bytes(image_bytes)
+                        html_pages.append(f'<img src="images/{img_filename}" alt="image" />')
 
         html_pages.append("</div>\n</body>\n</html>")
         doc.close()
