@@ -6,7 +6,7 @@ COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_D
 .PHONY: build summary analyze split md html translate
 
 build:
-	$(COMPOSE) build
+	$(COMPOSE) build ebook
 
 summary:
 	$(COMPOSE) run --rm ebook uv run poe summary

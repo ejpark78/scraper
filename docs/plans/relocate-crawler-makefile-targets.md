@@ -47,6 +47,7 @@
   - 모듈 상대 경로 임포트 보장을 위한 빈 패키지 마커 파일 생성
 - **`[MODIFY]`** `apps/ebook/Makefile`:
   - 실행 명령어 호출부를 `uv run ebook-process`에서 `uv run poe <task>` 형태로 리팩토링하여 일치 보장
+  - `build` 타겟의 도커 컴포즈 빌드 명령어에 프로파일 제약을 극복할 수 있도록 대상 서비스(`ebook`)를 명시적으로 지정하도록 수정
 
 ---
 

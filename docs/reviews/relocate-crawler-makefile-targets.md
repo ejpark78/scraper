@@ -50,5 +50,5 @@
 
 ### 3. apps/ebook Config
 - **의견**: `apps/ebook/pyproject.toml`에 `poethepoet` 플러그인을 추가하고 `[tool.poe.tasks]` 설정을 선언하여 npm scripts와 정확하게 일치하는 단축 태스크 쉘 명령어(`summary`, `analyze` 등) 구조를 갖추었습니다.
-- **의견**: `apps/ebook/Makefile`에서도 호출 방식을 `uv run poe <task>`로 변경하여 태스크 러너 기반의 일관성 있는 호출 인터페이스를 완성하였습니다.
+- **의견**: `apps/ebook/Makefile`에서도 호출 방식을 `uv run poe <task>`로 변경하여 태스크 러너 기반의 일관성 있는 호출 인터페이스를 완성하였습니다. 또한, 프로파일 제한이 걸려 빌드에서 제외되던 오류를 방지하기 위해 `build` 타겟에 대상 서비스명(`ebook`)을 명시하여 안정성을 높였습니다.
 
