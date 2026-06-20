@@ -49,6 +49,7 @@
   - 실행 명령어 호출부를 `uv run ebook-process`에서 `uv run poe <task>` 형태로 리팩토링하여 일치 보장
   - `build` 타겟의 도커 컴포즈 빌드 명령어에 프로파일 제약을 극복할 수 있도록 대상 서비스(`ebook`)를 명시적으로 지정하도록 수정
   - `html` 타겟에 `PDF` 생략 시 에러를 뿜는 대신 인자 없이 호출하도록 수정하여 전체 일괄 변환 기능 연동
+  - `OUTPUT ?= output` 변수를 선언하고, `html` 타겟 호출 시 `--output "$(OUTPUT)"`을 덧붙이도록 개선하여 CLI 옵션 전달 오버헤드 해소
 - **`[MODIFY]`** `apps/ebook/src/process.py`:
   - `--html` 인자를 선택적으로 허용하도록 변경하고, 비어있거나 "all"인 경우 `output` 내의 모든 PDF를 찾아 일괄 변환하는 기능 구현
 

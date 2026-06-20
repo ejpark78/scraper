@@ -3,7 +3,9 @@ ROOT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 
 COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
 
-.PHONY: build summary analyze split md html translate
+OUTPUT ?= output
+
+.PHONY: build summary analyze split md html translate shell
 
 build:
 	$(COMPOSE) build ebook
@@ -26,9 +28,9 @@ md:
 
 html:
 	@if [ -z "$(PDF)" ]; then \
-		$(COMPOSE) run --rm ebook uv run poe html; \
+		$(COMPOSE) run --rm ebook uv run poe html --output "$(OUTPUT)"; \
 	else \
-		$(COMPOSE) run --rm ebook uv run poe html "$(PDF)"; \
+		$(COMPOSE) run --rm ebook uv run poe html "$(PDF)" --output "$(OUTPUT)"; \
 	fi
 
 translate:
