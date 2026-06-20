@@ -145,80 +145,83 @@ async function startExport() {
       </div>
     </header>
 
-    <div class="dashboard-content" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px;">
+    <div class="dashboard-content" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; min-height: 580px;">
       <!-- Left Panel: Settings Form -->
-      <div class="queue-section-card" style="display: flex; flex-direction: column; gap: 16px; padding: 20px; overflow-y: auto;">
-        <h3 style="margin: 0; color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">⚙️ 내보내기 설정</h3>
+      <div class="queue-section-card" style="display: flex; flex-direction: column; padding: 20px; height: 100%; box-sizing: border-box; min-height: 520px;">
+        <h3 style="margin: 0; color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 16px;">⚙️ 내보내기 설정</h3>
         
-        <!-- Book Selection -->
-        <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
-          <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">1. 대상 서적 선택</label>
-          <div v-if="loadingBooks" class="loading-text" style="font-size:12px; color:var(--text-muted);">도서 폴더 스캔 중...</div>
-          <select v-else v-model="selectedBook" class="form-select" style="width: 100%;">
-            <option v-for="book in availableBooks" :key="book" :value="book">{{ book }}</option>
-          </select>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">또는 아래에 전체 경로를 직접 지정할 수 있습니다:</div>
-          <input type="text" v-model="customPath" placeholder="/app/data/ebook/output/서적폴더명" class="form-input-text" style="width: 100%;">
-        </div>
+        <!-- Scrollable settings options -->
+        <div class="settings-scroll-area" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding-right: 8px; margin-bottom: 16px;">
+          <!-- Book Selection -->
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">1. 대상 서적 선택</label>
+            <div v-if="loadingBooks" class="loading-text" style="font-size:12px; color:var(--text-muted);">도서 폴더 스캔 중...</div>
+            <select v-else v-model="selectedBook" class="form-select" style="width: 100%;">
+              <option v-for="book in availableBooks" :key="book" :value="book">{{ book }}</option>
+            </select>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">또는 아래에 전체 경로를 직접 지정할 수 있습니다:</div>
+            <input type="text" v-model="customPath" placeholder="/app/data/ebook/output/서적폴더명" class="form-input-text" style="width: 100%;">
+          </div>
 
-        <!-- Target Platform Tabs -->
-        <div class="form-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-          <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">2. 대상 플랫폼 지정</label>
-          <div class="tabs-nav" style="background: #181c25; border-radius: 6px; padding: 4px; display: flex; gap: 4px;">
-            <button 
-              type="button" 
-              class="tab-btn" 
-              :class="{ active: exportTarget === 'joplin' }" 
-              @click="exportTarget = 'joplin'"
-              style="flex: 1; text-align: center; padding: 8px; font-size: 12px; border-radius: 4px; height: auto;"
-            >
-              Joplin 노트
-            </button>
-            <button 
-              type="button" 
-              class="tab-btn" 
-              :class="{ active: exportTarget === 'obsidian' }" 
-              @click="exportTarget = 'obsidian'"
-              style="flex: 1; text-align: center; padding: 8px; font-size: 12px; border-radius: 4px; height: auto;"
-            >
-              Obsidian 보관소
-            </button>
+          <!-- Target Platform Tabs -->
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">2. 대상 플랫폼 지정</label>
+            <div class="tabs-nav" style="background: #181c25; border-radius: 6px; padding: 4px; display: flex; gap: 4px;">
+              <button 
+                type="button" 
+                class="tab-btn" 
+                :class="{ active: exportTarget === 'joplin' }" 
+                @click="exportTarget = 'joplin'"
+                style="flex: 1; text-align: center; padding: 8px; font-size: 12px; border-radius: 4px; height: auto;"
+              >
+                Joplin 노트
+              </button>
+              <button 
+                type="button" 
+                class="tab-btn" 
+                :class="{ active: exportTarget === 'obsidian' }" 
+                @click="exportTarget = 'obsidian'"
+                style="flex: 1; text-align: center; padding: 8px; font-size: 12px; border-radius: 4px; height: auto;"
+              >
+                Obsidian 보관소
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Target Specific Connection Fields -->
-        <div v-if="exportTarget === 'joplin'" class="target-settings-pane" style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
-          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 11px; color: var(--text-secondary);">Joplin Webclipper API URL</label>
-            <input type="text" v-model="joplinUrl" placeholder="http://host.docker.internal:41184" class="form-input-text" style="width: 100%; font-size: 12px;">
+          <!-- Target Specific Connection Fields -->
+          <div v-if="exportTarget === 'joplin'" class="target-settings-pane" style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: var(--text-secondary);">Joplin Webclipper API URL</label>
+              <input type="text" v-model="joplinUrl" placeholder="http://host.docker.internal:41184" class="form-input-text" style="width: 100%; font-size: 12px;">
+            </div>
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: var(--text-secondary);">Joplin API 웹클리퍼 토큰</label>
+              <input type="password" v-model="joplinToken" placeholder="클리퍼 인증 토큰 입력" class="form-input-text" style="width: 100%; font-size: 12px;">
+            </div>
           </div>
-          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 11px; color: var(--text-secondary);">Joplin API 웹클리퍼 토큰</label>
-            <input type="password" v-model="joplinToken" placeholder="클리퍼 인증 토큰 입력" class="form-input-text" style="width: 100%; font-size: 12px;">
-          </div>
-        </div>
 
-        <div v-else class="target-settings-pane" style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
-          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 11px; color: var(--text-secondary);">Obsidian REST API URL</label>
-            <input type="text" v-model="obsidianUrl" placeholder="http://host.docker.internal:27123" class="form-input-text" style="width: 100%; font-size: 12px;">
+          <div v-else class="target-settings-pane" style="background: rgba(255,255,255,0.02); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: var(--text-secondary);">Obsidian REST API URL</label>
+              <input type="text" v-model="obsidianUrl" placeholder="http://host.docker.internal:27123" class="form-input-text" style="width: 100%; font-size: 12px;">
+            </div>
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: var(--text-secondary);">Obsidian Local REST API 키</label>
+              <input type="password" v-model="obsidianKey" placeholder="Local REST API 키 입력" class="form-input-text" style="width: 100%; font-size: 12px;">
+            </div>
           </div>
-          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 11px; color: var(--text-secondary);">Obsidian Local REST API 키</label>
-            <input type="password" v-model="obsidianKey" placeholder="Local REST API 키 입력" class="form-input-text" style="width: 100%; font-size: 12px;">
-          </div>
-        </div>
 
-        <!-- Export Options checkboxes -->
-        <div class="form-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-          <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">3. 변환 옵션</label>
-          <div style="display: flex; gap: 16px;">
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: #fff;">
-              <input type="checkbox" v-model="addFrontmatter"> Frontmatter 자동 추가
-            </label>
-            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: #fff;">
-              <input type="checkbox" v-model="createIndex"> INDEX 파일 자동 생성
-            </label>
+          <!-- Export Options checkboxes -->
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">3. 변환 옵션</label>
+            <div style="display: flex; gap: 16px;">
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: #fff;">
+                <input type="checkbox" v-model="addFrontmatter"> Frontmatter 자동 추가
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: #fff;">
+                <input type="checkbox" v-model="createIndex"> INDEX 파일 자동 생성
+              </label>
+            </div>
           </div>
         </div>
 
@@ -227,7 +230,7 @@ async function startExport() {
           @click="startExport" 
           class="btn-primary" 
           :disabled="exporting"
-          style="margin-top: auto; padding: 12px; width: 100%; font-weight: bold; font-size: 14px; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+          style="padding: 12px; width: 100%; font-weight: bold; font-size: 14px; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px;"
         >
           <span v-if="exporting" class="spinner" style="width: 16px; height: 16px; border-width: 2px; margin: 0;"></span>
           <span>{{ exporting ? '내보내는 중...' : '📥 노트로 내보내기 실행' }}</span>
