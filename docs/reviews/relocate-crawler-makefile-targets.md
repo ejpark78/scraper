@@ -50,4 +50,5 @@
 
 ### 3. apps/ebook Config
 - **의견**: `apps/ebook/pyproject.toml`에 `[project.scripts]` 섹션을 생성하여 `ebook-process` 엔트리포인트를 추가했습니다. 이와 더불어 `src` 폴더에 빈 `__init__.py` 패키지 마커를 배치해 상대 임포트 경로가 가상환경 상에서 정상 기능하도록 안전망을 설계했습니다.
+- **의견**: `apps/ebook/Makefile`에서도 `python src/process.py` 호출 방식을 컨테이너 안팎에서 일관되게 `uv run ebook-process`로 변경하여 태스크 실행 구성을 통일시켰습니다.
 
