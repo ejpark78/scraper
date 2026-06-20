@@ -17,8 +17,9 @@
 - **`[MODIFY]`** `Makefile`:
   - `gpt-%`, `gn-%` 등 및 `gm-%`, 그리고 `clear-queue`, `grep-errors`, `dump-queue`, `fix-urls`, `get-queue-status` 타겟들을 신규 npm script 기동 방식으로 타겟 래핑
   - `rebuild`, `restart` 시스템 제어 타겟 루트 메이크파일로 통합 후, `apps/crawler/Makefile`로 최종 위임
+  - `gm-%` 타겟 역시 `apps/crawler/Makefile` 내의 `gmail-$*` 타겟으로 위임
 - **`[NEW]`** `apps/crawler/Makefile`:
-  - 큐/에러 처리 및 빌드/재기동 단축 타겟들을 전담 관리하는 전용 메이크파일 신규 작성
+  - 큐/에러 처리, 빌드/재기동 단축 타겟, 그리고 `gmail-sync` 타겟까지 전담 관리하는 전용 메이크파일 신규 작성 및 확장
 - **`[DELETE]`** `scripts/utils/worker.mk`
 - **`[DELETE]`** `scripts/tools/gmail.mk`
 - **`[DELETE]`** `scripts/sites/gpters.mk`

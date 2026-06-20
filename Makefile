@@ -94,14 +94,9 @@ debug:
 mongo-%:
 	@$(MAKE) -f scripts/utils/mongo.mk $*
 
-# gmail tools
+# gmail tools (forward to apps/crawler)
 gm-%:
-	@if [ "$*" = "sync" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) -v $(pwd)/data/gmail:/data gmail npm run gmail:sync; \
-	else \
-		echo "Unknown command: $*"; \
-		exit 1; \
-	fi
+	@$(MAKE) -C apps/crawler gmail-$*
 
 # agent utils
 agents-%:

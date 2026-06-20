@@ -17,6 +17,10 @@ rebuild:
 restart:
 	SCALE=$(SCALE) $(COMPOSE) up -d worker scraper converter indexer
 
+# gmail tools
+gmail-sync:
+	$(COMPOSE) run --rm $(RUN_USER) -v $$(HOST_PROJECT_PATH)/data/gmail:/data gmail npm run gmail:sync
+
 # queue & utils (forward to npm scripts)
 clear-queue:
 	$(COMPOSE) run --rm $(RUN_USER) worker npm run queue:clear

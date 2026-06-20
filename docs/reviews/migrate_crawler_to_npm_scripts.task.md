@@ -11,9 +11,10 @@
 - [x] 루트 `Makefile` 수정 완료 ([Makefile](file:///home/ejpark/workspace/scraper/Makefile))
   - 개별 사이트별 mk 임포트를 걷어내고, 동적 매핑 헬퍼 타겟 `run-scrape`를 활용하여 원스톱 기동 및 이전 CLI 인터페이스 100% 호환성 확보
   - `rebuild`, `restart`, `clear-queue`, `grep-errors`, `dump-queue`, `fix-urls`, `get-queue-status` 등의 타겟들을 `apps/crawler/Makefile`로 위임 래핑 완료
-- [x] `apps/crawler/Makefile` 생성 완료 ([Makefile](file:///home/ejpark/workspace/scraper/apps/crawler/Makefile))
-  - 큐/에러 처리 및 빌드/재기동 단축 타겟들을 전담 관리하는 전용 메이크파일 신규 작성 완료
-- [x] 레거시 중복 Makefile 파일 및 폴더 영구 삭제 완료 (`scripts/sites/` 및 `scripts/utils/worker.mk` 삭제)
+  - `gm-%` (Gmail sync) 타겟 역시 `apps/crawler/Makefile` 내부의 `gmail-$*` 타겟으로 위임 포워딩 연동 완료
+- [x] `apps/crawler/Makefile` 생성 및 확장 완료 ([Makefile](file:///home/ejpark/workspace/scraper/apps/crawler/Makefile))
+  - 큐/에러 처리, 빌드/재기동 단축 타겟, 그리고 `gmail-sync` 타겟까지 전담 관리하는 전용 메이크파일 신규 작성 및 확장 완료
+- [x] 레거시 중복 Makefile 파일 및 폴더 영구 삭제 완료 (`scripts/sites/`, `scripts/utils/worker.mk` 및 `scripts/tools/gmail.mk` 삭제)
 
 ## 🟨 미진행/보류 작업 (Pending Tasks)
 - 없음
