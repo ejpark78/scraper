@@ -147,50 +147,59 @@ app.get('/api/site-stats/search', async (req: Request, res: Response) => {
     // Result structure: Record<string (date), Record<string (site), number>>
     const statsMap: Record<string, Record<string, number>> = {};
 
-    // Initialize all dates in range to prevent missing dates in UI
-    const tempDate = new Date(startUtc);
-    while (tempDate <= endUtc) {
-      const dateStr = tempDate.toISOString().slice(0, 10); // KST 기준으로 날짜를 초기화해주기 위해
-      // KST 날짜 표기 구하기
-      const kstDateStr = new Date(tempDate.getTime() + (9 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+    // Initialize all dates in range to prevent missing dates in UI using millisecond step
+    const startMs = startUtc.getTime();
+    const endMs = endUtc.getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
+    for (let ms = startMs; ms <= endMs; ms += oneDayMs) {
+      // Get the date string in KST timezone
+      const kstDateStr = new Date(ms + (9 * 60 * 60 * 1000)).toISOString().slice(0, 10);
       statsMap[kstDateStr] = {};
-      // 1 day increment
-      tempDate.setDate(tempDate.getDate() + 1);
     }
 
     for (const collName of targetCollections) {
-      const coll = silverDb.collection(collName);
-      const aggregationResult = await coll.aggregate([
-        {
-          $match: {
-            updatedAt: {
-              $gte: startUtc,
-              $lte: endUtc
+      console.log(`[Server] Aggregating daily stats for collection: ${collName}`);
+      try {
+        const coll = silverDb.collection(collName);
+        const aggregationResult = await coll.aggregate([
+          {
+            $match: {
+              updatedAt: {
+                $exists: true,
+                $ne: null,
+                $gte: startUtc,
+                $lte: endUtc
+              }
+            }
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$updatedAt",
+                  timezone: "Asia/Seoul"
+                }
+              },
+              count: { $sum: 1 }
             }
           }
-        },
-        {
-          $group: {
-            _id: {
-              $dateToString: {
-                format: "%Y-%m-%d",
-                date: "$updatedAt",
-                timezone: "Asia/Seoul"
-              }
-            },
-            count: { $sum: 1 }
-          }
-        }
-      ]).toArray();
+        ]).toArray();
 
-      for (const group of aggregationResult) {
-        const dateKey = group._id;
-        if (dateKey) {
-          if (!statsMap[dateKey]) {
-            statsMap[dateKey] = {};
+        console.log(`[Server] Aggregation finished for ${collName}. Got ${aggregationResult.length} groups.`);
+
+        for (const group of aggregationResult) {
+          const dateKey = group._id;
+          if (dateKey) {
+            if (!statsMap[dateKey]) {
+              statsMap[dateKey] = {};
+            }
+            statsMap[dateKey][collName] = group.count;
           }
-          statsMap[dateKey][collName] = group.count;
         }
+      } catch (err: any) {
+        console.error(`[Server] Error aggregating collection ${collName}:`, err.message);
       }
     }
 
