@@ -10,7 +10,6 @@ services:
       - TZ=Asia/Seoul
       - MONGO_URL=mongodb://mongodb:27017
     volumes:
-      - ${HOST_PROJECT_PATH:-.}/apps/ebook:/app
       - ${HOST_PROJECT_PATH:-.}/data/ebook:/app/data
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro

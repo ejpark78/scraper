@@ -15,7 +15,7 @@ up:
 	@echo "🚀 모든 서비스와 어드민 도구가 성공적으로 실행되었습니다."
 
 down:
-	$(COMPOSE) --profile runtime --profile tools --profile worker down || true
+	$(COMPOSE) --profile '*' down || true
 	@echo "🛑 모든 서비스가 종료되었습니다."
 
 logs:

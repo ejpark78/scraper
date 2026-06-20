@@ -40,31 +40,46 @@ refresh-silver: gpt-refresh-silver gn-refresh-silver ddds-refresh-silver pk-refr
 
 # sites
 gpt-%:
-	@$(MAKE) -f scripts/sites/gpters.mk $*
+	@$(MAKE) run-scrape SITE=gpters CMD=$*
 
 gn-%:
-	@$(MAKE) -f scripts/sites/geeknews.mk $*
+	@$(MAKE) run-scrape SITE=geeknews CMD=$*
 
 ddds-%:
-	@$(MAKE) -f scripts/sites/dailydoseofds.mk $*
+	@$(MAKE) run-scrape SITE=dailydoseofds CMD=$*
 
 pk-%:
-	@$(MAKE) -f scripts/sites/pytorch_kr.mk $*
+	@$(MAKE) run-scrape SITE=pytorch_kr CMD=$*
 
 ab-%:
-	@$(MAKE) -f scripts/sites/aicasebook.mk $*
+	@$(MAKE) run-scrape SITE=aicasebook CMD=$*
 
 up-%:
-	@$(MAKE) -f scripts/sites/uppity.mk $*
+	@$(MAKE) run-scrape SITE=uppity CMD=$*
 
 mj-%:
-	@$(MAKE) -f scripts/sites/maily_josh.mk $*
+	@$(MAKE) run-scrape SITE=maily_josh CMD=$*
 
 yz-%:
-	@$(MAKE) -f scripts/sites/yozm.mk $*
+	@$(MAKE) run-scrape SITE=yozm CMD=$*
 
 li-%:
-	@$(MAKE) -f scripts/sites/linkedin.mk $*
+	@$(MAKE) run-scrape SITE=linkedin CMD=$*
+
+PAGE       ?= 1
+LIST_SLACK ?= 2
+
+run-scrape:
+	@if [ "$(CMD)" = "list" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):list -- --page "$(PAGE)" --list-slack "$(LIST_SLACK)"; \
+	elif [ "$(CMD)" = "refresh-urls" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):refresh-urls; \
+	elif [ "$(CMD)" = "refresh-silver" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) $(ENV_COMMON) worker npm run scrape:$(SITE):refresh-silver; \
+	else \
+		echo "Unknown command: $(CMD)"; \
+		exit 1; \
+	fi
 
 # tests
 test-%:
