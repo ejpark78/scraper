@@ -22,7 +22,8 @@
 - [x] `tests.mk` 내의 테스트 및 디버깅 유틸 타겟들을 `apps/crawler/Makefile` 및 npm script로 이전 완료
 - [x] `apps/viewer/Makefile` 생성 및 `up-viewer` 타겟 이관 완료
 - [x] `apps/viewer/docker/compose.yml`을 `apps/viewer/compose.yml`로 이동 및 빌드 컨텍스트, Makefile 연동 업데이트 완료
-- [x] `apps/viewer/Makefile` 내 `down` 타겟 추가 및 루트 `down-viewer` 위임 완료
+- [x] `apps/viewer/Makefile` 내 `down` 타겟 추가 및 루트 `viewer-%` (viewer-up, viewer-down) 통합 매핑 완료
+
 
 
 
