@@ -6,4 +6,4 @@
 - [x] `apps/viewer/Makefile` 의 `build` 타겟 명령어에 `generate-sites-config` 자동화 추가
 - [x] 코드 리뷰 문서 (`039-automate-sites-config-in-viewer-makefile.review.md`) 작성
 - [x] 결과보고서 (`039-automate-sites-config-in-viewer-makefile.walkthrough.md`) 작성
-- [ ] 자동 커밋 스크립트 실행
+- [x] 자동 커밋 스크립트 실행
