@@ -75,7 +75,7 @@ const registry = new Map<string, SiteDescriptor>();
 
 function discoverSites(): void {
   // 뷰어 환경이므로, 항상 루트/config/sites.json 정적 파일을 가져와 사이트 정보를 채웁니다.
-  const staticConfigPath = path.resolve(__dirname, '..', '..', '..', '..', 'config', 'sites.json');
+  const staticConfigPath = path.resolve(__dirname, '..', '..', 'config', 'sites.json');
 
   if (fs.existsSync(staticConfigPath)) {
     try {

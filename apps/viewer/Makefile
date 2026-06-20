@@ -12,6 +12,7 @@ build:
 	@echo "⚙️  Generating static sites configuration..."
 	$(COMPOSE) run --rm -v $(ROOT_DIR):/app worker npx ts-node apps/crawler/src/scripts/generate-sites-config.ts
 	$(COMPOSE) build --no-cache viewer-fe viewer-api viewer-mcp
+	@rm -f $(ROOT_DIR)/apps/viewer/config/sites.json
 	@echo "🚀 Viewer Build가 완료되었습니다."
 
 up:
