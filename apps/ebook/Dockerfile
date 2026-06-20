@@ -15,7 +15,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock .
 
 # Install dependencies globally inside container
-RUN uv pip install --system -r pyproject.toml
+RUN uv pip install --system -r pyproject.toml && rm -rf ${UV_CACHE_DIR}
 
 # Copy source
 COPY . .
