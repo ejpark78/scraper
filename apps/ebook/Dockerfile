@@ -3,6 +3,7 @@ FROM python:3.13-slim
 # Install uv (fast Python package manager)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV UV_CACHE_DIR=/tmp/uv-cache
+ENV UV_NO_VENV=1
 
 # Install system dependencies if fitz/pymupdf needs them (usually fitz ships prebuilt wheels)
 RUN apt-get update && apt-get install -y --no-install-recommends \
