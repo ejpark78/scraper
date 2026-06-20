@@ -1,6 +1,7 @@
-# Makefile for apps/ebook (Runs Docker commands)
+# Dynamic detection of project root path via Make functions
+ROOT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 
-COMPOSE := docker compose -p scraper 
+COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
 
 .PHONY: build summary analyze split md html translate
 

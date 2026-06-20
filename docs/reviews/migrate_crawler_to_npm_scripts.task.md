@@ -23,6 +23,8 @@
 - [x] `apps/viewer/Makefile` 생성 및 `up-viewer` 타겟 이관 완료
 - [x] `apps/viewer/docker/compose.yml`을 `apps/viewer/compose.yml`로 이동 및 빌드 컨텍스트, Makefile 연동 업데이트 완료
 - [x] `apps/viewer/Makefile` 내 `down` 타겟 추가 및 루트 `viewer-%` (viewer-up, viewer-down) 통합 매핑 완료
+- [x] 서브 Makefile(crawler, viewer, ebook) 전체 대상 GNU Make 내장함수를 활용한 `ROOT_DIR` 동적 설정 및 `--project-directory` 환경 표준화 완료
+
 
 
 

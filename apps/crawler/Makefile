@@ -1,10 +1,11 @@
 # Makefile for apps/crawler (Runs Docker commands)
 
-# Define project root relative to this Makefile
-export HOST_PROJECT_PATH = $(shell cd ../.. && pwd)
+# Dynamic detection of project root path via Make functions
+ROOT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))../..)
+export HOST_PROJECT_PATH = $(ROOT_DIR)
 
 # Fallbacks for variables if not called from root Makefile
-COMPOSE  ?= docker compose -p scraper -f ../../compose.yml
+COMPOSE  ?= docker compose -p scraper -f $(ROOT_DIR)/compose.yml
 RUN_USER ?= --user $$(id -u):$$(id -g)
 
 .PHONY: rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status run-scrape test-urls test-mcp test-recursive test-sites extract debug

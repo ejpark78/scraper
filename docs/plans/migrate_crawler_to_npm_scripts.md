@@ -24,6 +24,8 @@
 - **`[MODIFY]`** `apps/viewer/compose.yml` [NEW / MOVE]:
   - `apps/viewer/docker/compose.yml`을 `apps/viewer/compose.yml`로 이동 및 내부 Dockerfile context 상대경로 수정
 - **`[DELETE]`** `apps/viewer/docker/compose.yml`
+- **`[MODIFY]`** `Makefile`, `apps/crawler/Makefile`, `apps/viewer/Makefile`, `apps/ebook/Makefile`, `scripts/**/*.mk`:
+  - GNU Make의 내장 함수를 사용하는 `ROOT_DIR` 기반 동적 루트 경로 감지 표준화 적용
 - **`[NEW]`** `apps/crawler/Makefile`:
   - `run-scrape` 동적 분기 라우터 타겟, 파라미터 변수, 큐/에러 처리, 빌드/재기동 단축 타겟, 그리고 `gmail-sync` 타겟까지 전담 관리하는 전용 메이크파일 신규 작성 및 확장
 - **`[DELETE]`** `scripts/utils/worker.mk`
