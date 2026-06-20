@@ -25,10 +25,6 @@ const joplinToken = ref<string>('');
 const obsidianUrl = ref<string>('http://host.docker.internal:27123');
 const obsidianKey = ref<string>('');
 
-// Export Options
-const addFrontmatter = ref<boolean>(true);
-const createIndex = ref<boolean>(true);
-
 // Action Status
 const exporting = ref<boolean>(false);
 const exportLog = ref<{ type: 'info' | 'success' | 'error'; message: string; time: string }[]>([]);
@@ -99,8 +95,6 @@ async function startExport() {
       pathName: bookPath,
       token: exportTarget.value === 'joplin' ? joplinToken.value.trim() : undefined,
       key: exportTarget.value === 'obsidian' ? obsidianKey.value.trim() : undefined,
-      addFrontmatter: addFrontmatter.value,
-      createIndex: createIndex.value,
     };
 
     // Override Env parameters dynamic post to backend
@@ -208,19 +202,6 @@ async function startExport() {
             <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
               <label style="font-size: 11px; color: var(--text-secondary);">Obsidian Local REST API 키</label>
               <input type="password" v-model="obsidianKey" placeholder="Local REST API 키 입력" class="form-input-text" style="width: 100%; font-size: 12px;">
-            </div>
-          </div>
-
-          <!-- Export Options checkboxes -->
-          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-            <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">3. 변환 옵션</label>
-            <div style="display: flex; gap: 16px;">
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: #fff;">
-                <input type="checkbox" v-model="addFrontmatter"> Frontmatter 자동 추가
-              </label>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; color: #fff;">
-                <input type="checkbox" v-model="createIndex"> INDEX 파일 자동 생성
-              </label>
             </div>
           </div>
         </div>

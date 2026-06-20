@@ -38,3 +38,4 @@
 ## 4. 추가 다듬기 및 버그 픽 (Bugfix)
 - [x] ExporterView의 입력 폼 카드 영역에 세로 스크롤(`overflow-y: auto`) 적용하여 토큰 입력 필드가 잘려 보이지 않도록 수정
 - [x] viewer-api 컨테이너에 `/app/data` 볼륨 마운트 추가하여 내보내기 서적 목록 노출 안 되는 버그 수정
+- [x] '3. 변환 옵션' (Frontmatter 자동 추가, INDEX 파일 자동 생성) UI 및 백엔드 스크립트 기능 완전 제거

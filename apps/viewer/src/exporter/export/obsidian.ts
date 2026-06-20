@@ -19,18 +19,9 @@ export async function exportToObsidian(
   for (const chapter of book.chapters) {
     const filename = `${sanitizeFilename(chapter.title)}.md`;
     const filePath = `${folderPath}/${filename}`;
-    let content = chapter.content;
-
-    if (options.addFrontmatter) {
-      content = `---\ntitle: "${chapter.title.replace(/"/g, '\\"')}"\nbook: "${book.title.replace(/"/g, '\\"')}"\nsource: "${chapter.url}"\n---\n\n` + content;
-    }
+    const content = chapter.content;
 
     await createFile(filePath, content, 'text/markdown', apiKey);
-  }
-
-  if (options.createIndex) {
-    const indexContent = generateIndex(book, 'obsidian');
-    await createFile(`${folderPath}/INDEX.md`, indexContent, 'text/markdown', apiKey);
   }
 }
 

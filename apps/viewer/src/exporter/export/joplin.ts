@@ -21,24 +21,11 @@ export async function exportToJoplin(
   }
 
   for (const chapter of book.chapters) {
-    let content = chapter.content;
-    if (options.addFrontmatter) {
-      content = `---\ntitle: "${chapter.title.replace(/"/g, '\\"')}"\nbook: "${book.title.replace(/"/g, '\\"')}"\nsource: "${chapter.url}"\n---\n\n` + content;
-    }
+    const content = chapter.content;
 
     await createNote(
       sanitizeFilename(chapter.title),
       content,
-      bookFolder.id,
-      token
-    );
-  }
-
-  if (options.createIndex) {
-    const indexContent = generateIndex(book, 'joplin');
-    await createNote(
-      'INDEX',
-      indexContent,
       bookFolder.id,
       token
     );

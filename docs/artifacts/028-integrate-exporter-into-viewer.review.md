@@ -51,3 +51,6 @@
 * **[개선] Joplin 최상위 루트로 폴더 직접 생성하도록 디렉토리 정렬**:
   - **기존**: `Wikidocs` 루트 폴더를 중간 래퍼로 항상 생성하여 서적 폴더들이 해당 폴더 내에 강제 매핑되었음.
   - **개선**: 불필요한 중간 뎁스 래퍼를 배제하기 위해 [joplin.ts](file:///home/ejpark/workspace/scraper/apps/viewer/src/exporter/export/joplin.ts) 파일에서 `getOrCreateRootFolder` 로직을 제거하고, `createBookFolder` 시 `parent_id` 지정을 배제하여 최상위 루트 노트북으로 바로 서적 이름(예: `Beyond Vibe Coding`) 폴더를 생성하도록 경로 단순화 완료.
+* **[삭제] '3. 변환 옵션' 제거 (Frontmatter 추가 / INDEX 생성 기능 제거)**:
+  - **이유**: 해당 기능들의 지속 노출 방지 및 UI 복잡도 최소화 요청에 따름.
+  - **조치**: [ExporterView.vue](file:///home/ejpark/workspace/scraper/apps/viewer/src/frontend/src/views/ExporterView.vue) 마크업 및 리액티브 바인딩 데이터에서 옵션 체크박스를 전면 삭제하였으며, 백엔드 라우터 [exporter.ts](file:///home/ejpark/workspace/scraper/apps/viewer/src/api/routes/exporter.ts) 및 실제 연동 스크립트([joplin.ts](file:///home/ejpark/workspace/scraper/apps/viewer/src/exporter/export/joplin.ts), [obsidian.ts](file:///home/ejpark/workspace/scraper/apps/viewer/src/exporter/export/obsidian.ts))에서도 Frontmatter 포맷팅 및 INDEX.md 노트를 더 이상 생성하지 않도록 해당 조건 블록을 완전히 파기하였음.

@@ -50,7 +50,7 @@ router.get('/books', (req: Request, res: Response) => {
  */
 router.post('/export', async (req: Request, res: Response) => {
   try {
-    const { target, pathName, token, key, addFrontmatter, createIndex } = req.body;
+    const { target, pathName, token, key } = req.body;
 
     if (!target || !['joplin', 'obsidian'].includes(target)) {
       return res.status(400).json({ error: '올바른 target 값을 지정해주세요. (joplin 또는 obsidian)' });
@@ -75,8 +75,8 @@ router.post('/export', async (req: Request, res: Response) => {
     const options: ExportOptions = {
       target: target as 'joplin' | 'obsidian',
       includeImages: false,
-      addFrontmatter: addFrontmatter !== false,
-      createIndex: createIndex !== false,
+      addFrontmatter: false,
+      createIndex: false,
     };
 
     if (target === 'joplin') {
