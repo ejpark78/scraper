@@ -7,6 +7,11 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [1.4.5] - 2026-06-20
+
+### Changed
+- **Exporter 설정 카드 최소 높이 재조정**: 입력 폼 단순화에 따라 불필요하게 낭비되는 화면 하단 여백 스페이스를 줄이기 위해 설정 카드의 `min-height`를 기존 `615px`에서 `470px`로 하향 조정하여 UI 비주얼 밸런스 개선 완료.
+
 ## [1.4.4] - 2026-06-20
 
 ### Removed
