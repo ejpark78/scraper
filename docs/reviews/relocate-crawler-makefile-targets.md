@@ -28,8 +28,15 @@
 +
 +gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
 +	@$(MAKE) -C apps/crawler $@
++
++# crawler infra, queue & tools forwarding
++rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status:
++	@$(MAKE) -C apps/crawler $@ SCALE=$(SCALE)
++
++gm-%:
++	@$(MAKE) -C apps/crawler gmail-$*
 ```
-- **의견**: 기존의 지저분한 사이트 매핑 로직들이 루트 메이크파일에서 제거되고, 매칭되는 타겟을 그대로 하위 메이크파일에 `$@`로 패스하여 루트 명령어 인터페이스의 투명한 호환성을 제공합니다.
+- **의견**: 기존의 지저분한 사이트 매핑 로직들과 더불어 `rebuild`, `restart`, `clear-queue` 등 다양한 인프라 제어/큐 관리 타겟들이 하나의 병합 포워딩 규칙으로 리팩토링되어, 루트 메이크파일의 유지 보수 비용을 획기적으로 줄이고 가독성을 크게 개선했습니다.
 
 ### 2. apps/crawler/Makefile
 ```diff

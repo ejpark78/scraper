@@ -45,10 +45,6 @@ extract debug:
 mongo-%:
 	@$(MAKE) -f scripts/utils/mongo.mk $*
 
-# gmail tools (forward to apps/crawler)
-gm-%:
-	@$(MAKE) -C apps/crawler gmail-$*
-
 # agent utils
 agents-%:
 	@$(MAKE) -f scripts/agents/agents.mk $*
@@ -61,32 +57,17 @@ ms-%:
 ebook-%:
 	@$(MAKE) -C apps/ebook $* PDF="$(PDF)" RANGE="$(RANGE)" OUT="$(OUT)"
 
-# infra management
-SCALE         ?= 1
-rebuild:
-	@$(MAKE) -C apps/crawler rebuild
-
-restart:
-	@$(MAKE) -C apps/crawler restart SCALE=$(SCALE)
-
+# viewer utils
 viewer-%:
 	@$(MAKE) -C apps/viewer $*
 
-# queue & utils (forward to apps/crawler)
-clear-queue:
-	@$(MAKE) -C apps/crawler clear-queue
+# crawler infra, queue & tools forwarding
+SCALE         ?= 1
+rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status:
+	@$(MAKE) -C apps/crawler $@ SCALE=$(SCALE)
 
-grep-errors:
-	@$(MAKE) -C apps/crawler grep-errors
-
-dump-queue:
-	@$(MAKE) -C apps/crawler dump-queue
-
-fix-urls:
-	@$(MAKE) -C apps/crawler fix-urls
-
-get-queue-status:
-	@$(MAKE) -C apps/crawler get-queue-status
+gm-%:
+	@$(MAKE) -C apps/crawler gmail-$*
 
 
 

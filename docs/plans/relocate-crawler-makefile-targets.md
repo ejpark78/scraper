@@ -14,6 +14,8 @@
   - `list`, `refresh-urls`, `refresh-silver` 제거
   - `gpt-%`, `gn-%`, `ddds-%`, `pk-%`, `ab-%`, `up-%`, `mj-%`, `yz-%`, `li-%` 사이트별 직접 맵 타겟 제거
   - `test-%`, `extract`, `debug` 등 상세 호출 룰 제거
+  - `rebuild`, `restart`, `clear-queue`, `grep-errors`, `dump-queue`, `fix-urls`, `get-queue-status` 개별 타겟 제거 및 병합 포워딩 설정
+  - `gm-%` 포워딩 구문 단순화
   - `apps/crawler/Makefile`로 위의 타겟들을 투명하게 전달해 주는 포워딩 규칙 추가:
     ```makefile
     list refresh-urls refresh-silver:
@@ -27,6 +29,12 @@
 
     extract debug:
     	@$(MAKE) -C apps/crawler $@ SITE="$(SITE)" ID="$(ID)" FILE="$(FILE)"
+
+    rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status:
+    	@$(MAKE) -C apps/crawler $@ SCALE=$(SCALE)
+
+    gm-%:
+    	@$(MAKE) -C apps/crawler gmail-$*
     ```
 
 ### 2. Crawler Makefile
