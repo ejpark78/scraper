@@ -8,16 +8,13 @@
 # Usage:
 #   bash scripts/agents/squash-artifacts.sh              # squash all triplets
 #   bash scripts/agents/squash-artifacts.sh --dry         # dry run (show what would be squashed)
-#   bash scripts/agents/squash-artifacts.sh --batch       # batch .summary.md by decade groups
+#   bash scripts/agents/squash-artifacts.sh --batch       # batch all artifacts by decade groups
 #   bash scripts/agents/squash-artifacts.sh --batch --dry # dry run for batch mode
 #
 # --batch mode:
-#   Groups existing .summary.md files by decade (001-010, 011-020, ...)
-#   and merges each group into a single ###-###.batch.md file, then deletes
-#   the original .summary.md files.
-#
-# Preserved files (never squashed/deleted):
-#   .spec.md, .adr.md, .plan.md, .issue.md, .test.md
+#   Groups all numbered artifacts (.plan.md, .adr.md, .spec.md, .summary.md)
+#   by decade (001-010, 011-020, ...) and merges each group into a single
+#   ###-###.batch.md file, then deletes the originals.
 # ==============================================================================
 set -euo pipefail
 
@@ -26,7 +23,8 @@ COUNT=0
 MODE="${1:-}"
 
 # ──────────────────────────────────────────────────────────────────────────────
-# --batch mode: group .summary.md by decade (001-010, 011-020, ...)
+# --batch mode: group all numbered artifacts by decade (001-010, 011-020, ...)
+# Collects .plan.md, .adr.md, .spec.md, .summary.md and merges into .batch.md.
 # ──────────────────────────────────────────────────────────────────────────────
 if [ "$MODE" = "--batch" ]; then
     BATCH_DRY=false
@@ -36,14 +34,14 @@ if [ "$MODE" = "--batch" ]; then
         find "$ARTIFACTS_DIR" -maxdepth 1 -name "$1" -type f 2>/dev/null | sort
     }
 
-    # Collect all summary files
-    summary_files=()
+    # Collect all numbered artifact files (exclude .batch.md and INDEX.md)
+    all_artifacts=()
     while IFS= read -r f; do
-        summary_files+=("$f")
-    done < <(find_files "*.summary.md" | sort)
+        all_artifacts+=("$f")
+    done < <(find "$ARTIFACTS_DIR" -maxdepth 1 -name '[0-9][0-9][0-9]-*.md' -type f ! -name '*.batch.md' 2>/dev/null | sort)
 
-    if [ "${#summary_files[@]}" -eq 0 ]; then
-        echo "✅ No .summary.md files to batch."
+    if [ "${#all_artifacts[@]}" -eq 0 ]; then
+        echo "✅ No numbered artifacts to batch."
         exit 0
     fi
 
@@ -51,7 +49,7 @@ if [ "$MODE" = "--batch" ]; then
     prefixes=()
     while IFS= read -r p; do
         prefixes+=("$p")
-    done < <(for f in "${summary_files[@]}"; do
+    done < <(for f in "${all_artifacts[@]}"; do
         basename "$f" | sed -E 's/^([0-9]+)-.*/\1/'
     done | sort -u)
 
@@ -70,11 +68,12 @@ if [ "$MODE" = "--batch" ]; then
         range_end=$(printf "%03d" $end_num)
         batch_file="$ARTIFACTS_DIR/${decade_start}-${range_end}.batch.md"
 
+        # Collect all files in this decade range
         batch_sources=()
         for p in ${decade_groups["$decade_start"]}; do
             while IFS= read -r f; do
                 batch_sources+=("$f")
-            done < <(find_files "$p-*.summary.md" | sort)
+            done < <(find_files "$p-*" ! -name '*.batch.md' | sort)
         done
 
         if [ "${#batch_sources[@]}" -eq 0 ]; then
@@ -88,6 +87,7 @@ if [ "$MODE" = "--batch" ]; then
             continue
         fi
 
+        # Merge into batch file
         {
             echo "# Batch: ${decade_start}–${range_end}"
             echo ""
@@ -96,7 +96,8 @@ if [ "$MODE" = "--batch" ]; then
             echo "---"
             echo ""
             for f in "${batch_sources[@]}"; do
-                stem=$(basename "$f" .summary.md)
+                stem=$(basename "$f" .md)
+                ext="${f##*.}"
                 echo "## $stem"
                 echo ""
                 cat "$f"
