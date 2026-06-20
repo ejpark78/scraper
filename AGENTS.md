@@ -1,13 +1,19 @@
 # 🤖 Agent Project Rules (AGENTS.md)
 
+## 🎯 Project Vision
+
+이 프로젝트는 LinkedIn, 기술 뉴스레터, 기술 서적 등 분산된 기술 정보를 수집·구조화하여 개발자를 위한 통합 기술 지식 허브를 구축합니다. 수집 → 정제 → 검색 → LLM 분석 파이프라인을 모노레포 환경에서 운영합니다.
+
+---
+
 ## ⚠️ Critical Constraints
 
 1. **No Arbitrary Bash**: Consent required for ALL shell commands (including read-only diagnostics, git, docker, ls, env, etc.) except for Pre-Approved Commands. Present the exact command in chat for explicit approval first. Compress multiple diagnostics/status checks into a single chained execution (e.g. chaining with `&&`, `;`, or using `cat << 'EOF' | bash`) to minimize user confirmation loops.
 2. **Strict Planning**: Propose a plan in a Markdown table (Columns: File Path, Action, Details) and obtain consent before file writes or env changes (except Pre-Approved). All design and migration plans must be documented in the 'docs/artifacts/' directory under a specific filename and approved by the user. CRITICAL: You must NOT call any write or modification tools in the same turn you propose a plan; always end your turn and wait for consent first. You must verify that the consent is explicitly granted by the human USER in a chat message. Do NOT interpret automated system notifications, background task completions, or other system-generated events as user consent to proceed.
 3. **Minimal File Scope & Coverage**: Do not use root-level grep or recursive list_dir.
    * To map the project structure without missing nested folders, run a single `git ls-files` call once.
-   * Pinpoint the exact target file path using the map, then use `view_file` to read it directly.
-   * If searching for code symbols across multiple files, use `grep_search` to pinpoint the matching line numbers instead of reading files one-by-one, minimizing API/token consumption while maintaining full coverage.
+    * Pinpoint the exact target file path using the map, then use `Read` to read it directly.
+    * If searching for code symbols across multiple files, use `Grep` to pinpoint the matching line numbers instead of reading files one-by-one, minimizing API/token consumption while maintaining full coverage.
 4. **Transparent Issues**: Report errors immediately. No silent restores. Max 2 autonomous troubleshooting retries without user review.
 5. **Relative Links**: Use relative paths (e.g. `[Worker](src/Worker.ts)`) in docs. No `file://`.
 6. **Automatic Git Commits**: Run `scripts/agents/commit-changes.sh` immediately after valid edits.
@@ -48,7 +54,9 @@
 에이전트는 모든 설계 및 기능 변경 작업을 수행할 때 아래의 **문서화 수명 주기(Documentation Lifecycle)**를 준수해야 합니다.
 
 1. **문서화 수명 주기 순서**:
-   $$\text{PRD (요구정의)} \longrightarrow \text{Specs (명세)} \longrightarrow \text{ADR (의사결정)} \longrightarrow \text{Plans (계획)} \longrightarrow \text{Code / Reviews (코드/리뷰)} \longrightarrow \text{Walkthrough (결과보고)}$$
+   $$\text{Spec (.spec.md)} \longrightarrow \text{Plan (.plan.md)} \longrightarrow \text{Review (.review.md + .task.md)} \longrightarrow \text{Walkthrough (.walkthrough.md)}$$
+   - PRD는 필요 시에만 작성 (선택), ADR은 구조적 설계 분기 시에만 작성
+   - 테스트 시나리오는 Review 단계에서 `.test.md`로 포함
 
 2. **디렉토리 표준 및 명명 규칙**:
    - **`docs/artifacts/`**: 모든 요구 정의 명세(Spec), 아키텍처 의사결정(ADR), 설계/계획, 태스크, 코드 리뷰, 결과보고서, 장애 분석, 테스트 시나리오 문서를 단일 디렉토리에서 관리합니다. 각 히스토리별로 **3자리 순차 번호 접두사**를 매겨 관련 파일들을 용도별 접미사(종류)로 구분하여 보존합니다.
@@ -62,13 +70,49 @@
       - 테스트 시나리오: `###-filename.test.md` (템플릿: [tests_template.md](docs/templates/tests_template.md))
    - **`CHANGELOG.md`**: 프로젝트 루트의 단일 파일로 릴리즈 버전 및 마일스톤 단위의 전체 변경 이력을 통합 관리합니다. (개별 changelog 폴더 분할은 지양)
 
-3. **코드 리뷰 작성 강제 및 자가 검증**:
-    - 코드(Makefile, Dockerfile 등 설정 파일 포함) 수정이 수반되면 반드시 `docs/artifacts/` 하위에 3자리 순차 번호 및 접미사 규칙에 맞춘 리뷰 문서(`.review.md`), 할 일 목록(`.task.md`), 결과보고서(`.walkthrough.md`)를 세트로 작성하여 커밋해야 합니다.
-    - 에이전트는 작업을 마치고 완료를 보고하기 전에 **"코드를 수정해두고 docs/artifacts 하위에 번호 및 접미사 규칙에 맞게 리뷰 세트 문서를 누락하지 않았는지"** 반드시 되돌아보는 자가 검증 루프(Self-Inspection)를 돌려야 합니다. 리뷰 작성이 누락된 상태에서는 최종 Done 보고를 할 수 없습니다.
+3. **변경 규모별 문서화 의무 차등**:
+
+| 등급 | 대상 | 필수 문서 |
+|------|------|----------|
+| **Major** | 기능 추가, 아키텍처 변경, Bugfix | `.review.md` + `.task.md` + `.walkthrough.md` |
+| **Minor** | 리팩터링, 설정/패키지/의존성 변경 | `.task.md` 1종 (축약형) |
+| **Trivial** | 오타, 주석, 문서만 변경 | CHANGELOG.md 1줄 (번호 미부여) |
+
+- **Bugfix**는 등급과 무관하게 `.review.md`/`.task.md` 상단에 **Bugfix** 명시
+- Major 누락 시 최종 Done 보고 불가
+
+4. **자가 검증 및 지속적 개선**:
+   - 자가 검증 루프는 모든 변경(Major/Minor/Trivial)에 필수
+   - 순서: 편집 반영 확인 → CHANGELOG 갱신 확인 → lint/build 정상 확인 → Done 보고
+   - dump loop, 누락된 수정, 반복 실패 발생 시 `docs/artifacts/`에 `.issue.md`로 원인 기록 (현상 → 원인 → 방지책)
+   - 세션 시작 시 최근 `.issue.md`(최대 3개)를 참조하여 동일 패턴 예방
+
+5. **아티팩트 Squash 정책**:
+   - `make agents-squash`로 `.review.md` + `.task.md` + `.walkthrough.md` 3종을 `.summary.md` 1개로 압축 (토큰 ~66% 절약)
+   - `.spec.md`, `.adr.md`, `.plan.md`, `.issue.md`, `.test.md`는 원본 유지
+   - 세션 종료 시 아티팩트 수가 50개 초과이면 `make agents-squash` 실행 제안
 
 
+
+## 🧭 Agent Skill Directory Map
+
+작업 시 컨텍스트에 따라 해당 Skill 파일을 활성화/참조하세요:
+
+| 컨텍스트 | Skill 파일 | 설명 |
+|:---|:---|:---|
+| 사이트 크롤러/파이프라인 | [develop_sites_skills.md](.agents/skills/develop_sites_skills.md) | Bronze→Silver 파이프라인, Base 클래스 |
+| DB/인덱스 | [database_skills.md](.agents/skills/database_skills.md) | MongoDB/Redis 스키마, 인덱스 |
+| HTML/스크래핑 디버깅 | [html_debugging_skills.md](.agents/skills/html_debugging_skills.md) | HtmlDebugger 유틸, HTML 덤프 |
+| Firecrawl 웹 검색 | `~/.claude/skills/firecrawl-*/` | Firecrawl CLI 스킬들 |
+
+## 💡 Token Efficiency Rules
+
+1. **아티팩트 사전 스캔 금지**: `docs/artifacts/` 문서는 자동으로 읽지 않음. 필요 시 INDEX.md에서 번호 확인 후 직접 Read
+2. **AGENTS.md 유지보수**: AGENTS.md는 100줄 이내 유지. 불필요한 예제/중복 발견 시 정리
+3. **Compact 정기 정리**: 10세션마다 또는 아티팩트 50개 초과 시 `make agents-squash` 권장
 
 ## 🔓 Pre-Approved Commands
+
 The following commands/scripts are pre-approved and exempt from Rule 1's and Rule 2's consent loops:
 - `git ls-files` (Read-only project codebase mapping to minimize token/API usage)
 - `scripts/agents/commit-changes.sh` (Runs automatically after edits to save progress)
