@@ -7,6 +7,13 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [1.3.0] - 2026-06-20
+
+### Added
+- **Joplin/Obsidian Exporter Module (`apps/exporter`)**: `wikidocs-exporter`의 내보내기 핵심 기능을 모노레포 독립 모듈(`apps/exporter`)로 완벽 이식 및 통합.
+- **Docker-Centric Execution Config**: 컨테이너 개발 환경에서 호스트 PC의 로컬 API에 접근하기 위한 루프백 설정(`host.docker.internal`) 정립, `compose.yml` 및 `Makefile` 빌드 파이프라인 결합 완료.
+- **Local Markdown File Scanner**: `data/ebook/output/` 디렉터리에 추출된 도서별 챕터 마크다운 파일들을 분석하여 자동으로 도서 데이터로 조립하는 로더 모듈 구현.
+
 ## [1.2.0] - 2026-06-20
 
 ### Changed
