@@ -14,4 +14,5 @@
 
 ### 3. Docker 구동 편의성 (Docker Usability)
 - **평가:** Makefile 타겟으로 래핑하여 완성도가 향상되었습니다.
-- **상세:** 볼륨 마운트 상대경로 이슈를 보완하기 위해 Makefile 내에서 `HOST_PROJECT_PATH` 환경변수를 강제 고정하여, 개발자가 어디서든 `make split` 또는 `make html`로 간단히 컨테이너 실행이 가능합니다.
+- **상세:** 볼륨 마운트 상대경로 이슈를 보완하기 위해 Makefile 내에서 `HOST_PROJECT_PATH` 환경변수를 강제 고정하여, 개발자가 어디서든 `make split` 또는 `make html`로 간단히 컨테이너 실행이 가능합니다. 또한 루트 Makefile의 `ebook-%` 연동으로 프로젝트 루트 레벨에서도 단축 명령 조작이 원스톱으로 가능해졌습니다.
+

@@ -12,6 +12,7 @@
 - [x] `apps/ebook/src/process.py` Entrypoint 컨트롤러 슬림화 리팩토링 수정 완료
 - [x] 구버전 중복 레거시 파일들 삭제 완료 (`analyze_pdfs.py`, `translate.py`)
 - [x] `apps/ebook/Makefile` 생성 완료 (Docker Compose 매핑 및 편리한 개발 타겟 탑재)
+- [x] 루트 `Makefile` 연동 완료 (`ebook-%` 패턴 규칙을 이용해 루트에서도 하위 타겟 기동 가능)
 
 ## 🟨 미진행/보류 작업 (Pending Tasks)
 - 없음

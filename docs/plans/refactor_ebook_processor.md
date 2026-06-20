@@ -17,6 +17,7 @@
 - **`[NEW]`** `apps/ebook/src/pdf_translator.py`: Ollama API를 이용해 PDF 내 문장을 한글로 번역 및 요약본을 빌드하는 로직 모듈화
 - **`[NEW]`** `apps/ebook/src/pdf_analyzer.py`: PDF 내 TOC 분석, 대화형 도서 챕터 경계 튜닝 및 기존 일괄 summary dump 출력 기능
 - **`[NEW]`** `apps/ebook/Makefile`: Docker Compose 명령어 래핑 및 타겟 기반 단축 명령어 세트 제공
+- **`[MODIFY]`** `Makefile`: 루트 Makefile에 `ebook-%` 패턴 규칙을 추가하여 하위 타겟과 간편 연동
 
 ### 2. Main Entrypoint & Legacy Cleanup
 - **`[MODIFY]`** `apps/ebook/src/process.py`: 전체 흐름 분기(CLI parser 포함)를 조율하고 위 모듈들을 임포트해 명령을 내리는 얇은 메인 기동 컨트롤러로 재구성

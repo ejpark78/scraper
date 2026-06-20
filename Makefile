@@ -91,3 +91,8 @@ agents-%:
 # meili utils
 ms-%:
 	@$(MAKE) -f scripts/utils/meili.mk $*
+
+# ebook utils
+ebook-%:
+	@$(MAKE) -C apps/ebook $* PDF="$(PDF)" RANGE="$(RANGE)" OUT="$(OUT)"
+
