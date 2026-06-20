@@ -103,6 +103,9 @@ rebuild:
 restart:
 	@$(MAKE) -C apps/crawler restart SCALE=$(SCALE)
 
+up-viewer:
+	@$(MAKE) -C apps/viewer up
+
 # queue & utils (forward to apps/crawler)
 clear-queue:
 	@$(MAKE) -C apps/crawler clear-queue

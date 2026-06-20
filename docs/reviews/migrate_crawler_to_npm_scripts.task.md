@@ -20,6 +20,8 @@
 - [x] `apps/crawler/Makefile` 내부로 `run-scrape` 로직 및 `PAGE`, `LIST_SLACK` 변수 선언 이관 완료
 - [x] 각 개별 사이트별 타겟(`gpt-%` 등)이 `apps/crawler/Makefile`의 `run-scrape`를 직접 호출하도록 포워딩 매핑 업데이트 완료
 - [x] `tests.mk` 내의 테스트 및 디버깅 유틸 타겟들을 `apps/crawler/Makefile` 및 npm script로 이전 완료
+- [x] `apps/viewer/Makefile` 생성 및 `up-viewer` 타겟 이관 완료
+
 
 
 ## 🟨 미진행/보류 작업 (Pending Tasks)
