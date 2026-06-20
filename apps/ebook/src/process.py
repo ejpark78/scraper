@@ -132,7 +132,7 @@ def main():
     parser.add_argument("--analyze", help="Analyze specified PDF structure interactively")
     parser.add_argument("--split", action="store_true", help="Split PDFs into chapter PDFs")
     parser.add_argument("--md", action="store_true", help="Convert split chapter PDFs to markdown")
-    parser.add_argument("--html", help="Directly convert specified PDF (or all PDFs if empty/all) to HTML")
+    parser.add_argument("--html", nargs="?", const="all", help="Directly convert specified PDF (or all PDFs if empty/all) to HTML")
     
     # Translation options
     parser.add_argument("--translate", help="Translate PDF path")
@@ -155,19 +155,29 @@ def main():
         sys.exit(0)
 
     # 3. Direct HTML Mode
-    if args.html:
+    if args.html is not None:
         html_converter = HTMLConverter(args.output)
-        pdf_file = Path(args.html)
-        if pdf_file.exists():
-            html_converter.convert(pdf_file)
+        if args.html == "all" or args.html == "":
+            output_dir = Path(args.output)
+            pdf_files = list(output_dir.glob("**/*.pdf"))
+            if not pdf_files:
+                print(f"No PDF files found in {args.output}")
+                sys.exit(0)
+            for pdf_file in pdf_files:
+                print(f"Converting {pdf_file.name} to HTML...")
+                html_converter.convert(pdf_file)
         else:
-            # Check if it resides in the data directory
-            alt_path = Path(args.data) / args.html
-            if alt_path.exists():
-                html_converter.convert(alt_path)
+            pdf_file = Path(args.html)
+            if pdf_file.exists():
+                html_converter.convert(pdf_file)
             else:
-                print(f"File not found: {args.html}")
-                sys.exit(1)
+                # Check if it resides in the data directory
+                alt_path = Path(args.data) / args.html
+                if alt_path.exists():
+                    html_converter.convert(alt_path)
+                else:
+                    print(f"File not found: {args.html}")
+                    sys.exit(1)
         sys.exit(0)
 
     # 4. Translation Mode

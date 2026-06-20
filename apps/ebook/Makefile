@@ -26,10 +26,10 @@ md:
 
 html:
 	@if [ -z "$(PDF)" ]; then \
-		echo "Usage: make html PDF=<path_to_pdf>"; \
-		exit 1; \
+		$(COMPOSE) run --rm ebook uv run poe html; \
+	else \
+		$(COMPOSE) run --rm ebook uv run poe html "$(PDF)"; \
 	fi
-	$(COMPOSE) run --rm ebook uv run poe html "$(PDF)"
 
 translate:
 	@if [ -z "$(PDF)" ] || [ -z "$(RANGE)" ] || [ -z "$(OUT)" ]; then \
