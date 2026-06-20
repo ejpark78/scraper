@@ -9,6 +9,8 @@ COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_D
 .PHONY: up down
 
 build:
+	@echo "⚙️  Generating static sites configuration..."
+	$(COMPOSE) run --rm -v $(ROOT_DIR):/app worker npx ts-node apps/crawler/src/scripts/generate-sites-config.ts
 	$(COMPOSE) build --no-cache viewer-fe viewer-api viewer-mcp
 	@echo "🚀 Viewer Build가 완료되었습니다."
 
