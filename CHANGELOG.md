@@ -7,6 +7,11 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [1.4.3] - 2026-06-20
+
+### Fixed (Bugfixes)
+- **Bugfix: 내보내기 문서 내 로컬 이미지 깨짐(엑스박스) 문제 완벽 수정**: Joplin 내보내기 진행 시 상대 경로 텍스트 상태로 남겨져 이미지가 로드되지 않던 현상을 해결하기 위해, 백엔드에 `GET /api/exporter/image` API를 추가하고 프론트엔드가 이미지 Blob을 획득하여 Joplin 리소스 API(`POST /resources`)로 직접 자동 업로드한 뒤 본문을 리소스 ID 식별자(`:/resource_id`)로 치환하여 연동되도록 수정 완료.
+
 ## [1.4.2] - 2026-06-20
 
 ### Fixed (Bugfixes)

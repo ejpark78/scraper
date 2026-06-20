@@ -128,5 +128,46 @@ router.get('/book-content', (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/exporter/image
+ * 서적 폴더 내부의 특정 이미지 파일을 서빙합니다.
+ */
+router.get('/image', (req: Request, res: Response) => {
+  try {
+    const { pathName, imagePath } = req.query;
+    if (!pathName || typeof pathName !== 'string' || !imagePath || typeof imagePath !== 'string') {
+      return res.status(400).json({ error: '필수 파라미터가 누락되었습니다. (pathName, imagePath)' });
+    }
+
+    const booksDir = getBooksDirectory();
+    const sanitizedBookPath = path.basename(pathName);
+    
+    // 이미지 상대 경로에 대한 기본적인 디렉터리 상위 탐색 방지 (.. 방지)
+    const sanitizedImagePath = imagePath.replace(/\.\./g, '');
+    const resolvedImagePath = path.join(booksDir, sanitizedBookPath, sanitizedImagePath);
+
+    if (!fs.existsSync(resolvedImagePath)) {
+      return res.status(404).json({ error: `이미지 파일이 존재하지 않습니다: ${imagePath}` });
+    }
+
+    // 파일 타입에 맞는 Content-Type 설정 (단순하게 확장자 기반 처리)
+    const ext = path.extname(resolvedImagePath).toLowerCase();
+    let contentType = 'image/png';
+    if (ext === '.jpg' || ext === '.jpeg') {
+      contentType = 'image/jpeg';
+    } else if (ext === '.gif') {
+      contentType = 'image/gif';
+    } else if (ext === '.svg') {
+      contentType = 'image/svg+xml';
+    }
+
+    res.setHeader('Content-Type', contentType);
+    fs.createReadStream(resolvedImagePath).pipe(res);
+  } catch (error: any) {
+    console.error('[Exporter API] Failed to serve image:', error);
+    res.status(500).json({ error: error.message || 'Failed to serve image' });
+  }
+});
+
 export default router;
 

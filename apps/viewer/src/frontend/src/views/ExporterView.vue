@@ -83,6 +83,34 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[\\/:*?"<>|]/g, '_');
 }
 
+// Helper to download image from backend and upload it to Joplin as a resource
+async function uploadImageToJoplin(apiUrl: string, token: string, bookPath: string, imagePath: string): Promise<string> {
+  const imgUrl = `/api/exporter/image?pathName=${encodeURIComponent(bookPath)}&imagePath=${encodeURIComponent(imagePath)}`;
+  const imgRes = await fetch(imgUrl);
+  if (!imgRes.ok) {
+    throw new Error(`백엔드 이미지 로드 실패 (${imgRes.status})`);
+  }
+  const blob = await imgRes.blob();
+
+  const formData = new FormData();
+  const filename = imagePath.split('/').pop() || 'image.png';
+  formData.append('data', blob, filename);
+  formData.append('props', JSON.stringify({ title: filename }));
+
+  const resUpload = await fetch(`${apiUrl}/resources?token=${encodeURIComponent(token)}`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!resUpload.ok) {
+    const errText = await resUpload.text();
+    throw new Error(`Joplin 리소스 생성 실패 (${resUpload.status}): ${errText}`);
+  }
+
+  const resData = await resUpload.json();
+  return resData.id;
+}
+
 async function startExport() {
   const bookPath = customPath.value.trim() || selectedBook.value;
   if (!bookPath) {
@@ -139,12 +167,39 @@ async function startExport() {
         const progress = `[${i + 1}/${book.chapters.length}]`;
         addLog('info', `${progress} 📝 Joplin에 "${chapter.title}" 노트 생성 중...`);
 
+        let content = chapter.content;
+
+        // 마크다운 이미지 정규식: ![title](images/...)
+        const imgRegex = /!\[(.*?)\]\((images\/.*?)\)/g;
+        const matches = [...content.matchAll(imgRegex)];
+        
+        if (matches.length > 0) {
+          addLog('info', `${progress} 🖼️ 이미지 처리 중... (총 ${matches.length}개 이미지 감지됨)`);
+          const imageCache = new Map<string, string>();
+          for (const match of matches) {
+            const rawMatch = match[0];
+            const title = match[1];
+            const imgPath = match[2];
+            
+            try {
+              let resourceId = imageCache.get(imgPath);
+              if (!resourceId) {
+                resourceId = await uploadImageToJoplin(apiUrl, token, bookPath, imgPath);
+                imageCache.set(imgPath, resourceId);
+              }
+              content = content.replace(rawMatch, `![${title}](:/${resourceId})`);
+            } catch (imgErr: any) {
+              addLog('error', `⚠️ 이미지 업로드 실패 (${imgPath}): ${imgErr.message}`);
+            }
+          }
+        }
+
         const noteRes = await fetch(`${apiUrl}/notes?token=${encodeURIComponent(token)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: sanitizeFilename(chapter.title),
-            body: chapter.content,
+            body: content,
             parent_id: folderId,
           }),
         });
