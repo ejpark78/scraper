@@ -134,7 +134,7 @@ async function startExport() {
         throw new Error(`Joplin에 연결할 수 없습니다: ${err.message}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${apiUrl})에 접근 가능한지 확인해주세요.`);
       }
 
-      for (let i = 0; i < book.chapters.length; i++) {
+      for (let i = book.chapters.length - 1; i >= 0; i--) {
         const chapter = book.chapters[i];
         const progress = `[${i + 1}/${book.chapters.length}]`;
         addLog('info', `${progress} 📝 Joplin에 "${chapter.title}" 노트 생성 중...`);
@@ -167,7 +167,7 @@ async function startExport() {
       const folderName = sanitizeFilename(book.title);
       addLog('info', `🔗 Obsidian 연결 확인 및 파일 전송 시도...`);
 
-      for (let i = 0; i < book.chapters.length; i++) {
+      for (let i = book.chapters.length - 1; i >= 0; i--) {
         const chapter = book.chapters[i];
         const progress = `[${i + 1}/${book.chapters.length}]`;
         const filename = `${sanitizeFilename(chapter.title)}.md`;
