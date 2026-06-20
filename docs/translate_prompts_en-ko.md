@@ -34,9 +34,10 @@
 
 ### [출력 예시 가이드]
 
-## 1. Introduction to Regularization (섹션 타이틀)
+## 1. Introduction to Regularization 
+## 1. Introduction to Regularization 
+섹션 타이틀
 
-**[1 - 원문 (Original Text)] **
 Standard *deep learning* models often suffer from **overfitting** when trained on small datasets. To mitigate this, regularization techniques like `dropout` are applied:
 * It reduces co-dependency between neurons.
 * It acts as a form of ensemble learning.
@@ -48,7 +49,6 @@ Standard *deep learning* models often suffer from **overfitting** when trained o
 | Dropout | Randomly deactivates neurons | Reduces co-dependency |
 | Weight Decay | Adds penalty to loss function | Keeps weights small |
 
-**[1 - 번역문 (Translated Text)] **
 표준 *딥러닝(deep learning)* 모델은 소규모 데이터셋으로 학습할 때 종종 **오버피팅(overfitting)** 문제를 겪습니다. 이를 완화하기 위해 `드롭아웃(dropout)`과 같은 정규화 기법이 적용됩니다:
 * 이는 뉴런 간의 상호 의존성을 줄여줍니다.
 * 이는 일종의 앙상블 학습으로 기능합니다.
