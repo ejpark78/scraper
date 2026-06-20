@@ -15,7 +15,7 @@ const pathMap: Record<string, string> = {
   aicasebook: 'src/sites/aicasebook/List.ts',
   dailydose_ds: 'src/sites/dailydoseofds/List.ts',
   geeknews: 'src/sites/geeknews/List.ts',
-  gpters_news: 'src/sites/gpters/news/List.ts',
+  gpters: 'src/sites/gpters/news/List.ts',
   gpters_newsletter: 'src/sites/gpters/newsletter/List.ts',
   linkedin_jobs: 'src/sites/linkedin/jobs/List.ts',
   maily_josh: 'src/sites/maily/josh/List.ts',
@@ -60,7 +60,7 @@ if (!targetPath) {
 let arg = page || '1';
 if (siteKey === 'geeknews' && day && day.trim() !== '') {
   arg = day;
-} else if ((siteKey === 'gpters_news' || siteKey === 'gpters_newsletter') && limit) {
+} else if ((siteKey === 'gpters' || siteKey === 'gpters_newsletter') && limit) {
   arg = limit;
 }
 
