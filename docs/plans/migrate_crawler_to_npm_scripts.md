@@ -20,7 +20,10 @@
   - `gm-%` 타겟 역시 `apps/crawler/Makefile` 내의 `gmail-$*` 타겟으로 위임
   - `up-viewer` 타겟을 `apps/viewer/Makefile`로 최종 위임
 - **`[NEW]`** `apps/viewer/Makefile`:
-  - `viewer` 서비스 구축 및 구동 관련 독자적 Makefile 생성
+  - `viewer` 서비스 구축 및 구동 관련 독자적 Makefile 생성 및 docker compose 경로 바인딩 조정
+- **`[MODIFY]`** `apps/viewer/compose.yml` [NEW / MOVE]:
+  - `apps/viewer/docker/compose.yml`을 `apps/viewer/compose.yml`로 이동 및 내부 Dockerfile context 상대경로 수정
+- **`[DELETE]`** `apps/viewer/docker/compose.yml`
 - **`[NEW]`** `apps/crawler/Makefile`:
   - `run-scrape` 동적 분기 라우터 타겟, 파라미터 변수, 큐/에러 처리, 빌드/재기동 단축 타겟, 그리고 `gmail-sync` 타겟까지 전담 관리하는 전용 메이크파일 신규 작성 및 확장
 - **`[DELETE]`** `scripts/utils/worker.mk`

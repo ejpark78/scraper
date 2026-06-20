@@ -5,7 +5,7 @@
 services:
   viewer-fe:
     build:
-      context: ..
+      context: .
       dockerfile: docker/fe/Dockerfile
     image: scraper/viewer-fe:dev
     profiles:
@@ -34,7 +34,7 @@ services:
 
   viewer-api:
     build:
-      context: ../
+      context: .
       dockerfile: docker/api/Dockerfile
       args:
         - BUILD_DATE
@@ -74,7 +74,7 @@ services:
 
   viewer-mcp:
     build:
-      context: ../
+      context: .
       dockerfile: docker/mcp/Dockerfile
       args:
         - BUILD_DATE
