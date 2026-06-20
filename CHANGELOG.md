@@ -15,6 +15,7 @@ and this project adheres to Semantic Versioning.
 
 ### Fixed (Bugfixes)
 - **Bugfix: Exporter 설정 카드 높이 잘림 문제 해결**: Joplin 또는 Obsidian 연동 설정 필드가 활성화될 때 설정 폼 카드의 스크롤이 불가하여 `Joplin API 웹클리퍼 토큰` 입력란 및 하단 버튼이 뷰포트에서 잘려 보이지 않는 레이아웃 버그를 `.queue-section-card`에 `overflow-y: auto` 스타일을 주입하여 수정 완료.
+- **Bugfix: viewer-api 컨테이너 내 /app/data 볼륨 마운트 누락 수정**: 웹 Exporter 화면에서 "1. 대상 서적 선택" 드롭다운 목록이 비어 있는 원인을 분석하여, `viewer-api` 서비스 볼륨 설정에 호스트의 `./data`가 누락된 것을 식별하고 `apps/viewer/compose.yml` 파일에 볼륨 바인딩 설정을 추가하여 해결 완료.
 
 ## [1.3.0] - 2026-06-20
 
