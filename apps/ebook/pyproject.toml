@@ -6,7 +6,13 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "pymupdf>=1.27.2.3",
+    "poethepoet>=0.32.2",
 ]
 
-[project.scripts]
-ebook-process = "src.process:main"
+[tool.poe.tasks]
+summary = "python src/process.py --summary"
+analyze = "python src/process.py --analyze"
+split = "python src/process.py --split"
+md = "python src/process.py --md"
+html = "python src/process.py --html"
+translate = "python src/process.py --translate"
