@@ -43,6 +43,10 @@ class HTMLToMarkdownConverter:
         for tag in soup(["style", "script"]):
             tag.decompose()
 
+        # Remove page separators (e.g. <div class="page-separator">Page 2</div>)
+        for separator in soup.find_all(class_="page-separator"):
+            separator.decompose()
+
         # 1. Extract Base64 Images to files
         self._extract_base64_images(soup, html_path)
 
