@@ -110,6 +110,104 @@ app.get('/api/collections', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/site-stats/search
+app.get('/api/site-stats/search', async (req: Request, res: Response) => {
+  try {
+    const startDateStr = req.query.startDate as string;
+    const endDateStr = req.query.endDate as string;
+
+    if (!startDateStr || !endDateStr) {
+      return res.status(400).json({ error: 'startDate and endDate parameters are required (YYYY-MM-DD)' });
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(startDateStr) || !dateRegex.test(endDateStr)) {
+      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+    }
+
+    const startUtc = new Date(`${startDateStr}T00:00:00+09:00`);
+    const endUtc = new Date(`${endDateStr}T23:59:59.999+09:00`);
+
+    if (isNaN(startUtc.getTime()) || isNaN(endUtc.getTime())) {
+      return res.status(400).json({ error: 'Invalid date values' });
+    }
+
+    await mongo.connect();
+    const client = (mongo as any).client;
+    if (!client) throw new Error('MongoDB client not initialized');
+
+    const silverDb = client.db('silver');
+    const collections = await silverDb.listCollections().toArray();
+    
+    // We target 'linkedin.jobs' and any collection ending with '.contents' or 'linkedin.companies'
+    const targetCollections = collections
+      .map(c => c.name)
+      .filter(name => name === 'linkedin.jobs' || name.endsWith('.contents') || name === 'linkedin.companies');
+
+    // Result structure: Record<string (date), Record<string (site), number>>
+    const statsMap: Record<string, Record<string, number>> = {};
+
+    // Initialize all dates in range to prevent missing dates in UI
+    const tempDate = new Date(startUtc);
+    while (tempDate <= endUtc) {
+      const dateStr = tempDate.toISOString().slice(0, 10); // KST 기준으로 날짜를 초기화해주기 위해
+      // KST 날짜 표기 구하기
+      const kstDateStr = new Date(tempDate.getTime() + (9 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+      statsMap[kstDateStr] = {};
+      // 1 day increment
+      tempDate.setDate(tempDate.getDate() + 1);
+    }
+
+    for (const collName of targetCollections) {
+      const coll = silverDb.collection(collName);
+      const aggregationResult = await coll.aggregate([
+        {
+          $match: {
+            updatedAt: {
+              $gte: startUtc,
+              $lte: endUtc
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$updatedAt",
+                timezone: "Asia/Seoul"
+              }
+            },
+            count: { $sum: 1 }
+          }
+        }
+      ]).toArray();
+
+      for (const group of aggregationResult) {
+        const dateKey = group._id;
+        if (dateKey) {
+          if (!statsMap[dateKey]) {
+            statsMap[dateKey] = {};
+          }
+          statsMap[dateKey][collName] = group.count;
+        }
+      }
+    }
+
+    // Convert statsMap to sorted array
+    const sortedStats = Object.keys(statsMap)
+      .sort()
+      .map(date => ({
+        date,
+        stats: statsMap[date]
+      }));
+
+    res.json(sortedStats);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/documents', async (req: Request, res: Response) => {
   try {
     const collectionName = req.query.collection as string || 'linkedin.jobs';
