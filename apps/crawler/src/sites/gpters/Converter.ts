@@ -9,6 +9,7 @@
 
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
+import { DateUtils } from '../../utils/DateUtils';
 
 import { GptersMeta, descriptor } from './news/site.config';
 
@@ -32,7 +33,10 @@ export class GptersConverter implements IConverter<GptersMeta> {
             }
         }
         const longContent = (fieldsMap.content || post.shortContent || '').replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
-        const publishedAt = post.createdAt || null;
+        
+        const publishedAtStr = post.createdAt || null;
+        const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
+
         const reactionsCount = post.reactionsCount || 0;
         const repliesCount = post.repliesCount || 0;
         const finalUrl = url || `https://www.${descriptor.domain}/news/post/${post.slug}-${id}`;
@@ -44,7 +48,11 @@ export class GptersConverter implements IConverter<GptersMeta> {
         let markdown = `# 💡 [GPTERS] ${title}\n\n`;
         markdown += `* **작성자:** ${author}\n`;
         if (spaceName) markdown += `* **스페이스:** ${spaceName}\n`;
-        markdown += `* **작성일:** ${publishedAt || '정보 없음'}\n`;
+        if (publishedAt) {
+            markdown += `* **작성일:** ${publishedAt.toISOString()}\n`;
+        } else {
+            markdown += `* **작성일:** 정보 없음\n`;
+        }
         markdown += `* **리액션:** 👍 ${reactionsCount} | 💬 ${repliesCount}\n`;
         markdown += `* **원본 링크:** [바로가기](${finalUrl})\n\n`;
         markdown += `## 📝 내용\n\n${longContent}\n`;

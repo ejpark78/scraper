@@ -11,6 +11,7 @@ import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
 import { YozmMeta } from './site.config';
+import { DateUtils } from '../../utils/DateUtils';
 
 export class YozmConverter implements IConverter<YozmMeta> {
 
@@ -41,11 +42,13 @@ export class YozmConverter implements IConverter<YozmMeta> {
  
     const newsLd = this.findNewsLd($);
  
-    let publishedAt: string | null = null;
+    let publishedAtStr: string | null = null;
     if (newsLd?.datePublished) {
-      publishedAt = newsLd.datePublished;
+      publishedAtStr = newsLd.datePublished;
     }
  
+    const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
+
     let category: string | null = null;
     if (newsLd?.articleSection) {
       category = newsLd.articleSection;
@@ -137,7 +140,7 @@ export class YozmConverter implements IConverter<YozmMeta> {
       markdown += `* **카테고리:** ${category}\n`;
     }
     if (publishedAt) {
-      markdown += `* **발행일:** ${publishedAt}\n`;
+      markdown += `* **발행일:** ${publishedAt.toISOString()}\n`;
     }
     if (author) {
       markdown += `* **작가:** ${author}\n`;

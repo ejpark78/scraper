@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
+import { DateUtils } from '../../utils/DateUtils';
 
 import { GeekNewsMeta, GeekNewsComment } from './site.config';
 
@@ -42,7 +43,7 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
             
             content = this.cleanContent(content);
 
-            let publishedAt: string | null = null;
+            let publishedAtStr: string | null = null;
             let jsonLdRaw: string | null = null;
             try {
                 const jsonLdScript = $('script[type="application/ld+json"]');
@@ -51,7 +52,7 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
                     if (jsonLdRaw) {
                         const data = JSON.parse(jsonLdRaw);
                         if (data.datePublished) {
-                            publishedAt = data.datePublished;
+                            publishedAtStr = data.datePublished;
                         }
                     }
                 }
@@ -59,9 +60,14 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
                 console.error(`⚠️ JSON-LD 파싱 중 에러 발생: ${e.message}`);
             }
 
+            const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
+
             let markdown = `# 📰 ${title}\n\n`;
             if (dateStr) {
                 markdown += `* **기간:** ${dateStr}\n`;
+            }
+            if (publishedAt) {
+                markdown += `* **발행일:** ${publishedAt.toISOString()}\n`;
             }
             markdown += `* **원문 링크:** [바로가기](${url})\n\n`;
             markdown += `## 📝 주간 요약 설명\n${content}\n`;
@@ -93,7 +99,7 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
         }
         
         // 2. Extract publication date from JSON-LD or meta
-        let publishedAt: string | null = null;
+        let publishedAtStr: string | null = null;
 
         // 2. Extract JSON-LD and comments & content
         const comments: GeekNewsComment[] = [];
@@ -114,8 +120,8 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
                     }
 
                     // Extract publication date from JSON-LD
-                    if (!publishedAt && data.datePublished) {
-                        publishedAt = data.datePublished;
+                    if (!publishedAtStr && data.datePublished) {
+                        publishedAtStr = data.datePublished;
                     }
 
                     const processJsonLdComment = (commentData: any) => {
@@ -211,10 +217,14 @@ export class GeekNewsConverter implements IConverter<GeekNewsMeta> {
         
         // 5. Clean content
         content = this.cleanContent(content);
+
+        const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
         
         // 6. Generate Markdown
         let markdown = `# 📰 ${title}\n\n`;
-        markdown += `* **작성일:** ${publishedAt || '정보 없음'}\n`;
+        if (publishedAt) {
+            markdown += `* **작성일:** ${publishedAt.toISOString()}\n`;
+        }
         markdown += `* **기사 링크:** [바로가기](${externalUrl})\n\n`;
         markdown += `## 📝 요약 설명\n${content}\n\n`;
         

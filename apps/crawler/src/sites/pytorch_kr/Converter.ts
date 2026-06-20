@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
+import { DateUtils } from '../../utils/DateUtils';
 
 import { PyTorchKRMeta } from './site.config';
 
@@ -39,27 +40,29 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
         }
 
         // Extract publication date
-        let publishedAt: string | null = null;
+        let publishedAtStr: string | null = null;
 
         // 1. Try blog layout date
         const featuredPost = $('p.featured-post').first().text().trim();
         if (featuredPost) {
-            publishedAt = featuredPost;
+            publishedAtStr = featuredPost;
         }
 
         // 2. Try <time datetime> tag
-        if (!publishedAt) {
+        if (!publishedAtStr) {
             const timeTag = $('time[datetime]').first();
             if (timeTag.length) {
-                publishedAt = timeTag.attr('datetime') || null;
+                publishedAtStr = timeTag.attr('datetime') || null;
             }
         }
 
         // 3. Try meta property
-        if (!publishedAt) {
+        if (!publishedAtStr) {
             const metaTime = $('meta[property="article:published_time"]').attr('content');
-            if (metaTime) publishedAt = metaTime;
+            if (metaTime) publishedAtStr = metaTime;
         }
+
+        const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
 
         // Extract content from built-in selectors (synchronous HTML parse)
         let contentText = this.extractContentFromHtml($, title);
@@ -68,7 +71,11 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
         const fullContent = `${title}\n${contentText}`;
         
         let markdown = `# 📂 [PyTorch KR] ${title}\n\n`;
-        markdown += `* **작성일:** ${publishedAt || '정보 없음'}\n`;
+        if (publishedAt) {
+            markdown += `* **작성일:** ${publishedAt.toISOString()}\n`;
+        } else {
+            markdown += `* **작성일:** 정보 없음\n`;
+        }
         markdown += `* **원본 링크:** [바로가기](${finalUrl})\n\n`;
         markdown += `## 📝 본문 내용\n\n${contentText}\n`;
         

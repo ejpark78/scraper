@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../../core/IConverter';
+import { DateUtils } from '../../utils/DateUtils';
 
 import { MailyJoshMeta } from './site.config';
 
@@ -27,19 +28,21 @@ export class MailyJoshConverter implements IConverter<MailyJoshMeta> {
 
     const category = $('h2 a[href*="/c/"]').first().text().trim() || null;
 
-    let publishedAt: string | null = null;
+    let publishedAtStr: string | null = null;
     const pubDateMeta = $('meta[property="article:published_time"]').attr('content');
     if (pubDateMeta) {
-      publishedAt = pubDateMeta;
+      publishedAtStr = pubDateMeta;
     } else {
       const dateEl = $('span.text-slate-600').first();
       const dateText = dateEl.text().trim();
       const dateMatch = dateText.match(/(\d{4}\.\d{2}\.\d{2})/);
       if (dateMatch) {
         const parts = dateMatch[1].split('.');
-        publishedAt = `${parts[0]}-${parts[1]}-${parts[2]}T00:00:00Z`;
+        publishedAtStr = `${parts[0]}-${parts[1]}-${parts[2]}T00:00:00Z`;
       }
     }
+
+    const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
 
     let viewCount: string | null = null;
     $('span.text-slate-600').each((_, el) => {
@@ -57,7 +60,7 @@ export class MailyJoshConverter implements IConverter<MailyJoshMeta> {
       markdown += `* **카테고리:** ${category}\n`;
     }
     if (publishedAt) {
-      markdown += `* **발행일:** ${publishedAt}\n`;
+      markdown += `* **발행일:** ${publishedAt.toISOString()}\n`;
     }
     if (viewCount) {
       markdown += `* **조회수:** ${viewCount}\n`;

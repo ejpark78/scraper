@@ -16,7 +16,7 @@ export interface MailyJoshMeta {
   id: string;
   title: string;
   url: string;
-  publishedAt: string | null;
+  publishedAt: Date | null;
   category: string | null;
   viewCount: string | null;
   content: string;

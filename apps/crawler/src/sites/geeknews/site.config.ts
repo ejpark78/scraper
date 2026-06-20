@@ -21,7 +21,7 @@ export interface GeekNewsMeta {
     id: string;
     title: string;
     url: string;
-    publishedAt: string | null;
+    publishedAt: Date | null;
     content: string;
     comments: GeekNewsComment[];
     jsonLdRaw: string | null;

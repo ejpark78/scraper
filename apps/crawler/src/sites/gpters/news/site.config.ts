@@ -18,7 +18,7 @@ export interface GptersMeta {
     url: string;
     author: string | null;
     shortContent: string | null;
-    publishedAt: string | null;
+    publishedAt: Date | null;
     reactionsCount: number;
     repliesCount: number;
     rawContent: string;

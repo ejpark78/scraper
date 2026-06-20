@@ -50,7 +50,7 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
     return this.converter.convertHtmlToMarkdown(htmlContent, id, url);
   }
 
-  private getDatePathParts(publishedAt: string | null): { year: string; month: string } {
+  private getDatePathParts(publishedAt: Date | string | null): { year: string; month: string } {
     if (publishedAt) {
       const d = new Date(publishedAt);
       if (!isNaN(d.getTime())) {

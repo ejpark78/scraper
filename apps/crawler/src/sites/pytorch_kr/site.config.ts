@@ -54,7 +54,7 @@ export interface PyTorchKRMeta {
     id: string;
     title: string;
     url: string;
-    publishedAt: string | null;
+    publishedAt: Date | null;
     content: string;
     rawContent: string;
 }

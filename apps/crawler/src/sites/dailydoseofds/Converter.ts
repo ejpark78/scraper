@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
 import { IConverter } from '../../core/IConverter';
+import { DateUtils } from '../../utils/DateUtils';
 
 import { DailyDoseDSMeta } from './site.config';
 
@@ -21,7 +22,8 @@ export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
         $('.gh-nav-list, .gh-pagination, #sx-footer, .pswp').remove();
 
         const title = $('h1').first().text().trim() || $('title').text().split('|')[0].trim() || 'Unknown Title';
-        const publishedAt = $('time').first().attr('datetime') || $('div[data-sx-updated-on]').first().text().trim() || null;
+        const publishedAtStr = $('time').first().attr('datetime') || $('div[data-sx-updated-on]').first().text().trim() || null;
+        const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
         
         // 2. Content Extraction - Follow the successful unit test pattern
         const contentEl = $('main').first();
@@ -58,7 +60,7 @@ export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
             });
 
             const rawContent = `# 📂 [Daily Dose of DS] ${title}\n\n` +
-                               `* **작성일:** ${publishedAt || '정보 없음'}\n` +
+                               `* **작성일:** ${publishedAt ? publishedAt.toISOString() : '정보 없음'}\n` +
                                `* **원본 링크:** [바로가기](${url})\n\n` +
                                `## 📝 본문 내용\n\n${contentText}\n`;
             

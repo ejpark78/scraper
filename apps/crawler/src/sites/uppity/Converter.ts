@@ -10,6 +10,8 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
+import { DateUtils } from '../../utils/DateUtils';
+
 import { UppityMeta } from './site.config';
 
 export class UppityConverter implements IConverter<UppityMeta> {
@@ -24,23 +26,29 @@ export class UppityConverter implements IConverter<UppityMeta> {
         const titleTag = $('title').text().trim().replace(/ - UPPITY.*$/, '').replace(/ \| UPPITY.*$/, '');
         const title = ogTitle || titleTag || 'Unknown Title';
 
-        let publishedAt: string | null = null;
+        let publishedAtStr: string | null = null;
         const metaTime = $('meta[property="article:published_time"]').attr('content');
         if (metaTime) {
-            publishedAt = metaTime;
+            publishedAtStr = metaTime;
         } else {
             const timeTag = $('time[datetime]').first();
             if (timeTag.length) {
-                publishedAt = timeTag.attr('datetime') || null;
+                publishedAtStr = timeTag.attr('datetime') || null;
             }
         }
+
+        const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
 
         const contentHtml = this.extractContentHtml($);
         const contentText = this.htmlToMarkdown(contentHtml);
         const cleanedContent = this.cleanContent(contentText);
 
         let markdown = `# ${title}\n\n`;
-        markdown += `* **작성일:** ${publishedAt || '정보 없음'}\n`;
+        if (publishedAt) {
+            markdown += `* **작성일:** ${publishedAt.toISOString()}\n`;
+        } else {
+            markdown += `* **작성일:** 정보 없음\n`;
+        }
         markdown += `* **원본 링크:** [바로가기](${finalUrl})\n\n`;
         markdown += `## 내용\n\n${cleanedContent}\n`;
 

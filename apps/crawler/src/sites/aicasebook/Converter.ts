@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import * as prettier from 'prettier';
 import { IConverter } from '../../core/IConverter';
+import { DateUtils } from '../../utils/DateUtils';
 
 import { AiCasebookMeta } from './site.config';
 
@@ -29,13 +30,13 @@ export class AiCasebookConverter implements IConverter<AiCasebookMeta> {
 
     // Extract published time (Unix ms timestamp string)
     const publishedAtStr = $('meta[property="article:published_time"]').attr('content') || null;
-    let publishedAt: string | null = null;
+    let publishedAt: Date | null = null;
     if (publishedAtStr) {
       const ts = parseInt(publishedAtStr, 10);
       if (!isNaN(ts)) {
-        publishedAt = new Date(ts).toISOString();
+        publishedAt = DateUtils.parseSafeDate(new Date(ts));
       } else {
-        publishedAt = publishedAtStr;
+        publishedAt = DateUtils.parseSafeDate(publishedAtStr);
       }
     }
 
@@ -125,7 +126,7 @@ export class AiCasebookConverter implements IConverter<AiCasebookMeta> {
     }
     markdown += `* **작성자:** ${author || '정보 없음'}\n`;
     if (publishedAt) {
-      markdown += `* **작성일:** ${publishedAt}\n`;
+      markdown += `* **작성일:** ${publishedAt.toISOString()}\n`;
     }
     if (sourceLink) {
       markdown += `* **원본 링크:** [바로가기](${sourceLink})\n`;

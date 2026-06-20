@@ -20,7 +20,7 @@ export interface AiCasebookMeta {
   author: string;
   categories: string[];
   tags: string[];
-  publishedAt: string | null;
+  publishedAt: Date | null;
   views: number;
   sourceLink: string;
   seriesName: string | null;

@@ -72,4 +72,25 @@ export class DateUtils {
         }
         return `${S}s`;
     }
+
+    /**
+     * 🕒 문자열 입력을 받아 안전하게 Date 객체 또는 null을 반환하는 유틸
+     */
+    public static parseSafeDate(dateInput: string | Date | null | undefined): Date | null {
+        if (!dateInput) {
+            return null;
+        }
+        if (dateInput instanceof Date) {
+            return isNaN(dateInput.getTime()) ? null : dateInput;
+        }
+        
+        // 문자열 정리 (예: '2026.06.20' -> '2026-06-20')
+        let cleaned = dateInput.trim();
+        if (cleaned.match(/^\d{4}\.\d{2}\.\d{2}$/)) {
+            cleaned = cleaned.replace(/\./g, '-');
+        }
+        
+        const d = new Date(cleaned);
+        return isNaN(d.getTime()) ? null : d;
+    }
 }

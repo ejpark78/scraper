@@ -17,7 +17,7 @@ export interface YozmMeta {
   id: string;
   title: string;
   url: string;
-  publishedAt: string | null;
+  publishedAt: Date | null;
   category: string | null;
   author: string | null;
   content: string;

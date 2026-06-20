@@ -163,30 +163,63 @@ app.get('/api/site-stats/search', async (req: Request, res: Response) => {
       console.log(`[Server] Aggregating daily stats for collection: ${collName} using field ${dateType}`);
       try {
         const coll = silverDb.collection(collName);
-        const aggregationResult = await coll.aggregate([
-          {
-            $match: {
-              [dateType]: {
-                $exists: true,
-                $ne: null,
-                $gte: startUtc,
-                $lte: endUtc
+        const pipeline: any[] = [];
+
+        if (dateType === 'publishedAt') {
+          // Direct index match pipeline since publishedAt is now stored as Date object
+          pipeline.push(
+            {
+              $match: {
+                publishedAt: {
+                  $exists: true,
+                  $ne: null,
+                  $gte: startUtc,
+                  $lte: endUtc
+                }
+              }
+            },
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: "%Y-%m-%d",
+                    date: "$publishedAt",
+                    timezone: "Asia/Seoul"
+                  }
+                },
+                count: { $sum: 1 }
               }
             }
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: "%Y-%m-%d",
-                  date: `$${dateType}`,
-                  timezone: "Asia/Seoul"
+          );
+        } else {
+          // High performance direct index match pipeline for updatedAt
+          pipeline.push(
+            {
+              $match: {
+                updatedAt: {
+                  $exists: true,
+                  $ne: null,
+                  $gte: startUtc,
+                  $lte: endUtc
                 }
-              },
-              count: { $sum: 1 }
+              }
+            },
+            {
+              $group: {
+                _id: {
+                  $dateToString: {
+                    format: "%Y-%m-%d",
+                    date: "$updatedAt",
+                    timezone: "Asia/Seoul"
+                  }
+                },
+                count: { $sum: 1 }
+              }
             }
-          }
-        ]).toArray();
+          );
+        }
+
+        const aggregationResult = await coll.aggregate(pipeline).toArray();
 
         console.log(`[Server] Aggregation finished for ${collName}. Got ${aggregationResult.length} groups.`);
 

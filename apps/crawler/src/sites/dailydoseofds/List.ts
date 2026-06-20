@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import { BaseListService } from '../../core/BaseListService';
 import { descriptor } from './site.config';
+import { DateUtils } from '../../utils/DateUtils';
 
 class DailyDoseDSList extends BaseListService {
     constructor() {
@@ -107,7 +108,7 @@ class DailyDoseDSList extends BaseListService {
 
                 const id = Buffer.from(url).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
 
-                if (await this.processItem(id, url, title, { publishedAt: dateStr })) {
+                if (await this.processItem(id, url, title, { publishedAt: DateUtils.parseSafeDate(dateStr) })) {
                     queuedCount++;
                 }
             }
