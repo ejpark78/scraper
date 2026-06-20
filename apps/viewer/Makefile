@@ -4,13 +4,14 @@
 ROOT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 
 # Fallbacks for variables if not called from root Makefile
-COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
+COMPOSE  ?= docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
+RUN_USER ?= --user $$(id -u):$$(id -g)
 
 .PHONY: up down
 
 build:
 	@echo "⚙️  Generating static sites configuration..."
-	$(COMPOSE) run --rm -v $(ROOT_DIR):/app worker npx ts-node apps/crawler/src/scripts/generate-sites-config.ts
+	$(COMPOSE) run --rm $(RUN_USER) -v $(ROOT_DIR):/app worker npx ts-node apps/crawler/src/scripts/generate-sites-config.ts
 	$(COMPOSE) build --no-cache viewer-fe viewer-api viewer-mcp
 	@echo "🧹 Cleaning up temporary static sites configuration..."
 	@rm -f $(ROOT_DIR)/apps/viewer/config/sites.json
