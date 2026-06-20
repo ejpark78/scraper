@@ -249,6 +249,7 @@ async function fetchErrors() {
 // Daily Crawl Stats States
 const loadingCrawlStats = ref<boolean>(false);
 const crawlStats = ref<any[]>([]);
+const selectedSite = ref<string>('all');
 
 // Helpers to get initial date strings in YYYY-MM-DD
 function getKstDateString(date: Date): string {
@@ -300,10 +301,28 @@ async function fetchCrawlStats() {
   }
 }
 
+const filteredCrawlStats = computed(() => {
+  if (selectedSite.value === 'all') {
+    return crawlStats.value;
+  }
+  return crawlStats.value.map(item => {
+    const stats: Record<string, number> = {};
+    for (const key in item.stats) {
+      if (key.includes(selectedSite.value)) {
+        stats[key] = item.stats[key];
+      }
+    }
+    return {
+      date: item.date,
+      stats
+    };
+  });
+});
+
 const maxDailyTotal = computed(() => {
-  if (crawlStats.value.length === 0) return 10;
+  if (filteredCrawlStats.value.length === 0) return 10;
   let maxVal = 0;
-  for (const item of crawlStats.value) {
+  for (const item of filteredCrawlStats.value) {
     let dayTotal = 0;
     for (const site in item.stats) {
       dayTotal += item.stats[site] || 0;
@@ -315,7 +334,7 @@ const maxDailyTotal = computed(() => {
 
 const activeCollections = computed(() => {
   const colls = new Set<string>();
-  for (const item of crawlStats.value) {
+  for (const item of filteredCrawlStats.value) {
     for (const site in item.stats) {
       if (item.stats[site] > 0) {
         colls.add(site);
@@ -473,6 +492,20 @@ async function addUrlQueue() {
           
           <!-- Date Filter Control -->
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0;">
+            <!-- Site Selector Dropdown -->
+            <select v-model="selectedSite" style="background: #1e1e2e; border: 1px solid var(--border-color); border-radius: 4px; color: #fff; font-size: 11px; padding: 4px 8px; height: 28px; outline: none; cursor: pointer; font-weight: 500;">
+              <option value="all">🌐 전체 사이트 (All)</option>
+              <option value="gpters">🟢 Gpters</option>
+              <option value="dailydose">🟡 Dailydose ds</option>
+              <option value="pytorch_kr">🔴 Pytorch kr</option>
+              <option value="uppity">💖 Uppity</option>
+              <option value="geeknews">🟠 Geeknews</option>
+              <option value="yozm">💜 Yozm</option>
+              <option value="maily_josh">💚 Maily josh</option>
+              <option value="linkedin.jobs">🔵 LinkedIn Jobs</option>
+              <option value="linkedin.companies">💎 LinkedIn Co.</option>
+            </select>
+
             <button @click="moveWeek(-1)" class="btn-secondary" style="padding: 4px 12px; font-size: 11px; height: 28px; flex-shrink: 0;">◀ 이전 주</button>
             <div style="display: flex; align-items: center; gap: 6px; background: #1e1e2e; border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 8px; flex-shrink: 0; min-height: 28px;">
               <input type="date" v-model="startDateInput" style="background: transparent; border: none; color: #fff; font-size: 11px; outline: none; cursor: pointer; width: 120px; color-scheme: dark; font-family: monospace;" />
@@ -519,7 +552,7 @@ async function addUrlQueue() {
                 </div>
 
                 <!-- Individual Date Column -->
-                <div v-for="item in crawlStats" :key="item.date" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; max-width: 60px; z-index: 2; group; position: relative;">
+                <div v-for="item in filteredCrawlStats" :key="item.date" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; max-width: 60px; z-index: 2; group; position: relative;">
                   
                   <!-- Stacked Bar Wrapper -->
                   <div class="chart-bar-wrapper" style="width: 100%; min-height: 2px; display: flex; flex-direction: column-reverse; justify-content: flex-start; border-radius: 4px 4px 0 0; background: rgba(255, 255, 255, 0.02); overflow: hidden; position: relative; transition: all 0.3s ease; cursor: pointer;"
