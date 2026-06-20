@@ -479,7 +479,10 @@ export class LinkedInList {
 }
 
 if (require.main === module) {
-    const configFile = process.argv[2] || 'config/config.json';
+    let configFile = process.argv[2] || 'config/config.json';
+    if (configFile && /^\d+$/.test(configFile)) {
+        configFile = 'config/config.json';
+    }
     const scraper = new LinkedInList();
     
     const mongo = MongoDatabase.getInstance();
