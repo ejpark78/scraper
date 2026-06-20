@@ -39,6 +39,10 @@ class HTMLToMarkdownConverter:
 
         soup = BeautifulSoup(html_content, "lxml")
 
+        # Remove <style> and <script> tags entirely so their inner CSS/JS text is not converted to markdown
+        for tag in soup(["style", "script"]):
+            tag.decompose()
+
         # 1. Extract Base64 Images to files
         self._extract_base64_images(soup, html_path)
 
