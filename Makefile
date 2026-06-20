@@ -25,7 +25,6 @@ lint:
 
 -include scripts/utils/browser.mk
 -include scripts/utils/docker.mk
--include scripts/utils/worker.mk
 -include scripts/tools/tools.mk
 
 # sites grouped targets
@@ -97,7 +96,12 @@ mongo-%:
 
 # gmail tools
 gm-%:
-	@$(MAKE) -f scripts/tools/gmail.mk $*
+	@if [ "$*" = "sync" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) -v $(pwd)/data/gmail:/data gmail npm run gmail:sync; \
+	else \
+		echo "Unknown command: $*"; \
+		exit 1; \
+	fi
 
 # agent utils
 agents-%:
@@ -110,4 +114,30 @@ ms-%:
 # ebook utils
 ebook-%:
 	@$(MAKE) -C apps/ebook $* PDF="$(PDF)" RANGE="$(RANGE)" OUT="$(OUT)"
+
+# infra management
+SCALE         ?= 1
+rebuild:
+	@$(MAKE) -C apps/crawler rebuild
+
+restart:
+	@$(MAKE) -C apps/crawler restart SCALE=$(SCALE)
+
+# queue & utils (forward to apps/crawler)
+clear-queue:
+	@$(MAKE) -C apps/crawler clear-queue
+
+grep-errors:
+	@$(MAKE) -C apps/crawler grep-errors
+
+dump-queue:
+	@$(MAKE) -C apps/crawler dump-queue
+
+fix-urls:
+	@$(MAKE) -C apps/crawler fix-urls
+
+get-queue-status:
+	@$(MAKE) -C apps/crawler get-queue-status
+
+
 

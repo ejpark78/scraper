@@ -11,11 +11,16 @@
 
 ### 1. Crawler Configuration (NPM 스크립트화)
 - **`[MODIFY]`** `apps/crawler/package.json`: 
-  - 각 크롤러 사이트(`gpters`, `geeknews`, `dailydoseofds`, `pytorch_kr`, `aicasebook`, `uppity`, `maily_josh`, `yozm`, `linkedin`) 별로 `scrape:list`, `scrape:refresh-urls`, `scrape:refresh-silver` 등을 정의하여 추가
+  - 각 크롤러 사이트별 scrape 명령, `gmail:sync`, 그리고 `queue:clear`, `queue:status`, `queue:dump`, `queue:fix-urls`, `log:grep-errors` 등 큐/에러 처리 스크립트 추가
 
 ### 2. Root Makefile Wrapper & Cleanups
 - **`[MODIFY]`** `Makefile`:
-  - `gpt-%`, `gn-%` 등으로 각각 분산 로딩되던 포함 파일들을 정리하고, 신규 npm script 기동 방식으로 타겟 래핑
+  - `gpt-%`, `gn-%` 등 및 `gm-%`, 그리고 `clear-queue`, `grep-errors`, `dump-queue`, `fix-urls`, `get-queue-status` 타겟들을 신규 npm script 기동 방식으로 타겟 래핑
+  - `rebuild`, `restart` 시스템 제어 타겟 루트 메이크파일로 통합 후, `apps/crawler/Makefile`로 최종 위임
+- **`[NEW]`** `apps/crawler/Makefile`:
+  - 큐/에러 처리 및 빌드/재기동 단축 타겟들을 전담 관리하는 전용 메이크파일 신규 작성
+- **`[DELETE]`** `scripts/utils/worker.mk`
+- **`[DELETE]`** `scripts/tools/gmail.mk`
 - **`[DELETE]`** `scripts/sites/gpters.mk`
 - **`[DELETE]`** `scripts/sites/geeknews.mk`
 - **`[DELETE]`** `scripts/sites/dailydoseofds.mk`
