@@ -10,8 +10,8 @@
  */
 
 import { MongoDatabase } from '../database/mongo';
-import { getSite } from '../crawler/core/SiteRegistry';
-import { HtmlDebugger } from '../crawler/utils/HtmlDebugger';
+import { getSite } from '../core/SiteRegistry';
+import { HtmlDebugger } from '../utils/HtmlDebugger';
 import * as fs from 'fs';
 import * as path from 'path';
 

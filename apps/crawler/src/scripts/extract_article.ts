@@ -6,7 +6,7 @@
  */
 
 import { MongoDatabase } from '../database/mongo';
-import { getSite } from '../crawler/core/SiteRegistry';
+import { getSite } from '../core/SiteRegistry';
 import * as fs from 'fs';
 import * as path from 'path';
 

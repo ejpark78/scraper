@@ -10,8 +10,8 @@
  */
 
 import { MongoDatabase } from '../database/mongo';
-import { getAllSites } from '../crawler/core/SiteRegistry';
-import { UrlUtils } from '../crawler/utils/UrlUtils';
+import { getAllSites } from '../core/SiteRegistry';
+import { UrlUtils } from '../utils/UrlUtils';
 
 class LegacyNoiseIdCleaner {
     private mongo = MongoDatabase.getInstance();

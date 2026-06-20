@@ -9,7 +9,7 @@
  */
 
 import { MongoDatabase } from '../database/mongo';
-import { getAllSites, getIndexName } from '../crawler/core/SiteRegistry';
+import { getAllSites, getIndexName } from '../core/SiteRegistry';
 import { MeiliSearchDatabase } from '../database/meili';
 import crypto from 'crypto';
 

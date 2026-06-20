@@ -12,7 +12,7 @@
 import Redis from 'ioredis';
 import { MongoDatabase } from '../database/mongo';
 import { MeiliSearchDatabase } from '../database/meili';
-import { getAllSites, getIndexName } from '../crawler/core/SiteRegistry';
+import { getAllSites, getIndexName } from '../core/SiteRegistry';
 
 const INDEX_NAME = 'contents';
 

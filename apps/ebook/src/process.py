@@ -16,105 +16,6 @@ from .html_to_markdown import HTMLToMarkdownConverter
 from .pdf_translator import PDFTranslator
 from .pdf_analyzer import PDFAnalyzer
 
-BOOK_CONFIG: dict[str, dict] = {
-    "AI Engineering.pdf": {
-        "chapters": [
-            ("Chapter 1. Introduction to Building AI Applications with Foundation Models", 25, 73),
-            ("Chapter 2. Understanding Foundation Models", 73, 137),
-            ("Chapter 3. Evaluation Methodology", 137, 183),
-            ("Chapter 4. Evaluate AI Systems", 183, 235),
-            ("Chapter 5. Prompt Engineering", 235, 277),
-            ("Chapter 6. RAG and Agents", 277, 331),
-            ("Chapter 7. Finetuning", 331, 387),
-            ("Chapter 8. Dataset Engineering", 387, 429),
-            ("Chapter 9. Inference Optimization", 429, 473),
-            ("Chapter 10. AI Engineering Architecture and User Feedback", 473, 519),
-            ("Epilogue", 519, 521),
-        ],
-    },
-    "AI-Assisted Programming - Tom Taulli.pdf": {
-        "chapters": [
-            ("Chapter 1. New World for Developers", 21, 41),
-            ("Chapter 2. How AI Coding Technology Works", 41, 63),
-            ("Chapter 3. Prompt Engineering", 63, 81),
-            ("Chapter 4. GitHub Copilot", 81, 103),
-            ("Chapter 5. Other AI-Assisted Programming Tools", 103, 123),
-            ("Chapter 6. ChatGPT and Other General-Purpose LLMs", 123, 151),
-            ("Chapter 7. Ideas, Planning, and Requirements", 151, 173),
-            ("Chapter 8. Coding", 173, 199),
-            ("Chapter 9. Debugging, Testing, and Deployment", 199, 213),
-            ("Chapter 10. Takeaways", 213, 225),
-        ],
-    },
-    "Beyond Vibe Coding - Addy Osmani.pdf": {
-        "chapters": [
-            ("Preface", 5, 13),
-            ("1. Introduction: What Is Vibe Coding?", 13, 66),
-            ("2. The Art of the Prompt: Communicating Effectively with AI", 66, 102),
-            ("3. The 70% Problem: AI-Assisted Workflows That Actually Work", 102, 121),
-            ("4. Beyond the 70%: Maximizing Human Contribution", 121, 143),
-            ("5. Understanding Generated Code: Review, Refine, Own", 143, 157),
-            ("6. AI-Driven Prototyping: Tools and Techniques", 157, 174),
-            ("7. Building Web Applications with AI", 174, 202),
-            ("8. Security, Maintainability, and Reliability", 202, 244),
-            ("9. The Ethical Implications of Vibe Coding", 244, 266),
-            ("10. Autonomous Background Coding Agents", 266, 292),
-            ("11. Beyond Code Generation: The Future of AI-Augmented Development", 292, 387),
-        ],
-    },
-    "Building Applications with AI Agents.pdf": {
-        "chapters": [
-            ("Chapter 1. Introduction to Agents", 23, 39),
-            ("Chapter 2. Designing Agent Systems", 39, 63),
-            ("Chapter 3. User Experience Design for Agentic Systems", 63, 93),
-            ("Chapter 4. Tool Use", 93, 111),
-            ("Chapter 5. Orchestration", 111, 137),
-            ("Chapter 6. Knowledge and Memory", 137, 157),
-            ("Chapter 7. Learning in Agentic Systems", 157, 185),
-            ("Chapter 8. From One Agent to Many", 185, 227),
-            ("Chapter 9. Validation and Measurement", 227, 245),
-            ("Chapter 10. Monitoring in Production", 245, 265),
-            ("Chapter 11. Improvement Loops", 265, 293),
-            ("Chapter 12. Protecting Agentic Systems", 293, 319),
-            ("Chapter 13. Human-Agent Collaboration", 319, 337),
-            ("Glossary", 337, 355),
-        ],
-    },
-    "Generative AI on Kubernetes.pdf": {
-        "chapters": [
-            ("Introduction", 21, 37),
-            ("Part I. Inference", 37, 115),
-            ("Part II. Production Readiness", 115, 213),
-            ("Part III. Tuning", 213, 295),
-            ("Part IV. AI-Driven Apps", 295, 404),
-        ],
-    },
-    "Learning LangChain.pdf": {
-        "chapters": [
-            ("Chapter 1. LLM Fundamentals with LangChain", 29, 51),
-            ("Chapter 2. RAG Part I: Indexing Your Data", 51, 85),
-            ("Chapter 3. RAG Part II: Chatting with Your Data", 85, 123),
-            ("Chapter 4. Using LangGraph to Add Memory to Your Chatbot", 123, 143),
-            ("Chapter 5. Cognitive Architectures with LangGraph", 143, 163),
-            ("Chapter 6. Agent Architecture", 163, 183),
-            ("Chapter 7. Agents II", 183, 199),
-            ("Chapter 8. Patterns to Make the Most of LLMs", 199, 219),
-            ("Chapter 9. Deployment: Launching Your AI Application into Production", 219, 243),
-            ("Chapter 10. Testing: Evaluation, Monitoring, and Continuous Improvement", 243, 279),
-            ("Chapter 11. Building with LLMs", 279, 297),
-        ],
-    },
-    "simplicity - Dave Thomas.pdf": {
-        "chapters": [
-            ("1. An Approach to Simplicity", 16, 19),
-            ("Part I. Simplify What You Do Simplify How You Do It", 19, 73),
-            ("Part II. Simplify Your Environment", 73, 111),
-            ("Part III. Simplify Your Interactions", 111, 140),
-            ("Part IV. Simplify Your Code", 140, 190),
-        ],
-    },
-}
-
 
 def load_books_config(books_json_path: Path) -> dict:
     if books_json_path.exists():
@@ -257,7 +158,7 @@ def main():
             print(f"\nProcessing {pdf_name}...")
 
             # Locate configuration
-            cfg = books_cfg.get(pdf_name) or BOOK_CONFIG.get(pdf_name)
+            cfg = books_cfg.get(pdf_name)
             if not cfg:
                 print(f"  No configuration found for {pdf_name}. Skip.")
                 continue

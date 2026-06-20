@@ -10,7 +10,7 @@
  */
 
 import { MongoDatabase } from '../database/mongo';
-import { getSite, getAllSites } from '../crawler/core/SiteRegistry';
+import { getSite, getAllSites } from '../core/SiteRegistry';
 
 class IdMigrationRunner {
     private mongo = MongoDatabase.getInstance();
