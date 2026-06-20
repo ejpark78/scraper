@@ -7,4 +7,4 @@
 - [x] 수정 사항 검증 및 결과 확인
 - [x] 코드 리뷰 문서 (`035-fix-linkedin-list-argument.review.md`) 작성
 - [x] 결과보고서 (`035-fix-linkedin-list-argument.walkthrough.md`) 작성
-- [ ] 자동 커밋 스크립트 실행
+- [x] 자동 커밋 스크립트 실행
