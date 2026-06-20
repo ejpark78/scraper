@@ -15,7 +15,7 @@ include:
   - apps/crawler/docker/gmail/compose.yml
   - apps/crawler/docker/worker/compose.yml
   - apps/ebook/compose.yml
-  - apps/viewer/docker/compose.yml
+  - apps/viewer/compose.yml
   - docker/tools/cronicle/compose.yml
   - docker/tools/dozzle/compose.yml
   - docker/tools/jupyter/compose.yml
