@@ -10,9 +10,9 @@ dependencies = [
 ]
 
 [tool.poe.tasks]
-summary = "python src/process.py --summary"
-analyze = "python src/process.py --analyze"
-split = "python src/process.py --split"
-md = "python src/process.py --md"
-html = "python src/process.py --html"
-translate = "python src/process.py --translate"
+summary = "python -m src.process --summary"
+analyze = "python -m src.process --analyze"
+split = "python -m src.process --split"
+md = "python -m src.process --md"
+html = "python -m src.process --html"
+translate = "python -m src.process --translate"

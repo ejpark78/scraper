@@ -49,7 +49,7 @@
 - **의견**: 크롤러 서브 모듈 내에 사이트 관련 빌드/실행 책임을 모두 모았으며, `test-%` 와일드카드 라우팅을 추가하여 향후 추가되는 테스트 스크립트도 별도 Makefile 수정 없이 손쉽게 실행할 수 있게 되었습니다.
 
 ### 3. apps/ebook Config
-- **의견**: `apps/ebook/pyproject.toml`에 `poethepoet` 플러그인을 추가하고 `[tool.poe.tasks]` 설정을 선언하여 npm scripts와 정확하게 일치하는 단축 태스크 쉘 명령어(`summary`, `analyze` 등) 구조를 갖추었습니다.
+- **의견**: `apps/ebook/pyproject.toml`에 `poethepoet` 플러그인을 추가하고 `[tool.poe.tasks]` 설정을 선언하여 npm scripts와 정확하게 일치하는 단축 태스크 쉘 명령어(`summary`, `analyze` 등) 구조를 갖추었습니다. 이때 상대 임포트 경로가 비정상 처리되지 않도록 단독 파일 실행이 아닌 `python -m src.process` 모듈 실행 방식을 채택했습니다.
 - **의견**: `apps/ebook/Makefile`에서도 호출 방식을 `uv run poe <task>`로 변경하여 태스크 러너 기반의 일관성 있는 호출 인터페이스를 완성하였습니다. 또한, 프로파일 제한이 걸려 빌드에서 제외되던 오류를 방지하기 위해 `build` 타겟에 대상 서비스명(`ebook`)을 명시하여 안정성을 높였습니다. 추가로 `html` 타겟의 `PDF` 매개변수 체크 오류 분기를 개선하여 일괄 처리 플로우를 구성했습니다.
 - **의견**: `apps/ebook/src/process.py`의 `--html` 인자를 선택형(`nargs="?"`)으로 변환하고 전체 변환(`all`)에 대한 비즈니스 로직을 삽입하여, 파일이 지정되지 않았을 때의 UX 및 배치 기능을 향상시켰습니다.
 

@@ -42,7 +42,7 @@
 
 ### 3. Ebook App Configuration
 - **`[MODIFY]`** `apps/ebook/pyproject.toml`:
-  - `poethepoet` 라이브러리를 의존성에 추가하고, `[tool.poe.tasks]` 섹션을 통해 `summary`, `analyze`, `split`, `md`, `html`, `translate` 단축 쉘 명령 정의
+  - `poethepoet` 라이브러리를 의존성에 추가하고, `[tool.poe.tasks]` 섹션을 통해 `summary`, `analyze`, `split`, `md`, `html`, `translate` 단축 쉘 명령 정의 (상대 임포트 작동 보장을 위해 파일 호출이 아닌 `python -m src.process` 모듈 호출 방식을 사용하도록 구성)
 - **`[NEW]`** `apps/ebook/src/__init__.py`:
   - 모듈 상대 경로 임포트 보장을 위한 빈 패키지 마커 파일 생성
 - **`[MODIFY]`** `apps/ebook/Makefile`:
