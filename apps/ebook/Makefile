@@ -5,6 +5,7 @@ COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_D
 
 RUN_USER ?= --user $$(id -u):$$(id -g)
 OUTPUT ?= data/output
+RAW_PDF ?= data/raw
 
 .PHONY: build summary analyze split pdf2md pdf2html translate_md html2md translate_batch shell test
 
@@ -22,7 +23,7 @@ analyze:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze "$(PDF)"
 
 split:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --path "$(OUTPUT)"
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --raw-pdf "$(RAW_PDF)" --path "$(OUTPUT)"
 
 pdf2md:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe pdf2md --path "$(OUTPUT)"
