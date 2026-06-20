@@ -51,15 +51,15 @@
    $$\text{PRD (요구정의)} \longrightarrow \text{Specs (명세)} \longrightarrow \text{ADR (의사결정)} \longrightarrow \text{Plans (계획)} \longrightarrow \text{Code / Reviews (코드/리뷰)} \longrightarrow \text{Walkthrough (결과보고)}$$
 
 2. **디렉토리 표준 및 명명 규칙**:
-   - **`docs/artifacts/`**: 모든 요구 정의 명세(Spec), 아키텍처 의사결정(ADR), 설계/계획, 태스크, 코드 리뷰, 결과보고서 문서를 단일 디렉토리에서 관리합니다. 각 히스토리별로 **3자리 순차 번호 접두사**를 매겨 관련 파일들을 용도별 접미사(종류)로 구분하여 보존합니다.
+   - **`docs/artifacts/`**: 모든 요구 정의 명세(Spec), 아키텍처 의사결정(ADR), 설계/계획, 태스크, 코드 리뷰, 결과보고서, 장애 분석, 테스트 시나리오 문서를 단일 디렉토리에서 관리합니다. 각 히스토리별로 **3자리 순차 번호 접두사**를 매겨 관련 파일들을 용도별 접미사(종류)로 구분하여 보존합니다.
       - 요구명세서: `###-filename.spec.md` (예: `001-integrate-ebook-service.spec.md`)
       - 의사결정서: `###-filename.adr.md` (예: `023-redis-namespace-restructuring.adr.md`)
       - 계획서: `###-filename.plan.md` (예: `022-integrate-joplin-obsidian-exporter.plan.md`)
       - 리뷰 문서: `###-filename.review.md`
       - 할 일 목록: `###-filename.task.md`
       - 결과보고서: `###-filename.walkthrough.md`
-   - **`docs/tests/`**: 수동 검증 단계 및 통합 테스트 케이스 시나리오를 정의합니다. (템플릿: [tests_template.md](file:///home/ejpark/workspace/scraper/docs/templates/tests_template.md))
-   - **`docs/issues/`**: 개발/운영 중 발생한 중대 장애 분석, 디버깅 과정 및 원인 파악과 조치 결과를 기록합니다. (단순 일회성 오류가 아닌 반복 장애/트러블슈팅 지식 보관용, 템플릿: [issues_template.md](file:///home/ejpark/workspace/scraper/docs/templates/issues_template.md))
+      - 장애 분석/트러블슈팅: `###-filename.issue.md` (템플릿: [issues_template.md](docs/templates/issues_template.md))
+      - 테스트 시나리오: `###-filename.test.md` (템플릿: [tests_template.md](docs/templates/tests_template.md))
    - **`CHANGELOG.md`**: 프로젝트 루트의 단일 파일로 릴리즈 버전 및 마일스톤 단위의 전체 변경 이력을 통합 관리합니다. (개별 changelog 폴더 분할은 지양)
 
 3. **코드 리뷰 작성 강제 및 자가 검증**:
