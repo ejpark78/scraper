@@ -33,4 +33,4 @@ RUN npm ci && npm cache clean --force
 # Copy source files
 COPY . .
 
-CMD ["npx", "ts-node", "src/workers/ScraperWorker.ts"]
+CMD ["npm", "run", "worker:scraper"]

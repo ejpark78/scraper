@@ -43,7 +43,10 @@
     "test:recursive": "ts-node ../../tests/recursive/RecursiveScrape.test.ts",
     "test:sites": "ts-node ../../tests/sites/dailydoseofds/Converter.test.ts && ts-node ../../tests/sites/geeknews/Converter.test.ts && ts-node ../../tests/sites/maily/josh/Converter.test.ts && ts-node ../../tests/sites/pytorch_kr/Converter.test.ts && ts-node ../../tests/sites/yozm/Converter.test.ts",
     "extract:article": "ts-node src/scripts/extract_article.ts",
-    "debug:html": "ts-node src/scripts/debug_html.ts"
+    "debug:html": "ts-node src/scripts/debug_html.ts",
+    "worker:scraper": "ts-node src/workers/ScraperWorker.ts",
+    "worker:converter": "ts-node src/workers/ConverterWorker.ts",
+    "worker:indexer": "ts-node src/workers/IndexerWorker.ts"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
