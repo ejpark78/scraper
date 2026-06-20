@@ -106,6 +106,9 @@ restart:
 up-viewer:
 	@$(MAKE) -C apps/viewer up
 
+down-viewer:
+	@$(MAKE) -C apps/viewer down
+
 # queue & utils (forward to apps/crawler)
 clear-queue:
 	@$(MAKE) -C apps/crawler clear-queue
