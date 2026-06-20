@@ -250,6 +250,11 @@ async function fetchErrors() {
 const loadingCrawlStats = ref<boolean>(false);
 const crawlStats = ref<any[]>([]);
 const selectedSite = ref<string>('all');
+const dateType = ref<string>('collected');
+
+watch(dateType, () => {
+  fetchCrawlStats();
+});
 
 // Helpers to get initial date strings in YYYY-MM-DD
 function getKstDateString(date: Date): string {
@@ -291,7 +296,7 @@ function formatCollectionName(collName: string): string {
 async function fetchCrawlStats() {
   loadingCrawlStats.value = true;
   try {
-    const response = await fetch(`/api/site-stats/search?startDate=${startDateInput.value}&endDate=${endDateInput.value}`);
+    const response = await fetch(`/api/site-stats/search?startDate=${startDateInput.value}&endDate=${endDateInput.value}&dateType=${dateType.value}`);
     const data = await response.json();
     crawlStats.value = data;
   } catch (err) {
@@ -486,12 +491,24 @@ async function addUrlQueue() {
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; flex-wrap: wrap; gap: 12px;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <h3 style="margin: 0; display: flex; align-items: center; gap: 6px;">
-              <span>📅</span> 일별 콘텐츠 수집 현황 (정제 완료 기준)
+              <span>📅</span> 일별 콘텐츠 현황
             </h3>
           </div>
           
           <!-- Date Filter Control -->
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0;">
+            <!-- Date Type Radio Group -->
+            <div style="display: flex; align-items: center; gap: 12px; background: #1e1e2e; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 10px; height: 28px; flex-shrink: 0; font-size: 11px;">
+              <label style="display: flex; align-items: center; gap: 4px; color: #fff; cursor: pointer; font-weight: 500; margin: 0;">
+                <input type="radio" value="collected" v-model="dateType" style="margin: 0; cursor: pointer; accent-color: var(--accent-color);" />
+                수집일
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px; color: #fff; cursor: pointer; font-weight: 500; margin: 0;">
+                <input type="radio" value="published" v-model="dateType" style="margin: 0; cursor: pointer; accent-color: var(--accent-color);" />
+                발행일
+              </label>
+            </div>
+
             <!-- Site Selector Dropdown -->
             <select v-model="selectedSite" style="background: #1e1e2e; border: 1px solid var(--border-color); border-radius: 4px; color: #fff; font-size: 11px; padding: 4px 8px; height: 28px; outline: none; cursor: pointer; font-weight: 500;">
               <option value="all">🌐 전체 사이트 (All)</option>

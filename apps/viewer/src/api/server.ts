@@ -115,6 +115,7 @@ app.get('/api/site-stats/search', async (req: Request, res: Response) => {
   try {
     const startDateStr = req.query.startDate as string;
     const endDateStr = req.query.endDate as string;
+    const dateType = req.query.dateType === 'published' ? 'publishedAt' : 'updatedAt';
 
     if (!startDateStr || !endDateStr) {
       return res.status(400).json({ error: 'startDate and endDate parameters are required (YYYY-MM-DD)' });
@@ -159,13 +160,13 @@ app.get('/api/site-stats/search', async (req: Request, res: Response) => {
     }
 
     for (const collName of targetCollections) {
-      console.log(`[Server] Aggregating daily stats for collection: ${collName}`);
+      console.log(`[Server] Aggregating daily stats for collection: ${collName} using field ${dateType}`);
       try {
         const coll = silverDb.collection(collName);
         const aggregationResult = await coll.aggregate([
           {
             $match: {
-              updatedAt: {
+              [dateType]: {
                 $exists: true,
                 $ne: null,
                 $gte: startUtc,
@@ -178,7 +179,7 @@ app.get('/api/site-stats/search', async (req: Request, res: Response) => {
               _id: {
                 $dateToString: {
                   format: "%Y-%m-%d",
-                  date: "$updatedAt",
+                  date: `$${dateType}`,
                   timezone: "Asia/Seoul"
                 }
               },
