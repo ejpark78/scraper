@@ -15,29 +15,19 @@ build:
 summary:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe summary --path "$(OUTPUT)"
 
+OVERWRITE_FLAG := $(if $(filter true,$(OVERWRITE)),--overwrite,)
+
 analyze:
-	@if [ -z "$(FILE)" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze --raw "$(RAW)"; \
-	else \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze "$(FILE)" --raw "$(RAW)"; \
-	fi
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze --raw "$(RAW)" $(OVERWRITE_FLAG)
 
 split:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --raw "$(RAW)" --path "$(OUTPUT)"
 
 to-html:
-	@if [ -z "$(FILE)" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-html --path "$(OUTPUT)"; \
-	else \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-html "$(FILE)" --path "$(OUTPUT)"; \
-	fi
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-html --path "$(OUTPUT)"
 
 to-md:
-	@if [ -z "$(FILE)" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-md --path "$(OUTPUT)"; \
-	else \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-md "$(FILE)" --path "$(OUTPUT)"; \
-	fi
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-md --path "$(OUTPUT)"
 
 translate_md:
 	@if [ -z "$(PDF)" ] || [ -z "$(RANGE)" ] || [ -z "$(OUT)" ]; then \

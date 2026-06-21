@@ -43,9 +43,9 @@
 ## 아키텍처
 - Command pattern: `commands.py` (EbookCommand ABC + 6 구현체)
 - `ChapterSplitter` — PDF(페이지) / EPUB(내부 문서) 분할
-- `HTMLConverter` — PDF → HTML (PyMuPDF)
-- `HTMLToMarkdownConverter` — HTML → MD (BeautifulSoup + markdownify)
-- `PDFTranslator` — PDF 페이지 번역
+- `HTMLConverter` (`html_parser.py`) — PDF → HTML (PyMuPDF)
+- `HTMLToMarkdownConverter` (`markdown_parser.py`) — HTML → MD (BeautifulSoup + markdownify)
+- `PDFTranslator` (`translator.py`) — PDF 페이지 번역
 - `get_output_path(filename)` — `.pdf`/`.epub` 제거한 순수 파일명 반환
 
 ## 설정 및 분석 (Analyze)

@@ -42,7 +42,7 @@ class PDFAnalyzer:
                 print(f"  {title} (p.{page})")
             print()
 
-    def analyze(self, pdf_path: str) -> BookProfile | None:
+    def analyze(self, pdf_path: str, overwrite: bool = False) -> BookProfile | None:
         path = Path(pdf_path)
         if not path.exists():
             print(f"File or directory not found: {pdf_path}")
@@ -60,10 +60,23 @@ class PDFAnalyzer:
             last_profile = None
             for f in all_files:
                 try:
-                    last_profile = self.analyze(str(f))
+                    last_profile = self.analyze(str(f), overwrite)
                 except Exception as e:
                     print(f"Failed to analyze {f.name}: {e}")
             return last_profile
+
+        # Early check for books.json existing configuration
+        if not overwrite:
+            books_path = path.parent / "books.json"
+            if books_path.exists():
+                try:
+                    with open(str(books_path), 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                    if path.name in config:
+                        print(f"  Config for '{path.name}' already exists in books.json. Skipping analysis (overwrite=False).")
+                        return None
+                except Exception as e:
+                    print(f"  Failed to read books.json for skip check: {e}")
 
         if path.suffix.lower() == ".epub":
             return self._analyze_epub(path)

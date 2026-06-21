@@ -7,10 +7,10 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 from .split_chapter import ChapterSplitter, BookProfile, ChapterDef, get_output_path
-from .pdf_to_html import HTMLConverter
-from .html_to_markdown import HTMLToMarkdownConverter
-from .pdf_translator import PDFTranslator
-from .pdf_analyzer import PDFAnalyzer
+from .html_parser import HTMLConverter
+from .markdown_parser import HTMLToMarkdownConverter
+from .translator import PDFTranslator
+from .analyzer import PDFAnalyzer
 
 
 # ── Utilities ──────────────────────────────────────────────────────────────
@@ -92,6 +92,8 @@ class AnalyzeCommand(EbookCommand):
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument("--analyze", nargs="?", const="all", default=None,
                             help="Analyze specified PDF/EPUB structure or directory")
+        parser.add_argument("--overwrite", action="store_true", default=False,
+                            help="Overwrite existing configuration in books.json if already analyzed")
 
     def execute(self, args: Namespace) -> None:
         target = args.analyze
@@ -113,7 +115,7 @@ class AnalyzeCommand(EbookCommand):
             print(f"Path not found: {target if target else args.raw}")
             sys.exit(1)
 
-        PDFAnalyzer().analyze(str(target_path))
+        PDFAnalyzer().analyze(str(target_path), overwrite=args.overwrite)
         sys.exit(0)
 
 
@@ -125,8 +127,8 @@ class ToHtmlCommand(EbookCommand):
         return "to_html"
 
     def add_arguments(self, parser: ArgumentParser) -> None:
-        parser.add_argument("--to-html", nargs="?", const="all",
-                            help="Convert PDF/EPUB to HTML (all files if no arg)")
+        parser.add_argument("--to-html", action="store_true",
+                            help="Convert all PDF/EPUB files under data directory to HTML")
 
     def _convert_pdf(self, pdf_path: Path) -> None:
         converter = HTMLConverter(str(pdf_path.parent))
@@ -148,20 +150,10 @@ class ToHtmlCommand(EbookCommand):
         book.close()
 
     def execute(self, args: Namespace) -> None:
-        raw = args.to_html
-        files: list[Path] = []
-        if raw == "all" or raw == "":
-            files = _collect_files(["pdf", "epub"], args.path)
-            if not files:
-                print(f"No PDF/EPUB files found in {args.path}")
-                sys.exit(0)
-        else:
-            f = _resolve_file_arg(raw, args.path)
-            if f:
-                files = [f]
-            else:
-                print(f"File not found: {raw}")
-                sys.exit(1)
+        files = _collect_files(["pdf", "epub"], args.path)
+        if not files:
+            print(f"No PDF/EPUB files found in {args.path}")
+            sys.exit(0)
 
         for f in files:
             print(f"Converting {f.name} to HTML...")
@@ -219,8 +211,8 @@ class ToMdCommand(EbookCommand):
         return "to_md"
 
     def add_arguments(self, parser: ArgumentParser) -> None:
-        parser.add_argument("--to-md", nargs="?", const="all",
-                            help="Convert HTML/PDF/EPUB to Markdown (all files if no arg)")
+        parser.add_argument("--to-md", action="store_true",
+                            help="Convert all HTML/PDF/EPUB files under data directory to Markdown")
 
     def _convert_html(self, html_path: Path) -> None:
         converter = HTMLToMarkdownConverter(str(html_path.parent))
@@ -249,20 +241,10 @@ class ToMdCommand(EbookCommand):
         book.close()
 
     def execute(self, args: Namespace) -> None:
-        raw = args.to_md
-        files: list[Path] = []
-        if raw == "all" or raw == "":
-            files = _collect_files(["html", "pdf", "epub"], args.path)
-            if not files:
-                print(f"No HTML/PDF/EPUB files found in {args.path}")
-                sys.exit(0)
-        else:
-            f = _resolve_file_arg(raw, args.path)
-            if f:
-                files = [f]
-            else:
-                print(f"File not found: {raw}")
-                sys.exit(1)
+        files = _collect_files(["html", "pdf", "epub"], args.path)
+        if not files:
+            print(f"No HTML/PDF/EPUB files found in {args.path}")
+            sys.exit(0)
 
         for f in files:
             print(f"Converting {f.name} to Markdown...")

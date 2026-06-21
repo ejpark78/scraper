@@ -1,6 +1,6 @@
 """Tests for TextCleaner — pure-function unit tests with no PDF dependency."""
 
-from src.pdf_to_markdown import TextCleaner
+from src.pdf_parser import TextCleaner
 
 
 def test_fix_linebreaks_hyphenation():

@@ -1,6 +1,6 @@
 """Tests for ColumnDetector — pure sorting logic with no PDF dependency."""
 
-from src.pdf_to_markdown import ColumnDetector
+from src.pdf_parser import ColumnDetector
 
 
 def _make_block(x0, y0, x1, y1):
