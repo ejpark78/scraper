@@ -8,7 +8,7 @@ BUILD_DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 VCS_REF := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 build:
-	BUILD_DATE=$(BUILD_DATE) VCS_REF=$(VCS_REF) $(COMPOSE) --profile runtime --profile tools --profile worker build
+	BUILD_DATE=$(BUILD_DATE) VCS_REF=$(VCS_REF) $(COMPOSE) --profile runtime --profile tools --profile worker --profile viewer build --no-cache
 
 up:
 	$(COMPOSE) --profile worker up -d

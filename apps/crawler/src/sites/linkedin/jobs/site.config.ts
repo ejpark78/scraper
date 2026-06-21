@@ -202,6 +202,7 @@ export const descriptor: SiteDescriptor = {
   name: 'LinkedIn Jobs',
   favicon: 'https://www.linkedin.com/favicon.ico',
   indexName: 'linkedin_jobs',
+  domain: 'www.linkedin.com',
 
   indexes: [
     { collection: 'bronze/linkedin.jobs', fields: { jobId: 1 }, options: { unique: true } },
@@ -231,6 +232,7 @@ export const descriptor: SiteDescriptor = {
     updateFilterKey: 'jobId',
     defaultSlack: 0,
     extractId: (url) => UrlUtils.extractJobId(url) || '',
+    urlsCollectionName: 'bronze/linkedin.job_urls',
     excludePatterns: ['favicon', 'login', 'logout', 'signup'],
     scrape: scrapeLinkedinJob,
     htmlSourcesToScan: ['bronze/linkedin.lists', 'bronze/linkedin.jobs'],
