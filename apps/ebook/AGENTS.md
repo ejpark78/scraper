@@ -1,15 +1,15 @@
 # 📘 Ebook Pipeline
 
 ## 개요
-(PDF, EPUB) → split → to-html → to-md → translate (en-ko)
+(PDF, EPUB) → split → (PDF, html) → to-html → (html) → to-md → (markdown) → translate (markdown: en-ko)
 
 ## 주요 명령어
 | 명령어 | 설명 |
 |--------|------|
+| `make ebook-analyze` | PDF/EPUB 파일 또는 디렉토리 하위의 파일들에서 구조 분석 및 TOC 추출 (`books.json` 저장) |
 | `make ebook-split` | PDF/EPUB → 챕터별 파일 분할 (PDF→PDF, EPUB→HTML) |
 | `make ebook-to-html` | PDF/EPUB → HTML 변환 |
-| `make ebook-to-md` | HTML/PDF/EPUB → Markdown 변환 |
-| `make ebook-analyze` | PDF/EPUB 파일 또는 디렉토리 하위의 파일들에서 구조 분석 및 TOC 추출 (`books.json` 저장) |
+| `make ebook-to-md` | HTML → Markdown 변환 |
 | `make ebook-test` | pytest 실행 |
 
 ## 출력 파일 규칙

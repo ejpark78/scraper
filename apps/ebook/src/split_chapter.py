@@ -123,5 +123,4 @@ class ChapterSplitter:
             chapter_paths.append(ch_path)
             print(f"  ✓ {title_clean}.html")
 
-        book.close()
         return chapter_paths
