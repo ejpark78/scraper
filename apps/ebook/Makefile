@@ -51,7 +51,7 @@ translate_batch:
 		echo "Usage: make translate_batch INPUT_DIR=<dir> [PROVIDER=gemini] [MODEL=...]"; \
 		exit 1; \
 	fi
-	$(COMPOSE) run --rm $(RUN_USER) -e GEMINI_API_KEY -e OPENAI_API_KEY ebook uv run poe translate_batch --input-dir "$(INPUT_DIR)" $(PROVIDER:%=--provider %) $(MODEL:%=--model %)
+	$(COMPOSE) run --rm $(RUN_USER) -e GEMINI_API_KEY -e OPENAI_API_KEY -e OPENCODE_API_KEY ebook uv run poe translate_batch --input-dir "$(INPUT_DIR)" $(PROVIDER:%=--provider %) $(MODEL:%=--model %)
 
 shell:
 	$(COMPOSE) run --rm $(RUN_USER) ebook bash
