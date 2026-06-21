@@ -28,7 +28,8 @@
     "distance": 100,
     "f_TPR": ["past 24 hours", "past 1 week"],
     "sortBy": "recent",
-    "spellCorrectionEnabled": true
+    "spellCorrectionEnabled": true,
+    "geo_enable": true
   },
   "search_targets": [
     {

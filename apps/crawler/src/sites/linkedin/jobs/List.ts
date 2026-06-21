@@ -307,10 +307,14 @@ export class LinkedInList {
             const redis = new Redis(redisUrl);
 
             let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
+            let geoEnable = true;
             try {
                 const configPath = path.join(__dirname, '..', '..', '..', '..', 'config', 'config.json');
                 if (fs.existsSync(configPath)) {
                     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                    if (config.global_settings && config.global_settings.geo_enable !== undefined) {
+                        geoEnable = config.global_settings.geo_enable;
+                    }
                     if (config.search_targets) {
                         targetLocations = config.search_targets
                             .filter((t: any) => t.enabled !== false)
@@ -364,7 +368,7 @@ export class LinkedInList {
                 }
 
                 const geo = parseGeo(location);
-                const matchesTarget = targetLocations.includes(geo);
+                const matchesTarget = !geoEnable || targetLocations.includes(geo);
                 
                 const jobMeta = {
                     jobId,

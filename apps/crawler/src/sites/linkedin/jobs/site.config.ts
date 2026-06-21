@@ -25,6 +25,7 @@ export interface GlobalSettings {
     distance?: string | number | (string | number)[];
     spellCorrectionEnabled?: boolean;
     start?: number;
+    geo_enable?: boolean;
 }
 
 export interface SearchTarget {

@@ -180,12 +180,16 @@ export abstract class BasePipeline<TMeta> {
                     const jobsList = JSON.parse(fs.readFileSync(urlsFile, 'utf-8'));
                     origCount = jobsList.length;
 
-                    // config.json에서 target locations 로드
+                    // config.json에서 target locations 및 geo_enable 로드
                     let targetLocations = ['South Korea', 'United Arab Emirates', 'Japan'];
+                    let geoEnable = true;
                     try {
                         const configPath = path.join(__dirname, '..', '..', 'config', 'config.json');
                         if (fs.existsSync(configPath)) {
                             const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                            if (config.global_settings && config.global_settings.geo_enable !== undefined) {
+                                geoEnable = config.global_settings.geo_enable;
+                            }
                             if (config.search_targets) {
                                 targetLocations = config.search_targets
                                 .filter((t: any) => t.enabled !== false)
@@ -195,8 +199,8 @@ export abstract class BasePipeline<TMeta> {
                     } catch (e) {}
 
                     jobsList.forEach((job: any) => {
-                        // 오직 DIRECT 소스이고 타겟 국가에 매칭되는 건들 중 아직 캐시에 없는 건만 대기열에 추가
-                        if (job.source === 'DIRECT' && targetLocations.includes(job.geo)) {
+                        // 오직 DIRECT 소스이고 (geo_enable이 비활성화되었거나 타겟 국가에 매칭되는) 건들 중 아직 캐시에 없는 건만 대기열에 추가
+                        if (job.source === 'DIRECT' && (!geoEnable || targetLocations.includes(job.geo))) {
                             const id = job.jobId;
                             if (!id) return;
                             if (!cacheSet.has(id) && !processedIds.has(id)) {
