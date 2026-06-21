@@ -29,7 +29,7 @@
     "f_TPR": ["past 24 hours", "past 1 week"],
     "sortBy": "recent",
     "spellCorrectionEnabled": true,
-    "geo_enable": true
+    "geo_enable": false
   },
   "search_targets": [
     {
