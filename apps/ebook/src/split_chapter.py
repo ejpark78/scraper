@@ -1,14 +1,14 @@
-"""split_chapter.py — PDF chapter splitter.
+"""split_chapter.py — PDF/EPUB chapter splitter.
 
-Extracts page ranges from a PDF file to create separate chapter PDF files.
+Extracts page ranges from PDF files or chapter sections from EPUB files.
 """
 
 from pathlib import Path
 import re
+from dataclasses import dataclass
+
 import fitz
 
-# Reuse existing data classes or structure
-from dataclasses import dataclass
 
 @dataclass
 class ChapterDef:
@@ -16,6 +16,7 @@ class ChapterDef:
     start_page: int
     end_page: int
     include: bool = True
+
 
 @dataclass
 class BookProfile:
@@ -32,25 +33,34 @@ def sanitize_filename(name: str) -> str:
     return name[:120]
 
 
-def get_book_title(pdf_name: str) -> str:
-    name = pdf_name.replace('.pdf', '')
-    return name.strip()
+def get_output_path(filename: str) -> str:
+    name = filename.lower()
+    for ext in ('.pdf', '.epub'):
+        if name.endswith(ext):
+            return filename[:-len(ext)].strip()
+    return filename.strip()
 
 
 class ChapterSplitter:
-    """Split a PDF into chapter-level PDF files."""
+    """Split a PDF or EPUB into chapter-level files."""
 
-    def __init__(self, data_dir: str, output_dir: str):
-        self.data_dir = Path(data_dir)
+    def __init__(self, raw_dir: str, output_dir: str):
+        self.raw_dir = Path(raw_dir)
         self.output_dir = Path(output_dir)
 
-    def split(self, pdf_name: str, profile: BookProfile) -> list[Path]:
-        pdf_path = self.data_dir / pdf_name
-        if not pdf_path.exists():
-            print(f"  ✗ File not found: {pdf_path}")
+    def split(self, filename: str, profile: BookProfile) -> list[Path]:
+        filepath = self.raw_dir / filename
+        if not filepath.exists():
+            print(f"  ✗ File not found: {filepath}")
             return []
 
-        book_dir = self.output_dir / get_book_title(pdf_name)
+        if filename.lower().endswith('.epub'):
+            return self._split_epub(filepath, profile)
+        return self._split_pdf(filename, profile)
+
+    def _split_pdf(self, pdf_name: str, profile: BookProfile) -> list[Path]:
+        pdf_path = self.raw_dir / pdf_name
+        book_dir = self.output_dir / get_output_path(pdf_name)
         book_dir.mkdir(parents=True, exist_ok=True)
 
         doc = fitz.open(str(pdf_path))
@@ -84,4 +94,34 @@ class ChapterSplitter:
             print(f"  ✓ {ch_filename}")
 
         doc.close()
+        return chapter_paths
+
+    def _split_epub(self, epub_path: Path, profile: BookProfile) -> list[Path]:
+        import ebooklib
+        from ebooklib import epub
+
+        book = epub.read_epub(str(epub_path))
+        book_dir = self.output_dir / get_output_path(epub_path.name)
+        book_dir.mkdir(parents=True, exist_ok=True)
+
+        docs = list(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
+        chapter_paths = []
+
+        for ch in profile.chapters:
+            if not ch.include:
+                continue
+
+            idx = ch.start_page - 1
+            if idx < 0 or idx >= len(docs):
+                print(f"  ✗ Invalid index for '{ch.title}': {ch.start_page}")
+                continue
+
+            content = docs[idx].get_content()
+            title_clean = sanitize_filename(ch.title)
+            ch_path = book_dir / f"{title_clean}.html"
+            ch_path.write_bytes(content)
+            chapter_paths.append(ch_path)
+            print(f"  ✓ {title_clean}.html")
+
+        book.close()
         return chapter_paths

@@ -1,7 +1,7 @@
 """Tests for split_chapter utility functions and dataclasses."""
 
 from pathlib import Path
-from src.split_chapter import sanitize_filename, get_book_title, ChapterDef, BookProfile
+from src.split_chapter import sanitize_filename, get_output_path, ChapterDef, BookProfile
 
 
 def test_sanitize_filename_removes_special_chars():
@@ -22,15 +22,16 @@ def test_sanitize_filename_truncates():
     assert len(result) <= 120
 
 
-def test_get_book_title_removes_author():
-    assert get_book_title("The Book - Tom Taulli.pdf") == "The Book"
-    assert get_book_title("Learning Python - Addy Osmani.pdf") == "Learning Python"
-    assert get_book_title("Programming 101.pdf") == "Programming 101"
+def test_get_output_path_strips_extensions():
+    assert get_output_path("The Book - Tom Taulli.pdf") == "The Book - Tom Taulli"
+    assert get_output_path("Learning Python - Addy Osmani.pdf") == "Learning Python - Addy Osmani"
+    assert get_output_path("Programming 101.pdf") == "Programming 101"
+    assert get_output_path("My Book.epub") == "My Book"
 
 
-def test_get_book_title_handles_no_author():
-    assert get_book_title("simple.pdf") == "simple"
-    assert get_book_title("My Book Title.pdf") == "My Book Title"
+def test_get_output_path_no_extension():
+    assert get_output_path("simple.pdf") == "simple"
+    assert get_output_path("My Book Title.pdf") == "My Book Title"
 
 
 def test_chapter_def_defaults():

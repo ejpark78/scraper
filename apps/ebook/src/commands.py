@@ -6,8 +6,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-from .split_chapter import ChapterSplitter, BookProfile, ChapterDef, get_book_title
-from .pdf_to_markdown import ChapterConverter
+from .split_chapter import ChapterSplitter, BookProfile, ChapterDef, get_output_path
 from .pdf_to_html import HTMLConverter
 from .html_to_markdown import HTMLToMarkdownConverter
 from .pdf_translator import PDFTranslator
@@ -23,12 +22,13 @@ def load_books_config(books_json_path: Path) -> dict:
     return {}
 
 
-def _collect_files(suffix: str, *dirs: str) -> list[Path]:
+def _collect_files(suffixes: list[str], *dirs: str) -> list[Path]:
     files = []
-    for d in dirs:
-        search_dir = Path(d)
-        if search_dir.exists():
-            files.extend(list(search_dir.glob(f"**/*.{suffix}")))
+    for suf in suffixes:
+        for d in dirs:
+            search_dir = Path(d)
+            if search_dir.exists():
+                files.extend(list(search_dir.glob(f"**/*.{suf}")))
     files = [p for p in files if "raw" not in p.resolve().parts]
     files = list({p.resolve(): p for p in files}.values())
     return files
@@ -50,7 +50,7 @@ class EbookCommand(ABC):
     @property
     @abstractmethod
     def flag(self) -> str:
-        """Primary argparse attribute name (e.g. 'summary', 'pdf2html')."""
+        """Primary argparse attribute name (e.g. 'summary', 'to_html')."""
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         """Register CLI arguments. Override if the command has flags."""
@@ -100,35 +100,58 @@ class AnalyzeCommand(EbookCommand):
         sys.exit(0)
 
 
-# ── PDF → HTML ─────────────────────────────────────────────────────────────
+# ── To HTML (PDF/EPUB → HTML) ──────────────────────────────────────────────
 
-class Pdf2HtmlCommand(EbookCommand):
+class ToHtmlCommand(EbookCommand):
     @property
     def flag(self) -> str:
-        return "pdf2html"
+        return "to_html"
 
     def add_arguments(self, parser: ArgumentParser) -> None:
-        parser.add_argument("--pdf2html", nargs="?", const="all",
-                            help="Directly convert specified PDF (or all PDFs if empty/all) to HTML")
+        parser.add_argument("--to-html", nargs="?", const="all",
+                            help="Convert PDF/EPUB to HTML (all files if no arg)")
+
+    def _convert_pdf(self, pdf_path: Path) -> None:
+        converter = HTMLConverter(str(pdf_path.parent))
+        converter.convert(pdf_path)
+
+    def _convert_epub(self, epub_path: Path) -> None:
+        import ebooklib
+        from ebooklib import epub
+
+        book = epub.read_epub(str(epub_path))
+        out_dir = epub_path.parent
+        docs = list(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
+        for item in docs:
+            content = item.get_content()
+            name = Path(item.get_name()).name
+            ch_path = out_dir / name
+            ch_path.write_bytes(content)
+            print(f"  ✓ Extracted HTML: {name}")
+        book.close()
 
     def execute(self, args: Namespace) -> None:
-        converter = HTMLConverter(args.path)
-        raw = args.pdf2html
+        raw = args.to_html
+        files: list[Path] = []
         if raw == "all" or raw == "":
-            pdf_files = _collect_files("pdf", args.path)
-            if not pdf_files:
-                print(f"No PDF files found in {args.path}")
+            files = _collect_files(["pdf", "epub"], args.path)
+            if not files:
+                print(f"No PDF/EPUB files found in {args.path}")
                 sys.exit(0)
-            for pdf_file in pdf_files:
-                print(f"Converting {pdf_file.name} to HTML...")
-                converter.convert(pdf_file)
         else:
-            pdf_file = _resolve_file_arg(raw, args.path)
-            if pdf_file:
-                converter.convert(pdf_file)
+            f = _resolve_file_arg(raw, args.path)
+            if f:
+                files = [f]
             else:
                 print(f"File not found: {raw}")
                 sys.exit(1)
+
+        for f in files:
+            print(f"Converting {f.name} to HTML...")
+            if f.suffix.lower() == ".epub":
+                self._convert_epub(f)
+            else:
+                self._convert_pdf(f)
         sys.exit(0)
 
 
@@ -171,73 +194,100 @@ class TranslateCommand(EbookCommand):
         sys.exit(0)
 
 
-# ── HTML → Markdown ────────────────────────────────────────────────────────
+# ── To Markdown (HTML/PDF/EPUB → MD) ───────────────────────────────────────
 
-class Html2MdCommand(EbookCommand):
+class ToMdCommand(EbookCommand):
     @property
     def flag(self) -> str:
-        return "html2md"
+        return "to_md"
 
     def add_arguments(self, parser: ArgumentParser) -> None:
-        parser.add_argument("--html2md", nargs="?", const="all",
-                            help="Convert specified HTML (or all HTMLs if empty/all) to Markdown")
+        parser.add_argument("--to-md", nargs="?", const="all",
+                            help="Convert HTML/PDF/EPUB to Markdown (all files if no arg)")
+
+    def _convert_html(self, html_path: Path) -> None:
+        converter = HTMLToMarkdownConverter(str(html_path.parent))
+        converter.convert(html_path)
+
+    def _convert_pdf(self, pdf_path: Path) -> None:
+        print(f"  Converting PDF→HTML→MD: {pdf_path.name}")
+        html_converter = HTMLConverter(str(pdf_path.parent))
+        html_path = html_converter.convert(pdf_path)
+        self._convert_html(html_path)
+
+    def _convert_epub(self, epub_path: Path) -> None:
+        import ebooklib
+        from ebooklib import epub
+
+        book = epub.read_epub(str(epub_path))
+        docs = list(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
+        md_converter = HTMLToMarkdownConverter(str(epub_path.parent))
+        for item in docs:
+            content = item.get_content()
+            name = Path(item.get_name()).name
+            html_path = epub_path.parent / name
+            html_path.write_bytes(content)
+            print(f"  Extracted HTML: {name}")
+            md_converter.convert(html_path)
+        book.close()
 
     def execute(self, args: Namespace) -> None:
-        converter = HTMLToMarkdownConverter(args.path)
-        raw = args.html2md
+        raw = args.to_md
+        files: list[Path] = []
         if raw == "all" or raw == "":
-            html_files = _collect_files("html", args.path)
-            if not html_files:
-                print(f"No HTML files found in {args.path}")
+            files = _collect_files(["html", "pdf", "epub"], args.path)
+            if not files:
+                print(f"No HTML/PDF/EPUB files found in {args.path}")
                 sys.exit(0)
-            for html_file in html_files:
-                print(f"Converting {html_file.name} to Markdown...")
-                converter.convert(html_file)
         else:
-            html_file = _resolve_file_arg(raw, args.path)
-            if html_file:
-                converter.convert(html_file)
+            f = _resolve_file_arg(raw, args.path)
+            if f:
+                files = [f]
             else:
                 print(f"File not found: {raw}")
                 sys.exit(1)
+
+        for f in files:
+            print(f"Converting {f.name} to Markdown...")
+            if f.suffix.lower() == ".epub":
+                self._convert_epub(f)
+            elif f.suffix.lower() == ".pdf":
+                self._convert_pdf(f)
+            else:
+                self._convert_html(f)
         sys.exit(0)
 
 
-# ── Split / PDF → Markdown ─────────────────────────────────────────────────
+# ── Split ──────────────────────────────────────────────────────────────────
 
-class SplitOrPdf2MdCommand(EbookCommand):
+class SplitCommand(EbookCommand):
     @property
     def flag(self) -> str:
         return "split"
 
-    def matches(self, args: Namespace) -> bool:
-        return args.split or args.pdf2md
-
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument("--split", action="store_true",
-                            help="Split PDFs into chapter PDFs")
-        parser.add_argument("--pdf2md", action="store_true",
-                            help="Convert split chapter PDFs to markdown")
+                            help="Split PDF/EPUB into chapter files")
 
     def execute(self, args: Namespace) -> None:
-        raw_pdf_path = Path(args.raw_pdf)
+        raw_path = Path(args.raw)
         output_path = Path(args.path)
         books_cfg = load_books_config(Path("books.json"))
 
-        pdf_files = list(raw_pdf_path.glob("*.pdf"))
-        if not pdf_files:
-            print(f"No PDF files found in {args.raw_pdf}")
+        source_files = list(raw_path.glob("*.pdf")) + list(raw_path.glob("*.epub"))
+        if not source_files:
+            print(f"No PDF/EPUB files found in {args.raw}")
             sys.exit(0)
 
-        splitter = ChapterSplitter(args.raw_pdf, args.path)
+        splitter = ChapterSplitter(args.raw, args.path)
 
-        for pdf in pdf_files:
-            pdf_name = pdf.name
-            print(f"\nProcessing {pdf_name}...")
+        for src in source_files:
+            name = src.name
+            print(f"\nProcessing {name}...")
 
-            cfg = books_cfg.get(pdf_name)
+            cfg = books_cfg.get(name)
             if not cfg:
-                print(f"  No configuration found for {pdf_name}. Skip.")
+                print(f"  No configuration found for {name}. Skip.")
                 continue
 
             chapters = []
@@ -259,31 +309,13 @@ class SplitOrPdf2MdCommand(EbookCommand):
                 ))
 
             profile = BookProfile(
-                path=pdf,
-                title=get_book_title(pdf_name),
+                path=src,
+                title=get_output_path(name),
                 page_count=0,
                 chapters=chapters,
             )
 
-            chapter_pdfs: list[Path] = []
-            if args.split:
-                print("  Splitting chapters...")
-                chapter_pdfs = splitter.split(pdf_name, profile)
-            else:
-                book_dir = output_path / get_book_title(pdf_name)
-                for ch in profile.chapters:
-                    if ch.include:
-                        ch_path = book_dir / f"{ch.title}.pdf"
-                        if ch_path.exists():
-                            chapter_pdfs.append(ch_path)
-
-            if args.pdf2md:
-                print("  Converting split chapters to markdown...")
-                converter = ChapterConverter(output_path)
-                for ch_pdf in chapter_pdfs:
-                    if ch_pdf.exists():
-                        print(f"    Converting {ch_pdf.name}...")
-                        converter.convert(ch_pdf)
+            chapter_paths = splitter.split(name, profile)
 
         sys.exit(0)
 
@@ -293,8 +325,8 @@ class SplitOrPdf2MdCommand(EbookCommand):
 COMMANDS: list[EbookCommand] = [
     SummaryCommand(),
     AnalyzeCommand(),
-    Pdf2HtmlCommand(),
+    ToHtmlCommand(),
     TranslateCommand(),
-    Html2MdCommand(),
-    SplitOrPdf2MdCommand(),
+    ToMdCommand(),
+    SplitCommand(),
 ]

@@ -5,9 +5,9 @@ COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_D
 
 RUN_USER ?= --user $$(id -u):$$(id -g)
 OUTPUT ?= data/output
-RAW_PDF ?= data/raw
+RAW ?= data/raw
 
-.PHONY: build summary analyze split pdf2md pdf2html translate_md html2md translate_batch shell test
+.PHONY: build summary analyze split to-html to-md translate_md translate_batch shell test
 
 build:
 	$(COMPOSE) build --no-cache ebook
@@ -16,23 +16,27 @@ summary:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe summary --path "$(OUTPUT)"
 
 analyze:
-	@if [ -z "$(PDF)" ]; then \
-		echo "Usage: make analyze PDF=<path_to_pdf>"; \
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make analyze FILE=<path>"; \
 		exit 1; \
 	fi
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze "$(PDF)"
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze "$(FILE)"
 
 split:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --raw-pdf "$(RAW_PDF)" --path "$(OUTPUT)"
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --raw "$(RAW)" --path "$(OUTPUT)"
 
-pdf2md:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe pdf2md --path "$(OUTPUT)"
-
-pdf2html:
-	@if [ -z "$(PDF)" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe pdf2html --path "$(OUTPUT)"; \
+to-html:
+	@if [ -z "$(FILE)" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-html --path "$(OUTPUT)"; \
 	else \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe pdf2html "$(PDF)" --path "$(OUTPUT)"; \
+		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-html "$(FILE)" --path "$(OUTPUT)"; \
+	fi
+
+to-md:
+	@if [ -z "$(FILE)" ]; then \
+		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-md --path "$(OUTPUT)"; \
+	else \
+		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-md "$(FILE)" --path "$(OUTPUT)"; \
 	fi
 
 translate_md:
@@ -41,13 +45,6 @@ translate_md:
 		exit 1; \
 	fi
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe translate_md "$(PDF)" --translate-pages "$(RANGE)" --translate-out "$(OUT)"
-
-html2md:
-	@if [ -z "$(HTML)" ]; then \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe html2md --path "$(OUTPUT)"; \
-	else \
-		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe html2md "$(HTML)" --path "$(OUTPUT)"; \
-	fi
 
 translate_batch:
 	@if [ -z "$(INPUT_DIR)" ]; then \

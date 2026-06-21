@@ -14,16 +14,16 @@ dependencies = [
     "openai>=1.70.0",
     "python-dotenv>=1.1.0",
     "pytest>=8.3.5",
+    "ebooklib>=0.18",
 ]
 
 [tool.poe.tasks]
 summary = "python -m src.process --summary"
 analyze = "python -m src.process --analyze"
 split = "python -m src.process --split"
-pdf2md = "python -m src.process --pdf2md"
-pdf2html = "python -m src.process --pdf2html"
+to-html = "python -m src.process --to-html"
+to-md = "python -m src.process --to-md"
 translate_md = "python -m src.process --translate-md"
-html2md = "python -m src.process --html2md"
 translate_batch = "python -m src.translate_batch"
 test = "pytest tests/ -v"
 
