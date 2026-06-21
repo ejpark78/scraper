@@ -4,7 +4,7 @@ ROOT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_DIR)/compose.yml
 
 RUN_USER ?= --user $$(id -u):$$(id -g)
-OUTPUT ?= data/output
+OUT_PATH ?= data/output
 RAW ?= data/raw
 
 .PHONY: build summary analyze split to-html to-md translate_md translate_batch shell test
@@ -13,7 +13,7 @@ build:
 	$(COMPOSE) build --no-cache ebook
 
 summary:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe summary --path "$(OUTPUT)"
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe summary --path "$(OUT_PATH)"
 
 OVERWRITE_FLAG := $(if $(filter true,$(OVERWRITE)),--overwrite,)
 
@@ -21,13 +21,13 @@ analyze:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze --raw "$(RAW)" $(OVERWRITE_FLAG)
 
 split:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --raw "$(RAW)" --path "$(OUTPUT)"
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --raw "$(RAW)" --path "$(OUT_PATH)"
 
 to-html:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-html --path "$(OUTPUT)"
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-html --path "$(OUT_PATH)"
 
 to-md:
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-md --path "$(OUTPUT)"
+	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-md --path "$(OUT_PATH)"
 
 translate_md:
 	@if [ -z "$(PDF)" ] || [ -z "$(RANGE)" ] || [ -z "$(OUT)" ]; then \

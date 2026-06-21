@@ -4,13 +4,14 @@
 (PDF, EPUB) → split → (PDF, html) → to-html → (html) → to-md → (markdown) → translate (markdown: en-ko)
 
 ## 주요 명령어
-| 명령어 | 설명 |
-|--------|------|
-| `make ebook-analyze` | PDF/EPUB 파일 또는 디렉토리 하위의 파일들에서 구조 분석 및 TOC 추출 (`books.json` 저장) |
-| `make ebook-split` | PDF/EPUB → 챕터별 파일 분할 (PDF→PDF, EPUB→HTML) |
-| `make ebook-to-html` | PDF/EPUB → HTML 변환 |
-| `make ebook-to-md` | HTML → Markdown 변환 |
-| `make ebook-test` | pytest 실행 |
+| 명령어 | 기본값 파라미터가 명시된 Make 실행 형식 | 설명 |
+|--------|-----------------------------------------|------|
+| `make ebook-analyze` | `make -C apps/ebook analyze RAW=data/raw OVERWRITE=false` | PDF/EPUB 파일 또는 디렉토리 하위의 파일들에서 구조 분석 및 TOC 추출 (`books.json` 저장) |
+| `make ebook-split` | `make -C apps/ebook split RAW=data/raw OUT_PATH=data/output` | PDF/EPUB → 챕터별 파일 분할 (PDF→PDF, EPUB→HTML) |
+| `make ebook-to-html` | `make -C apps/ebook to-html OUT_PATH=data/output` | PDF/EPUB → HTML 변환 |
+| `make ebook-to-md` | `make -C apps/ebook to-md OUT_PATH=data/output` | HTML → Markdown 변환 |
+| `make ebook-test` | `make -C apps/ebook test` | pytest 실행 |
+| **통합 파이프라인 검증** | `make -C apps/ebook build && make -C apps/ebook split RAW=data/raw OUT_PATH=data/output && make -C apps/ebook to-html OUT_PATH=data/output && make -C apps/ebook to-md OUT_PATH=data/output` | 이미지 빌드부터 분할, HTML 변환, Markdown 최종 변환까지 전체 파이프라인을 일괄 통합 테스트 및 검증 |
 
 ## 출력 파일 규칙
 - 변환 결과는 **입력 파일과 동일한 디렉토리**에 저장
@@ -29,9 +30,8 @@
 | `--to-md` | HTML→MD 2단계 (중간html 유지) | HTML→MD 2단계 | HTMLToMarkdownConverter |
 
 ## Makefile 변수
-- `OUTPUT=data/output` — split/convert 작업 디렉토리
-- `RAW=data/raw` — 원본 PDF/EPUB 디렉토리
-- `FILE=<path>` — 단일 파일 처리 시 파일 경로
+- `OUT_PATH=data/output` — split/convert 작업 디렉토리 (파이썬 스크립트의 `--path` 인자 매핑)
+- `RAW=data/raw` — 원본 PDF/EPUB 디렉토리 (파이썬 스크립트의 `--raw` 인자 매핑)
 
 ## Permission 이슈 해결
 - `ENV UV_FROZEN=1` — `uv run`이 lock 파일 검증/갱신 시도로 발생하는 Permission denied 해결
