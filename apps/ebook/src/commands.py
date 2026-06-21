@@ -61,10 +61,8 @@ class EbookCommand(ABC):
 
     def matches(self, args: Namespace) -> bool:
         val = getattr(args, self.flag, None)
-        if val is None:
+        if val is None or val is False:
             return False
-        if isinstance(val, bool):
-            return val
         return True
 
 
@@ -92,11 +90,30 @@ class AnalyzeCommand(EbookCommand):
         return "analyze"
 
     def add_arguments(self, parser: ArgumentParser) -> None:
-        parser.add_argument("--analyze",
-                            help="Analyze specified PDF structure interactively")
+        parser.add_argument("--analyze", nargs="?", const="all", default=None,
+                            help="Analyze specified PDF/EPUB structure or directory")
 
     def execute(self, args: Namespace) -> None:
-        PDFAnalyzer().analyze(args.analyze)
+        target = args.analyze
+        if target is True or target == "all" or target == "" or target is None:
+            target_path = Path(args.raw)
+        else:
+            resolved = _resolve_file_arg(target, args.raw)
+            if resolved:
+                target_path = resolved
+            else:
+                target_path = Path(target)
+                if not target_path.exists():
+                    # Fallback to output directory check
+                    resolved_out = _resolve_file_arg(target, args.path)
+                    if resolved_out:
+                        target_path = resolved_out
+
+        if not target_path.exists():
+            print(f"Path not found: {target if target else args.raw}")
+            sys.exit(1)
+
+        PDFAnalyzer().analyze(str(target_path))
         sys.exit(0)
 
 
@@ -272,7 +289,7 @@ class SplitCommand(EbookCommand):
     def execute(self, args: Namespace) -> None:
         raw_path = Path(args.raw)
         output_path = Path(args.path)
-        books_cfg = load_books_config(Path("books.json"))
+        books_cfg = load_books_config(raw_path / "books.json")
 
         source_files = list(raw_path.glob("*.pdf")) + list(raw_path.glob("*.epub"))
         if not source_files:

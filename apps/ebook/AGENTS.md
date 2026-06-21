@@ -9,6 +9,7 @@
 | `make ebook-split` | PDF/EPUB → 챕터별 파일 분할 (PDF→PDF, EPUB→HTML) |
 | `make ebook-to-html` | PDF/EPUB → HTML 변환 |
 | `make ebook-to-md` | HTML/PDF/EPUB → Markdown 변환 |
+| `make ebook-analyze` | PDF/EPUB 파일 또는 디렉토리 하위의 파일들에서 구조 분석 및 TOC 추출 (`books.json` 저장) |
 | `make ebook-test` | pytest 실행 |
 
 ## 출력 파일 규칙
@@ -47,6 +48,11 @@
 - `PDFTranslator` — PDF 페이지 번역
 - `get_output_path(filename)` — `.pdf`/`.epub` 제거한 순수 파일명 반환
 
-## 설정
-- `books.json`: 파일명을 key, `chapters[]`에 title/start/end/include
-- `--path data/output`: split 결과물 및 convert 입출력 경로
+## 설정 및 분석 (Analyze)
+- `books.json`: 파일명을 key, `chapters[]`에 title/start/end/include 정보를 보관합니다.
+- `--analyze` / `make ebook-analyze`: 
+  - 단일 파일 또는 디렉토리 경로를 인자로 받습니다.
+  - 디렉토리가 전달될 경우, 하위의 모든 `.pdf` 및 `.epub` 파일을 재귀적으로 검색하여 TOC를 분석합니다.
+  - 대화형 TTY 환경이 아닐 경우(배치 혹은 비대화형 실행), 사용자 입력창을 띄우지 않고 기본 추천 챕터 범위를 자동으로 계산해 `books.json`에 즉각 저장합니다.
+  - 기존에 `books.json`에 이미 분석된 데이터가 존재하는 도서는 비대화형 모드에서는 덮어쓰지 않고 스킵하여 안전하게 보존합니다.
+- `--path data/output`: split 결과물 및 convert 입출력 경로로 사용됩니다.

@@ -42,11 +42,31 @@ class PDFAnalyzer:
                 print(f"  {title} (p.{page})")
             print()
 
-    def analyze(self, pdf_path: str) -> BookProfile:
+    def analyze(self, pdf_path: str) -> BookProfile | None:
         path = Path(pdf_path)
         if not path.exists():
-            print(f"File not found: {pdf_path}")
+            print(f"File or directory not found: {pdf_path}")
             sys.exit(1)
+
+        if path.is_dir():
+            print(f"Scanning directory: {path}")
+            pdf_files = sorted(path.rglob("*.pdf"))
+            epub_files = sorted(path.rglob("*.epub"))
+            all_files = pdf_files + epub_files
+            if not all_files:
+                print(f"No PDF or EPUB files found under: {path}")
+                return None
+            
+            last_profile = None
+            for f in all_files:
+                try:
+                    last_profile = self.analyze(str(f))
+                except Exception as e:
+                    print(f"Failed to analyze {f.name}: {e}")
+            return last_profile
+
+        if path.suffix.lower() == ".epub":
+            return self._analyze_epub(path)
 
         doc = fitz.open(str(path))
 
@@ -117,10 +137,66 @@ class PDFAnalyzer:
         doc.close()
 
         # Save configuration
-        self._save_books_config(profile)
+        self._save_books_config(profile, path.parent)
         print(f"\nSaved to books.json")
         print(f"Estimated body font size: {profile.body_font_size:.1f}pt")
 
+        return profile
+
+    def _analyze_epub(self, epub_path: Path) -> BookProfile:
+        import ebooklib
+        from ebooklib import epub
+        from bs4 import BeautifulSoup
+        import warnings
+        from bs4 import XMLParsedAsHTMLWarning
+
+        warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+        book = epub.read_epub(str(epub_path))
+        docs = list(book.get_items_of_type(ebooklib.ITEM_DOCUMENT))
+
+        profile = BookProfile(
+            path=epub_path,
+            title=epub_path.name,
+            page_count=len(docs),
+            chapters=[]
+        )
+
+        print(f"\n{'=' * 60}")
+        print(f"  Analyzing EPUB: {epub_path.name} ({len(docs)} documents)")
+        print(f"{'=' * 60}\n")
+
+        for idx, item in enumerate(docs):
+            content = item.get_content()
+            soup = BeautifulSoup(content, "lxml")
+            
+            # Find title
+            title = None
+            h1 = soup.find("h1")
+            if h1:
+                title = h1.get_text().strip()
+            if not title:
+                title_tag = soup.find("title")
+                if title_tag:
+                    title = title_tag.get_text().strip()
+            if not title:
+                title = Path(item.get_name()).stem
+
+            is_excluded = any(ex.lower() in title.lower() for ex in EXCLUDE_TITLES)
+            include = not is_excluded
+
+            # Using 1-indexed document positions for start_page / end_page mapping in EPUB
+            profile.chapters.append(ChapterDef(
+                title=title,
+                start_page=idx + 1,
+                end_page=idx + 1,
+                include=include
+            ))
+            
+            print(f"  [{idx+1:2d}] {title:60s} (Include: {include})")
+
+        self._save_books_config(profile, epub_path.parent)
+        print(f"\nSaved to books.json")
         return profile
 
     def _build_part_chapters(self, toc: list, total_pages: int) -> list:
@@ -247,8 +323,8 @@ class PDFAnalyzer:
         sizes.sort()
         return sizes[len(sizes) // 2]
 
-    def _save_books_config(self, profile: BookProfile):
-        books_path = Path("books.json")
+    def _save_books_config(self, profile: BookProfile, raw_dir: Path):
+        books_path = raw_dir / "books.json"
         config = {}
         if books_path.exists():
             with open(str(books_path), 'r', encoding='utf-8') as f:
@@ -256,10 +332,14 @@ class PDFAnalyzer:
 
         pdf_name = profile.path.name
         existing = config.get(pdf_name)
-        if existing and sys.stdin.isatty():
-            ans = input(f"  Config for '{pdf_name}' already exists in books.json. Overwrite? [y/N] ").strip().lower()
-            if not ans.startswith('y'):
-                print("  Skipped saving to books.json.")
+        if existing:
+            if sys.stdin.isatty():
+                ans = input(f"  Config for '{pdf_name}' already exists in books.json. Overwrite? [y/N] ").strip().lower()
+                if not ans.startswith('y'):
+                    print("  Skipped saving to books.json.")
+                    return
+            else:
+                print(f"  Config for '{pdf_name}' already exists in books.json. Skipping overwrite (non-interactive mode).")
                 return
 
         chapters = []

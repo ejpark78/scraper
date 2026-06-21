@@ -17,10 +17,10 @@ summary:
 
 analyze:
 	@if [ -z "$(FILE)" ]; then \
-		echo "Usage: make analyze FILE=<path>"; \
-		exit 1; \
+		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze --raw "$(RAW)"; \
+	else \
+		$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze "$(FILE)" --raw "$(RAW)"; \
 	fi
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe analyze "$(FILE)"
 
 split:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe split --raw "$(RAW)" --path "$(OUTPUT)"
