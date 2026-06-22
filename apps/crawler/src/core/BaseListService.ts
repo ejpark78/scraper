@@ -120,7 +120,6 @@ export abstract class BaseListService {
                 url,
                 attempt: 1,
                 priority,
-                recursive: AppConfig.RECURSIVE_SCRAPE,
             };
             if (scraperSlackVal > 0) {
                 payload.scraperSlack = scraperSlackVal;

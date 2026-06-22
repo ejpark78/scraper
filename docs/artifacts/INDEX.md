@@ -10,4 +10,5 @@
 |   |         | [045-ebook-refactoring.plan.md](045-ebook-refactoring.plan.md) | 4 (plan 1 + task 1 + review 1 + walkthrough 1) |
 |   |         | [046-ebook-oop-refactoring.plan.md](046-ebook-oop-refactoring.plan.md) | 4 (plan 1 + task 1 + review 1 + walkthrough 1) |
 |   |         | [047-ebook-changelog-separation.plan.md](047-ebook-changelog-separation.plan.md) | 4 (plan 1 + task 1 + review 1 + walkthrough 1) |
+|   |         | [048-remove-recursive-scrape.plan.md](048-remove-recursive-scrape.plan.md) | 1 (plan 1) |
 

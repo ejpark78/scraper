@@ -19,13 +19,10 @@ restart:
 	SCALE=$(SCALE) $(COMPOSE) up -d worker scraper converter indexer
 
 # sites grouped targets
-list: RECURSIVE_SCRAPE=true
 list: gpt-list gn-list ddds-list pk-list ab-list up-list mj-list yz-list 
 
-refresh-urls: RECURSIVE_SCRAPE=true
 refresh-urls: gpt-refresh-urls gn-refresh-urls ddds-refresh-urls pk-refresh-urls ab-refresh-urls up-refresh-urls mj-refresh-urls yz-refresh-urls 
 
-refresh-silver: RECURSIVE_SCRAPE=true
 refresh-silver: gpt-refresh-silver gn-refresh-silver ddds-refresh-silver pk-refresh-silver ab-refresh-silver up-refresh-silver mj-refresh-silver yz-refresh-silver
 
 # sites
@@ -78,9 +75,6 @@ test-urls:
 
 test-mcp:
 	$(COMPOSE) run --rm $(RUN_USER) viewer npm run test:mcp
-
-test-recursive:
-	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SITE=$(SITE) worker npm run test:recursive
 
 test-sites:
 	$(COMPOSE) run --rm $(RUN_USER) worker npm run test:sites

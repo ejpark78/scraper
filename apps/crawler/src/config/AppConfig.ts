@@ -90,10 +90,6 @@ export class AppConfig {
      */
     public static readonly ERROR_RESET: boolean = process.env.ERROR_RESET === 'true';
 
-    /**
-     * Whether recursive scraping is enabled
-     */
-    public static readonly RECURSIVE_SCRAPE: boolean = process.env.RECURSIVE_SCRAPE === 'true';
 
     /**
      * Combined login flag using LOGIN or AUTH env variables
