@@ -4,6 +4,13 @@ All notable changes to the crawler service will be documented in this file.
 
 ---
 
+## [1.10.0] - 2026-06-23
+
+### Changed
+- **아티팩트 아카이빙 개편**:
+  - `make agents-squash` (매개변수 없음) 호출 시 triplet squash 완료 후 자동으로 10개 단위 아카이빙(decade group)까지 연속 실행하도록 `squash-artifacts.sh`를 개선.
+  - 아카이빙 결과 파일 확장자 명칭을 `*.batch.md`에서 `*.archive.md`로 전면 교환.
+
 ## [1.9.0] - 2026-06-23
 
 ### Added

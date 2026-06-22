@@ -85,8 +85,9 @@
    - dump loop, 누락된 수정, 반복 실패 발생 시 `docs/artifacts/`에 `.issue.md`로 원인 기록 (현상 → 원인 → 방지책)
    - 세션 시작 시 최근 `.issue.md`(최대 3개)를 참조하여 동일 패턴 예방
 
-5. **아티팩트 Squash 정책**:
+5. **아티팩트 Squash 및 Archive 정책**:
    - `make agents-squash`로 `.review.md` + `.task.md` + `.walkthrough.md` 3종을 `.summary.md` 1개로 압축 (토큰 ~66% 절약)
+   - 압축 후 번호가 매겨진 모든 아티팩트 파일들을 10개 단위로 묶어 `###-###.archive.md` 파일로 통합 아카이빙하고 원본을 제거합니다.
    - `.spec.md`, `.adr.md`, `.plan.md`, `.issue.md`, `.test.md`는 원본 유지
    - 세션 종료 시 아티팩트 수가 50개 초과이면 `make agents-squash` 실행 제안
 
