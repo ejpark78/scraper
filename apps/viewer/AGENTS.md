@@ -1,0 +1,16 @@
+# 🤖 Agent Project Rules - Viewer Scope (apps/viewer/AGENTS.md)
+
+이 규칙은 `apps/viewer` 내의 프론트엔드 및 대시보드 코드를 수정하거나 해당 컨텍스트에서 작업을 수행할 때 적용되는 전용 제약 사항입니다.
+
+---
+
+## ⚠️ viewer 전용 제약 사항 (Critical Constraints)
+
+1. **Docker 중심 테스트 및 실행**:
+   - **프론트엔드 컴파일 및 배포**: 프론트엔드 변경 적용 시 서비스 이미지를 직접 재빌드합니다.
+     - 예시: `docker compose build viewer` 또는 `docker compose up -d --build viewer`
+     - viewer는 호스트 볼륨 마운트 없이 격리된 컨테이너 내에서 실행되므로 이미지 재빌드가 필수적입니다.
+
+2. **환경 제어 공동 위임 (페어 프로그래밍)**:
+   - 컨테이너 재빌드, 서비스 재시작, 이미지 정리, 복잡한 런타임 배포 등의 작업 실행 시, 에이전트는 명령어를 직접 실행하지 말고 목적과 명령어를 설명하며 사용자가 수동으로 실행하도록 요청해야 합니다.
+     - 예시: `make up-viewer`

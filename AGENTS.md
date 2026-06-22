@@ -9,7 +9,7 @@
 ## ⚠️ 주요 제약 사항 (Critical Constraints)
 
 1. **임의 Bash 명령어 금지**: Pre-Approved 명령어를 제외한 모든 셸 명령어(읽기 전용 진단, git, docker, ls, env 등 포함)는 사용자의 명시적 승인이 필요합니다. 정확한 명령어를 채팅에 먼저 제시하고 승인을 받으세요. 여러 진단/상태 확인은 `&&`, `;` 또는 `cat << 'EOF' | bash`로 연결하여 단일 실행으로 압축하세요.
-2. **계획 수립 철저**: 파일 쓰기나 환경 변경 전에 `docs/artifacts/` 디렉토리에 특정 파일명으로 계획서 파일(.plan.md)을 작성하여 제시하고 최종 승인을 받으세요. CRITICAL: 계획서 파일(.plan.md) 제안과 동시에 실제 소스 코드나 설정 쓰기/수정 도구를 호출하지 마세요; 항상 계획서 파일에 대한 사용자의 명시적인 승인을 먼저 기다리세요. 시스템 알림, 백그라운드 작업 완료 등은 사용자 승인으로 간주하지 마세요.
+2. **계획 수립 철저**: 파일 쓰기나 환경 변경 전에 `docs/artifacts/` 디렉토리에 특정 파일명으로 계획서 파일(.plan.md)을 작성하여 제시하고 최종 승인을 받으세요. CRITICAL: 계획서 파일(.plan.md) 제안과 동시에 실제 소스 코드나 설정 쓰기/수정 도구를 호출하지 마세요; 항상 계획서 파일에 대한 사용자의 명시적인 승인을 먼저 기다리세요.
 3. **최소 파일 범위 및 커버리지**: 루트 레벨 grep이나 재귀 list_dir을 사용하지 마세요.
    * 중첩 폴더를 놓치지 않고 프로젝트 구조를 파악하려면 `git ls-files`를 한 번 실행하세요.
    * 정확한 대상 파일 경로를 찾은 후 `Read`로 직접 읽으세요.
@@ -18,24 +18,19 @@
 5. **상대경로 링크**: 문서에서는 상대경로를 사용하세요 (예: `[Worker](src/Worker.ts)`). `file://` 사용 금지.
 6. **자동 Git 커밋**: 유효한 편집 직후 `scripts/agents/commit-changes.sh`를 실행합니다.
 7. **Docker 중심 테스트 및 실행**: 모든 로컬 스크립트는 `docker compose`로 테스트/실행합니다. 테스트/디버깅과 프로덕션 검증을 구분하세요:
-   * **디버깅/테스트**: 항상 볼륨 마운트를 사용하여 소스 파일을 실시간 동기화 (예: `docker compose -p scraper run --rm --user $(id -u):$(id -g) -v $(pwd):/app -v /app/node_modules worker npx ts-node src/...`). `docker cp` 사용 금지.
+   * **디버깅/테스트**: 항상 볼륨 마운트를 사용하여 소스 파일을 실시간 동기화. `docker cp` 사용 금지.
    * **프로덕션/검증**: 최종 빌드 이미지 검증 시 볼륨 마운트 없이 실행 (이미지 재빌드 후). MongoDB/Redis 접근이 Docker 네트워크 내에서 가능한지 확인.
-   * **프론트엔드 컴파일 및 배포**: 프론트엔드 변경 적용 시 서비스 이미지를 직접 재빌드 (예: `docker compose build viewer` 또는 `docker compose up -d --build viewer`), viewer는 호스트 볼륨 마운트 없이 격리된 컨테이너 내에서 실행되므로.
-   * **로컬 node_modules 마운트 문제**: `-v $(pwd):/app`으로 워크스페이스 마운트 시 호스트의 `node_modules`가 컨테이너 버전을 덮어씁니다. 라이브러리 버전 불일치(특히 Playwright 브라우저)를 방지하려면 익명 볼륨 마운트 추가: `-v /app/node_modules`.
-   * **Playwright 브라우저 불일치**: `browserType.launch: Executable doesn't exist` 오류 발생 시:
-     - 종속성 버전 정렬을 위해 해당 서비스 이미지만 재빌드: `docker compose build worker`
-     - 또는 컨테이너에서 브라우저 설치: `docker compose run --rm worker npx playwright install`
+   * **로컬 node_modules 마운트 문제**: `-v $(pwd):/app`으로 워크스페이스 마운트 시 호스트의 `node_modules`가 컨테이너 버전을 덮어씁니다. 라이브러리 버전 불일치를 방지하려면 익명 볼륨 마운트 추가: `-v /app/node_modules`.
    * **호스트 포트 노출 금지**: 인프라 서비스 포트(MongoDB `27017`, Redis `6379`, Meilisearch `7700`)를 호스트 머신에 직접 노출하지 마세요. 모든 트래픽은 Traefik 리버스 프록시 도메인(예: `*.localhost`, `*.nip.io`)을 통해 라우팅.
-   * **Docker 내부 CLI 작업**: 인프라 서비스가 호스트에 포트를 노출하지 않으므로, CLI 유틸리티/진단/REST 작업(예: `curl` 명령어)은 `docker compose run`으로 컨테이너 네트워크 내에서 실행 (예: `docker compose -p scraper run --rm worker curl -X DELETE http://meilisearch:7700/indexes/contents`). 호스트→localhost 직접 연결 시도 금지. CRITICAL: 네트워크/API 진단 시 기본 서비스 컨테이너에 패키지를 설치/수정하지 말고 `nicolaka/netshoot` 컨테이너 사용 (예: `docker compose -p scraper run --rm nicolaka/netshoot curl ...`). 다만, 데이터베이스, Meilisearch 및 Redis 진단을 위해 뷰어 MCP 서버가 제공하는 전용 도구(`run_mongo_query`, `run_meili_query`, `run_redis_query`)가 구축되어 있는 경우, 사용자 승인이 필요한 셸 진단 대신 해당 MCP 도구를 우선 사용하여 진단을 수행하세요.
+   * **Docker 내부 CLI 작업**: 인프라 서비스가 호스트에 포트를 노출하지 않으므로, CLI 유틸리티/진단/REST 작업(예: `curl` 명령어)은 `docker compose run`으로 컨테이너 네트워크 내에서 실행 (예: `docker compose -p scraper run --rm worker curl ...`). 호스트→localhost 직접 연결 시도 금지. CRITICAL: 네트워크/API 진단 시 기본 서비스 컨테이너에 패키지를 설치/수정하지 말고 `nicolaka/netshoot` 컨테이너 사용. 다만, 데이터베이스, Meilisearch 및 Redis 진단을 위해 뷰어 MCP 서버가 제공하는 전용 도구(`run_mongo_query`, `run_meili_query`, `run_redis_query`)가 구축되어 있는 경우, 사용자 승인이 필요한 셸 진단 대신 해당 MCP 도구를 우선 사용하여 진단을 수행하세요.
 8. **트랜스크립트 내보내기 (수동 실행)**: 세션 시작 시 `make agents-dump`를 자동 실행하지 마세요. 사용자가 요청하거나 세션 결과를 요약할 때만 명령어 라인을 제공하세요.
 9. **동시 백그라운드 작업 금지**: 경쟁 상태 및 DB/시스템 상태 손상을 방지하기 위해, 각 명령어에 대한 사용자의 명시적 승인 없이 여러 백그라운드 명령어/태스크를 병렬 실행하지 마세요. 활성 백그라운드 작업이 완전히 종료되고 종료 상태를 확인한 후에만 다음 명령어 승인을 요청하세요.
 10. **데이터 변경은 사용자에게 위임**: 데이터 손상이나 충돌을 방지하기 위해, 에이전트는 주요 영구 데이터 변경, DB 시딩, 인덱스 리셋/재인덱싱(예: `meili-manager.ts --reset`)을 실행하거나 승인 요청하지 마세요. 대신 필요한 실행 단계와 명령어를 채팅에 명확히 설명하고 사용자가 수동으로 실행하도록 요청하세요.
-11. **환경 제어 공동 위임 (페어 프로그래밍)**: 컨테이너 재빌드, 서비스 재시작, 이미지 정리, 복잡한 런타임 배포 등의 작업 실행 시, 에이전트는 협업 파트너처럼 행동하세요. 명령어를 직접 실행하지 말고, 목적과 명령어를 설명하며 사용자가 수동으로 실행하도록 요청 (예: `make up-viewer`).
+11. **환경 제어 공동 위임 (페어 프로그래밍)**: 컨테이너 재빌드, 서비스 재시작, 이미지 정리, 복잡한 런타임 배포 등의 작업 실행 시, 에이전트는 협업 파트너처럼 행동하세요. 명령어를 직접 실행하지 말고, 목적과 명령어를 설명하며 사용자가 수동으로 실행하도록 요청하십시오.
 12. **AI 처리 및 응답 한국어**: 모든 AI 처리 로그, 상태 메시지, 채팅 응답은 한국어로 작성합니다.
 13. **범위 외 수정 금지**: 사용자가 명시적으로 요청한 범위 밖의 파일은 수정하지 마세요.
 14. **추측 수정 금지**: 추측에 기반한 코드 수정은 엄격히 금지됩니다. 문제의 근본 원인을 모르면 사용자에게 문의하세요.
-15. **재귀 수집 금지 및 1회성 수집 고정**: 실시간 스크랩 시 페이지 내 링크들을 파싱하여 수집 큐에 재유입시키는 재귀 수집(`RECURSIVE_SCRAPE`) 기능은 제거되었습니다. 모든 수집 작업은 1회성 수집으로 고정되며, 큐에는 1회성 명령만 추가되어 무한 큐 증식을 방지합니다. (단, `BaseRefreshUrls.ts`에 내장된 기존 완료 HTML 정밀 스캔 복구 기능은 그대로 보존되어 정상 작동합니다.)
-
+15. **개별 패키지 전용 규칙의 격리**: crawler 및 viewer 전용 세부 실행 방식/제약 조건은 각각 `apps/crawler/AGENTS.md` 및 `apps/viewer/AGENTS.md` 파일에 정의합니다. 에이전트는 해당 하위 디렉토리 작업 시 개별 규칙을 확인하고 준수해야 합니다.
 
 ## ⚠️ 보안 규칙 (Security Rules)
 - **ENV 접근 금지**: `.env` 또는 `.env.*` 파일에 접근하지 마세요. `.env.example`을 참조하세요.
@@ -55,7 +50,7 @@
 에이전트는 모든 설계 및 기능 변경 작업을 수행할 때 아래의 **문서화 수명 주기(Documentation Lifecycle)**를 준수해야 합니다.
 
 1. **문서화 수명 주기 순서**:
-   $$\text{Spec (.spec.md)} \longrightarrow \text{Plan (.plan.md)} \longrightarrow \text{Review (.review.md + .task.md)} \longrightarrow \text{Walkthrough (.walkthrough.md)}$$
+   Spec (.spec.md) -> Plan (.plan.md) -> Review (.review.md + .task.md) -> Walkthrough (.walkthrough.md)
    - PRD는 필요 시에만 작성 (선택), ADR은 구조적 설계 분기 시에만 작성
    - 테스트 시나리오는 Review 단계에서 `.test.md`로 포함
 

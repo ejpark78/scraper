@@ -7,6 +7,14 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [1.7.0] - 2026-06-23
+
+### Changed
+- **AGENTS.md 규칙 패키지별 격리 및 구조화**: 루트 레벨의 `AGENTS.md`에서 `apps/crawler` 및 `apps/viewer`에 각각 종속되어 있던 세부 실행 커맨드, Playwright 브라우저 해결 절차, 프론트엔드 이미지 재빌드 가이드, 재귀 수집 제약 등을 격리 분리.
+  - 루트 `AGENTS.md`: 전체 공통 핵심 프로세스(승인 원칙, 문서 수명 주기 규칙 등)만 보존.
+  - `apps/crawler/AGENTS.md` (신규): Playwright 브라우저 대응, 수집 파이프라인 규칙, 관련 Skill Map 명시.
+  - `apps/viewer/AGENTS.md` (신규): 뷰어 이미지 수동 컴파일 가이드 및 환경 위임 규칙 명시.
+
 ## [1.6.0] - 2026-06-22
 
 ### Changed
