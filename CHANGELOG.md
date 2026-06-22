@@ -1,130 +1,41 @@
-# Changelog
+# Monorepo Changelog (Index)
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to Semantic Versioning.
+이 마스터 Changelog 파일은 모노레포 프로젝트의 통합 마일스톤 이력 및 서비스별 상세 변경 이력 연결을 담당합니다.
 
 ---
 
-## [1.7.0] - 2026-06-23
+## 🧭 서비스별 상세 변경 이력 (Sub-module Changelogs)
 
-### Changed
-- **AGENTS.md 규칙 패키지별 격리 및 구조화**: 루트 레벨의 `AGENTS.md`에서 `apps/crawler` 및 `apps/viewer`에 각각 종속되어 있던 세부 실행 커맨드, Playwright 브라우저 해결 절차, 프론트엔드 이미지 재빌드 가이드, 재귀 수집 제약 등을 격리 분리.
-  - 루트 `AGENTS.md`: 전체 공통 핵심 프로세스(승인 원칙, 문서 수명 주기 규칙 등)만 보존.
-  - `apps/crawler/AGENTS.md` (신규): Playwright 브라우저 대응, 수집 파이프라인 규칙, 관련 Skill Map 명시.
-  - `apps/viewer/AGENTS.md` (신규): 뷰어 이미지 수동 컴파일 가이드 및 환경 위임 규칙 명시.
+상세 컴포넌트별 릴리즈 및 변경 로그는 각 서비스 폴더 내부의 개별 Changelog를 참고하세요.
 
-## [1.6.0] - 2026-06-22
+* 🕷️ **Crawler 서비스**: [apps/crawler/CHANGELOG.md](file:///home/ejpark/workspace/scraper/apps/crawler/CHANGELOG.md)
+* 🖥️ **Viewer & Dashboard**: [apps/viewer/CHANGELOG.md](file:///home/ejpark/workspace/scraper/apps/viewer/CHANGELOG.md)
+* 📚 **Ebook 파이프라인**: [apps/ebook/CHANGELOG.md](file:///home/ejpark/workspace/scraper/apps/ebook/CHANGELOG.md)
 
-### Changed
-- **apps/ebook 구조 단순화 및 CLI 진입점 통합**: 복잡한 OOP Command 패턴(`EbookCommand`)을 걷어내고 CLI 진입점을 `main.py` 단일 파일로 단순화 및 병합. `commands.py`를 삭제하고 각 실행부(Summary, Analyze, HTML 변환, MD 변환, Split)를 `main.py` 내부의 단순 함수 구조로 이식.
-- `process.py` -> `main.py`로 이름을 변경하여 CLI 진입점 역할을 명확화.
-- `pyproject.toml` 및 `Makefile` 내의 poe tasks, make targets 실행 경로를 `src.main`으로 갱신.
-- **main.py OOP 리팩토링**: `main.py` 내에 정의된 로직들을 OOP 규칙 및 단일 책임 원칙(SRP)에 맞춰 `EbookPipeline`(비즈니스 로직 캡슐화) 및 `EbookCLI`(CLI 매개변수 바인딩 및 파싱 제어) 클래스로 리팩토링 및 캡슐화.
-- **상수 이식**: `constants.py`가 제거됨에 따라, 유일한 참조처였던 `analyzer.py` 내부에 `EXCLUDE_TITLES` 상수를 로컬로 내장 정의.
+---
 
-### Removed
-- **미사용 번역 기능 제거**: 현재 사용하지 않는 PDF/Markdown 번역 기능인 `translator.py`, `translate_batch.py` 파일을 제거하고 `Makefile` 및 `pyproject.toml`에서 번역 관련 명령어(`translate_md`, `translate_batch`)를 삭제.
-- **데드 코드 정리**: 파이프라인에서 사용되지 않는 `pdf_parser.py` 및 단일 상수 래퍼 `constants.py`를 제거하고, 해당 파일에 의존하던 `tests/test_column_detector.py`, `tests/test_text_cleaner.py` 테스트 코드를 영구 삭제.
+## 🎯 통합 버전 이력 요약 (Global Milestones)
 
-### Fixed (Bugfixes)
-- **Bugfix: 단위 테스트 Mock 구성 오류 수정**: `tests/test_analyzer.py`에서 디렉토리 재귀 분석(`test_analyze_directory_recursion`) 시 Mock 우회 문제로 인한 `call_count` 검출 실패 및 Regex chapter detection 테스트(`test_overwrite_skip_logic_true`) 시 Mock 객체 반환으로 인한 `TypeError` 오류를 Mock 구조 정밀화 및 `side_effect` 분기 처리를 통해 수정 완료.
+### [1.7.0] - 2026-06-23
+* **격리 아키텍처 수립**: `AGENTS.md` 규칙 및 `CHANGELOG.md` 변경 로그를 각 모노레포 패키지(`apps/crawler`, `apps/viewer`, `apps/ebook`) 하위로 정밀하게 격리 및 분리 분할하여 결합도 최소화.
 
-## [1.5.0] - 2026-06-21
+### [1.6.0] - 2026-06-22
+* **Ebook 서비스 정밀 단순화**: Ebook 모듈의 Command 패턴 복잡성을 제거하고 단일 진입점 OOP 구현으로 정비.
 
-### Changed
-- **apps/ebook 리팩토링 (Phase 1~3)**: 중복 코드 제거, 일관성 개선, 테스트/린터 인프라를 전면 도입.
-  - **Phase 1 (클린업)**: `EXCLUDE_TITLES`를 `src/constants.py` 중앙 상수로 분리 (`pdf_analyzer.py`, `pdf_to_markdown.py`에서 중복 제거); `process.py`의 중복 `ArgumentParser` 제거; 파일 탐색 로직을 `_collect_files()` / `_resolve_file_arg()` 헬퍼로 추출 (`--pdf2html` / `--html2md` 중복 제거).
-  - **Phase 2 (일관성)**: `HTMLConverter` / `HTMLToMarkdownConverter`가 output 디렉토리에 결과를 저장하도록 수정 (기존 source 옆 저장); `pdf_translator.py` 모듈 레벨 상수 제거 (Docker 호환성을 위해 생성자 기본값만 유지); `pyproject.toml`에 누락 의존성(`google-generativeai`, `openai`, `python-dotenv`, `pytest`) 및 `[tool.ruff]` / `[tool.pytest]` 설정 추가; `translate_batch` Poe task 및 Make target 추가.
-  - **Phase 3 (품질)**: `tests/test_text_cleaner.py` (23개), `tests/test_splitter_utils.py` (7개), `tests/test_column_detector.py` (4개) 총 30개 단위 테스트 작성 (pytest); `README.md` 신규 작성.
-  - **Phase 4 (Command 패턴)**: `main()` 165줄 → 15줄로 단축. 7개 모드를 `src/commands.py`의 `EbookCommand` 추상 클래스 기반 6개 Command 클래스로 분리 (OCP/SRP 준수). `COMMANDS` 레지스트리 기반 dispatch 도입.
+### [1.5.0] - 2026-06-21
+* **Ebook 테스트 도입**: Ebook 서비스 파이프라인 전면 리팩토링 및 30여 개의 단위 테스트 작성.
 
-## [1.4.5] - 2026-06-20
+### [1.4.0] - 2026-06-20
+* **Exporter 웹 통합**: Joplin/Obsidian Exporter 대시보드 웹 통합 배포 및 Vue Router 전환.
 
-### Changed
-- **Exporter 설정 카드 최소 높이 재조정**: 입력 폼 단순화에 따라 불필요하게 낭비되는 화면 하단 여백 스페이스를 줄이기 위해 설정 카드의 `min-height`를 기존 `615px`에서 `470px`로 하향 조정하여 UI 비주얼 밸런스 개선 완료.
+### [1.3.0] - 2026-06-20
+* **Exporter 모듈 신설**: Exporter 기능 마이그레이션 및 동적 마크다운 로더 구현.
 
-## [1.4.4] - 2026-06-20
+### [1.2.0] - 2026-06-20
+* **모노레포 빌드 아키텍처 개편**: 기존 쉘/메이크파일 스크립트 결합도를 해소하고, `package.json`의 npm 스크립트로 크롤러 커맨드를 일괄 이관 및 모노레포 구조 세분화.
 
-### Removed
-- **서적 경로 직접 입력 기능 제거**: 내보내기 폼의 복잡성을 낮추기 위해 사용 빈도가 적고 UX 혼선을 일으킬 수 있는 "또는 아래에 전체 경로를 직접 지정할 수 있습니다" 안내 텍스트 및 서적 경로 수동 입력 필드 요소를 뷰포트에서 영구 제거 완료.
+### [1.1.0] - 2026-06-19
+* **Ebook 파이프라인 추가**: PDF 정제 및 Meilisearch/MongoDB 가공 유틸리티 통합 탑재.
 
-## [1.4.3] - 2026-06-20
-
-### Fixed (Bugfixes)
-- **Bugfix: 내보내기 문서 내 로컬 이미지 깨짐(엑스박스) 문제 완벽 수정**: Joplin 내보내기 진행 시 상대 경로 텍스트 상태로 남겨져 이미지가 로드되지 않던 현상을 해결하기 위해, 백엔드에 `GET /api/exporter/image` API를 추가하고 프론트엔드가 이미지 Blob을 획득하여 Joplin 리소스 API(`POST /resources`)로 직접 자동 업로드한 뒤 본문을 리소스 ID 식별자(`:/resource_id`)로 치환하여 연동되도록 수정 완료.
-
-## [1.4.2] - 2026-06-20
-
-### Fixed (Bugfixes)
-- **Bugfix: 내보내기 정렬 역순 현상 교정**: Joplin 등 외부 노트 도구의 '작성순 내림차순(최신순)' 정렬 특성으로 인해 책 챕터들이 목록 역순으로 정렬되던 문제를 바로잡기 위해, 내보내기 시 챕터를 마지막 장(N장)부터 첫 장(1장)으로 역순으로 생성하도록 순서 교정 완료.
-
-## [1.4.1] - 2026-06-20
-
-### Fixed (Bugfixes)
-- **Bugfix: 브라우저 직접 내보내기(Direct Export) 지원**: Docker 내부망에서의 Joplin/Obsidian 포트 접근 보안 제약 및 방화벽 한계를 극복하기 위해, 백엔드 서버 대신 프론트엔드(브라우저)에서 사용자의 로컬 루프백(`127.0.0.1`) 포트로 직접 `fetch` 요청을 전송하여 문서를 내보내도록 통신 주체를 브라우저 단으로 전면 리팩토링 및 개선 완료.
-- **GET /api/exporter/book-content API 추가**: 프론트엔드에서 일괄적으로 서적 내용을 읽을 수 있도록 전체 챕터 마크다운 내용을 묶어서 반환하는 백엔드 API 신설.
-
-## [1.4.0] - 2026-06-20
-
-### Added
-- **Joplin/Obsidian Exporter Web Integration**: `apps/exporter` 코드를 `apps/viewer` 내로 완전히 마이그레이션하고 백엔드 Express Router (`/api/exporter/*`) 및 프론트엔드 Exporter 뷰 (`ExporterView.vue`)를 새로 구현하여 웹 대시보드 상에서 간편하게 내보내기 조작이 가능하도록 통합.
-- **Frontend Vue Router Migration**: 기존 `App.vue`에 집중되었던 1,200줄의 코드를 `DashboardView.vue`, `DocumentView.vue`, `ExporterView.vue` 컴포넌트로 깔끔하게 리팩토링 및 격리 분리하고, `vue-router@4`를 도입하여 다중 페이지 아키텍처로 개편.
-- **Joplin 루트 직접 폴더 생성**: 사용자의 편의성에 맞추어 `Wikidocs` 루트 폴더 래퍼를 생성하는 대신, Joplin 최상위 루트 노트북 디렉토리에 바로 서적 폴더가 생성되도록 내보내기 디렉터리 경로 개선 완료.
-- **변환 옵션(Frontmatter/INDEX) 삭제**: 불필요하게 스페이스를 차지하던 `3. 변환 옵션` (Frontmatter 자동 추가, INDEX 파일 자동 생성) 체크박스와 관련 비즈니스 로직을 UI 및 백엔드 기능 전체에서 제거 완료.
-
-### Fixed (Bugfixes)
-- **Bugfix: Exporter 설정 카드 높이 잘림 문제 해결**: Joplin 또는 Obsidian 연동 설정 필드가 활성화될 때 설정 폼 카드의 스크롤이 불가하여 `Joplin API 웹클리퍼 토큰` 입력란 및 하단 버튼이 뷰포트에서 잘려 보이지 않는 레이아웃 버그를 `.queue-section-card`에 `overflow-y: auto` 스타일 주입 및 최소 높이를 `615px`로 상향 조정하여 수정 완료.
-- **Bugfix: viewer-api 컨테이너 내 /app/data 볼륨 마운트 누락 수정**: 웹 Exporter 화면에서 "1. 대상 서적 선택" 드롭다운 목록이 비어 있는 원인을 분석하여, `viewer-api` 서비스 볼륨 설정에 호스트의 `./data`가 누락된 것을 식별하고 `apps/viewer/compose.yml` 파일에 볼륨 바인딩 설정을 추가하여 해결 완료.
-- **Bugfix: Docker 컨테이너 내 host.docker.internal 게이트웨이 해석 에러 해결**: 리눅스 Docker 환경 내의 `viewer-api` 컨테이너가 호스트에 실행 중인 Joplin에 연결할 수 있도록 `apps/viewer/compose.yml` 서비스 내역에 `extra_hosts: ["host.docker.internal:host-gateway"]` 네트워크 설정을 정밀 보완 완료.
-
-## [1.3.0] - 2026-06-20
-
-### Added
-- **Joplin/Obsidian Exporter Module (`apps/exporter`)**: `wikidocs-exporter`의 내보내기 핵심 기능을 모노레포 독립 모듈(`apps/exporter`)로 완벽 이식 및 통합.
-- **Docker-Centric Execution Config**: 컨테이너 개발 환경에서 호스트 PC의 로컬 API에 접근하기 위한 루프백 설정(`host.docker.internal`) 정립, `compose.yml` 및 `Makefile` 빌드 파이프라인 결합 완료.
-- **Local Markdown File Scanner**: `data/ebook/output/` 디렉터리에 추출된 도서별 챕터 마크다운 파일들을 분석하여 자동으로 도서 데이터로 조립하는 로더 모듈 구현.
-
-## [1.2.0] - 2026-06-20
-
-### Changed
-- **Crawler Scripts Migration (NPM Scripts)**: `scripts/sites/` 하위의 사이트별 Makefile 9개와 `worker.mk`, `gmail.mk`, `tests.mk` 등을 모두 제거하고, 27개의 크롤링 커맨드 및 Gmail/Queue 관련 스크립트, 테스트 관련 스크립트를 `apps/crawler/package.json`의 npm 스크립트로 통합 완료.
-- **Makefile Restructuring**: 루트 `Makefile`의 스파게티성 `run-scrape` 로직 및 `PAGE`, `LIST_SLACK` 기본값 정의, 그리고 테스트/디버깅 타겟들을 `apps/crawler/Makefile` 내부로 완벽히 이전 및 이격. 루트 Makefile은 이를 중계 호출(Forwarding)하는 미니멀한 래퍼 구조로 재정렬.
-- **Monorepo Separation**: `apps/viewer/docker/compose.yml`을 `apps/viewer/compose.yml`로 통합/이동하고 내부 빌드 컨텍스트를 `.`로 정렬하여 결합도를 최소화함. 또한 `apps/viewer/Makefile`에 `down` 타겟을 구현하고 루트 `viewer-up` 및 `viewer-down` 매핑에 호환되도록 `viewer-%` 와일드카드 타겟 위임을 구조화함.
-- **Makefile Path Standardization**: 하위 모든 Makefile(`crawler`, `viewer`, `ebook`)에서 Make 내장 함수를 활용해 `ROOT_DIR`을 동적 검출하도록 단일 표준화하고, `docker compose` 명령 실행 시 `--project-directory` 플래그를 정립하여 상대 경로 하드코딩 문제를 우아하게 해결함.
-
-
-
-
-## [1.1.0] - 2026-06-19
-
-### Added
-- **Ebook Parser & Sync Pipeline**: Added `apps/ebook` service using Python 3.13 and `uv` to process book PDFs, and created a TypeScript CLI synchronization script (`sync-ebooks.ts`) in `apps/crawler` to load chapters into MongoDB (`silver.contents`) and Meilisearch (`contents`).
-
-### Changed
-- **Monorepo Restructuring**: Transitioned the single-app repository into a modern monorepo layout:
-  - Main scraper logic shifted to `apps/crawler`.
-  - Frontend dashboard and server decoupled to `apps/viewer`.
-  - Created shared packages `packages/database` and `packages/config`.
-- **Docker Profiles for Ebook**: Equipped the `ebook` service container with a specific docker compose profile (`ebook`), isolating resources and allowing on-demand CLI executions.
-
-### Fixed (Bugfixes)
-- **Bugfix: Resolved TypeScript Compilation and Module Resolution Errors**: Fixed critical run-time `MODULE_NOT_FOUND` compiler errors in `ScraperWorker.ts`, `ConverterWorker.ts`, `IndexerWorker.ts`, and `TargetLoader.ts` by migrating to environment-agnostic physical relative paths (`../../../../packages/database/...`).
-- **Bugfix: Fixed Scripts Entrypoints in Makefiles**: Restructured legacy `src/scripts` paths inside `browser.mk`, `meili.mk`, `mongo.mk`, `tests.mk`, and `worker.mk` to use the updated monorepo directory `apps/crawler/src/scripts`.
-
-## [1.0.0] - 2026-06-19
-
-
-### Added
-- **Retroactive Noise Cleansing Script**: Added `clean_legacy_noise_ids.ts` to automatically scan all site collections in MongoDB, prune malformed IDs containing Korean trailing particles, and re-schedule clean URLs for re-crawling.
-
-### Changed
-- **Redis Namespace Refactoring**: Restructured all active scraper queues and completion caches into a unified, site-centric layout:
-  - Sc scraper queues: `sites:${siteKey}:scrape:${priority}`
-  - Completion caches: `sites:${siteKey}:completed`
-- **Dashboard Metric Parsing**: Updated dashboard server API and App.vue UI metrics to dynamically parse both legacy (`scrape_queue:*`) and namespace-isolated (`sites:*:scrape:*`) queues.
-
-### Fixed
-- **Cross-Site Cache Collision Bug**: Resolved a critical issue where `Daily Dose of DS`, `GeekNews`, `GPTers News`, and `PyTorch KR` shared the same Redis cache key (`completed_news`), causing `seedCache()` to be skipped across multiple crawls and forcing all crawled documents into the scraper queues repeatedly.
-- **Legacy Fallback Handling**: Implemented automatic completed set key upgrades in `BaseListService` and `BaseRefreshUrls` to gracefully map legacy config prefixes (e.g. `completed_`) to the new namespace format.
+### [1.0.0] - 2026-06-19
+* **Redis 네임스페이스 격리**: Redis 큐 충돌 및 오동작을 수정한 Namespace 개편 릴리즈.
