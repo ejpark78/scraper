@@ -4,6 +4,13 @@ All notable changes to the crawler service will be documented in this file.
 
 ---
 
+## [1.8.0] - 2026-06-23
+
+### Fixed (Bugfixes)
+- **Bugfix: Scraper Worker Deadlock**:
+  - Redis 커넥션을 이원화하여 blocking 명령어(`blpop`)용 커넥션과 일반 명령어(`get`, `set`, `rpush`, `lpush` 등)용 커넥션 간의 소켓 경합 및 데드락 제거.
+  - `ScraperWorker.ts` 내 `this.dispatcher.scrape` 호출 시 120초 글로벌 실행 타임아웃(`withTimeout`) 래퍼를 도입하여, Playwright 브라우저 대기 및 네트워크 지연 시 영구 블로킹(hanging) 상태에 빠지지 않도록 버그 수정.
+
 ## [1.7.0] - 2026-06-23
 
 ### Changed

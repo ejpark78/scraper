@@ -11,4 +11,5 @@
 |   |         | [046-ebook-oop-refactoring.plan.md](046-ebook-oop-refactoring.plan.md) | 4 (plan 1 + task 1 + review 1 + walkthrough 1) |
 |   |         | [047-ebook-changelog-separation.plan.md](047-ebook-changelog-separation.plan.md) | 4 (plan 1 + task 1 + review 1 + walkthrough 1) |
 |   |         | [048-remove-recursive-scrape.plan.md](048-remove-recursive-scrape.plan.md) | 1 (plan 1) |
+| 6 | 051–060 | [052-fix-scraper-deadlock.plan.md](052-fix-scraper-deadlock.plan.md) | 1 (plan 1) |
 

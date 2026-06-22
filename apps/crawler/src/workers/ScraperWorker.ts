@@ -27,6 +27,21 @@ const CONVERT_QUEUE = 'convert_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
 const DEAD_LETTER_QUEUE = 'dead_letter_queue';
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+    promise
+      .then((res) => {
+        clearTimeout(timer);
+        resolve(res);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
 interface ScrapePayload {
   site: string;
   url: string;
@@ -85,12 +100,14 @@ class QueueManager {
 
 class ScraperWorker {
   private redis: Redis;
+  private redisBlocking: Redis;
   private mongo: MongoDatabase;
   private dispatcher: ScraperDispatcher;
   private queueManager: QueueManager;
 
   constructor() {
     this.redis = new Redis(REDIS_URL);
+    this.redisBlocking = new Redis(REDIS_URL);
     this.mongo = MongoDatabase.getInstance();
     this.dispatcher = new ScraperDispatcher();
     this.queueManager = new QueueManager();
@@ -104,7 +121,7 @@ class ScraperWorker {
     while (true) {
       try {
         const activeQueues = this.queueManager.getActiveQueues();
-        const res = await this.redis.blpop(...activeQueues, 5);
+        const res = await this.redisBlocking.blpop(...activeQueues, 5);
         if (!res) continue;
 
         const queueName = res[0];
@@ -173,11 +190,15 @@ class ScraperWorker {
     Logger.info(`[Scraper] POP target [${site}] ID: ${id} from queue: ${queueName}`, { url, queue: queueName });
 
     const tempHtmlPath = path.join(os.tmpdir(), `temp_raw_${site}_${id}.html`);
-    try {
-      await this.checkAndApplyRateLimit(site, scraperSlack);
-      await this.dispatcher.scrape(site, url, tempHtmlPath);
+      try {
+        await this.checkAndApplyRateLimit(site, scraperSlack);
+        await withTimeout(
+          this.dispatcher.scrape(site, url, tempHtmlPath),
+          120000,
+          `Scraping execution timed out after 120000ms for [${site}]`
+        );
 
-      if (!fs.existsSync(tempHtmlPath) || fs.statSync(tempHtmlPath).size === 0) {
+        if (!fs.existsSync(tempHtmlPath) || fs.statSync(tempHtmlPath).size === 0) {
         throw new Error('Downloaded raw HTML content is empty.');
       }
 
@@ -314,7 +335,10 @@ class ScraperWorker {
 
     if (scrapeErr.message && (scrapeErr.message.includes('세션 만료') || scrapeErr.message.includes('Auth Wall'))) {
       Logger.error(`LinkedIn Session expired. Graceful shut down of scraper.`, scrapeErr);
-      await this.redis.quit();
+      await Promise.all([
+        this.redis.quit(),
+        this.redisBlocking.quit()
+      ]);
       process.exit(1);
     }
   }
