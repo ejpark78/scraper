@@ -41,7 +41,7 @@
 - Makefile `OUTPUT` 기본값 `data/output` (마운트된 볼륨 내 경로, writable)
 
 ## 아키텍처
-- `main.py` — CLI 진입점 및 실행 로직 통합 구조
+- `main.py` — CLI 진입점(`EbookCLI`) 및 코어 비즈니스 로직(`EbookPipeline`)의 OOP 구조로 캡슐화
 - `ChapterSplitter` — PDF(페이지) / EPUB(내부 문서) 분할
 - `HTMLConverter` (`html_parser.py`) — PDF → HTML (PyMuPDF)
 - `HTMLToMarkdownConverter` (`markdown_parser.py`) — HTML → MD (BeautifulSoup + markdownify)
