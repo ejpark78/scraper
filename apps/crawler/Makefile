@@ -80,7 +80,7 @@ test-sites:
 	$(COMPOSE) run --rm $(RUN_USER) worker npm run test:sites
 
 test-%:
-	$(COMPOSE) run --rm $(RUN_USER) -e RECURSIVE_SCRAPE=$(RECURSIVE_SCRAPE) -e SITE=$(SITE) worker npm run test:$*
+	$(COMPOSE) run --rm $(RUN_USER) -e SITE=$(SITE) worker npm run test:$*
 
 extract:
 	@if [ -z "$(SITE)" ] || [ -z "$(ID)" ]; then \

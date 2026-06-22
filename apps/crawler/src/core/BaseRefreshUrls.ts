@@ -162,8 +162,7 @@ export class BaseRefreshUrls {
                     site,
                     url: j.url,
                     attempt: 1,
-                    priority,
-                    recursive: AppConfig.RECURSIVE_SCRAPE,
+                    priority
                 }));
 
                 const chunkSize = 1000;
@@ -359,8 +358,7 @@ export class BaseRefreshUrls {
             site,
             url: u.url,
             attempt: 1,
-            priority,
-            recursive: AppConfig.RECURSIVE_SCRAPE,
+            priority
         }));
         for (let i = 0; i < queuePayloads.length; i += chunkSize) {
             const chunk = queuePayloads.slice(i, i + chunkSize);
