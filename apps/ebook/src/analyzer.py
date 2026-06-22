@@ -11,7 +11,12 @@ import sys
 import fitz
 
 from .split_chapter import BookProfile, ChapterDef
-from .constants import EXCLUDE_TITLES
+
+EXCLUDE_TITLES = [
+    "cover", "copyright", "table of contents", "contents",
+    "index", "about the author", "about the authors", "colophon",
+    "foreword",
+]
 
 
 class PDFAnalyzer:

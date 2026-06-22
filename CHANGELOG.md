@@ -13,9 +13,12 @@ and this project adheres to Semantic Versioning.
 - **apps/ebook 구조 단순화 및 CLI 진입점 통합**: 복잡한 OOP Command 패턴(`EbookCommand`)을 걷어내고 CLI 진입점을 `main.py` 단일 파일로 단순화 및 병합. `commands.py`를 삭제하고 각 실행부(Summary, Analyze, HTML 변환, MD 변환, Split)를 `main.py` 내부의 단순 함수 구조로 이식.
 - `process.py` -> `main.py`로 이름을 변경하여 CLI 진입점 역할을 명확화.
 - `pyproject.toml` 및 `Makefile` 내의 poe tasks, make targets 실행 경로를 `src.main`으로 갱신.
+- **main.py OOP 리팩토링**: `main.py` 내에 정의된 로직들을 OOP 규칙 및 단일 책임 원칙(SRP)에 맞춰 `EbookPipeline`(비즈니스 로직 캡슐화) 및 `EbookCLI`(CLI 매개변수 바인딩 및 파싱 제어) 클래스로 리팩토링 및 캡슐화.
+- **상수 이식**: `constants.py`가 제거됨에 따라, 유일한 참조처였던 `analyzer.py` 내부에 `EXCLUDE_TITLES` 상수를 로컬로 내장 정의.
 
 ### Removed
 - **미사용 번역 기능 제거**: 현재 사용하지 않는 PDF/Markdown 번역 기능인 `translator.py`, `translate_batch.py` 파일을 제거하고 `Makefile` 및 `pyproject.toml`에서 번역 관련 명령어(`translate_md`, `translate_batch`)를 삭제.
+- **데드 코드 정리**: 파이프라인에서 사용되지 않는 `pdf_parser.py` 및 단일 상수 래퍼 `constants.py`를 제거하고, 해당 파일에 의존하던 `tests/test_column_detector.py`, `tests/test_text_cleaner.py` 테스트 코드를 영구 삭제.
 
 ### Fixed (Bugfixes)
 - **Bugfix: 단위 테스트 Mock 구성 오류 수정**: `tests/test_analyzer.py`에서 디렉토리 재귀 분석(`test_analyze_directory_recursion`) 시 Mock 우회 문제로 인한 `call_count` 검출 실패 및 Regex chapter detection 테스트(`test_overwrite_skip_logic_true`) 시 Mock 객체 반환으로 인한 `TypeError` 오류를 Mock 구조 정밀화 및 `side_effect` 분기 처리를 통해 수정 완료.
