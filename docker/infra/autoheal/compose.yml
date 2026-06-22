@@ -1,0 +1,22 @@
+# ==============================================================================
+# 🩺 Docker Autoheal Service (profile: infrastructure)
+# ==============================================================================
+# Design Context: Automatically restarts unhealthy containers by monitoring docker socket.
+# Constraints:    Must mount docker socket. Filters by label 'autoheal=true'.
+# Dependencies:   willfarrell/autoheal
+# ==============================================================================
+
+services:
+  autoheal:
+    image: willfarrell/autoheal:latest
+    container_name: autoheal
+    profiles:
+      - infrastructure
+      - worker
+      - crawler
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+      - TZ=Asia/Seoul
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped

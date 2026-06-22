@@ -22,6 +22,13 @@ const INDEX_QUEUE = 'index_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
 const DEAD_LETTER_QUEUE = 'dead_letter_queue';
 
+function touchHeartbeat(): void {
+  try {
+    const hbPath = '/tmp/converter-heartbeat';
+    fs.writeFileSync(hbPath, new Date().toISOString(), 'utf-8');
+  } catch {}
+}
+
 async function main() {
   Logger.info(`Connecting to Redis at ${REDIS_URL}...`);
   const redis = new Redis(REDIS_URL);
@@ -29,9 +36,11 @@ async function main() {
   await mongo.connect();
 
   Logger.info(`Converter Worker started, listening to: ${CONVERT_QUEUE}`);
+  touchHeartbeat();
 
   while (true) {
     try {
+      touchHeartbeat();
       const res = await redis.blpop(CONVERT_QUEUE, 5);
       if (!res) continue;
 

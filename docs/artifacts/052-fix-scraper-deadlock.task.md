@@ -19,4 +19,4 @@
 - [x] `CHANGELOG.md` 파일에 버그 수정 사항 기록 (Bugfix 명시).
 - [x] `.review.md` 작성 및 변경사항 코드 리뷰 자가 수행.
 - [x] `.walkthrough.md` 작성 및 최종 변경 이력 정리.
-- [ ] `scripts/agents/commit-changes.sh`를 실행하여 깃 커밋 자동화.
+- [x] `scripts/agents/commit-changes.sh`를 실행하여 깃 커밋 자동화.

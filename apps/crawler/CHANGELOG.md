@@ -4,6 +4,14 @@ All notable changes to the crawler service will be documented in this file.
 
 ---
 
+## [1.9.0] - 2026-06-23
+
+### Added
+- **Docker Autoheal 와치독 서비스**: `willfarrell/autoheal`을 인프라 서비스로 도입하여 `unhealthy` 상태의 컨테이너를 자동 재시작.
+- **하트비트 헬스체크 메커니즘**:
+  - `ScraperWorker.ts` 및 `ConverterWorker.ts` 내부 루프에서 5초 주기(blpop 대기 시)로 하트비트 파일(`scraper-heartbeat`, `converter-heartbeat`)을 갱신하도록 구현.
+  - `apps/crawler/docker/worker/compose.yml` 내 헬스체크를 pgrep 대신 하트비트 파일의 최근 수정 시간(3분 이내) 검사로 변경하여 실질적인 락(Lock) 감지가 가능하도록 조치.
+
 ## [1.8.0] - 2026-06-23
 
 ### Fixed (Bugfixes)

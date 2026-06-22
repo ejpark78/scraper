@@ -45,6 +45,8 @@ services:
     profiles:
       - worker
       - crawler
+    labels:
+      autoheal: "true"
     environment:
       - TZ=Asia/Seoul
       - JSON_LOG=true
@@ -59,7 +61,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "ScraperWorker.ts"]
+      test: ["CMD-SHELL", "[ $$(find /tmp/scraper-heartbeat -mmin -3 | wc -l) -gt 0 ] || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -78,6 +80,8 @@ services:
     profiles:
       - worker
       - crawler
+    labels:
+      autoheal: "true"
     environment:
       - TZ=Asia/Seoul
       - AUTH=${AUTH:-}
@@ -91,7 +95,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "ConverterWorker.ts"]
+      test: ["CMD-SHELL", "[ $$(find /tmp/converter-heartbeat -mmin -3 | wc -l) -gt 0 ] || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

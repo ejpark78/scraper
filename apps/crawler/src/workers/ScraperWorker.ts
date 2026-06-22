@@ -113,13 +113,22 @@ class ScraperWorker {
     this.queueManager = new QueueManager();
   }
 
+  private touchHeartbeat(): void {
+    try {
+      const hbPath = '/tmp/scraper-heartbeat';
+      fs.writeFileSync(hbPath, new Date().toISOString(), 'utf-8');
+    } catch {}
+  }
+
   public async start(): Promise<void> {
     Logger.info(`Connecting to Redis at ${REDIS_URL}...`);
     await this.mongo.connect();
     Logger.info(`Scraper Worker started, listening to: ${SCRAPE_QUEUE}`);
+    this.touchHeartbeat();
 
     while (true) {
       try {
+        this.touchHeartbeat();
         const activeQueues = this.queueManager.getActiveQueues();
         const res = await this.redisBlocking.blpop(...activeQueues, 5);
         if (!res) continue;
