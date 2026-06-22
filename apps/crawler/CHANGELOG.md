@@ -4,6 +4,11 @@ All notable changes to the crawler service will be documented in this file.
 
 ---
 
+## [1.11.0] - 2026-06-23
+
+### Added
+- **INDEX.md 자동화 기능**: `squash-artifacts.sh` 스크립트 내부에 `update_index_md` 함수를 구현하여, 아카이빙 시 실물 잔여 아티팩트와 아카이브 파일의 개수를 동적으로 스캔 및 카운팅하여 `docs/artifacts/INDEX.md` 파일을 실시간 자동 재생성 갱신하도록 기능 추가.
+
 ## [1.10.0] - 2026-06-23
 
 ### Changed
