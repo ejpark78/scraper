@@ -1,7 +1,7 @@
 # 📘 Ebook Pipeline
 
 ## 개요
-(PDF, EPUB) → split → (PDF, html) → to-html → (html) → to-md → (markdown) → translate (markdown: en-ko)
+(PDF, EPUB) → split → (PDF, html) → to-html → (html) → to-md → (markdown)
 
 ## 주요 명령어
 | 명령어 | 기본값 파라미터가 명시된 Make 실행 형식 | 설명 |
@@ -41,11 +41,10 @@
 - Makefile `OUTPUT` 기본값 `data/output` (마운트된 볼륨 내 경로, writable)
 
 ## 아키텍처
-- Command pattern: `commands.py` (EbookCommand ABC + 6 구현체)
+- `main.py` — CLI 진입점 및 실행 로직 통합 구조
 - `ChapterSplitter` — PDF(페이지) / EPUB(내부 문서) 분할
 - `HTMLConverter` (`html_parser.py`) — PDF → HTML (PyMuPDF)
 - `HTMLToMarkdownConverter` (`markdown_parser.py`) — HTML → MD (BeautifulSoup + markdownify)
-- `PDFTranslator` (`translator.py`) — PDF 페이지 번역
 - `get_output_path(filename)` — `.pdf`/`.epub` 제거한 순수 파일명 반환
 
 ## 설정 및 분석 (Analyze)

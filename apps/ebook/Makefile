@@ -7,7 +7,7 @@ RUN_USER ?= --user $$(id -u):$$(id -g)
 OUT_PATH ?= data/output
 RAW ?= data/raw
 
-.PHONY: build summary analyze split to-html to-md translate_md translate_batch shell test
+.PHONY: build summary analyze split to-html to-md shell test
 
 build:
 	$(COMPOSE) build --no-cache ebook
@@ -28,20 +28,6 @@ to-html:
 
 to-md:
 	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe to-md --path "$(OUT_PATH)"
-
-translate_md:
-	@if [ -z "$(PDF)" ] || [ -z "$(RANGE)" ] || [ -z "$(OUT)" ]; then \
-		echo "Usage: make translate_md PDF=<path_to_pdf> RANGE=<start-end> OUT=<output_base>"; \
-		exit 1; \
-	fi
-	$(COMPOSE) run --rm $(RUN_USER) ebook uv run poe translate_md "$(PDF)" --translate-pages "$(RANGE)" --translate-out "$(OUT)"
-
-translate_batch:
-	@if [ -z "$(INPUT_DIR)" ]; then \
-		echo "Usage: make translate_batch INPUT_DIR=<dir> [PROVIDER=gemini] [MODEL=...]"; \
-		exit 1; \
-	fi
-	$(COMPOSE) run --rm $(RUN_USER) -e GEMINI_API_KEY -e OPENAI_API_KEY -e OPENCODE_API_KEY ebook uv run poe translate_batch --input-dir "$(INPUT_DIR)" $(PROVIDER:%=--provider %) $(MODEL:%=--model %)
 
 shell:
 	$(COMPOSE) run --rm $(RUN_USER) ebook bash

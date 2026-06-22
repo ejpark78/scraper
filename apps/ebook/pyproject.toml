@@ -18,13 +18,11 @@ dependencies = [
 ]
 
 [tool.poe.tasks]
-summary = "python -m src.process --summary"
-analyze = "python -m src.process --analyze"
-split = "python -m src.process --split"
-to-html = "python -m src.process --to-html"
-to-md = "python -m src.process --to-md"
-translate_md = "python -m src.process --translate-md"
-translate_batch = "python -m src.translate_batch"
+summary = "python -m src.main --summary"
+analyze = "python -m src.main --analyze"
+split = "python -m src.main --split"
+to-html = "python -m src.main --to-html"
+to-md = "python -m src.main --to-md"
 test = "pytest tests/ -v"
 
 [tool.ruff]

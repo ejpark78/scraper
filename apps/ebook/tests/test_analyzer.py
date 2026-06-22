@@ -27,10 +27,15 @@ def test_analyze_directory_recursion(temp_raw_dir):
     epub.write_text("dummy epub 3")
     
     analyzer = PDFAnalyzer()
+    original_analyze = analyzer.analyze
     
     # Mock self.analyze calls for individual files to avoid actual parsing
     with patch.object(analyzer, 'analyze') as mock_analyze:
-        mock_analyze.side_effect = lambda path, overwrite=False: BookProfile(Path(path), Path(path).name, 10, [])
+        def side_effect(path, overwrite=False):
+            if Path(path).is_dir():
+                return original_analyze(path, overwrite)
+            return BookProfile(Path(path), Path(path).name, 10, [])
+        mock_analyze.side_effect = side_effect
         
         # Analyze the directory
         analyzer.analyze(str(temp_raw_dir))
@@ -86,6 +91,16 @@ def test_overwrite_skip_logic_true(temp_raw_dir):
         mock_doc = MagicMock()
         mock_doc.page_count = 50
         mock_doc.get_toc.return_value = []
+        
+        # mock page get_text to return dict or string depending on format type
+        mock_page = MagicMock()
+        def page_get_text(format_type="text"):
+            if format_type == "dict":
+                return {"blocks": []}
+            return ""
+        mock_page.get_text.side_effect = page_get_text
+        mock_doc.__getitem__.return_value = mock_page
+        
         mock_fitz_open.return_value = mock_doc
         
         with patch.object(analyzer, '_save_books_config') as mock_save:

@@ -7,4 +7,5 @@
 | 3 | 021–030 | [021-030.batch.md](021-030.batch.md) | 8 (plan 3 + adr 4 + spec 1) |
 | 4 | 031–040 | [031-040.batch.md](031-040.batch.md) | 8 (plan 8) |
 | 5 | 041–050 | [042-add-dashboard-daily-crawl-stats.plan.md](042-add-dashboard-daily-crawl-stats.plan.md) | 4 (plan 1 + task 1 + review 1 + walkthrough 1) |
+|   |         | [045-ebook-refactoring.plan.md](045-ebook-refactoring.plan.md) | 4 (plan 1 + task 1 + review 1 + walkthrough 1) |
 
