@@ -12,6 +12,7 @@
    - **Playwright 브라우저 불일치**: `browserType.launch: Executable doesn't exist` 오류 발생 시 다음 중 하나를 실행합니다:
      - 종속성 버전 정렬을 위해 worker 이미지만 재빌드: `docker compose build worker`
      - 또는 컨테이너에서 브라우저 설치: `docker compose run --rm worker npx playwright install`
+   - **컨테이너 와치독 및 하트비트**: 백그라운드 워커 컨테이너(scraper, converter)는 락(Lock) 상태 감지를 위해 실행 루프 내에서 하트비트 파일(예: `/tmp/scraper-heartbeat`, `/tmp/converter-heartbeat`)을 주기적으로 갱신해야 합니다. Docker `healthcheck`는 이 파일의 최근 수정 시간(3분 이내)을 대조하여 비정상 대기 감지 시 `unhealthy`로 판단하며, `autoheal` 와치독 컨테이너가 헬스 실패 시 자동으로 컨테이너를 재시작(`autoheal=true` 라벨 활용)합니다.
 
 2. **재귀 수집 금지 및 1회성 수집 고정**:
    - 실시간 스크랩 시 페이지 내 링크들을 파싱하여 수집 큐에 재유입시키는 재귀 수집(`RECURSIVE_SCRAPE`) 기능은 제거되었습니다.

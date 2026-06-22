@@ -3,7 +3,7 @@
 ## 📌 리뷰 개요
 - **작업명**: 컨테이너 와치독 및 하트비트 헬스체크 추가
 - **수정 파일**:
-  - [AGENTS.md](file:///home/ejpark/workspace/scraper/AGENTS.md)
+  - [apps/crawler/AGENTS.md](file:///home/ejpark/workspace/scraper/apps/crawler/AGENTS.md)
   - `docker/infra/autoheal/compose.yml` (신규)
   - [compose.yml](file:///home/ejpark/workspace/scraper/compose.yml)
   - [apps/crawler/docker/worker/compose.yml](file:///home/ejpark/workspace/scraper/apps/crawler/docker/worker/compose.yml)

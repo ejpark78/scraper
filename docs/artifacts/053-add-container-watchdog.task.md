@@ -21,5 +21,5 @@
 ### 3단계: 문서화 및 검증
 - [x] `CHANGELOG.md` 및 `apps/crawler/CHANGELOG.md` 갱신.
 - [x] `.review.md` 및 `.walkthrough.md` 작성.
-- [ ] 타입 검증 및 빌드 확인 요청.
+- [x] 타입 검증 및 빌드 확인 요청.
 - [x] `scripts/agents/commit-changes.sh` 실행 및 완료 보고.

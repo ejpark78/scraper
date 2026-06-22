@@ -10,7 +10,7 @@
 ## 🛠️ 변경 및 적용 사항 요약
 
 ### 1. 룰 명문화 및 인프라 추가
-- [AGENTS.md](file:///home/ejpark/workspace/scraper/AGENTS.md): 컨테이너 와치독 및 하트비트 감시 규칙을 Docker 항목의 규칙 서브블록으로 등록.
+- [apps/crawler/AGENTS.md](file:///home/ejpark/workspace/scraper/apps/crawler/AGENTS.md): 컨테이너 와치독 및 하트비트 감시 규칙을 Docker 항목의 규칙 서브블록으로 등록.
 - `docker/infra/autoheal/compose.yml`: autoheal 와치독 이미지 세팅 완료.
 - [compose.yml](file:///home/ejpark/workspace/scraper/compose.yml): autoheal 구성을 마스터 인프라 구성에 포함.
 
