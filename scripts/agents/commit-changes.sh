@@ -99,18 +99,35 @@ if [ -n "$(git status --porcelain)" ]; then
     show_file_diff "$file" "$status"
   done
 
-  # Infer a reasonable commit message based on modified files
-  MSG="chore: commit changes"
-  
-  # Check which files are staged to make the message more informative
-  STAGED_FILES=$(git diff --cached --name-only)
-  
-  if echo "$STAGED_FILES" | grep -q "AGENTS.md"; then
-    MSG="docs: update AGENTS.md rules"
-  elif echo "$STAGED_FILES" | grep -q "src/crawler/workers/ConverterWorker.ts"; then
-    MSG="feat(crawler): retain original image URLs and append collected metadata"
-  elif echo "$STAGED_FILES" | grep -q "src/"; then
-    MSG="feat: update scraper/converter implementation"
+  # Get current branch name
+  BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+  MSG=""
+
+  # Check if branch name matches feature/###-description or hotfix/###-description
+  if [[ "$BRANCH_NAME" =~ ^feature/([0-9]{3})-(.+)$ ]]; then
+    NUM="${BASH_REMATCH[1]}"
+    DESC="${BASH_REMATCH[2]}"
+    DESC_SPACE=$(echo "$DESC" | tr '-' ' ')
+    MSG="feat(${NUM}): ${DESC_SPACE}"
+  elif [[ "$BRANCH_NAME" =~ ^hotfix/([0-9]{3})-(.+)$ ]]; then
+    NUM="${BASH_REMATCH[1]}"
+    DESC="${BASH_REMATCH[2]}"
+    DESC_SPACE=$(echo "$DESC" | tr '-' ' ')
+    MSG="fix(${NUM}): ${DESC_SPACE}"
+  fi
+
+  # Fallback to file-based inference if branch name does not match Git Flow pattern
+  if [ -z "$MSG" ]; then
+    MSG="chore: commit changes"
+    STAGED_FILES=$(git diff --cached --name-only)
+    
+    if echo "$STAGED_FILES" | grep -q "AGENTS.md"; then
+      MSG="docs: update AGENTS.md rules"
+    elif echo "$STAGED_FILES" | grep -q "src/crawler/workers/ConverterWorker.ts"; then
+      MSG="feat(crawler): retain original image URLs and append collected metadata"
+    elif echo "$STAGED_FILES" | grep -q "src/"; then
+      MSG="feat: update scraper/converter implementation"
+    fi
   fi
 
   git commit -m "$MSG" > /dev/null
