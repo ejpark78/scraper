@@ -1,0 +1,12 @@
+- [ ] 프론트엔드 라우팅 및 App.vue 메뉴 수정
+  - [ ] `apps/viewer/src/frontend/src/router/index.ts`에 Importer 경로 추가
+  - [ ] `apps/viewer/src/frontend/src/App.vue` 사이드바 내비게이션에 Importer 항목 추가
+- [ ] 백엔드 API 구현 및 확장
+  - [ ] `apps/viewer/src/api/routes/exporter.ts`에 `/joplin/folders`, `/joplin/notes`, `/joplin/import` 라우트 구현
+  - [ ] `apps/viewer/src/exporter/export/joplin.ts`가 호출 시점의 동적 `apiUrl` 및 `token`을 전달받아 작동하도록 수정
+- [ ] 프론트엔드 뷰 구현 및 개선
+  - [ ] `apps/viewer/src/frontend/src/views/ExporterView.vue`에서 연결 시 custom `apiUrl`을 전달하도록 수정
+  - [ ] `apps/viewer/src/frontend/src/views/ImporterView.vue` 신규 개발 (UI 구성, 연결 연동, 다운로드 및 저장 연동)
+- [ ] 검증 및 Git 커밋
+  - [ ] 로컬 빌드 및 연동 정상 작동 확인
+  - [ ] `scripts/agents/commit-changes.sh` 자동 실행 및 변경 기록 

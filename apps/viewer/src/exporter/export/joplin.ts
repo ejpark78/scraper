@@ -7,17 +7,20 @@ const JOPLIN_API_URL = process.env.JOPLIN_API_URL || 'http://host.docker.interna
 export async function exportToJoplin(
   book: WikiDocsBook,
   options: ExportOptions,
-  token: string
+  token: string,
+  apiUrl?: string
 ): Promise<void> {
   if (!token) {
     throw new Error('Joplin API 토큰이 제공되지 않았습니다.');
   }
 
+  const targetApiUrl = apiUrl || JOPLIN_API_URL;
+
   let bookFolder;
   try {
-    bookFolder = await createBookFolder(book.title, token);
+    bookFolder = await createBookFolder(book.title, token, targetApiUrl);
   } catch (error) {
-    throw new Error(`Joplin에 연결할 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${JOPLIN_API_URL})에 접근 가능한지 확인해주세요.`);
+    throw new Error(`Joplin에 연결할 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${targetApiUrl})에 접근 가능한지 확인해주세요.`);
   }
 
   for (const chapter of book.chapters) {
@@ -27,13 +30,14 @@ export async function exportToJoplin(
       sanitizeFilename(chapter.title),
       content,
       bookFolder.id,
-      token
+      token,
+      targetApiUrl
     );
   }
 }
 
-async function createBookFolder(title: string, token: string): Promise<{ id: string }> {
-  const response = await fetch(`${JOPLIN_API_URL}/folders?token=${encodeURIComponent(token)}`, {
+async function createBookFolder(title: string, token: string, apiUrl: string): Promise<{ id: string }> {
+  const response = await fetch(`${apiUrl}/folders?token=${encodeURIComponent(token)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -56,9 +60,10 @@ async function createNote(
   title: string,
   content: string,
   parentId: string,
-  token: string
+  token: string,
+  apiUrl: string
 ): Promise<void> {
-  const response = await fetch(`${JOPLIN_API_URL}/notes?token=${encodeURIComponent(token)}`, {
+  const response = await fetch(`${apiUrl}/notes?token=${encodeURIComponent(token)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

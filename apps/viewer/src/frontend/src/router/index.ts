@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import DashboardView from '../views/DashboardView.vue';
 import DocumentView from '../views/DocumentView.vue';
-import ExporterView from '../views/ExporterView.vue';
+import ExternalView from '../views/ExternalView.vue';
 
 const routes = [
   {
@@ -20,9 +20,9 @@ const routes = [
     props: true,
   },
   {
-    path: '/exporter',
-    name: 'Exporter',
-    component: ExporterView,
+    path: '/external',
+    name: 'External',
+    component: ExternalView,
   },
 ];
 

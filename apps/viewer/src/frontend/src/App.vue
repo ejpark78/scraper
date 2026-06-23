@@ -43,8 +43,8 @@ function selectDashboard() {
   router.push({ name: 'Dashboard' });
 }
 
-function selectExporter() {
-  router.push({ name: 'Exporter' });
+function selectExternal() {
+  router.push({ name: 'External' });
 }
 </script>
 
@@ -70,11 +70,11 @@ function selectExporter() {
         </li>
         <li 
           class="collection-item"
-          :class="{ active: route.name === 'Exporter' }"
-          @click="selectExporter"
+          :class="{ active: route.name === 'External' }"
+          @click="selectExternal"
         >
-          <span style="vertical-align:middle;margin-right:8px;font-size:16px;">📥</span>
-          <span style="vertical-align:middle;">Exporter</span>
+          <span style="vertical-align:middle;margin-right:8px;font-size:16px;">🔄</span>
+          <span style="vertical-align:middle;">External (Joplin)</span>
         </li>
       </ul>
 
