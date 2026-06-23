@@ -273,9 +273,47 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 const execAsync = promisify(exec);
 
-// Joplin CLI 실행 시 홈 디렉토리 수동 지정을 위해 env에 HOME을 설정해줄 필요가 있을 수 있음
-// (Docker 환경에서 안전하게 작동하도록 보장)
-const joplinEnv = { ...process.env, HOME: '/tmp' };
+// Joplin CLI 실행 시 홈 디렉토리 수동 지정 및 SSL 검증 완화 설정 적용
+const joplinEnv = { 
+  ...process.env, 
+  HOME: '/tmp',
+  NODE_TLS_REJECT_UNAUTHORIZED: '0'
+};
+
+/**
+ * POST /api/exporter/joplin/cli-test
+ * Joplin CLI의 설정을 변경하고 서버 연결성을 간단히 확인합니다.
+ */
+router.post('/joplin/cli-test', async (req: Request, res: Response) => {
+  try {
+    const { apiUrl, username, password } = req.body;
+    if (!apiUrl || !username || !password) {
+      return res.status(400).json({ error: 'Joplin Server URL, ID, Password는 필수 항목입니다.' });
+    }
+
+    console.log(`[Joplin CLI Test] Configuring Joplin CLI to target: ${apiUrl}`);
+    
+    // Config 설정 반영
+    await execAsync('joplin config sync.target 9', { env: joplinEnv });
+    await execAsync(`joplin config sync.9.path "${apiUrl.trim()}"`, { env: joplinEnv });
+    await execAsync(`joplin config sync.9.username "${username.trim()}"`, { env: joplinEnv });
+    await execAsync(`joplin config sync.9.password "${password.trim()}"`, { env: joplinEnv });
+
+    // 간단한 동기화 드라이 런 혹은 API 테스트를 시도합니다. (joplin sync 명령어로 동기화 통신을 1회 가볍게 시도)
+    console.log('[Joplin CLI Test] Testing connection...');
+    // --random-option 같은게 없으므로 joplin sync를 짧게 시도하여 자격증명 에러가 안 생기는지 판별
+    const { stdout } = await execAsync('joplin sync', { env: joplinEnv });
+    
+    if (stdout.includes('Error:') || stdout.includes('Invalid username or password') || stdout.includes('Could not connect')) {
+      return res.status(401).json({ error: `연결 실패: ${stdout}` });
+    }
+
+    res.json({ success: true, message: 'Joplin Server 연결 테스트가 통과되었습니다.' });
+  } catch (error: any) {
+    console.error('[Joplin CLI Test] Error:', error);
+    res.status(500).json({ error: error.message || 'Joplin Server 연결 테스트 도중 에러가 발생했습니다.' });
+  }
+});
 
 /**
  * POST /api/exporter/joplin/cli-sync
@@ -308,7 +346,56 @@ router.post('/joplin/cli-sync', async (req: Request, res: Response) => {
     const { stdout } = await execAsync('joplin sync', { env: joplinEnv });
     console.log('[Joplin CLI Sync] Sync completed:', stdout);
 
-    res.json({ success: true, message: 'Joplin Server와 성공적으로 동기화되었습니다.', log: stdout });
+    // 3. 자동 전체 내보내기 (Export all notebooks to Markdown)
+    console.log('[Joplin CLI Sync] Auto exporting all notebooks to data/joplin/...');
+    const { stdout: lsStdout } = await execAsync('joplin ls /', { env: joplinEnv });
+    console.log('[Joplin CLI Sync] joplin ls / output:\n', lsStdout);
+    const lines = lsStdout.split('\n');
+    const exportedBooks: string[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      // 괄호 앞의 노트북 이름만 순수 추출 (예: "노트북이름 (id)" -> "노트북이름")
+      // "/" 문자 역시 끝에 붙어있으면 제거
+      let folderName = trimmed.split('(')[0].trim();
+      if (folderName.endsWith('/')) {
+        folderName = folderName.slice(0, -1).trim();
+      }
+
+      if (folderName && folderName !== '..' && folderName !== '.') {
+        const cleanFolderName = folderName.replace(/[\\/:*?"<>|]/g, '_');
+        const targetDir = path.join('/app/data/joplin', cleanFolderName);
+        const tempExportDir = path.join('/tmp/joplin_export', cleanFolderName);
+
+        try {
+          if (fs.existsSync(tempExportDir)) {
+            fs.rmSync(tempExportDir, { recursive: true, force: true });
+          }
+          fs.mkdirSync(tempExportDir, { recursive: true });
+
+          console.log(`[Joplin CLI Sync] Auto exporting notebook "${folderName}" to "${tempExportDir}"...`);
+          await execAsync(`joplin export --format md --notebook "${folderName}" "${tempExportDir}"`, { env: joplinEnv });
+
+          if (fs.existsSync(targetDir)) {
+            fs.rmSync(targetDir, { recursive: true, force: true });
+          }
+          fs.mkdirSync(path.dirname(targetDir), { recursive: true });
+          fs.renameSync(tempExportDir, targetDir);
+          exportedBooks.push(folderName);
+        } catch (exportErr: any) {
+          console.error(`[Joplin CLI Sync] Failed to auto export notebook "${folderName}":`, exportErr);
+        }
+      }
+    }
+
+    const finalLog = stdout + `\n\n[Auto Export Completed]\n내보낸 노트북 목록: ${exportedBooks.join(', ') || '없음'}`;
+    res.json({ 
+      success: true, 
+      message: `동기화 완료 및 ${exportedBooks.length}개 노트북이 마크다운으로 자동 저장되었습니다.`, 
+      log: finalLog 
+    });
   } catch (error: any) {
     console.error('[Joplin CLI Sync] Error:', error);
     res.status(500).json({ error: error.message || 'Joplin Server 동기화 도중 에러가 발생했습니다.' });
@@ -333,11 +420,11 @@ router.get('/joplin/cli-folders', async (req: Request, res: Response) => {
         if (!trimmed) return null;
         // 노트북은 보통 끝에 "/"가 붙거나 ID가 괄호로 표기됨
         // 정규식 매칭: "이름/ (ID)" 또는 "이름 (ID)"
-        const match = trimmed.match(/^(.+?)\/?\s*\(([a-zA-Z0-9]{32})\)$/);
+        const match = trimmed.match(/^([^\(]+?)\/?\s*\(([a-zA-Z0-9]{32})\)$/) || trimmed.match(/^([^\(]+?)\/?$/);
         if (match) {
           return {
             title: match[1].trim(),
-            id: match[2],
+            id: match[2] || match[1].trim(),
           };
         }
         return null;
