@@ -1,4 +1,4 @@
-# 문서화 수명 주기 & 아티팩트 관리 가이드 (documentation-lifecycle.md)
+# 문서화 수명 주기 & 아티팩트 관리 가이드 (documentation_lifecycle.md)
 
 이 가이드는 프로젝트의 설계 변경, 아키텍처 개선, 개발 진행 시 준수해야 하는 **문서화 수명 주기(Documentation Lifecycle)** 및 아티팩트 보존 방침을 규정합니다.
 

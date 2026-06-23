@@ -19,7 +19,7 @@
 4. **투명한 이슈 처리**: 오류는 즉시 보고합니다. 무음 복구 금지. 사용자 리뷰 없이 자가 트러블슈팅은 최대 2회.
 5. **상대경로 링크**: 문서에서는 상대경로를 사용하세요 (예: `[Worker](src/Worker.ts)`). `file://` 사용 금지.
 6. **자동 Git 커밋**: 유효한 편집 직후 `scripts/agents/commit-changes.sh`를 실행합니다.
-7. **Docker 중심 테스트 및 실행**: 로컬 스크립트는 `docker compose` 내부망에서 실행 및 진단해야 합니다. 호스트에 DB 포트를 직접 노출하지 말고 Traefik 프록시 도메인을 경유하여 통신하며, Netshoot 진단이나 MCP 도구를 사용합니다. 자세한 구성과 볼륨 마운트 해결 규칙은 [Docker Environment Guide](file:///Users/ejpark/workspace/scraper/docs/guides/docker-environment.md)를 상시 참고하세요.
+7. **Docker 중심 테스트 및 실행**: 로컬 스크립트는 `docker compose` 내부망에서 실행 및 진단해야 합니다. 호스트에 DB 포트를 직접 노출하지 말고 Traefik 프록시 도메인을 경유하여 통신하며, Netshoot 진단이나 MCP 도구를 사용합니다. 자세한 구성과 볼륨 마운트 해결 규칙은 [Docker Environment Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/docker_environment.md)를 상시 참고하세요.
 8. **트랜스크립트 내보내기 (수동 실행)**: 세션 시작 시 `make agents-dump`를 자동 실행하지 마세요. 사용자가 요청하거나 세션 결과를 요약할 때만 명령어 라인을 제공하세요.
 9. **동시 백그라운드 작업 금지**: 경쟁 상태 및 DB/시스템 상태 손상을 방지하기 위해, 각 명령어에 대한 사용자의 명시적 승인 없이 여러 백그라운드 명령어/태스크를 병렬 실행하지 마세요. 활성 백그라운드 작업이 완전히 종료되고 종료 상태를 확인한 후에만 다음 명령어 승인을 요청하세요.
 10. **데이터 변경은 사용자에게 위임**: 데이터 손상이나 충돌을 방지하기 위해, 에이전트는 주요 영구 데이터 변경, DB 시딩, 인덱스 리셋/재인덱싱(예: `meili-manager.ts --reset`)을 실행하거나 승인 요청하지 마세요. 대신 필요한 실행 단계와 명령어를 채팅에 명확히 설명하고 사용자가 수동으로 실행하도록 요청하세요.
@@ -28,7 +28,7 @@
 13. **범위 외 수정 금지**: 사용자가 명시적으로 요청한 범위 밖의 파일은 수정하지 마세요.
 14. **추측 수정 금지**: 추측에 기반한 코드 수정은 엄격히 금지됩니다. 문제의 근본 원인을 모르면 사용자에게 문의하세요.
 15. **개별 패키지 전용 규칙의 격리**: crawler 및 viewer 전용 세부 실행 방식/제약 조건은 각각 `apps/crawler/AGENTS.md` 및 `apps/viewer/AGENTS.md` 파일에 정의합니다. 에이전트는 해당 하위 디렉토리 작업 시 개별 규칙을 확인하고 준수해야 합니다.
-16. **Git Flow 브랜치 전략 및 에이전트 행동 지침**: `main` 직접 수정 절대 금지, 브랜치 전환 전 `commit-changes.sh` 실행 완료 필수, 충돌 시 강제 푸시 금지 등 핵심 동작 룰을 준수합니다. 구체적인 브랜치 명명법과 커밋/머지 절차는 [Git Flow Guide](file:///Users/ejpark/workspace/scraper/docs/guides/git-flow.md)를 로드하여 준수해야 합니다.
+16. **Git Flow 브랜치 전략 및 에이전트 행동 지침**: `main` 직접 수정 절대 금지, 브랜치 전환 전 `commit-changes.sh` 실행 완료 필수, 충돌 시 강제 푸시 금지 등 핵심 동작 룰을 준수합니다. 구체적인 브랜치 명명법과 커밋/머지 절차는 [Git Flow Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/git_flow.md)를 로드하여 준수해야 합니다.
 
 ## ⚠️ 보안 규칙 (Security Rules)
 - **ENV 접근 금지**: `.env` 또는 `.env.*` 파일에 접근하지 마세요. `.env.example`을 참조하세요.
@@ -44,10 +44,10 @@
 6. **No Superficial Patches**: 오류 발생 시 표면적 패치(예: 커스텀 regex 제외나 하드코딩 파라미터로 증상 숨기기)를 절대 구현하지 마세요. 항상 데이터 흐름을 추적하고, DB/상태 조정을 조사하여 진정한 근본 원인을 찾아 견고한 구조적/아키텍처 솔루션을 구현하세요. **또한 버그가 수정(Bugfix)되었을 때에는 단순 변경사항과 엄격히 구분하여 CHANGELOG와 코드 리뷰 문서에 'Bugfix'임을 명확히 표기하고 기록해야 합니다.**
 
 ## 🛠️ 기술 스택별 작업 규칙 (Tech Stack Rules)
-* **코딩 규칙 준수**: 코딩 작업 시 strict typing(`any` 금지), class OOP 설계, `uv` 의존성 도구 관리 등의 언어별 코딩 스타일을 명확히 알아야 합니다. 상세 코딩 가이드는 [Tech Stack Guide](file:///Users/ejpark/workspace/scraper/docs/guides/tech-stack.md)를 로드하여 규칙을 따르세요.
+* **코딩 규칙 준수**: 코딩 작업 시 strict typing(`any` 금지), class OOP 설계, `uv` 의존성 도구 관리 등의 언어별 코딩 스타일을 명확히 알아야 합니다. 상세 코딩 가이드는 [Tech Stack Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/tech_stack.md)를 로드하여 규칙을 따르세요.
 
 ## 📝 Documentation Lifecycle Rules
-* **문서화 의무 준수**: 모든 기능 변경은 Spec -> Plan -> Review -> Walkthrough 수명 주기를 밟으며 3자리 접두사를 가진 아티팩트로 보존해야 합니다. 상세 작성 템플릿과 Squash 정책은 [Documentation Lifecycle Guide](file:///Users/ejpark/workspace/scraper/docs/guides/documentation-lifecycle.md)를 상시 참고하세요.
+* **문서화 의무 준수**: 모든 기능 변경은 Spec -> Plan -> Review -> Walkthrough 수명 주기를 밟으며 3자리 접두사를 가진 아티팩트로 보존해야 합니다. 상세 작성 템플릿과 Squash 정책은 [Documentation Lifecycle Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/documentation_lifecycle.md)를 상시 참고하세요.
 
 ## 🧭 Agent Skill Directory Map
 
