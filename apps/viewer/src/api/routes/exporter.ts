@@ -188,11 +188,12 @@ router.post('/joplin/import', async (req: Request, res: Response) => {
       return res.json({ success: true, count: 0, message: '가져올 노트가 없습니다.' });
     }
 
-    // 2. data/joplin/[폴더명] 디렉토리 생성
+    // 2. /app/data/joplin/[폴더명]/images 디렉토리 생성
     const cleanFolderName = folderName.replace(/[\\/:*?"<>|]/g, '_');
-    const targetDir = path.resolve(__dirname, '../../../../../data/joplin', cleanFolderName);
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
+    const targetDir = path.join('/app/data/joplin', cleanFolderName);
+    const imagesDir = path.join(targetDir, 'images');
+    if (!fs.existsSync(imagesDir)) {
+      fs.mkdirSync(imagesDir, { recursive: true });
     }
 
     let successCount = 0;
@@ -204,8 +205,50 @@ router.post('/joplin/import', async (req: Request, res: Response) => {
         const cleanTitle = note.title.replace(/[\\/:*?"<>|]/g, '_') || `Untitled_${note.id}`;
         const filePath = path.join(targetDir, `${cleanTitle}.md`);
         
-        // 노트 바디에 마크다운 내용 저장
-        const bodyContent = note.body || '';
+        let bodyContent = note.body || '';
+
+        // Joplin 이미지 리소스 식별 정규식: (:/32자리리소스ID)
+        const resourceRegex = /\(:\/([a-zA-Z0-9]{32})\)/g;
+        let match;
+        const processedResources = new Set<string>();
+
+        while ((match = resourceRegex.exec(bodyContent)) !== null) {
+          const resourceId = match[1];
+          if (processedResources.has(resourceId)) continue;
+          processedResources.add(resourceId);
+
+          try {
+            // 3-1. Joplin Resource 메타데이터 조회 (확장자 획득용)
+            const metaRes = await fetch(`${resolvedUrl}/resources/${resourceId}?token=${encodeURIComponent(token)}`);
+            if (metaRes.ok) {
+              const metaData = (await metaRes.json()) as any;
+              const fileExt = metaData.file_extension ? `.${metaData.file_extension}` : '.png';
+              const imageFileName = `${resourceId}${fileExt}`;
+              const imagePath = path.join(imagesDir, imageFileName);
+
+              // 3-2. 실제 이미지 파일 바이너리 다운로드 및 저장
+              if (!fs.existsSync(imagePath)) {
+                console.log(`[Importer API] Downloading image resource: ${resourceId}`);
+                const fileRes = await fetch(`${resolvedUrl}/resources/${resourceId}/file?token=${encodeURIComponent(token)}`);
+                if (fileRes.ok) {
+                  const arrayBuffer = await fileRes.arrayBuffer();
+                  fs.writeFileSync(imagePath, Buffer.from(arrayBuffer));
+                } else {
+                  console.warn(`[Importer API] Failed to download file for resource ${resourceId}`);
+                }
+              }
+
+              // 3-3. 마크다운 본문의 :/리소스ID 링크를 images/파일명 링크로 치환
+              const targetLink = `(:/${resourceId})`;
+              const localLink = `(images/${imageFileName})`;
+              bodyContent = bodyContent.split(targetLink).join(localLink);
+            }
+          } catch (resourceErr: any) {
+            console.error(`[Importer API] Failed to process resource ${resourceId} for note ${note.title}:`, resourceErr);
+          }
+        }
+        
+        // 최종 노트 마크다운 파일 저장
         fs.writeFileSync(filePath, bodyContent, 'utf8');
         successCount++;
       } catch (err: any) {
@@ -218,7 +261,7 @@ router.post('/joplin/import', async (req: Request, res: Response) => {
       success: errors.length === 0,
       count: successCount,
       errors: errors.length > 0 ? errors : undefined,
-      message: `성공적으로 ${successCount}개의 노트를 임포트하여 '${cleanFolderName}' 폴더에 저장했습니다.`
+      message: `성공적으로 ${successCount}개의 노트를 임포트(이미지 리소스 포함)하여 '${cleanFolderName}' 폴더에 저장했습니다.`
     });
   } catch (error: any) {
     console.error('[Importer API] Import process failed:', error);
