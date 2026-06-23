@@ -6,9 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "preview": "vite preview"
   },
   "dependencies": {
     "marked": "^18.0.5",
@@ -23,17 +21,6 @@
     "@vue/tsconfig": "^0.9.1",
     "typescript": "~6.0.2",
     "vite": "^8.0.12",
-    "vue-tsc": "^3.2.8",
-    "storybook": "^10.4.6",
-    "@storybook/vue3-vite": "^10.4.6",
-    "@chromatic-com/storybook": "^5.2.1",
-    "@storybook/addon-vitest": "^10.4.6",
-    "@storybook/addon-a11y": "^10.4.6",
-    "@storybook/addon-docs": "^10.4.6",
-    "@storybook/addon-onboarding": "^10.4.6",
-    "vitest": "^4.1.9",
-    "playwright": "^1.61.0",
-    "@vitest/browser-playwright": "^4.1.9",
-    "@vitest/coverage-v8": "^4.1.9"
+    "vue-tsc": "^3.2.8"
   }
 }
