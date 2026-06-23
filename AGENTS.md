@@ -94,8 +94,6 @@
    - `.spec.md`, `.adr.md`, `.plan.md`, `.issue.md`, `.test.md`는 원본 유지
    - 세션 종료 시 아티팩트 수가 50개 초과이면 `make agents-squash` 실행 제안
 
-
-
 ## 🧭 Agent Skill Directory Map
 
 작업 시 컨텍스트에 따라 해당 Skill 파일을 활성화/참조하세요:
