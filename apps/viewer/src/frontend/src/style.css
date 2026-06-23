@@ -2,26 +2,26 @@
   --font-sans: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, sans-serif;
   
   /* Color Palette (Deep Dark Space / Cyberpunk Tech Theme) */
-  --bg-app: #080b11;
-  --bg-sidebar: #0f131a;
-  --bg-card: #141a24;
-  --bg-card-hover: #1c2432;
-  --bg-card-selected: #222d3d;
+  --bg-app: #0d253d;
+  --bg-sidebar: #1c1e54;
+  --bg-card: #1c1e54;
+  --bg-card-hover: #222566;
+  --bg-card-selected: #2a2d7c;
   
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-glow: rgba(99, 102, 241, 0.2);
+  --border-color: rgba(227, 232, 238, 0.08);
+  --border-glow: rgba(83, 58, 253, 0.2);
   
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  --text-primary: #ffffff;
+  --text-secondary: #64748d;
+  --text-muted: #61718a;
   
-  --primary: #6366f1; /* Indigo */
-  --primary-hover: #4f46e5;
-  --accent: #10b981; /* Emerald */
+  --primary: #533afd; /* Indigo */
+  --primary-hover: #4434d4;
+  --accent: #ea2261; /* Ruby */
   
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
-  --glass-bg: rgba(20, 26, 36, 0.6);
+  --shadow-sm: rgba(0, 55, 112, 0.08) 0 1px 3px;
+  --shadow-md: rgba(0, 55, 112, 0.08) 0 8px 24px, rgba(0, 55, 112, 0.04) 0 2px 6px;
+  --glass-bg: rgba(28, 30, 84, 0.6);
   --glass-border: rgba(255, 255, 255, 0.05);
 }
 
@@ -133,9 +133,9 @@ body {
 
 .collection-item.active {
   color: #fff;
-  background-color: rgba(99, 102, 241, 0.15);
-  border-color: rgba(99, 102, 241, 0.3);
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.1);
+  background-color: rgba(83, 58, 253, 0.15);
+  border-color: rgba(83, 58, 253, 0.3);
+  box-shadow: 0 0 12px rgba(83, 58, 253, 0.1);
 }
 
 .sidebar-footer {
@@ -271,7 +271,7 @@ body {
 
 .doc-card.active {
   background-color: var(--bg-card-selected);
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: rgba(83, 58, 253, 0.4);
   box-shadow: var(--shadow-sm);
 }
 
@@ -633,7 +633,7 @@ code.language-markdown {
 .spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid rgba(99, 102, 241, 0.1);
+  border: 3px solid rgba(83, 58, 253, 0.1);
   border-top: 3px solid var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -655,7 +655,7 @@ code.language-markdown {
   border-bottom: 1px solid var(--border-color);
   background: rgba(255, 255, 255, 0.01);
   scrollbar-width: thin; /* Show thin scrollbar on Firefox */
-  scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+  scrollbar-color: rgba(83, 58, 253, 0.3) transparent;
   cursor: grab;
   user-select: none;
   -webkit-overflow-scrolling: touch;
@@ -671,7 +671,7 @@ code.language-markdown {
   background: transparent;
 }
 .country-filters::-webkit-scrollbar-thumb {
-  background-color: rgba(99, 102, 241, 0.25);
+  background-color: rgba(83, 58, 253, 0.25);
   border-radius: 4px;
 }
 .country-filters::-webkit-scrollbar-thumb:hover {
@@ -696,13 +696,13 @@ code.language-markdown {
 .country-badge:hover {
   background: var(--bg-card-hover);
   color: var(--text-primary);
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(83, 58, 253, 0.3);
 }
 .country-badge.active {
-  background: rgba(99, 102, 241, 0.15);
+  background: rgba(83, 58, 253, 0.15);
   color: #fff;
   border-color: var(--primary);
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 10px rgba(83, 58, 253, 0.2);
 }
 
 /* Sidebar Toggle Buttons styling */
@@ -725,7 +725,7 @@ code.language-markdown {
 .sidebar-toggle:hover {
   border-color: var(--primary);
   color: #fff;
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(83, 58, 253, 0.1);
 }
 
 .sidebar-expand {
@@ -746,7 +746,7 @@ code.language-markdown {
 .sidebar-expand:hover {
   border-color: var(--primary);
   color: #fff;
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(83, 58, 253, 0.1);
 }
 
 .markdown-body img {
@@ -807,27 +807,30 @@ code.language-markdown {
 .btn-primary {
   background-color: var(--primary);
   color: #fff;
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+  border-radius: 9999px !important;
+  box-shadow: 0 0 12px rgba(83, 58, 253, 0.2);
 }
 .btn-primary:hover {
   background-color: var(--primary-hover);
-  box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 16px rgba(83, 58, 253, 0.4);
 }
 
 .btn-secondary {
   background-color: transparent;
   border-color: var(--border-color);
   color: var(--text-primary);
+  border-radius: 9999px !important;
 }
 .btn-secondary:hover {
   background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(83, 58, 253, 0.3);
 }
 
 .btn-danger {
   background-color: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.2);
   color: #f87171;
+  border-radius: 9999px !important;
 }
 .btn-danger:hover {
   background-color: rgba(239, 68, 68, 0.2);
@@ -982,26 +985,46 @@ code.language-markdown {
 }
 .form-input-text {
   flex: 1;
-  background-color: var(--bg-sidebar);
+  background-color: #161b26;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: 6px !important;
+  padding: 0 12px;
   color: #fff;
   font-family: var(--font-sans);
   font-size: 13px;
+  height: 38px !important;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .form-input-text:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--border-glow);
 }
 .form-select {
-  background-color: var(--bg-sidebar);
+  background-color: #161b26;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: 6px !important;
+  padding: 0 30px 0 12px;
   color: #fff;
   font-family: var(--font-sans);
   font-size: 13px;
+  height: 38px !important;
+  outline: none;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%2364748d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--border-glow);
 }
 
 .dead-letter-reason {

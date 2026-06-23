@@ -664,17 +664,17 @@ async function addUrlQueue() {
                   <td style="font-weight: 600; color: #fff; text-align: left;">
                     {{ stats.name }} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal; margin-left: 4px;">({{ siteKey }})</span>
                   </td>
-                  <td style="text-align: center; font-weight: 500;">
-                    <span class="badge-priority low" style="padding: 3px 6px; font-size: 10px; background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2);">{{ stats.urlsCount ? stats.urlsCount.toLocaleString('ko-KR') : 0 }} 건</span>
+                  <td style="text-align: center; font-weight: 500; font-feature-settings: 'tnum';">
+                    <span class="badge-priority low" style="padding: 3px 6px; font-size: 10px; background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); font-feature-settings: 'tnum';">{{ stats.urlsCount ? stats.urlsCount.toLocaleString('ko-KR') : 0 }} 건</span>
                   </td>
-                  <td style="text-align: center; font-weight: 500;">
-                    <span class="badge-priority low" style="padding: 3px 6px; font-size: 10px; background-color: rgba(168, 85, 247, 0.1); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.2);">{{ stats.htmlCount ? stats.htmlCount.toLocaleString('ko-KR') : 0 }} 건</span>
+                  <td style="text-align: center; font-weight: 500; font-feature-settings: 'tnum';">
+                    <span class="badge-priority low" style="padding: 3px 6px; font-size: 10px; background-color: rgba(168, 85, 247, 0.1); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.2); font-feature-settings: 'tnum';">{{ stats.htmlCount ? stats.htmlCount.toLocaleString('ko-KR') : 0 }} 건</span>
                   </td>
-                  <td style="text-align: center; font-weight: 500;">
-                    <span class="badge-priority low" style="padding: 3px 8px; font-size: 11px;">{{ stats.silverCount.toLocaleString('ko-KR') }} 건</span>
+                  <td style="text-align: center; font-weight: 500; font-feature-settings: 'tnum';">
+                    <span class="badge-priority low" style="padding: 3px 8px; font-size: 11px; font-feature-settings: 'tnum';">{{ stats.silverCount.toLocaleString('ko-KR') }} 건</span>
                   </td>
-                  <td style="text-align: center; font-weight: 500;">
-                    <span class="badge-priority medium" style="padding: 3px 8px; font-size: 11px;">{{ stats.meiliCount.toLocaleString('ko-KR') }} 건</span>
+                  <td style="text-align: center; font-weight: 500; font-feature-settings: 'tnum';">
+                    <span class="badge-priority medium" style="padding: 3px 8px; font-size: 11px; font-feature-settings: 'tnum';">{{ stats.meiliCount.toLocaleString('ko-KR') }} 건</span>
                   </td>
                 </tr>
               </tbody>

@@ -337,12 +337,13 @@ async function startImport() {
     <!-- Sub Navigation Tabs & Connection Settings -->
     <div style="padding: 24px 24px 0 24px; display: flex; flex-direction: column; gap: 20px;">
       <!-- Connection Configuration Card -->
-      <div class="queue-section-card" style="padding: 20px; display: grid; grid-template-columns: 200px 1fr 1fr; gap: 16px; align-items: flex-end; background: rgba(18, 24, 36, 0.7); border: 1px solid rgba(31, 41, 61, 0.8); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); border-radius: 12px;">
+      <div class="queue-section-card" style="padding: 20px; display: grid; grid-template-columns: 200px 1fr 1fr; gap: 16px; align-items: flex-end; background: rgba(28, 30, 84, 0.6); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); border-radius: 12px;">
         <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
           <label style="font-size: 11px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🔌 연결 방식</label>
           <select 
             v-model="connectionType" 
-            class="custom-select-box" 
+            class="form-select" 
+            style="width: 100%;"
           >
             <option value="clipper">Joplin 로컬 웹 클리퍼</option>
             <option value="server">자체 Joplin Server</option>
@@ -356,7 +357,7 @@ async function startImport() {
             v-model="joplinUrl" 
             placeholder="http://127.0.0.1:41184" 
             class="form-input-text" 
-            style="width: 100%; height: 38px; border: 1px solid var(--border-color); background-color: #161b26; color: #fff; padding: 0 12px; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; transition: border-color 0.2s;" 
+            style="width: 100%;" 
             :disabled="connectionType === 'clipper'"
           />
         </div>
@@ -368,7 +369,7 @@ async function startImport() {
             v-model="joplinToken" 
             placeholder="인증 토큰 입력" 
             class="form-input-text" 
-            style="width: 100%; height: 38px; border: 1px solid var(--border-color); background-color: #161b26; color: #fff; padding: 0 12px; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; transition: border-color 0.2s;"
+            style="width: 100%;"
           />
         </div>
       </div>
@@ -524,25 +525,5 @@ async function startImport() {
 </template>
 
 <style>
-.custom-select-box {
-  width: 100% !important;
-  height: 38px !important;
-  border: 1px solid var(--border-color) !important;
-  background: #161b26 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%2394a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>') no-repeat right 10px center !important;
-  background-size: 16px !important;
-  color: #fff !important;
-  padding: 0 35px 0 12px !important;
-  border-radius: 6px !important;
-  font-size: 13px !important;
-  outline: none !important;
-  appearance: none !important;
-  -webkit-appearance: none !important;
-  box-sizing: border-box !important;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.custom-select-box:focus {
-  border-color: var(--accent-color) !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
-}
+/* Style block removed in favor of global style.css definitions */
 </style>
