@@ -19,12 +19,7 @@
 4. **투명한 이슈 처리**: 오류는 즉시 보고합니다. 무음 복구 금지. 사용자 리뷰 없이 자가 트러블슈팅은 최대 2회.
 5. **상대경로 링크**: 문서에서는 상대경로를 사용하세요 (예: `[Worker](src/Worker.ts)`). `file://` 사용 금지.
 6. **자동 Git 커밋**: 유효한 편집 직후 `scripts/agents/commit-changes.sh`를 실행합니다.
-7. **Docker 중심 테스트 및 실행**: 모든 로컬 스크립트는 `docker compose`로 테스트/실행합니다. 테스트/디버깅과 프로덕션 검증을 구분하세요:
-   * **디버깅/테스트**: 항상 볼륨 마운트를 사용하여 소스 파일을 실시간 동기화. `docker cp` 사용 금지.
-   * **프로덕션/검증**: 최종 빌드 이미지 검증 시 볼륨 마운트 없이 실행 (이미지 재빌드 후). MongoDB/Redis 접근이 Docker 네트워크 내에서 가능한지 확인.
-   * **로컬 node_modules 마운트 문제**: `-v $(pwd):/app`으로 워크스페이스 마운트 시 호스트의 `node_modules`가 컨테이너 버전을 덮어씁니다. 라이브러리 버전 불일치를 방지하려면 익명 볼륨 마운트 추가: `-v /app/node_modules`.
-   * **호스트 포트 노출 금지**: 인프라 서비스 포트(MongoDB `27017`, Redis `6379`, Meilisearch `7700`)를 호스트 머신에 직접 노출하지 마세요. 모든 트래픽은 Traefik 리버스 프록시 도메인(예: `*.localhost`, `*.nip.io`)을 통해 라우팅.
-   * **Docker 내부 CLI 작업**: 인프라 서비스가 호스트에 포트를 노출하지 않으므로, CLI 유틸리티/진단/REST 작업(예: `curl` 명령어)은 `docker compose run`으로 컨테이너 네트워크 내에서 실행 (예: `docker compose -p scraper run --rm worker curl ...`). 호스트→localhost 직접 연결 시도 금지. CRITICAL: 네트워크/API 진단 시 기본 서비스 컨테이너에 패키지를 설치/수정하지 말고 `nicolaka/netshoot` 컨테이너 사용. 다만, 데이터베이스, Meilisearch 및 Redis 진단을 위해 뷰어 MCP 서버가 제공하는 전용 도구(`run_mongo_query`, `run_meili_query`, `run_redis_query`)가 구축되어 있는 경우, 사용자 승인이 필요한 셸 진단 대신 해당 MCP 도구를 우선 사용하여 진단을 수행하세요.
+7. **Docker 중심 테스트 및 실행**: 로컬 스크립트는 `docker compose` 내부망에서 실행 및 진단해야 합니다. 호스트에 DB 포트를 직접 노출하지 말고 Traefik 프록시 도메인을 경유하여 통신하며, Netshoot 진단이나 MCP 도구를 사용합니다. 자세한 구성과 볼륨 마운트 해결 규칙은 [Docker Environment Guide](file:///Users/ejpark/workspace/scraper/docs/guides/docker-environment.md)를 상시 참고하세요.
 8. **트랜스크립트 내보내기 (수동 실행)**: 세션 시작 시 `make agents-dump`를 자동 실행하지 마세요. 사용자가 요청하거나 세션 결과를 요약할 때만 명령어 라인을 제공하세요.
 9. **동시 백그라운드 작업 금지**: 경쟁 상태 및 DB/시스템 상태 손상을 방지하기 위해, 각 명령어에 대한 사용자의 명시적 승인 없이 여러 백그라운드 명령어/태스크를 병렬 실행하지 마세요. 활성 백그라운드 작업이 완전히 종료되고 종료 상태를 확인한 후에만 다음 명령어 승인을 요청하세요.
 10. **데이터 변경은 사용자에게 위임**: 데이터 손상이나 충돌을 방지하기 위해, 에이전트는 주요 영구 데이터 변경, DB 시딩, 인덱스 리셋/재인덱싱(예: `meili-manager.ts --reset`)을 실행하거나 승인 요청하지 마세요. 대신 필요한 실행 단계와 명령어를 채팅에 명확히 설명하고 사용자가 수동으로 실행하도록 요청하세요.
@@ -33,21 +28,7 @@
 13. **범위 외 수정 금지**: 사용자가 명시적으로 요청한 범위 밖의 파일은 수정하지 마세요.
 14. **추측 수정 금지**: 추측에 기반한 코드 수정은 엄격히 금지됩니다. 문제의 근본 원인을 모르면 사용자에게 문의하세요.
 15. **개별 패키지 전용 규칙의 격리**: crawler 및 viewer 전용 세부 실행 방식/제약 조건은 각각 `apps/crawler/AGENTS.md` 및 `apps/viewer/AGENTS.md` 파일에 정의합니다. 에이전트는 해당 하위 디렉토리 작업 시 개별 규칙을 확인하고 준수해야 합니다.
-16. **Git Flow 브랜치 전략 및 에이전트 행동 지침**:
-    * **브랜치 규격**:
-      * `main`: 상용 배포 브랜치 (직접 커밋/수정 절대 금지 및 직접 되돌아가지 않음)
-      * `develop`: 개발 통합 브랜치 (기본 작업 대상)
-      * `feature/*` 또는 `feature/###-<name>`: 기능 개발 브랜치 (`develop`에서 분기, 아티팩트 작업 시 번호 필수)
-      * `release/*`: 배포 준비 브랜치 (`develop`에서 분기)
-      * `hotfix/*` 또는 `hotfix/###-<name>`: 상용 버그 긴급 수정 브랜치 (`main`에서 분기)
-    * **커밋 메시지**: [Conventional Commits](https://conventionalcommits.org) 규칙을 반드시 준수합니다. (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`)
-    * **에이전트 행동 지침**: 에이전트는 `.plan.md` 작성 시 대상 브랜치(`Target Branch`)를 명시하고, 계획서 승인 후 작업을 시작하기 전에 사용자에게 브랜치 생성 및 전환 명령 실행 승인을 요청해야 합니다. 작업이 완료되면 `.walkthrough.md` 제출과 함께 `develop` 브랜치로의 병합 및 기능 브랜치 삭제 명령 실행 승인을 요청하십시오.
-17. **작업 및 병합(Merge) 절차**:
-    * **작업 시작 전**: 반드시 최신 `develop` 및 `main` 브랜치 상태를 확보(`git pull`)해야 합니다.
-    * **브랜치 전환 전**: 현재 브랜치의 작업 내역이 다른 브랜치에 혼입되는 일을 방지하기 위해 `scripts/agents/commit-changes.sh`를 실행하여 완전히 로컬 커밋을 완료하거나 `stash`한 후에 브랜치를 전환해야 합니다.
-    * **머지 충돌(Merge Conflict) 처리**: 충돌 발생 시 임의로 강제 푸시(`--force`)하지 말고 사용자에게 즉시 알려야 합니다.
-    * **환경 검증**: 코드 변경 후 Docker 컨테이너 내에서 빌드 오류나 린트 에러가 발생하지 않는지 검증해야 합니다.
-    * **main 직접 제어 금지**: 개발 브랜치에서 작업 도중 `main` 브랜치로 직접 되돌아가거나 직접 커밋하는 행위를 절대 금지합니다.
+16. **Git Flow 브랜치 전략 및 에이전트 행동 지침**: `main` 직접 수정 절대 금지, 브랜치 전환 전 `commit-changes.sh` 실행 완료 필수, 충돌 시 강제 푸시 금지 등 핵심 동작 룰을 준수합니다. 구체적인 브랜치 명명법과 커밋/머지 절차는 [Git Flow Guide](file:///Users/ejpark/workspace/scraper/docs/guides/git-flow.md)를 로드하여 준수해야 합니다.
 
 ## ⚠️ 보안 규칙 (Security Rules)
 - **ENV 접근 금지**: `.env` 또는 `.env.*` 파일에 접근하지 마세요. `.env.example`을 참조하세요.
@@ -63,63 +44,10 @@
 6. **No Superficial Patches**: 오류 발생 시 표면적 패치(예: 커스텀 regex 제외나 하드코딩 파라미터로 증상 숨기기)를 절대 구현하지 마세요. 항상 데이터 흐름을 추적하고, DB/상태 조정을 조사하여 진정한 근본 원인을 찾아 견고한 구조적/아키텍처 솔루션을 구현하세요. **또한 버그가 수정(Bugfix)되었을 때에는 단순 변경사항과 엄격히 구분하여 CHANGELOG와 코드 리뷰 문서에 'Bugfix'임을 명확히 표기하고 기록해야 합니다.**
 
 ## 🛠️ 기술 스택별 작업 규칙 (Tech Stack Rules)
-
-1. **🐍 Python**:
-   * Python 3.11+ 문법을 사용하고, PEP 8 스타일 가이드를 준수합니다.
-   * 모든 함수와 메서드 선언부에는 명확한 Type Hinting을 필수 적용합니다.
-   * 패키지 의존성 관리에 `uv`를 사용하므로, 패키지 추가/변경 시 관련 툴로 잠금 파일 및 설정을 즉각 업데이트하며 `requirements.txt`는 관리 범위에서 배제합니다.
-2. **🔷 TypeScript & Vue 3 (Frontend)**:
-   * Vue 3 컴포넌트 개발 시 `<script setup>` 문법과 Composition API를 사용합니다.
-   * `any` 타입 사용을 엄격히 금지하며, 인터페이스(`interface`)나 타입(`type`)을 명확히 정의합니다.
-   * 프로젝트 루트의 `.eslintrc` 및 `.prettierrc` 규칙을 준수하여 포맷팅을 수행합니다.
-3. **🐳 Docker Compose (Infrastructure)**:
-   * 로컬 개발 환경용 `docker-compose.yml` 또는 `docker-compose.dev.yml` 설정을 항상 확인하여 일치시킵니다.
-   * 소스 수정 후 볼륨 마운트가 정상 작동하는지 확인하고, 필요 시 Docker 빌드 캐시를 깨고 재빌드(`--build`)를 제안/수행합니다.
-   * 호스트 포트 충돌 및 데이터 유실을 방지하기 위해 컨테이너 네이밍과 볼륨 설정을 임의로 변경하지 않습니다.
+* **코딩 규칙 준수**: 코딩 작업 시 strict typing(`any` 금지), class OOP 설계, `uv` 의존성 도구 관리 등의 언어별 코딩 스타일을 명확히 알아야 합니다. 상세 코딩 가이드는 [Tech Stack Guide](file:///Users/ejpark/workspace/scraper/docs/guides/tech-stack.md)를 로드하여 규칙을 따르세요.
 
 ## 📝 Documentation Lifecycle Rules
-
-에이전트는 모든 설계 및 기능 변경 작업을 수행할 때 아래의 **문서화 수명 주기(Documentation Lifecycle)**를 준수해야 합니다.
-
-1. **문서화 수명 주기 순서**:
-   Spec (.spec.md) -> Plan (.plan.md) -> Review (.review.md + .task.md) -> Walkthrough (.walkthrough.md)
-   - PRD는 필요 시에만 작성 (선택), ADR은 구조적 설계 분기 시에만 작성
-   - 테스트 시나리오는 Review 단계에서 `.test.md`로 포함
-
-2. **디렉토리 표준 및 명명 규칙**:
-   - **`docs/artifacts/`**: 모든 요구 정의 명세(Spec), 아키텍처 의사결정(ADR), 설계/계획, 태스크, 코드 리뷰, 결과보고서, 장애 분석, 테스트 시나리오 문서를 단일 디렉토리에서 관리합니다. 각 히스토리별로 **3자리 순차 번호 접두사**를 매겨 관련 파일들을 용도별 접미사(종류)로 구분하여 보존합니다.
-      - 요구명세서: `###-filename.spec.md` (예: `001-integrate-ebook-service.spec.md`)
-      - 의사결정서: `###-filename.adr.md` (예: `023-redis-namespace-restructuring.adr.md`)
-      - 계획서: `###-filename.plan.md` (예: `022-integrate-joplin-obsidian-exporter.plan.md`)
-      - 리뷰 문서: `###-filename.review.md`
-      - 할 일 목록: `###-filename.task.md`
-      - 결과보고서: `###-filename.walkthrough.md`
-      - 장애 분석/트러블슈팅: `###-filename.issue.md` (템플릿: [issues_template.md](docs/templates/issues_template.md))
-      - 테스트 시나리오: `###-filename.test.md` (템플릿: [tests_template.md](docs/templates/tests_template.md))
-   - **`CHANGELOG.md`**: 프로젝트 루트의 단일 파일로 릴리즈 버전 및 마일스톤 단위의 전체 변경 이력을 통합 관리합니다. (개별 changelog 폴더 분할은 지양)
-
-3. **변경 규모별 문서화 의무 차등**:
-
-| 등급 | 대상 | 필수 문서 |
-|------|------|----------|
-| **Major** | 기능 추가, 아키텍처 변경, Bugfix | `.review.md` + `.task.md` + `.walkthrough.md` |
-| **Minor** | 리팩터링, 설정/패키지/의존성 변경 | `.task.md` 1종 (축약형) |
-| **Trivial** | 오타, 주석, 문서만 변경 | CHANGELOG.md 1줄 (번호 미부여) |
-
-- **Bugfix**는 등급과 무관하게 `.review.md`/`.task.md` 상단에 **Bugfix** 명시
-- Major 누락 시 최종 Done 보고 불가
-
-4. **자가 검증 및 지속적 개선**:
-   - 자가 검증 루프는 모든 변경(Major/Minor/Trivial)에 필수
-   - 순서: 편집 반영 확인 → CHANGELOG 갱신 확인 → lint/build 정상 확인 → Done 보고
-   - dump loop, 누락된 수정, 반복 실패 발생 시 `docs/artifacts/`에 `.issue.md`로 원인 기록 (현상 → 원인 → 방지책)
-   - 세션 시작 시 최근 `.issue.md`(최대 3개)를 참조하여 동일 패턴 예방
-
-5. **아티팩트 Squash 및 Archive 정책**:
-   - `make agents-squash`로 `.review.md` + `.task.md` + `.walkthrough.md` 3종을 `.summary.md` 1개로 압축 (토큰 ~66% 절약)
-   - 압축 후 번호가 매겨진 모든 아티팩트 파일들을 10개 단위로 묶어 `###-###.archive.md` 파일로 통합 아카이빙하고 원본을 제거합니다.
-   - `.spec.md`, `.adr.md`, `.plan.md`, `.issue.md`, `.test.md`는 원본 유지
-   - 세션 종료 시 아티팩트 수가 50개 초과이면 `make agents-squash` 실행 제안
+* **문서화 의무 준수**: 모든 기능 변경은 Spec -> Plan -> Review -> Walkthrough 수명 주기를 밟으며 3자리 접두사를 가진 아티팩트로 보존해야 합니다. 상세 작성 템플릿과 Squash 정책은 [Documentation Lifecycle Guide](file:///Users/ejpark/workspace/scraper/docs/guides/documentation-lifecycle.md)를 상시 참고하세요.
 
 ## 🧭 Agent Skill Directory Map
 
