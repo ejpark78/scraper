@@ -181,7 +181,7 @@ router.post('/joplin/import', async (req: Request, res: Response) => {
       const errText = await joplinRes.text();
       return res.status(joplinRes.status).json({ error: `Joplin 노트 조회 실패: ${errText}` });
     }
-    const responseData = await joplinRes.json();
+    const responseData = (await joplinRes.json()) as any;
     const notes = (responseData.items || responseData) as any[];
 
     if (!notes || notes.length === 0) {

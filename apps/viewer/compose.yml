@@ -11,9 +11,8 @@ services:
     profiles:
       - tools
       - viewer
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
+    environment:
+      - TZ=Asia/Seoul
     restart: unless-stopped
     depends_on:
       traefik:
@@ -51,8 +50,6 @@ services:
       - PORT=3000
       - IS_VIEWER=true
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOST_PROJECT_PATH:-.}/data:/app/data
     extra_hosts:
@@ -92,9 +89,6 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
       - REDIS_URL=redis://redis:6379
       - PORT=3001
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
       traefik:

@@ -11,7 +11,7 @@ RUN_USER ?= --user $$(id -u):$$(id -g)
 
 build:
 	@echo "⚙️  Generating static sites configuration..."
-	$(COMPOSE) run --rm $(RUN_USER) -v $(ROOT_DIR):/app worker npm --prefix apps/crawler run config:generate
+	$(COMPOSE) run --rm $(RUN_USER) -v $(ROOT_DIR):/app -v /app/node_modules worker npm --prefix apps/crawler run config:generate
 	$(COMPOSE) build --no-cache viewer-fe viewer-api viewer-mcp
 	@echo "🧹 Cleaning up temporary static sites configuration..."
 	@rm -f $(ROOT_DIR)/apps/viewer/config/sites.json
