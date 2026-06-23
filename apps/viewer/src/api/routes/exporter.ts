@@ -269,6 +269,131 @@ router.post('/joplin/import', async (req: Request, res: Response) => {
   }
 });
 
+import { exec } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
+
+// Joplin CLI 실행 시 홈 디렉토리 수동 지정을 위해 env에 HOME을 설정해줄 필요가 있을 수 있음
+// (Docker 환경에서 안전하게 작동하도록 보장)
+const joplinEnv = { ...process.env, HOME: '/tmp' };
+
+/**
+ * POST /api/exporter/joplin/cli-sync
+ * Joplin CLI의 설정을 변경하고 동기화를 실행합니다.
+ */
+router.post('/joplin/cli-sync', async (req: Request, res: Response) => {
+  try {
+    const { apiUrl, username, password, encryptionPassword } = req.body;
+    if (!apiUrl || !username || !password) {
+      return res.status(400).json({ error: 'Joplin Server URL, ID, Password는 필수 항목입니다.' });
+    }
+
+    console.log(`[Joplin CLI Sync] Configuring Joplin CLI to target: ${apiUrl}`);
+    
+    // 1. Joplin Target 및 계정 설정 구성
+    await execAsync('joplin config sync.target 9', { env: joplinEnv });
+    await execAsync(`joplin config sync.9.path "${apiUrl.trim()}"`, { env: joplinEnv });
+    await execAsync(`joplin config sync.9.username "${username.trim()}"`, { env: joplinEnv });
+    await execAsync(`joplin config sync.9.password "${password.trim()}"`, { env: joplinEnv });
+
+    // E2EE 암호가 전달된 경우 설정
+    if (encryptionPassword) {
+      await execAsync(`joplin encryption decrypt "${encryptionPassword}"`, { env: joplinEnv }).catch(err => {
+        console.warn('[Joplin CLI Sync] Encryption password warning:', err.message);
+      });
+    }
+
+    // 2. 동기화 실행
+    console.log('[Joplin CLI Sync] Running "joplin sync"...');
+    const { stdout } = await execAsync('joplin sync', { env: joplinEnv });
+    console.log('[Joplin CLI Sync] Sync completed:', stdout);
+
+    res.json({ success: true, message: 'Joplin Server와 성공적으로 동기화되었습니다.', log: stdout });
+  } catch (error: any) {
+    console.error('[Joplin CLI Sync] Error:', error);
+    res.status(500).json({ error: error.message || 'Joplin Server 동기화 도중 에러가 발생했습니다.' });
+  }
+});
+
+/**
+ * GET /api/exporter/joplin/cli-folders
+ * 동기화 완료된 로컬 Joplin CLI 데이터베이스 상태에서 노트북(폴더) 목록을 반환합니다.
+ */
+router.get('/joplin/cli-folders', async (req: Request, res: Response) => {
+  try {
+    console.log('[Joplin CLI Folders] Fetching folder list...');
+    // joplin ls / 명령으로 노트북 목록 조회
+    const { stdout } = await execAsync('joplin ls /', { env: joplinEnv });
+    
+    // 출력 라인 파싱 (예: "My Notebook/ (notebook_id)")
+    const lines = stdout.split('\n');
+    const folders = lines
+      .map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return null;
+        // 노트북은 보통 끝에 "/"가 붙거나 ID가 괄호로 표기됨
+        // 정규식 매칭: "이름/ (ID)" 또는 "이름 (ID)"
+        const match = trimmed.match(/^(.+?)\/?\s*\(([a-zA-Z0-9]{32})\)$/);
+        if (match) {
+          return {
+            title: match[1].trim(),
+            id: match[2],
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    res.json(folders);
+  } catch (error: any) {
+    console.error('[Joplin CLI Folders] Error:', error);
+    res.status(500).json({ error: error.message || '노트북 목록을 읽어오는 도중 에러가 발생했습니다.' });
+  }
+});
+
+/**
+ * POST /api/exporter/joplin/cli-import
+ * 지정된 노트북을 통째로 마크다운 디렉토리로 내보낸 뒤, data/joplin/ 디렉토리로 이동시킵니다.
+ */
+router.post('/joplin/cli-import', async (req: Request, res: Response) => {
+  try {
+    const { folderName } = req.body;
+    if (!folderName) {
+      return res.status(400).json({ error: '가져올 노트북 이름(folderName)이 필요합니다.' });
+    }
+
+    const cleanFolderName = folderName.replace(/[\\/:*?"<>|]/g, '_');
+    const targetDir = path.join('/app/data/joplin', cleanFolderName);
+    
+    // 임시 export 폴더 생성
+    const tempExportDir = path.join('/tmp/joplin_export', cleanFolderName);
+    if (fs.existsSync(tempExportDir)) {
+      fs.rmSync(tempExportDir, { recursive: true, force: true });
+    }
+    fs.mkdirSync(tempExportDir, { recursive: true });
+
+    console.log(`[Joplin CLI Import] Exporting notebook "${folderName}" to Markdown...`);
+    // joplin export --format md --notebook <name> <path>
+    await execAsync(`joplin export --format md --notebook "${folderName}" "${tempExportDir}"`, { env: joplinEnv });
+
+    // 내보낸 마크다운 결과물을 최종 data/joplin/ 하위로 이동/복사
+    if (fs.existsSync(targetDir)) {
+      fs.rmSync(targetDir, { recursive: true, force: true });
+    }
+    fs.mkdirSync(path.dirname(targetDir), { recursive: true });
+    fs.renameSync(tempExportDir, targetDir);
+
+    res.json({
+      success: true,
+      message: `성공적으로 노트북 "${folderName}"을 마크다운 파일과 이미지 리소스를 포함하여 '${cleanFolderName}' 폴더에 가져왔습니다.`
+    });
+  } catch (error: any) {
+    console.error('[Joplin CLI Import] Error:', error);
+    res.status(500).json({ error: error.message || '가져오기 도중 에러가 발생했습니다.' });
+  }
+});
+
+
 /**
  * GET /api/exporter/book-content
  * 특정 서적의 전체 마크다운 파일 내용(WikiDocsBook 구조)을 반환합니다.

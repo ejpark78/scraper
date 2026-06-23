@@ -4,7 +4,14 @@ All notable changes to the viewer and web dashboard service will be documented i
 
 ---
 
+## [1.8.0] - 2026-06-23
+
+### Added
+- **Joplin CLI 통합 및 ID/PW 동기화**: 자체 동기화 서버로부터 데이터를 받아오는 CLI 백엔드 처리 로직 및 UI 연동 제공.
+- **E2EE 복호화 옵션**: 동기화 셋업 시 E2EE 암호 키를 입력해 직접 로컬 DB에서 마크다운 텍스트를 해독할 수 있게 지원.
+
 ## [1.7.0] - 2026-06-23
+
 
 ### Changed
 - **AGENTS.md 격리 적용**: 루트 규칙에서 뷰어 전용 제약조건(프론트엔드 이미지 컴파일 지침, 환경 위임 협업 원칙 등)을 분리하여 `apps/viewer/AGENTS.md`에 단독 이식 완료.

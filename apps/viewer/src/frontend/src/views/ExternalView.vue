@@ -17,6 +17,12 @@ const connectionType = ref<'clipper' | 'server'>('clipper');
 const joplinUrl = ref<string>('http://127.0.0.1:41184');
 const joplinToken = ref<string>('');
 
+// Joplin Server (CLI) specific inputs
+const joplinEmail = ref<string>('');
+const joplinPassword = ref<string>('');
+const joplinEncryptionPassword = ref<string>('');
+const isCliSyncing = ref<boolean>(false);
+
 // Export Tab States
 const availableBooks = ref<string[]>([]);
 const loadingBooks = ref<boolean>(false);
@@ -47,6 +53,9 @@ onMounted(() => {
   const savedToken = localStorage.getItem('joplin_token');
   if (savedToken) joplinToken.value = savedToken;
 
+  const savedEmail = localStorage.getItem('joplin_email');
+  if (savedEmail) joplinEmail.value = savedEmail;
+
   fetchAvailableBooks();
 });
 
@@ -69,6 +78,10 @@ watch(joplinUrl, (newVal) => {
 
 watch(joplinToken, (newVal) => {
   localStorage.setItem('joplin_token', newVal);
+});
+
+watch(joplinEmail, (newVal) => {
+  localStorage.setItem('joplin_email', newVal);
 });
 
 // Helper for logger
@@ -241,24 +254,67 @@ async function startExport() {
 
 // ---------------- IMPORT LOGIC ----------------
 
-async function loadJoplinFolders() {
-  const token = joplinToken.value.trim();
+async function syncJoplinCli() {
   const apiUrl = joplinUrl.value.trim();
-  if (!token) {
-    alert('Joplin API 토큰을 입력해주세요.');
+  const username = joplinEmail.value.trim();
+  const password = joplinPassword.value;
+  const encryptionPassword = joplinEncryptionPassword.value;
+
+  if (!apiUrl || !username || !password) {
+    alert('Joplin Server URL, ID, 비밀번호를 모두 입력해주세요.');
     return;
   }
 
-  loadingFolders.value = true;
+  isCliSyncing.value = true;
   clearLog('import');
-  addLog('import', 'info', `🔗 Joplin 폴더 목록을 조회하는 중... (${apiUrl})`);
+  addLog('import', 'info', `🔄 Joplin Server(${apiUrl}) 연결 및 동기화 시작...`);
 
   try {
-    const res = await fetch('/api/exporter/joplin/folders', {
+    const res = await fetch('/api/exporter/joplin/cli-sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiUrl, token })
+      body: JSON.stringify({ apiUrl, username, password, encryptionPassword })
     });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'CLI 동기화 요청 실패');
+    }
+
+    const result = await res.json();
+    addLog('import', 'success', '✅ Joplin CLI 동기화가 성공적으로 완료되었습니다.');
+    
+    // 동기화 완료 후 노트북 목록 자동 로드
+    await loadJoplinFolders();
+  } catch (err: any) {
+    addLog('import', 'error', `❌ CLI 동기화 실패: ${err.message}`);
+  } finally {
+    isCliSyncing.value = false;
+  }
+}
+
+async function loadJoplinFolders() {
+  loadingFolders.value = true;
+  clearLog('import');
+  addLog('import', 'info', `🔗 Joplin 노트북 목록을 가져오는 중... (${connectionType.value === 'server' ? 'CLI Local DB' : joplinUrl.value})`);
+
+  try {
+    let res;
+    if (connectionType.value === 'server') {
+      // CLI 방식
+      res = await fetch('/api/exporter/joplin/cli-folders');
+    } else {
+      // 로컬 Clipper 방식
+      const token = joplinToken.value.trim();
+      const apiUrl = joplinUrl.value.trim();
+      if (!token) throw new Error('Joplin API 토큰을 입력해주세요.');
+
+      res = await fetch('/api/exporter/joplin/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiUrl, token })
+      });
+    }
 
     if (!res.ok) {
       const err = await res.json();
@@ -267,9 +323,10 @@ async function loadJoplinFolders() {
 
     const data = await res.json();
     folders.value = data.items || data;
-    addLog('import', 'success', `✅ Joplin 폴더 ${folders.value.length}개 조회 완료.`);
+    addLog('import', 'success', `✅ Joplin 노트북 ${folders.value.length}개 조회 완료.`);
     if (folders.value.length > 0) {
-      selectedFolder.value = folders.value[0].id;
+      // title이 있는 폴더 혹은 title 필드가 없는 경우 자체 파싱 결과의 title 활용
+      selectedFolder.value = folders.value[0].title || folders.value[0].id;
     }
   } catch (err: any) {
     addLog('import', 'error', `❌ 폴더 조회 실패: ${err.message}`);
@@ -279,27 +336,38 @@ async function loadJoplinFolders() {
 }
 
 async function startImport() {
-  const folderId = selectedFolder.value;
-  if (!folderId) {
+  const targetFolderVal = selectedFolder.value; // ID 또는 노트북 명
+  if (!targetFolderVal) {
     alert('가져올 대상 폴더(노트북)를 선택해주세요.');
     return;
   }
 
-  const token = joplinToken.value.trim();
-  const apiUrl = joplinUrl.value.trim();
-  const targetFolderObj = folders.value.find(f => f.id === folderId);
-  const folderName = targetFolderObj ? targetFolderObj.title : 'ImportedFolder';
-
   importing.value = true;
   clearLog('import');
-  addLog('import', 'info', `📥 폴더 "${folderName}"의 모든 노트를 가져오는 중...`);
+  addLog('import', 'info', `📥 노트북 "${targetFolderVal}"의 모든 노트를 마크다운으로 추출하는 중...`);
 
   try {
-    const res = await fetch('/api/exporter/joplin/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ apiUrl, token, folderId, folderName })
-    });
+    let res;
+    if (connectionType.value === 'server') {
+      // CLI 방식
+      res = await fetch('/api/exporter/joplin/cli-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderName: targetFolderVal })
+      });
+    } else {
+      // 로컬 Clipper 방식
+      const token = joplinToken.value.trim();
+      const apiUrl = joplinUrl.value.trim();
+      const targetFolderObj = folders.value.find(f => f.id === targetFolderVal);
+      const folderName = targetFolderObj ? targetFolderObj.title : 'ImportedFolder';
+
+      res = await fetch('/api/exporter/joplin/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiUrl, token, folderId: targetFolderVal, folderName })
+      });
+    }
 
     if (!res.ok) {
       const err = await res.json();
@@ -308,7 +376,7 @@ async function startImport() {
 
     const result = await res.json();
     if (result.success) {
-      addLog('import', 'success', `🎉 ${result.count}개의 노트를 임포트하여 'data/joplin/${folderName}/'에 마크다운으로 저장하였습니다.`);
+      addLog('import', 'success', result.message || `🎉 성공적으로 노트를 임포트하여 마크다운으로 저장하였습니다.`);
     } else {
       addLog('import', 'error', `⚠️ 임포트 중 일부 에러가 발생했습니다: ${result.errors?.join(', ')}`);
     }
@@ -318,6 +386,7 @@ async function startImport() {
     importing.value = false;
   }
 }
+
 </script>
 
 <template>
@@ -346,23 +415,23 @@ async function startImport() {
             style="width: 100%;"
           >
             <option value="clipper">Joplin 로컬 웹 클리퍼</option>
-            <option value="server">자체 Joplin Server</option>
+            <option value="server">자체 Joplin Server (CLI)</option>
           </select>
         </div>
 
         <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
-          <label style="font-size: 11px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🌐 Joplin API URL</label>
+          <label style="font-size: 11px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🌐 Joplin API/Server URL</label>
           <input 
             type="text" 
             v-model="joplinUrl" 
             placeholder="http://127.0.0.1:41184" 
             class="form-input-text" 
             style="width: 100%;" 
-            :disabled="connectionType === 'clipper'"
           />
         </div>
 
-        <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- clipper 방식일 때는 Token 입력 -->
+        <div v-if="connectionType === 'clipper'" class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
           <label style="font-size: 11px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🔑 API 인증 토큰</label>
           <input 
             type="password" 
@@ -372,7 +441,24 @@ async function startImport() {
             style="width: 100%;"
           />
         </div>
+
+        <!-- server (CLI) 방식일 때는 ID/PW 입력 -->
+        <div v-else class="form-group" style="display: flex; flex-direction: column; gap: 8px; grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 700;">👤 계정 이메일 (ID)</label>
+            <input type="text" v-model="joplinEmail" placeholder="email@domain.com" class="form-input-text" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 700;">🔒 계정 비밀번호</label>
+            <input type="password" v-model="joplinPassword" placeholder="비밀번호" class="form-input-text" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="font-size: 11px; color: var(--text-secondary); font-weight: 700;">🔑 E2EE 암호 (선택)</label>
+            <input type="password" v-model="joplinEncryptionPassword" placeholder="동기화 암호화 키" class="form-input-text" />
+          </div>
+        </div>
       </div>
+
 
       <!-- Feature Tab Controls -->
       <div class="tabs-nav" style="border-bottom: 2px solid var(--border-color); background: none; padding: 0; display: flex; gap: 8px;">
@@ -463,17 +549,34 @@ async function startImport() {
           <div>
             <h3 style="margin: 0; color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 16px;">📖 Joplin 데이터 가져오기</h3>
             
+            <!-- server 방식일 경우 동기화(Sync) 트리거 섹션 -->
+            <div v-if="connectionType === 'server'" style="margin-bottom: 24px; padding: 12px; border-radius: 8px; background: rgba(0, 0, 0, 0.2); border: 1px dashed var(--border-color);">
+              <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #fff;">🔄 Step 1: Joplin Server 동기화</h4>
+              <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 12px 0;">ID/PW 계정 정보를 기반으로 먼저 로컬 CLI DB와 서버 간의 데이터를 동기화합니다.</p>
+              <button 
+                @click="syncJoplinCli" 
+                class="btn-secondary" 
+                style="width: 100%; height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+                :disabled="isCliSyncing"
+              >
+                <span v-if="isCliSyncing" class="spinner" style="width: 14px; height: 14px; border-width: 2px; margin: 0;"></span>
+                <span>{{ isCliSyncing ? '서버와 동기화 중...' : '🔄 동기화 실행' }}</span>
+              </button>
+            </div>
+
             <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px;">
               <div class="form-group" style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
-                <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">대상 노트북(폴더) 선택</label>
+                <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">
+                  {{ connectionType === 'server' ? 'Step 2: 대상 노트북(폴더) 선택' : '대상 노트북(폴더) 선택' }}
+                </label>
                 <div v-if="loadingFolders" class="loading-text" style="font-size:12px; color:var(--text-muted);">노트북 스캔 중...</div>
                 <select v-else v-model="selectedFolder" class="form-select" style="width: 100%;">
-                  <option v-if="folders.length === 0" value="">조회된 노트북이 없습니다.</option>
-                  <option v-for="folder in folders" :key="folder.id" :value="folder.id">{{ folder.title }}</option>
+                  <option v-if="folders.length === 0" value="">{{ connectionType === 'server' ? '동기화를 먼저 완료하거나 노트북을 조회해주세요.' : '조회된 노트북이 없습니다.' }}</option>
+                  <option v-for="folder in folders" :key="folder.id" :value="connectionType === 'server' ? folder.title : folder.id">{{ folder.title }}</option>
                 </select>
               </div>
               <button @click="loadJoplinFolders" class="btn-secondary" style="height: 38px;" :disabled="loadingFolders">
-                노트북 조회
+                조회/갱신
               </button>
             </div>
 
@@ -492,6 +595,7 @@ async function startImport() {
             <span>{{ importing ? '가져오는 중...' : '📥 가져오기 실행' }}</span>
           </button>
         </div>
+
 
         <!-- Logging Console -->
         <div class="queue-section-card" style="display: flex; flex-direction: column; padding: 20px;">
