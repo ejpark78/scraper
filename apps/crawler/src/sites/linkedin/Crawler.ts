@@ -88,7 +88,11 @@ export class LinkedInCrawler implements ICrawler {
 
         const browser: Browser = await chromium.launch({
             headless: false,
-            args: ['--disable-blink-features=AutomationControlled']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-blink-features=AutomationControlled'
+            ]
         });
         const context = await browser.newContext({
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -129,7 +133,11 @@ export class LinkedInCrawler implements ICrawler {
         const isHeadless = process.env.HEADLESS !== 'false';
         const browser: Browser = await chromium.launch({
             headless: isHeadless,
-            args: ['--disable-blink-features=AutomationControlled']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-blink-features=AutomationControlled'
+            ]
         });
         
         try {
@@ -219,7 +227,11 @@ export class LinkedInCrawler implements ICrawler {
         const isHeadless = process.env.HEADLESS !== 'false';
         const browser: Browser = await chromium.launch({
             headless: isHeadless,
-            args: ['--disable-blink-features=AutomationControlled']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-blink-features=AutomationControlled'
+            ]
         });
         
         try {

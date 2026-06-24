@@ -16,6 +16,9 @@
 
 ## 🎯 통합 버전 이력 요약 (Global Milestones)
 
+### [1.14.0] - 2026-06-25
+* **LinkedIn 크롤러 Playwright Crash 해결 (Bugfix)**: Docker 컨테이너 등 제한된 권한 환경에서 Chromium 브라우저 기동 시 seccomp/샌드박스 정책 충돌로 인해 수집기가 `unhealthy` 상태에 빠지고 큐가 줄어들지 않던 SIGTRAP 오류 현상을 해결하기 위해, `Crawler.ts` 내 Chromium 브라우저 론치 옵션에 `--no-sandbox` 및 `--disable-setuid-sandbox` 인자를 강제 주입.
+
 ### [1.13.0] - 2026-06-23
 * **Joplin CLI 통합 및 ID/PW 동기화 도입**: 백엔드 Docker 컨테이너 내에 Headless Joplin CLI를 연동하여 자체 동기화 서버와 ID/PW 및 E2EE 복호화 키로 직접 데이터를 동기화하고, 노트북 단위 마크다운 및 이미지 리소스 임포트(export)를 일괄 처리하는 파이프라인 구현.
 

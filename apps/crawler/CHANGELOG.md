@@ -4,6 +4,12 @@ All notable changes to the crawler service will be documented in this file.
 
 ---
 
+## [1.12.0] - 2026-06-25
+
+### Fixed (Bugfixes)
+- **Bugfix: LinkedIn crawler Playwright crash inside Docker**:
+  - Docker 컨테이너 등 제한된 권한 환경에서 Chromium 브라우저가 실행될 때 seccomp/샌드박스 보안 정책 충돌로 인해 발생하는 SIGTRAP(강제 종료) 문제를 해결하기 위해, `Crawler.ts` 내 Playwright `chromium.launch` 옵션에 `--no-sandbox` 및 `--disable-setuid-sandbox` 인자를 주입.
+
 ## [1.11.0] - 2026-06-23
 
 ### Added
