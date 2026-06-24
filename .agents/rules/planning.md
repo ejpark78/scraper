@@ -1,3 +1,7 @@
+---
+trigger: plan, spec, adr, design
+---
+
 ## 📋 Execution & Review Planning Rule
 
 > [!IMPORTANT]

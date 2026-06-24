@@ -1,3 +1,7 @@
+---
+trigger: docker, compose, container, port, volume, network
+---
+
 # Docker 중심 개발 & 네트워크 인프라 가이드 (docker_environment.md)
 
 이 가이드는 Docker Compose 기반 개발 환경의 네트워크 진단, 포트 통제 정책, 그리고 볼륨 마운트 시 발생할 수 있는 주요 트러블슈팅 규칙을 다룹니다.

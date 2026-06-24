@@ -1,5 +1,6 @@
 ---
 description: Start the Autonomous AI Developer Pipeline sequence with a new idea
+trigger: /startcycle
 ---
 
 When the user types `/startcycle <idea>`, orchestrate the development process strictly using `.agents/agents.md` and `.agents/skills/`.
