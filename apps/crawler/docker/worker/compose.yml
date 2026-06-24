@@ -30,8 +30,6 @@ services:
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
       - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
 
   scraper:
     build:
@@ -57,8 +55,6 @@ services:
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
       - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "[ $$(find /tmp/scraper-heartbeat -mmin -3 | wc -l) -gt 0 ] || exit 1"]
@@ -91,8 +87,6 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "[ $$(find /tmp/converter-heartbeat -mmin -3 | wc -l) -gt 0 ] || exit 1"]
@@ -123,9 +117,6 @@ services:
       - MONGO_URL=mongodb://mongodb:27017
       - MEILI_URL=http://meilisearch:7700
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-}
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "pgrep", "-f", "IndexerWorker.ts"]

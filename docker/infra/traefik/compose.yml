@@ -33,8 +33,6 @@ services:
       - TZ=Asia/Seoul
       - DOCKER_API_VERSION=1.40
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
     networks:

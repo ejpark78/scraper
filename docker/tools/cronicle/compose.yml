@@ -29,8 +29,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOST_PROJECT_PATH:-.}/data/.services/cronicle:/opt/cronicle/data
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3012/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]

@@ -18,13 +18,12 @@ services:
       traefik:
         condition: service_healthy
     environment:
+      - TZ=Asia/Seoul
       - base_url=https://yacht.127.0.0.1.nip.io/api/
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/yacht:/config
       - /var/run/docker.sock:/var/run/docker.sock
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "pgrep", "-f", "uvicorn"]

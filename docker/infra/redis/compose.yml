@@ -19,8 +19,6 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/redis:/data
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -39,9 +37,6 @@ services:
         condition: service_healthy
     environment:
       - TZ=Asia/Seoul
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5540/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]

@@ -33,8 +33,6 @@
 #     volumes:
 #       - ${HOST_PROJECT_PATH:-.}/:/home/kasm-user/scraper
 #       - /var/run/docker.sock:/var/run/docker.sock
-#       - /etc/localtime:/etc/localtime:ro
-#       - /etc/timezone:/etc/timezone:ro
 #     restart: unless-stopped
 #     healthcheck:
 #       test: ["CMD", "curl", "-k", "https://localhost:6901/api/health"]

@@ -31,8 +31,6 @@ services:
       - CHOWN_HOME_OPTS=-R
     volumes:
       - ${HOST_PROJECT_PATH:-.}/notebooks:/home/jovyan
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     command: ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''"]
     restart: unless-stopped
     healthcheck:
