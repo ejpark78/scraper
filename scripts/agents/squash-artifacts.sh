@@ -14,7 +14,7 @@
 #   bash scripts/agents/squash-artifacts.sh --archive       # Run ONLY the decade group archiving and update INDEX.md
 #   bash scripts/agents/squash-artifacts.sh --archive --dry # Dry run for ONLY archiving
 # ==============================================================================
-set -euo pipefail
+set -eo pipefail
 
 ARTIFACTS_DIR="docs/artifacts"
 MODE="${1:-}"
@@ -102,16 +102,19 @@ run_archive() {
         basename "$f" | sed -E 's/^([0-9]+)-.*/\1/'
     done | sort -u)
 
-    # Group by decade
-    declare -A decade_groups
-    for p in "${prefixes[@]}"; do
-        local decade=$(( (10#$p - 1) / 10 * 10 + 1 ))
-        local key=$(printf "%03d" $decade)
-        decade_groups["$key"]+="$p "
-    done
+    # Extract unique decades
+    local decades=()
+    while IFS= read -r d; do
+        decades+=("$d")
+    done < <(
+        for p in "${prefixes[@]}"; do
+            local decade=$(( (10#$p - 1) / 10 * 10 + 1 ))
+            printf "%03d\n" $decade
+        done | sort -u
+    )
 
     local ARCHIVE_COUNT=0
-    for decade_start in $(printf "%s\n" "${!decade_groups[@]}" | sort); do
+    for decade_start in "${decades[@]}"; do
         local start_num=$((10#$decade_start))
         local end_num=$((start_num + 9))
         local range_end=$(printf "%03d" $end_num)
@@ -119,10 +122,13 @@ run_archive() {
 
         # Collect all files in this decade range
         local archive_sources=()
-        for p in ${decade_groups["$decade_start"]}; do
-            while IFS= read -r f; do
+        for f in "${all_artifacts[@]}"; do
+            local bname=$(basename "$f")
+            local prefix=$(echo "$bname" | sed -E 's/^([0-9]+)-.*/\1/')
+            local num=$((10#$prefix))
+            if [ "$num" -le "$end_num" ] && [ "$num" -ge "$start_num" ]; then
                 archive_sources+=("$f")
-            done < <(find_files "$p-*" ! -name '*.archive.md' | sort)
+            fi
         done
 
         if [ "${#archive_sources[@]}" -eq 0 ]; then
@@ -195,9 +201,20 @@ run_squash() {
     while IFS= read -r prefix; do
         [ -z "$prefix" ] && continue
 
-        mapfile -t reviews < <(find_files "$prefix-*.review.md")
-        mapfile -t tasks < <(find_files "$prefix-*.task.md")
-        mapfile -t walks < <(find_files "$prefix-*.walkthrough.md")
+        reviews=()
+        while IFS= read -r line; do
+            [ -n "$line" ] && reviews+=("$line")
+        done < <(find_files "$prefix-*.review.md")
+
+        tasks=()
+        while IFS= read -r line; do
+            [ -n "$line" ] && tasks+=("$line")
+        done < <(find_files "$prefix-*.task.md")
+
+        walks=()
+        while IFS= read -r line; do
+            [ -n "$line" ] && walks+=("$line")
+        done < <(find_files "$prefix-*.walkthrough.md")
 
         # Determine stem: use the first file's basename without suffix
         local first_file=""

@@ -8,3 +8,5 @@
 | 4 | 031-040 | [031-040.archive.md](031-040.archive.md) | 4 |
 | 5 | 041-050 | [041-050.archive.md](041-050.archive.md) | 19 |
 | 6 | 051-060 | [051-060.archive.md](051-060.archive.md) | 2 |
+| 7 | 061-070 | [061-070.archive.md](061-070.archive.md) | 19 |
+| 8 | 071-080 | [071-080.archive.md](071-080.archive.md) | 10 |
