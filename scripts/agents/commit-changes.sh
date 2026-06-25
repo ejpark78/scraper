@@ -132,8 +132,8 @@ if [ -n "$(git status --porcelain)" ]; then
     MSG="chore: commit changes"
     STAGED_FILES=$(git diff --cached --name-only)
     
-    if echo "$STAGED_FILES" | grep -q "AGENTS.md"; then
-      MSG="docs: update AGENTS.md rules"
+    if echo "$STAGED_FILES" | grep -qE "AGENTS.md|\.agents/rules/"; then
+      MSG="docs: update agent rules"
     elif echo "$STAGED_FILES" | grep -q "src/crawler/workers/ConverterWorker.ts"; then
       MSG="feat(crawler): retain original image URLs and append collected metadata"
     elif echo "$STAGED_FILES" | grep -q "src/"; then

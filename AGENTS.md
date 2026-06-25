@@ -36,13 +36,7 @@
 - **자격 증명 노출 금지**: API 키/자격 증명을 명령어 출력에 노출하지 마세요.
 
 ## ⚙️ 엔지니어링 및 아키텍처 규칙 (Engineering & Architecture Rules)
-
-1. **Strict OOP Patterns**: 클래스, 인터페이스, SOLID 원칙을 사용합니다. 핵심 로직에 느슨한 유틸리티 함수 사용을 지양합니다.
-2. **Strict Typing**: 'any' 타입 사용을 금지합니다. public 메서드에 명시적 반환 타입과 인터페이스를 선언합니다.
-3. **Robust Error Handling**: 빈 catch 블록을 사용하지 마세요. 항상 에러 컨텍스트를 로깅하고 finally 블록에서 DB/Redis 연결을 종료합니다.
-4. **Centralized Config**: 'process.env'는 전용 설정 파일에서만 접근합니다. 생성자를 통해 설정을 주입합니다.
-5. **Agent-Friendly Docstrings**: 모든 소스, 스크립트, 자동화 파일에 설계 컨텍스트, 제약 조건, 의존성을 설명하는 헤더 docstring/주석을 추가하여 리팩터링 루프를 방지합니다. 동작 변경 시 업데이트합니다.
-6. **No Superficial Patches**: 오류 발생 시 표면적 패치(예: 커스텀 regex 제외나 하드코딩 파라미터로 증상 숨기기)를 절대 구현하지 마세요. 항상 데이터 흐름을 추적하고, DB/상태 조정을 조사하여 진정한 근본 원인을 찾아 견고한 구조적/아키텍처 솔루션을 구현하세요. **또한 버그가 수정(Bugfix)되었을 때에는 단순 변경사항과 엄격히 구분하여 CHANGELOG와 코드 리뷰 문서에 'Bugfix'임을 명확히 표기하고 기록해야 합니다.**
+* **공통 규칙 및 DRY 원칙 준수**: 모든 개발 및 리팩터링 작업 시 strict typing, OOP 설계, 에러 처리, 그리고 **DRY(Don't Repeat Yourself) 규칙**을 상시 준수해야 합니다. 구체적인 설계 요구사항은 [Engineering & Architecture Guide](.agents/rules/engineering_architecture.md) 규칙 파일을 반드시 상시 로드하여 이행하세요.
 
 ## 🛠️ 기술 스택별 작업 규칙 (Tech Stack Rules)
 * **코딩 규칙 준수**: 코딩 작업 시 strict typing(`any` 금지), class OOP 설계, `uv` 의존성 도구 관리 등의 언어별 코딩 스타일을 명확히 알아야 합니다. 상세 코딩 가이드는 [Tech Stack Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/tech_stack.md)를 로드하여 규칙을 따르세요.

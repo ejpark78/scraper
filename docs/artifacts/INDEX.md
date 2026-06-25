@@ -113,4 +113,8 @@
 - [076-improve-index-md-visualization.summary](071-080.archive.md#076-improve-index-md-visualizationsummary)
 - [077-fix-archive-overwrite-issue.plan](071-080.archive.md#077-fix-archive-overwrite-issueplan)
 - [077-fix-archive-overwrite-issue.summary](071-080.archive.md#077-fix-archive-overwrite-issuesummary)
+- [078-refactor-rules-and-dry.plan](078-refactor-rules-and-dry.plan.md)
+- [078-refactor-rules-and-dry.task](078-refactor-rules-and-dry.task.md)
+- [078-refactor-rules-and-dry.review](078-refactor-rules-and-dry.review.md)
+- [078-refactor-rules-and-dry.walkthrough](078-refactor-rules-and-dry.walkthrough.md)
 
