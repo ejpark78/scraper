@@ -117,4 +117,8 @@
 - [078-refactor-rules-and-dry.task](078-refactor-rules-and-dry.task.md)
 - [078-refactor-rules-and-dry.review](078-refactor-rules-and-dry.review.md)
 - [078-refactor-rules-and-dry.walkthrough](078-refactor-rules-and-dry.walkthrough.md)
+- [079-fix-tool-path-rules.plan](079-fix-tool-path-rules.plan.md)
+- [079-fix-tool-path-rules.task](079-fix-tool-path-rules.task.md)
+- [079-fix-tool-path-rules.review](079-fix-tool-path-rules.review.md)
+- [079-fix-tool-path-rules.walkthrough](079-fix-tool-path-rules.walkthrough.md)
 
