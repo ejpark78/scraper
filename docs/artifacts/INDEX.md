@@ -125,4 +125,8 @@
 - [080-enforce-feature-branch.task](080-enforce-feature-branch.task.md)
 - [080-enforce-feature-branch.review](080-enforce-feature-branch.review.md)
 - [080-enforce-feature-branch.walkthrough](080-enforce-feature-branch.walkthrough.md)
+- [081-fix-artifacts-rule-spec.plan](081-fix-artifacts-rule-spec.plan.md)
+- [081-fix-artifacts-rule-spec.task](081-fix-artifacts-rule-spec.task.md)
+- [081-fix-artifacts-rule-spec.review](081-fix-artifacts-rule-spec.review.md)
+- [081-fix-artifacts-rule-spec.walkthrough](081-fix-artifacts-rule-spec.walkthrough.md)
 
