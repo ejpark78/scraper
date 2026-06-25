@@ -89,10 +89,21 @@ show_file_diff() {
 
 # Ensure git detects changes
 if [ -n "$(git status --porcelain)" ]; then
+  # Get current branch name
+  BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+  # Prevent direct commit to main branch
+  if [ "$BRANCH_NAME" = "main" ]; then
+    echo "❌ ERROR: Direct commit to 'main' branch is strictly prohibited by Git Flow guidelines." >&2
+    echo "   Please create or checkout a feature or develop branch first." >&2
+    exit 1
+  fi
+
   echo "🔄 Detecting modifications..."
   
   # Stage all modifications and untracked files
   git add .
+
 
   # 변경 상세 내역 출력
   git diff --cached --name-status | while read -r status file; do
