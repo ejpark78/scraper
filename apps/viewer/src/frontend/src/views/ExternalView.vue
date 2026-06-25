@@ -356,8 +356,8 @@ async function syncJoplinCli() {
       }
     }
 
-    // 동기화 완료 후 노트북 목록 자동 로드
-    await loadJoplinFolders();
+    // 동기화 완료 후 노트북 목록 자동 로드 (로그 유지)
+    await loadJoplinFolders(false);
   } catch (err: any) {
     addLog('import', 'error', `❌ CLI 동기화 실패: ${err.message}`);
   } finally {
@@ -365,9 +365,11 @@ async function syncJoplinCli() {
   }
 }
 
-async function loadJoplinFolders() {
+async function loadJoplinFolders(shouldClear = true) {
   loadingFolders.value = true;
-  clearLog('import');
+  if (shouldClear) {
+    clearLog('import');
+  }
   addLog('import', 'info', `🔗 Joplin 노트북 목록을 가져오는 중... (${connectionType.value === 'server' ? 'CLI Local DB' : joplinUrl.value})`);
 
   try {
