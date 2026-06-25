@@ -494,7 +494,7 @@ router.post('/joplin/cli-sync', async (req: Request, res: Response) => {
 
       const cleanFolderName = folderName.replace(/[\\/:*?"<>|]/g, '_');
       const targetDir = path.join('/app/data/joplin', cleanFolderName);
-      const tempExportDir = path.join('/tmp/joplin_export', cleanFolderName);
+      const tempExportDir = path.join('/app/data/joplin/.tmp_export', cleanFolderName);
 
       try {
         if (fs.existsSync(tempExportDir)) {
