@@ -28,7 +28,8 @@
 13. **범위 외 수정 금지**: 사용자가 명시적으로 요청한 범위 밖의 파일은 수정하지 마세요.
 14. **추측 수정 금지**: 추측에 기반한 코드 수정은 엄격히 금지됩니다. 문제의 근본 원인을 모르면 사용자에게 문의하세요.
 15. **개별 패키지 전용 규칙의 격리**: crawler 및 viewer 전용 세부 실행 방식/제약 조건은 각각 `apps/crawler/AGENTS.md` 및 `apps/viewer/AGENTS.md` 파일에 정의합니다. 에이전트는 해당 하위 디렉토리 작업 시 개별 규칙을 확인하고 준수해야 합니다.
-16. **Git Flow 브랜치 전략 및 에이전트 행동 지침**: `main` 직접 수정 절대 금지, 브랜치 전환 전 `commit-changes.sh` 실행 완료 필수, 충돌 시 강제 푸시 금지 등 핵심 동작 룰을 준수합니다. 특히 작업 세션 시작 시 반드시 현재 git 브랜치를 식별하고, `main` 브랜치일 경우 코드 수정을 시작하기 전에 브랜치 전환(`git checkout develop` 또는 `git checkout -b feature/*`)을 제안하고 사용자에게 경고해야 합니다. 구체적인 브랜치 명명법과 커밋/머지 절차는 [Git Flow Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/git_flow.md)를 로드하여 준수해야 합니다.
+16. **Git Flow 브랜치 전략 및 에이전트 행동 지침**: `main` 직접 수정 절대 금지, 브랜치 전환 전 `commit-changes.sh` 실행 완료 필수, 충돌 시 강제 푸시 금지 등 핵심 동작 룰을 준수합니다. 특히 작업 세션 시작 시 반드시 현재 git 브랜치를 식별하고, `main` 브랜치일 경우 코드 수정을 시작하기 전에 브랜치 전환(`git checkout develop` 또는 `git checkout -b feature/*`)을 제안하고 사용자에게 경고해야 합니다. 구체적인 브랜치 명명법과 커밋/머지 절차는 [Git Flow Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/git_flow.md)를 로드하여 준수해야 합니다. 또한 Git 히스토리를 조사할 때는 단발성 명령어를 반복 실행하여 덤프 루프를 돌지 말고 단일 턴에 통합 조회해야 합니다.
+
 
 ## ⚠️ 보안 규칙 (Security Rules)
 - **ENV 접근 금지**: `.env` 또는 `.env.*` 파일에 접근하지 마세요. `.env.example`을 참조하세요.

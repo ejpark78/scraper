@@ -9,7 +9,7 @@
 | 5 | 041-050 | [041-050.archive.md](041-050.archive.md) | 19 |
 | 6 | 051-060 | [051-060.archive.md](051-060.archive.md) | 2 |
 | 7 | 061-070 | [061-070.archive.md](061-070.archive.md) | 19 |
-| 8 | 071-080 | [071-080.archive.md](071-080.archive.md) | 2 |
+| 8 | 071-080 | [071-080.archive.md](071-080.archive.md) | 4 |
 
 ## 📂 상세 아카이브 내역 (Archived Details)
 
@@ -111,4 +111,6 @@
 
 - [076-improve-index-md-visualization.plan](071-080.archive.md#076-improve-index-md-visualizationplan)
 - [076-improve-index-md-visualization.summary](071-080.archive.md#076-improve-index-md-visualizationsummary)
+- [077-fix-archive-overwrite-issue.plan](071-080.archive.md#077-fix-archive-overwrite-issueplan)
+- [077-fix-archive-overwrite-issue.summary](071-080.archive.md#077-fix-archive-overwrite-issuesummary)
 

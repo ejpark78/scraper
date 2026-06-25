@@ -164,25 +164,35 @@ run_archive() {
         fi
 
         # Merge into archive file
-        {
-            echo "# Archive: ${decade_start}–${range_end}"
-            echo ""
-            echo "> Archived from ${#archive_sources[@]} artifact(s) in range ${decade_start}–${range_end}"
-            echo ""
-            echo "---"
-            echo ""
-            for f in "${archive_sources[@]}"; do
-                local stem=$(basename "$f" .md)
+        if [ ! -f "$archive_file" ]; then
+            {
+                echo "# Archive: ${decade_start}–${range_end}"
+                echo ""
+                echo "> Archived from ${#archive_sources[@]} artifact(s) in range ${decade_start}–${range_end}"
+                echo ""
+                echo "---"
+                echo ""
+            } > "$archive_file"
+        fi
+
+        for f in "${archive_sources[@]}"; do
+            local stem=$(basename "$f" .md)
+            # Check if this feature header is already inside the archive to prevent duplication
+            if grep -q "^## $stem" "$archive_file" 2>/dev/null; then
+                echo "  ⚠ $stem is already archived in $(basename "$archive_file"). Skipping merge, deleting source."
+                rm "$f"
+                continue
+            fi
+
+            # Append to archive file
+            {
                 echo "## $stem"
                 echo ""
                 cat "$f"
                 echo ""
                 echo "---"
                 echo ""
-            done
-        } > "$archive_file"
-
-        for f in "${archive_sources[@]}"; do
+            } >> "$archive_file"
             rm "$f"
         done
 
