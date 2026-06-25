@@ -121,4 +121,8 @@
 - [079-fix-tool-path-rules.task](079-fix-tool-path-rules.task.md)
 - [079-fix-tool-path-rules.review](079-fix-tool-path-rules.review.md)
 - [079-fix-tool-path-rules.walkthrough](079-fix-tool-path-rules.walkthrough.md)
+- [080-enforce-feature-branch.plan](080-enforce-feature-branch.plan.md)
+- [080-enforce-feature-branch.task](080-enforce-feature-branch.task.md)
+- [080-enforce-feature-branch.review](080-enforce-feature-branch.review.md)
+- [080-enforce-feature-branch.walkthrough](080-enforce-feature-branch.walkthrough.md)
 
