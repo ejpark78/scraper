@@ -67,6 +67,27 @@ update_index_md() {
             local desc=$(echo "$bname" | sed -E 's/^[0-9]+-(.*)\.md$/\1/')
             echo "|   | $desc | [$bname]($bname) | 1 |"
         done
+
+        echo ""
+        echo "## 📂 상세 아카이브 내역 (Archived Details)"
+        echo ""
+
+        for arch in "${archives[@]}"; do
+            local bname=$(basename "$arch")
+            local range=${bname%.archive.md}
+            echo "### 📦 아카이브: $range ($bname)"
+            echo ""
+            
+            while IFS= read -r header; do
+                if [ -n "$header" ]; then
+                    local clean_h=$(echo "$header" | sed -E 's/^## //')
+                    # Make anchor slug compatible with markdown spec
+                    local slug=$(echo "$clean_h" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9 _-]//g' | tr ' ' '-')
+                    echo "- [$clean_h]($bname#$slug)"
+                fi
+            done < <(grep '^## [0-9][0-9][0-9]-' "$arch" || true)
+            echo ""
+        done
     } > "$index_file"
 
     echo "  ✓ INDEX.md updated successfully."
