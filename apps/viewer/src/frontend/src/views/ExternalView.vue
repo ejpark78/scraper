@@ -315,22 +315,47 @@ async function syncJoplinCli() {
     });
 
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'CLI 동기화 요청 실패');
+      throw new Error(`서버 응답 오류 (HTTP ${res.status})`);
     }
 
-    const result = await res.json();
-    addLog('import', 'success', '✅ Joplin CLI 동기화가 성공적으로 완료되었습니다.');
-    if (result.log) {
-      // 로그를 라인 단위로 출력
-      result.log.split('\n').forEach((line: string) => {
-        const trimmed = line.trim();
-        if (trimmed) {
-          addLog('import', 'info', ` > ${trimmed}`);
-        }
-      });
+    if (!res.body) {
+      throw new Error('스트리밍 응답이 반환되지 않았습니다.');
     }
-    
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // 마지막 불완전한 라인은 버퍼에 보관
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        try {
+          const logObj = JSON.parse(trimmed);
+          addLog('import', logObj.type, logObj.message);
+        } catch (jsonErr) {
+          addLog('import', 'info', trimmed);
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      try {
+        const logObj = JSON.parse(buffer.trim());
+        addLog('import', logObj.type, logObj.message);
+      } catch (jsonErr) {
+        addLog('import', 'info', buffer.trim());
+      }
+    }
+
     // 동기화 완료 후 노트북 목록 자동 로드
     await loadJoplinFolders();
   } catch (err: any) {

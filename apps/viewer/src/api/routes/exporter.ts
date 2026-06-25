@@ -269,16 +269,52 @@ router.post('/joplin/import', async (req: Request, res: Response) => {
   }
 });
 
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 const execAsync = promisify(exec);
 
-// Joplin CLI 실행 시 홈 디렉토리 수동 지정 및 SSL 검증 완화 설정 적용
+// Joplin CLI 실행용 영구 프로필 폴더 설정 및 SSL 검증 완화 설정 적용
+const JOPLIN_PROFILE_DIR = '/app/data/.joplin_profile';
+if (!fs.existsSync(JOPLIN_PROFILE_DIR)) {
+  fs.mkdirSync(JOPLIN_PROFILE_DIR, { recursive: true });
+}
+
 const joplinEnv = { 
   ...process.env, 
-  HOME: '/tmp',
+  HOME: JOPLIN_PROFILE_DIR,
   NODE_TLS_REJECT_UNAUTHORIZED: '0'
 };
+
+function runCommandStream(
+  command: string, 
+  args: string[], 
+  env: any, 
+  onData: (data: string) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(command, args, { env });
+    
+    proc.stdout.on('data', (data) => {
+      onData(data.toString());
+    });
+    
+    proc.stderr.on('data', (data) => {
+      onData(data.toString());
+    });
+    
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Command "${command} ${args.join(' ')}" failed with exit code ${code}`));
+      }
+    });
+    
+    proc.on('error', (err) => {
+      reject(err);
+    });
+  });
+}
 
 /**
  * POST /api/exporter/joplin/cli-test
@@ -374,13 +410,26 @@ router.post('/joplin/cli-test', async (req: Request, res: Response) => {
  * Joplin CLI의 설정을 변경하고 동기화를 실행합니다.
  */
 router.post('/joplin/cli-sync', async (req: Request, res: Response) => {
+  // 스트리밍 응답 헤더 설정
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Transfer-Encoding', 'chunked');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const writeLog = (type: 'info' | 'success' | 'error', message: string) => {
+    res.write(JSON.stringify({ type, message }) + '\n');
+  };
+
   try {
     const { apiUrl, username, password, encryptionPassword } = req.body;
     if (!apiUrl || !username || !password) {
-      return res.status(400).json({ error: 'Joplin Server URL, ID, Password는 필수 항목입니다.' });
+      writeLog('error', 'Joplin Server URL, ID, Password는 필수 항목입니다.');
+      res.end();
+      return;
     }
 
     console.log(`[Joplin CLI Sync] Configuring Joplin CLI to target: ${apiUrl}`);
+    writeLog('info', `Joplin CLI 구성을 시작합니다... (대상: ${apiUrl})`);
     
     // 1. Joplin Target 및 계정 설정 구성
     await execAsync('joplin config sync.target 9', { env: joplinEnv });
@@ -390,69 +439,102 @@ router.post('/joplin/cli-sync', async (req: Request, res: Response) => {
 
     // E2EE 암호가 전달된 경우 설정
     if (encryptionPassword) {
+      writeLog('info', 'E2EE 복호화 비밀번호를 설정합니다...');
       await execAsync(`joplin encryption decrypt "${encryptionPassword}"`, { env: joplinEnv }).catch(err => {
-        console.warn('[Joplin CLI Sync] Encryption password warning:', err.message);
+        writeLog('info', `[Warning] E2EE 설정 경고: ${err.message}`);
       });
     }
 
-    // 2. 동기화 실행
-    console.log('[Joplin CLI Sync] Running "joplin sync"...');
-    const { stdout } = await execAsync('joplin sync', { env: joplinEnv });
-    console.log('[Joplin CLI Sync] Sync completed:', stdout);
+    // 2. 동기화 실행 (spawn으로 실시간 스트리밍)
+    writeLog('info', 'Joplin 서버와 동기화를 개시합니다 ("joplin sync")...');
+    
+    await runCommandStream(
+      'joplin',
+      ['sync'],
+      joplinEnv,
+      (data) => {
+        const lines = data.split('\n');
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed) {
+            writeLog('info', `[Sync] ${trimmed}`);
+          }
+        }
+      }
+    );
+
+    writeLog('success', '동기화 완료! 로컬 노트북 목록을 조회합니다.');
 
     // 3. 자동 전체 내보내기 (Export all notebooks to Markdown)
-    console.log('[Joplin CLI Sync] Auto exporting all notebooks to data/joplin/...');
     const { stdout: lsStdout } = await execAsync('joplin ls /', { env: joplinEnv });
-    console.log('[Joplin CLI Sync] joplin ls / output:\n', lsStdout);
     const lines = lsStdout.split('\n');
     const exportedBooks: string[] = [];
+    const notebooksToExport: string[] = [];
 
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed) continue;
       
-      // 괄호 앞의 노트북 이름만 순수 추출 (예: "노트북이름 (id)" -> "노트북이름")
-      // "/" 문자 역시 끝에 붙어있으면 제거
       let folderName = trimmed.split('(')[0].trim();
       if (folderName.endsWith('/')) {
         folderName = folderName.slice(0, -1).trim();
       }
 
       if (folderName && folderName !== '..' && folderName !== '.') {
-        const cleanFolderName = folderName.replace(/[\\/:*?"<>|]/g, '_');
-        const targetDir = path.join('/app/data/joplin', cleanFolderName);
-        const tempExportDir = path.join('/tmp/joplin_export', cleanFolderName);
-
-        try {
-          if (fs.existsSync(tempExportDir)) {
-            fs.rmSync(tempExportDir, { recursive: true, force: true });
-          }
-          fs.mkdirSync(tempExportDir, { recursive: true });
-
-          console.log(`[Joplin CLI Sync] Auto exporting notebook "${folderName}" to "${tempExportDir}"...`);
-          await execAsync(`joplin export --format md --notebook "${folderName}" "${tempExportDir}"`, { env: joplinEnv });
-
-          if (fs.existsSync(targetDir)) {
-            fs.rmSync(targetDir, { recursive: true, force: true });
-          }
-          fs.mkdirSync(path.dirname(targetDir), { recursive: true });
-          fs.renameSync(tempExportDir, targetDir);
-          exportedBooks.push(folderName);
-        } catch (exportErr: any) {
-          console.error(`[Joplin CLI Sync] Failed to auto export notebook "${folderName}":`, exportErr);
-        }
+        notebooksToExport.push(folderName);
       }
     }
 
-    const finalLog = stdout + `\n\n[Auto Export Completed]\n내보낸 노트북 목록: ${exportedBooks.join(', ') || '없음'}`;
-    res.json({ 
-      success: true, 
-      message: `동기화 완료 및 ${exportedBooks.length}개 노트북이 마크다운으로 자동 저장되었습니다.`, 
-      log: finalLog 
-    });
+    writeLog('info', `총 ${notebooksToExport.length}개의 노트북을 감지했습니다. 마크다운 내보내기를 시작합니다.`);
+
+    for (let i = 0; i < notebooksToExport.length; i++) {
+      const folderName = notebooksToExport[i];
+      const progressPrefix = `[${i + 1}/${notebooksToExport.length}]`;
+      writeLog('info', `${progressPrefix} "${folderName}" 노트북 내보내기 시작...`);
+
+      const cleanFolderName = folderName.replace(/[\\/:*?"<>|]/g, '_');
+      const targetDir = path.join('/app/data/joplin', cleanFolderName);
+      const tempExportDir = path.join('/tmp/joplin_export', cleanFolderName);
+
+      try {
+        if (fs.existsSync(tempExportDir)) {
+          fs.rmSync(tempExportDir, { recursive: true, force: true });
+        }
+        fs.mkdirSync(tempExportDir, { recursive: true });
+
+        // spawn으로 내보내기 출력 실시간 기록
+        await runCommandStream(
+          'joplin',
+          ['export', '--format', 'md', '--notebook', folderName, tempExportDir],
+          joplinEnv,
+          (data) => {
+            const lines = data.split('\n');
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed) {
+                writeLog('info', `${progressPrefix} ${trimmed}`);
+              }
+            }
+          }
+        );
+
+        if (fs.existsSync(targetDir)) {
+          fs.rmSync(targetDir, { recursive: true, force: true });
+        }
+        fs.mkdirSync(path.dirname(targetDir), { recursive: true });
+        fs.renameSync(tempExportDir, targetDir);
+        exportedBooks.push(folderName);
+        writeLog('success', `${progressPrefix} "${folderName}" 내보내기 완료!`);
+      } catch (exportErr: any) {
+        writeLog('error', `${progressPrefix} "${folderName}" 내보내기 실패: ${exportErr.message}`);
+      }
+    }
+
+    writeLog('success', `🎉 동기화 및 ${exportedBooks.length}개 노트북 마크다운 내보내기가 최종 완료되었습니다!`);
+    res.end();
   } catch (error: any) {
-    console.error('[Joplin CLI Sync] Error:', error);
-    res.status(500).json({ error: error.message || 'Joplin Server 동기화 도중 에러가 발생했습니다.' });
+    writeLog('error', `동기화 중 장애가 발생했습니다: ${error.message}`);
+    res.end();
   }
 });
 
