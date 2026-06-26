@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# 🤖 apps/crawler/scripts/test.sh
+# 🤖 apps/crawler/scripts/lint.sh
 # ==============================================================================
 # Description: Runs static verification (lint, type-check) for the crawler app.
 #              Executes inside the worker container via Docker Compose run.

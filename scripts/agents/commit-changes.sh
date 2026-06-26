@@ -122,10 +122,10 @@ if [ -n "$(git status --porcelain)" ]; then
 
   # crawler 검증
   if [ "$RUN_CRAWLER" = true ]; then
-    if [ -f "apps/crawler/scripts/test.sh" ]; then
-      echo "🏃 Executing apps/crawler/scripts/test.sh..."
-      chmod +x apps/crawler/scripts/test.sh
-      if ! ./apps/crawler/scripts/test.sh; then
+    if [ -f "apps/crawler/scripts/lint.sh" ]; then
+      echo "🏃 Executing apps/crawler/scripts/lint.sh..."
+      chmod +x apps/crawler/scripts/lint.sh
+      if ! ./apps/crawler/scripts/lint.sh; then
         echo "❌ ERROR: Crawler static check failed!" >&2
         exit 1
       fi
@@ -134,10 +134,10 @@ if [ -n "$(git status --porcelain)" ]; then
 
   # viewer 검증
   if [ "$RUN_VIEWER" = true ]; then
-    if [ -f "apps/viewer/scripts/test.sh" ]; then
-      echo "🏃 Executing apps/viewer/scripts/test.sh..."
-      chmod +x apps/viewer/scripts/test.sh
-      if ! ./apps/viewer/scripts/test.sh; then
+    if [ -f "apps/viewer/scripts/lint.sh" ]; then
+      echo "🏃 Executing apps/viewer/scripts/lint.sh..."
+      chmod +x apps/viewer/scripts/lint.sh
+      if ! ./apps/viewer/scripts/lint.sh; then
         echo "❌ ERROR: Viewer static check failed!" >&2
         exit 1
       fi
@@ -146,10 +146,10 @@ if [ -n "$(git status --porcelain)" ]; then
 
   # ebook 검증
   if [ "$RUN_EBOOK" = true ]; then
-    if [ -f "apps/ebook/scripts/test.sh" ]; then
-      echo "🏃 Executing apps/ebook/scripts/test.sh..."
-      chmod +x apps/ebook/scripts/test.sh
-      if ! ./apps/ebook/scripts/test.sh; then
+    if [ -f "apps/ebook/scripts/lint.sh" ]; then
+      echo "🏃 Executing apps/ebook/scripts/lint.sh..."
+      chmod +x apps/ebook/scripts/lint.sh
+      if ! ./apps/ebook/scripts/lint.sh; then
         echo "❌ ERROR: Ebook static check failed!" >&2
         exit 1
       fi
