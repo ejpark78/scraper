@@ -10,12 +10,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
-import * as prettier from 'prettier';
-import { IConverter } from '../../../core/IConverter';
+import { BaseConverter } from '../../../core/BaseConverter';
 
 import { CompanyMeta } from './site.config';
 
-export class CompanyMarkdownConverter implements IConverter<CompanyMeta> {
+export class CompanyMarkdownConverter extends BaseConverter<CompanyMeta> {
     /**
      * HTML 내용을 파싱하여 회사 메타정보와 마크다운 문서를 빌드합니다. (하이브리드 구조: JSON 우선 ➡️ DOM 폴백)
      */
@@ -368,34 +367,4 @@ ${specialties ? specialties.split(', ').map(s => `* ${s}`).join('\n') : '정보 
         };
     }
 
-    /**
-     * Prettier 마크다운 가독성 포맷팅 모듈 호출
-     */
-    public async prettify(rawText: string): Promise<string> {
-        let cleaned = rawText.replace(/(\r?\n\s*){3,}/g, '\n\n');
-        
-        try {
-            const formatted = await prettier.format(cleaned, {
-                parser: 'markdown',
-                proseWrap: 'preserve',
-                tabWidth: 2,
-                printWidth: 100
-            });
-            return formatted.replace(/(\r?\n\s*){3,}/g, '\n\n').trim() + '\n';
-        } catch (e) {
-            return cleaned;
-        }
-    }
-
-    /**
-     * 프리티어 포맷팅 후 최종 마크다운 파일 저장
-     */
-    public async prettifyAndSave(rawText: string, outputPath: string): Promise<void> {
-        const result = await this.prettify(rawText);
-        const parentDir = path.dirname(outputPath);
-        if (!fs.existsSync(parentDir)) {
-            fs.mkdirSync(parentDir, { recursive: true });
-        }
-        fs.writeFileSync(outputPath, result, 'utf-8');
-    }
 }

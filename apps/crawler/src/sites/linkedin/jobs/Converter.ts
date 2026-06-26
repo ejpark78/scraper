@@ -10,13 +10,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
-import * as prettier from 'prettier';
-import { DateUtils, UrlUtils, NamingUtils } from '../../../utils';
-import { IConverter } from '../../../core/IConverter';
+import { BaseConverter } from '../../../core/BaseConverter';
 
 import { JobMeta } from './site.config';
 
-export class LinkedInMarkdownConverter implements IConverter<JobMeta> {
+export class LinkedInMarkdownConverter extends BaseConverter<JobMeta> {
     /**
      * DOM 엘리먼트를 마크다운으로 정밀 파싱하는 private 재귀 도구
      */
@@ -463,10 +461,8 @@ ${jdText}
         };
     }
 
-    /**
-     * Prettier 마크다운 가독성 포맷팅 모듈 호출
-     */
     public async prettify(rawText: string): Promise<string> {
+        const prettier = require('prettier');
         let cleaned = rawText.replace(/Show\s+more\s*\n*\s*Show\s+less/gi, '');
         cleaned = cleaned.replace(/(\r?\n\s*){3,}/g, '\n\n');
         
@@ -478,18 +474,6 @@ ${jdText}
         });
         
         return formatted.replace(/(\r?\n\s*){3,}/g, '\n\n').trim() + '\n';
-    }
-
-    /**
-     * 프리티어 적용 후 최종 저장
-     */
-    public async prettifyAndSave(rawText: string, outputPath: string): Promise<void> {
-        const result = await this.prettify(rawText);
-        const parentDir = path.dirname(outputPath);
-        if (!fs.existsSync(parentDir)) {
-            fs.mkdirSync(parentDir, { recursive: true });
-        }
-        fs.writeFileSync(outputPath, result, 'utf-8');
     }
 
     /**

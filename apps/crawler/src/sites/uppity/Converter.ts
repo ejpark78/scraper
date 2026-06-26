@@ -8,13 +8,12 @@
  */
 
 import * as cheerio from 'cheerio';
-import * as prettier from 'prettier';
-import { IConverter } from '../../core/IConverter';
+import { BaseConverter } from '../../core/BaseConverter';
 import { DateUtils } from '../../utils/DateUtils';
 
 import { UppityMeta } from './site.config';
 
-export class UppityConverter implements IConverter<UppityMeta> {
+export class UppityConverter extends BaseConverter<UppityMeta> {
 
     public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<UppityMeta> {
         const $ = cheerio.load(htmlContent);
@@ -86,57 +85,4 @@ export class UppityConverter implements IConverter<UppityMeta> {
         return bodyHtml;
     }
 
-    private htmlToMarkdown(html: string): string {
-        try {
-            const TurndownService = require('turndown');
-            const turndownService = new TurndownService({
-                headingStyle: 'atx',
-                hr: '---',
-                bulletListMarker: '-',
-                codeBlockStyle: 'fenced',
-                emDelimiter: '*',
-            });
-            turndownService.remove('script');
-            turndownService.remove('style');
-            turndownService.remove('nav');
-            turndownService.remove('header:not(.entry-header)');
-            turndownService.remove('footer');
-            turndownService.remove('iframe');
-            turndownService.remove('noscript');
-            return turndownService.turndown(html).trim();
-        } catch {
-            const $ = cheerio.load(html);
-            return $.text().trim();
-        }
-    }
-
-    private cleanContent(text: string): string {
-        let c = text;
-        c = c.replace(/<[^>]*>/g, '');
-        c = c.replace(/^[ \t]*\*[ \t]/gm, '- ');
-        c = c.replace(/^\\- /gm, '- ');
-        c = c.replace(/^(#{2,})\s/gm, (_, hashes: string) => '#'.repeat(hashes.length + 1) + ' ');
-        return c.trim();
-    }
-
-    public async prettify(rawText: string): Promise<string> {
-        const formatted = await prettier.format(rawText, {
-            parser: 'markdown',
-            proseWrap: 'preserve',
-            tabWidth: 2,
-            printWidth: 100
-        });
-        return formatted.trim() + '\n';
-    }
-
-    public async prettifyAndSave(rawText: string, outputPath: string): Promise<void> {
-        const result = await this.prettify(rawText);
-        const fs = require('fs');
-        const path = require('path');
-        const parentDir = path.dirname(outputPath);
-        if (!fs.existsSync(parentDir)) {
-            fs.mkdirSync(parentDir, { recursive: true });
-        }
-        fs.writeFileSync(outputPath, result, 'utf-8');
-    }
 }

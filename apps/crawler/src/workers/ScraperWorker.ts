@@ -20,8 +20,9 @@ import { MongoDatabase } from '../database/mongo';
 import { UrlUtils, Logger } from '../utils';
 const { stripTrackingParams, isBinaryUrl, extractDomainUrl } = UrlUtils;
 import { getSite, getAllSites } from '../core/SiteRegistry';
+import { AppConfig } from '../config/AppConfig';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
+const REDIS_URL = AppConfig.REDIS_URL;
 const SCRAPE_QUEUE = 'scrape_queue';
 const CONVERT_QUEUE = 'convert_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
@@ -138,8 +139,9 @@ class ScraperWorker {
         if (!payloadRaw) continue;
 
         await this.processMessage(queueName, payloadRaw);
-      } catch (loopErr: any) {
-        Logger.error(`[Scraper] Worker loop exception: ${loopErr.message}`, loopErr);
+      } catch (loopErr: unknown) {
+        const errorMsg = loopErr instanceof Error ? loopErr.message : String(loopErr);
+        Logger.error(`[Scraper] Worker loop exception: ${errorMsg}`, loopErr);
       }
     }
   }
@@ -216,7 +218,7 @@ class ScraperWorker {
 
       this.logHtmlPreview(site, id, url, rawHtml);
       await this.saveRawHtmlAndQueueConvertTask(site, id, url, rawHtml, payload);
-    } catch (scrapeErr: any) {
+    } catch (scrapeErr: unknown) {
       await this.handleScrapeFailure(payload, id, scrapeErr);
     }
     });
@@ -302,12 +304,13 @@ class ScraperWorker {
   private async handleScrapeFailure(
     payload: ScrapePayload,
     id: string,
-    scrapeErr: any
+    scrapeErr: unknown
   ): Promise<void> {
     const { site, url, attempt, scraperSlack } = payload;
+    const errorMsg = scrapeErr instanceof Error ? scrapeErr.message : String(scrapeErr);
     Logger.error(`[Scraper] Scrape execution failed for [${site}] ID: ${id} on attempt ${attempt}`, scrapeErr);
 
-    const isPermanentError = scrapeErr && scrapeErr.message && scrapeErr.message.includes('HTTP status 404');
+    const isPermanentError = errorMsg.includes('HTTP status 404');
 
     if (attempt < 3 && !isPermanentError) {
       const priority = payload.priority || 'medium';
@@ -327,7 +330,7 @@ class ScraperWorker {
       }
       Logger.info(`[Scraper] Re-queued task to ${targetQueue} retry. Attempt: ${attempt + 1}`);
     } else {
-      const deadTask = { site, url, error: scrapeErr.message, failedAt: new Date().toISOString() };
+      const deadTask = { site, url, error: errorMsg, failedAt: new Date().toISOString() };
       await this.redis.rpush(DEAD_LETTER_QUEUE, JSON.stringify(deadTask));
       await this.redis.srem(ACTIVE_PROCESSING_SET, url);
       const desc = getSite(site);
@@ -335,26 +338,44 @@ class ScraperWorker {
         const urlsColl = await this.mongo.getCollection(desc.scraper.urlsCollectionName as `${'bronze' | 'silver'}/${string}`);
         await urlsColl.updateOne(
           { id },
-          { $set: { status: 'failed', failedAt: new Date(), error: scrapeErr.message } },
+          { $set: { status: 'failed', failedAt: new Date(), error: errorMsg } },
           { upsert: true }
         );
       }
       Logger.error(`[Scraper] Max retry attempts exceeded. Moved ID: ${id} to dead_letter_queue and marked as failed in urls`);
     }
 
-    if (scrapeErr.message && (scrapeErr.message.includes('세션 만료') || scrapeErr.message.includes('Auth Wall'))) {
+    if (errorMsg.includes('세션 만료') || errorMsg.includes('Auth Wall')) {
       Logger.error(`LinkedIn Session expired. Graceful shut down of scraper.`, scrapeErr);
+      await this.shutdown('Session Expired');
+    }
+  }
+
+  public async shutdown(signal: string): Promise<void> {
+    Logger.info(`[Scraper] Received ${signal}. Starting graceful shutdown...`);
+    try {
       await Promise.all([
         this.redis.quit(),
         this.redisBlocking.quit()
       ]);
+      Logger.info('[Scraper] Redis connections closed.');
+      await this.mongo.close();
+      Logger.info('[Scraper] MongoDB connection closed.');
+      process.exit(0);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      Logger.error(`[Scraper] Error during shutdown: ${errorMsg}`);
       process.exit(1);
     }
   }
 }
 
 const worker = new ScraperWorker();
-worker.start().catch((err) => {
+
+process.on('SIGTERM', () => worker.shutdown('SIGTERM'));
+process.on('SIGINT', () => worker.shutdown('SIGINT'));
+
+worker.start().catch((err: unknown) => {
   Logger.error('Fatal crash on Scraper Worker', err);
   process.exit(1);
 });

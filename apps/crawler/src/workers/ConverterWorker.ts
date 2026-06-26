@@ -15,8 +15,9 @@ import { MongoDatabase } from '../database/mongo';
 import { UrlUtils, NamingUtils, Logger, FormatUtils } from '../utils';
 import { getSite } from '../core/SiteRegistry';
 import { TargetLoader } from './TargetLoader';
+import { AppConfig } from '../config/AppConfig';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
+const REDIS_URL = AppConfig.REDIS_URL;
 const CONVERT_QUEUE = 'convert_queue';
 const INDEX_QUEUE = 'index_queue';
 const ACTIVE_PROCESSING_SET = 'active_processing';
@@ -29,10 +30,34 @@ function touchHeartbeat(): void {
   } catch {}
 }
 
+let redisClient: Redis | null = null;
+const mongoDb = MongoDatabase.getInstance();
+
+async function shutdown(signal: string) {
+  Logger.info(`[Converter] Received ${signal}. Starting graceful shutdown...`);
+  try {
+    if (redisClient) {
+      await redisClient.quit();
+      Logger.info('[Converter] Redis connection closed.');
+    }
+    await mongoDb.close();
+    Logger.info('[Converter] MongoDB connection closed.');
+    process.exit(0);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    Logger.error(`[Converter] Error during shutdown: ${errorMsg}`);
+    process.exit(1);
+  }
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
 async function main() {
   Logger.info(`Connecting to Redis at ${REDIS_URL}...`);
-  const redis = new Redis(REDIS_URL);
-  const mongo = MongoDatabase.getInstance();
+  redisClient = new Redis(REDIS_URL);
+  const redis = redisClient;
+  const mongo = mongoDb;
   await mongo.connect();
 
   Logger.info(`Converter Worker started, listening to: ${CONVERT_QUEUE}`);
@@ -99,8 +124,9 @@ async function main() {
 
         if (site === 'pytorch_kr' && (!meta.content?.trim() || meta.content === `${meta.title}\n`)) {
           Logger.info(`[Converter] Content empty for [${site}] ID: ${id}, trying JSON API fallback...`);
-          if (typeof (converter as any).fetchAndConvertFromJsonApi === 'function') {
-            const jsonMeta = await (converter as any).fetchAndConvertFromJsonApi(rawDoc.url, id);
+          const hasJsonFallback = converter as unknown as { fetchAndConvertFromJsonApi?: (url: string, id: string) => Promise<typeof meta> };
+          if (typeof hasJsonFallback.fetchAndConvertFromJsonApi === 'function') {
+            const jsonMeta = await hasJsonFallback.fetchAndConvertFromJsonApi(rawDoc.url || '', id);
             if (jsonMeta) {
               meta = jsonMeta;
               Logger.info(`[Converter] JSON API fallback succeeded for [${site}] ID: ${id}`);
@@ -171,8 +197,9 @@ async function main() {
             }
 
             Logger.info(`[Converter] Processed images and saved local files for [${site}] ID: ${id}`);
-          } catch (imgErr: any) {
-            Logger.warn(`[Converter] Local file save or image download failed for [${site}] ID: ${id}: ${imgErr.message}`, imgErr);
+          } catch (imgErr: unknown) {
+            const errorMsg = imgErr instanceof Error ? imgErr.message : String(imgErr);
+            Logger.warn(`[Converter] Local file save or image download failed for [${site}] ID: ${id}: ${errorMsg}`, imgErr);
           }
         }
 
@@ -210,7 +237,8 @@ async function main() {
           url: rawDoc.url || ''
         });
 
-      } catch (transErr: any) {
+      } catch (transErr: unknown) {
+        const errorMsg = transErr instanceof Error ? transErr.message : String(transErr);
         Logger.error(`[Converter] Conversion failed for [${site}] ID: ${id} on attempt ${attempt}`, transErr);
 
         if (attempt < 3) {
@@ -218,20 +246,21 @@ async function main() {
           await redis.rpush(CONVERT_QUEUE, JSON.stringify(retryTask));
           Logger.info(`[Converter] Re-queued task to retry. Attempt: ${attempt + 1}`);
         } else {
-          const deadTask = { site, id, bronze_id, error: transErr.message, failedAt: new Date().toISOString() };
+          const deadTask = { site, id, bronze_id, error: errorMsg, failedAt: new Date().toISOString() };
           await redis.rpush(DEAD_LETTER_QUEUE, JSON.stringify(deadTask));
           Logger.error(`[Converter] Max retry attempts exceeded. Moved convert ID: ${id} to dead_letter_queue`);
         }
       }
       });
 
-    } catch (loopErr: any) {
-      Logger.error(`[Converter] Worker loop exception: ${loopErr.message}`, loopErr);
+    } catch (loopErr: unknown) {
+      const errorMsg = loopErr instanceof Error ? loopErr.message : String(loopErr);
+      Logger.error(`[Converter] Worker loop exception: ${errorMsg}`, loopErr);
     }
   }
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   Logger.error('Fatal crash on Converter Worker', err);
   process.exit(1);
 });
