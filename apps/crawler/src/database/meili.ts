@@ -38,7 +38,7 @@ export class MeiliSearchDatabase {
     /**
      * Send HTTP request to Meilisearch API
      */
-    private async request<T = any>(path: string, method: string = 'GET', body?: any): Promise<T> {
+    private async request<T = unknown>(path: string, method: string = 'GET', body?: unknown): Promise<T> {
         const url = `${this.host}${path}`;
         const headers: Record<string, string> = {
             'Authorization': `Bearer ${this.apiKey}`,
@@ -100,7 +100,7 @@ export class MeiliSearchDatabase {
     /**
      * Add or replace documents in an index
      */
-    public async addDocuments(indexName: string, documents: any[]): Promise<void> {
+    public async addDocuments(indexName: string, documents: Record<string, unknown>[]): Promise<void> {
         if (documents.length === 0) return;
         // Clean and prepare documents for Meilisearch
         const cleanedDocs = documents.map(doc => {
@@ -128,7 +128,7 @@ export class MeiliSearchDatabase {
     /**
      * Search documents in an index
      */
-    public async search<T = any>(indexName: string, query: string, options: any = {}): Promise<{
+    public async search<T = unknown>(indexName: string, query: string, options: Record<string, unknown> = {}): Promise<{
         hits: T[];
         offset: number;
         limit: number;
