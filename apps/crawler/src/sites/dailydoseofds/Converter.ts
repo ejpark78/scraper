@@ -10,6 +10,7 @@
 import * as cheerio from 'cheerio';
 import { BaseConverter } from '../../core/BaseConverter';
 import { DateUtils } from '../../utils/DateUtils';
+import TurndownService from 'turndown';
 
 import { DailyDoseDSMeta } from './site.config';
 

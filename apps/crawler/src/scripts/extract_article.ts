@@ -80,7 +80,7 @@ async function main() {
     }
 
     console.log(`⚙️ Running converter for "${site}"...`);
-    const result = await converter.convertHtmlToMarkdown(htmlContent, id, doc.url || '');
+    const result: any = await converter.convertHtmlToMarkdown(htmlContent, id, doc.url || '');
     
     const mdPath = path.join(fixturesDir, `${id}.expected.md`);
     if (typeof converter.prettifyAndSave === 'function') {

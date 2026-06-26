@@ -3,9 +3,9 @@
 Extracts page ranges from PDF files or chapter sections from EPUB files.
 """
 
-from pathlib import Path
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 import fitz
 

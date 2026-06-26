@@ -85,4 +85,8 @@ export class UppityConverter extends BaseConverter<UppityMeta> {
         return bodyHtml;
     }
 
+    private cleanContent(content: string): string {
+        return content.trim();
+    }
+
 }

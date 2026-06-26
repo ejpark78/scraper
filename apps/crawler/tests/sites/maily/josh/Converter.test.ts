@@ -10,6 +10,8 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
+import * as cheerio from 'cheerio';
 import { MailyJoshConverter } from '../../../../src/sites/maily/josh/Converter';
 
 console.log('🧪 [시작] MailyJosh Converter 단위 테스트\n');
@@ -20,7 +22,6 @@ function loadFixture(name: string): string {
   return fs.readFileSync(path.join(__dirname, 'fixtures', name), 'utf-8');
 }
 
-const crypto = require('crypto');
 const TEST_URL = 'https://maily.so/josh/posts/d5ryw34jz1w';
 const TEST_ID = crypto.createHash('md5').update(TEST_URL).digest('hex');
 
@@ -29,13 +30,12 @@ try {
   // ── Pagination List Parsing ─────────────────────────────────────────
   console.log('📋 [Test] Pagination List Parsing (page 1)');
   const listHtml = loadFixture('list.html');
-  const cheerio = require('cheerio');
   const $ = cheerio.load(listHtml);
 
   const seenUrls = new Set<string>();
   const articleLinks: Array<{ url: string; title: string }> = [];
 
-  $('a.post-card-list-item[href*="/josh/posts/"]').each((_: any, el: any) => {
+  $('a.post-card-list-item[href*="/josh/posts/"]').each((_: number, el: any) => {
     const href = $(el).attr('href');
     if (!href) return;
     const fullUrl = href.startsWith('http') ? href : `https://maily.so${href}`;
@@ -89,8 +89,8 @@ try {
   console.log('🎉 모든 테스트 통과!');
   console.log('========================================');
 
-} catch (e: any) {
-  console.error(`\n❌ 테스트 실패: ${e.message}`);
+} catch (e: unknown) {
+  console.error(`\n❌ 테스트 실패: ${(e as Error).message}`);
   process.exit(1);
 }
 })();

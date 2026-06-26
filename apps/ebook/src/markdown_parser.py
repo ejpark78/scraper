@@ -8,8 +8,9 @@ GitHub Flavored Markdown (GFM).
 import base64
 import re
 from pathlib import Path
-from bs4 import BeautifulSoup
+
 import markdownify
+from bs4 import BeautifulSoup
 
 
 class CustomMarkdownConverter(markdownify.MarkdownConverter):
@@ -34,7 +35,7 @@ class HTMLToMarkdownConverter:
             raise FileNotFoundError(f"HTML file not found: {html_path}")
 
         print(f"Reading HTML from: {html_path}")
-        with open(html_path, "r", encoding="utf-8") as f:
+        with open(html_path, encoding="utf-8") as f:
             html_content = f.read()
 
         soup = BeautifulSoup(html_content, "lxml")
@@ -70,7 +71,7 @@ class HTMLToMarkdownConverter:
         # Output Markdown file path (alongside the input HTML)
         md_path = html_path.with_suffix('.md')
         md_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(md_path, "w", encoding="utf-8") as f:
             f.write(markdown_text)
 
@@ -97,15 +98,15 @@ class HTMLToMarkdownConverter:
 
                     # Decode base64
                     img_data = base64.b64decode(base64_data)
-                    
+
                     # Target filename (replace spaces with underscores)
                     safe_stem = re.sub(r"\s+", "_", html_path.stem)
                     img_filename = f"{safe_stem}_img_{idx + 1}.{ext}"
                     img_file_path = images_dir / img_filename
-                    
+
                     with open(img_file_path, "wb") as f_img:
                         f_img.write(img_data)
-                    
+
                     # Update src in soup to the relative path
                     img["src"] = f"images/{img_filename}"
                     print(f"Extracted image to: images/{img_filename}")
@@ -117,11 +118,11 @@ class HTMLToMarkdownConverter:
         # Split text into lines
         lines = markdown_text.splitlines()
         cleaned_lines = []
-        
+
         i = 0
         while i < len(lines):
             line = lines[i].strip()
-            
+
             # If line is blank, preserve it as a paragraph separator
             if not line:
                 cleaned_lines.append("")
@@ -136,12 +137,12 @@ class HTMLToMarkdownConverter:
             while (i + 1 < len(lines)) and lines[i + 1].strip():
                 curr_strip = merged_line.strip()
                 next_line = lines[i + 1].strip()
-                
+
                 # Check markdown constructs
                 is_md_structure = (
-                    next_line.startswith("#") or 
-                    next_line.startswith("-") or 
-                    next_line.startswith("*") or 
+                    next_line.startswith("#") or
+                    next_line.startswith("-") or
+                    next_line.startswith("*") or
                     next_line.startswith("`") or
                     next_line.startswith("[") or
                     re.match(r"^\d+\.", next_line)
@@ -155,13 +156,13 @@ class HTMLToMarkdownConverter:
                     i += 1
                 else:
                     break
-            
+
             cleaned_lines.append(merged_line)
             i += 1
 
         # Reconstruct markdown text
         result = "\n".join(cleaned_lines)
-        
+
         # Replace multiple consecutive spaces with a single space
         result = re.sub(r" {2,}", " ", result)
         # Replace multiple consecutive blank lines with a single blank line

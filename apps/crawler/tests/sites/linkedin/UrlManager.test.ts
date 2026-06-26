@@ -12,11 +12,11 @@ import { descriptor, Config } from '../../../src/sites/linkedin/jobs/site.config
 
 console.log('🧪 [시작] url_manager.ts 단위 테스트(Unit Test)를 실행합니다.');
 
-const generateUrls = (config: Config, options?: any): string[] => {
+const generateUrls = (config: Config, options?: unknown): string[] => {
     if (!descriptor.scraper?.generateUrls) {
         throw new Error('generateUrls not defined on descriptor');
     }
-    return descriptor.scraper.generateUrls(config, options);
+    return descriptor.scraper.generateUrls(config as any, options as any);
 };
 
 try {
@@ -176,8 +176,8 @@ try {
     console.log('\n🎉 [성공] 모든 url_manager.ts 단위 테스트가 완벽히 통과되었습니다!');
     process.exit(0);
 
-} catch (error: any) {
-    console.error(`\n❌ 테스트 실패: ${error.message}`);
-    console.error(error.stack);
+} catch (error: unknown) {
+    console.error(`\n❌ 테스트 실패: ${(error as Error).message}`);
+    console.error((error as Error).stack);
     process.exit(1);
 }

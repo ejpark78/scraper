@@ -21,7 +21,7 @@ export async function exportToJoplin(
   try {
     bookFolder = await createBookFolder(book.title, token, targetApiUrl);
   } catch (error) {
-    throw new Error(`Joplin에 연결할 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${targetApiUrl})에 접근 가능한지 확인해주세요.`);
+    throw new Error(`Joplin에 연결할 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${targetApiUrl})에 접근 가능한지 확인해주세요.`, { cause: error });
   }
 
   for (const chapter of book.chapters) {

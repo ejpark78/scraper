@@ -33,7 +33,7 @@ interface McpToolCallPayload {
   jsonrpc: string;
   id: number;
   method: string;
-  params: { name: string; arguments?: Record<string, any> };
+  params: { name: string; arguments?: Record<string, unknown> };
 }
 
 interface McpServerResult {
@@ -44,14 +44,14 @@ interface McpServerResponse {
   jsonrpc: string;
   id: number;
   result?: McpServerResult;
-  error?: any;
+  error?: unknown;
 }
 
 class McpSseClient {
   private urlObj: URL;
   private agent: https.Agent;
   private req: http.ClientRequest | null = null;
-  private pendingResolve: ((value: any) => void) | null = null;
+  private pendingResolve: ((value: unknown) => void) | null = null;
 
   constructor(private sseUrl: string) {
     this.urlObj = new URL(sseUrl);
@@ -91,7 +91,7 @@ class McpSseClient {
     });
   }
 
-  callTool(endpointPath: string, toolName: string, args?: Record<string, any>): Promise<any> {
+  callTool(endpointPath: string, toolName: string, args?: Record<string, unknown>): Promise<unknown> {
     return new Promise((resolve, reject) => {
       this.pendingResolve = resolve;
       const payload: McpToolCallPayload = {
@@ -159,9 +159,9 @@ async function main() {
     });
 
     assert.ok(result, 'Should receive a result');
-    assert.ok(result.content, 'Result should have content array');
-    assert.ok(result.content.length > 0, 'Content array should not be empty');
-    assert.ok(typeof result.content[0].text === 'string', 'Content text should be a string');
+    assert.ok((result as any).content, 'Result should have content array');
+    assert.ok((result as any).content.length > 0, 'Content array should not be empty');
+    assert.ok(typeof (result as any).content[0].text === 'string', 'Content text should be a string');
     console.log('✅ MCP tool call succeeded, content received');
 
   } finally {

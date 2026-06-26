@@ -179,7 +179,7 @@ async function main() {
       
       const orphaned = [];
       for (const hit of meiliHits) {
-        const docId = hit.docId; // This is the ID in MongoDB
+        const docId = (hit as any).docId; // This is the ID in MongoDB
         const mongoExists = await sContents.findOne({ id: docId });
         if (!mongoExists) {
           orphaned.push(hit);

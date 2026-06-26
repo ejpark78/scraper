@@ -47,7 +47,11 @@
     "debug:html": "ts-node src/scripts/debug_html.ts",
     "worker:scraper": "ts-node src/workers/ScraperWorker.ts",
     "worker:converter": "ts-node src/workers/ConverterWorker.ts",
-    "worker:indexer": "ts-node src/workers/IndexerWorker.ts"
+    "worker:indexer": "ts-node src/workers/IndexerWorker.ts",
+    "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts'",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
@@ -64,12 +68,15 @@
     "turndown": "^7.2.4"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cheerio": "^0.22.35",
     "@types/jsdom": "^28.0.3",
     "@types/mailparser": "^3.4.6",
     "@types/node": "^25.9.2",
     "@types/turndown": "^5.0.6",
+    "eslint": "^9.21.0",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.0"
   }
 }

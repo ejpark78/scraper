@@ -64,7 +64,7 @@ export class PyTorchKRConverter extends BaseConverter<PyTorchKRMeta> {
         const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
 
         // Extract content from built-in selectors (synchronous HTML parse)
-        let contentText = this.extractContentFromHtml($, title);
+        const contentText = this.extractContentFromHtml($, title);
 
         // Build result
         const fullContent = `${title}\n${contentText}`;

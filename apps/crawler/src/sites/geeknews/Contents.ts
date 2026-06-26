@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { GeekNewsConverter } from './Converter';
-import { HtmlMinifier } from '../utils';
+import { HtmlMinifier } from '../../utils';
 import { descriptor, GeekNewsMeta } from './site.config';
 
 export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
@@ -73,16 +73,16 @@ export class GeekNewsContents extends BasePipeline<GeekNewsMeta> {
     }
 
     protected async saveResults(meta: GeekNewsMeta, id: string, tempHtmlPath: string, _redisInstance?: any): Promise<{ targetDirName: string }> {
-        const { year, month } = this.getDatePathParts(meta.publishedAt);
+        const { year, month } = this.getDatePathParts(meta.publishedAt ? meta.publishedAt.toISOString() : null);
         const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
         // Download images locally
         try {
-            const { downloadImages } = await import('../utils/imageDownloader');
+            const { downloadImages } = await import('../../utils/imageDownloader');
             const { updatedMarkdown } = await downloadImages({
                 htmlContent: rawHtml,
                 markdown: meta.rawContent,
-                publishedAt: meta.publishedAt || undefined,
+                publishedAt: meta.publishedAt ? meta.publishedAt.toISOString() : undefined,
                 docId: id,
                 siteDir: 'geeknews',
                 siteDomain: 'news.hada.io',

@@ -99,6 +99,64 @@ if [ -n "$(git status --porcelain)" ]; then
     exit 1
   fi
 
+  # 변경이 일어난 패키지 식별 및 개별 test.sh 실행
+  echo "🔍 Running static verification tests..."
+  
+  # 변경된 파일 목록 파싱
+  STAGED_FILES=$(git status --porcelain | awk '{print $2}')
+  
+  # 각 패키지별 검사 트리거링 플래그
+  RUN_CRAWLER=false
+  RUN_VIEWER=false
+  RUN_EBOOK=false
+
+  for file in $STAGED_FILES; do
+    if [[ "$file" =~ ^apps/crawler/ ]]; then
+      RUN_CRAWLER=true
+    elif [[ "$file" =~ ^apps/viewer/ ]]; then
+      RUN_VIEWER=true
+    elif [[ "$file" =~ ^apps/ebook/ ]]; then
+      RUN_EBOOK=true
+    fi
+  done
+
+  # crawler 검증
+  if [ "$RUN_CRAWLER" = true ]; then
+    if [ -f "apps/crawler/scripts/test.sh" ]; then
+      echo "🏃 Executing apps/crawler/scripts/test.sh..."
+      chmod +x apps/crawler/scripts/test.sh
+      if ! ./apps/crawler/scripts/test.sh; then
+        echo "❌ ERROR: Crawler static check failed!" >&2
+        exit 1
+      fi
+    fi
+  fi
+
+  # viewer 검증
+  if [ "$RUN_VIEWER" = true ]; then
+    if [ -f "apps/viewer/scripts/test.sh" ]; then
+      echo "🏃 Executing apps/viewer/scripts/test.sh..."
+      chmod +x apps/viewer/scripts/test.sh
+      if ! ./apps/viewer/scripts/test.sh; then
+        echo "❌ ERROR: Viewer static check failed!" >&2
+        exit 1
+      fi
+    fi
+  fi
+
+  # ebook 검증
+  if [ "$RUN_EBOOK" = true ]; then
+    if [ -f "apps/ebook/scripts/test.sh" ]; then
+      echo "🏃 Executing apps/ebook/scripts/test.sh..."
+      chmod +x apps/ebook/scripts/test.sh
+      if ! ./apps/ebook/scripts/test.sh; then
+        echo "❌ ERROR: Ebook static check failed!" >&2
+        exit 1
+      fi
+    fi
+  fi
+
+
   echo "🔄 Detecting modifications..."
   
   # Stage all modifications and untracked files

@@ -10,6 +10,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as cheerio from 'cheerio';
 import { YozmConverter } from '../../../src/sites/yozm/Converter';
 
 console.log('🧪 [시작] Yozm Converter 단위 테스트\n');
@@ -28,13 +29,12 @@ try {
   // ── Pagination List Parsing ─────────────────────────────────────────
   console.log('📋 [Test] Pagination List Parsing (page 1)');
   const listHtml = loadFixture('list.html');
-  const cheerio = require('cheerio');
   const $ = cheerio.load(listHtml);
 
   const seenUrls = new Set<string>();
   const articleLinks: Array<{ url: string; title: string }> = [];
 
-  $('a[data-testid="contentsItem-item-link"]').each((_: any, el: any) => {
+  $('a[data-testid="contentsItem-item-link"]').each((_: number, el: any) => {
     const href = $(el).attr('href');
     if (!href || seenUrls.has(href)) return;
     seenUrls.add(href);
@@ -82,8 +82,8 @@ try {
   console.log('🎉 모든 테스트 통과!');
   console.log('========================================');
 
-} catch (e: any) {
-  console.error(`\n❌ 테스트 실패: ${e.message}`);
+} catch (e: unknown) {
+  console.error(`\n❌ 테스트 실패: ${(e as Error).message}`);
   process.exit(1);
 }
 })();

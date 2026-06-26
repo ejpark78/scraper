@@ -24,10 +24,10 @@ export class DateUtils {
         const matchRegexKo = /(\d+)\s*(일|주|달|개월|년|시간|분|초)\s*전/i;
         const matchRegexRaw = /(\d+)\s*(day|week|month|year|hour|minute|second)s?/i;
 
-        let match = (relativeStr || '').match(matchRegex) || (relativeStr || '').match(matchRegexKo) || (relativeStr || '').match(matchRegexRaw);
+        const match = (relativeStr || '').match(matchRegex) || (relativeStr || '').match(matchRegexKo) || (relativeStr || '').match(matchRegexRaw);
         if (match) {
-            let val = parseInt(match[1]);
-            let unit = match[2].toLowerCase();
+            const val = parseInt(match[1]);
+            const unit = match[2].toLowerCase();
             if (unit.startsWith('day') || unit === '일') daysAgo = val;
             else if (unit.startsWith('week') || unit === '주') daysAgo = val * 7;
             else if (unit.startsWith('month') || unit === '달' || unit === '개월') daysAgo = val * 30;
@@ -36,10 +36,10 @@ export class DateUtils {
         }
         
         if (!foundRelative && timeStr) {
-            let match = timeStr.match(matchRegex) || timeStr.match(matchRegexKo) || timeStr.match(matchRegexRaw);
+            const match = timeStr.match(matchRegex) || timeStr.match(matchRegexKo) || timeStr.match(matchRegexRaw);
             if (match) {
-                let val = parseInt(match[1]);
-                let unit = match[2].toLowerCase();
+                const val = parseInt(match[1]);
+                const unit = match[2].toLowerCase();
                 if (unit.startsWith('day') || unit === '일') daysAgo = val;
                 else if (unit.startsWith('week') || unit === '주') daysAgo = val * 7;
                 else if (unit.startsWith('month') || unit === '달' || unit === '개월') daysAgo = val * 30;
@@ -48,12 +48,12 @@ export class DateUtils {
         }
         
         baseDate.setDate(baseDate.getDate() - daysAgo);
-        let year = baseDate.getFullYear();
-        let month = String(baseDate.getMonth() + 1).padStart(2, '0');
-        let day = String(baseDate.getDate()).padStart(2, '0');
-        let hour = String(baseDate.getHours()).padStart(2, '0');
-        let minute = String(baseDate.getMinutes()).padStart(2, '0');
-        let second = String(baseDate.getSeconds()).padStart(2, '0');
+        const year = baseDate.getFullYear();
+        const month = String(baseDate.getMonth() + 1).padStart(2, '0');
+        const day = String(baseDate.getDate()).padStart(2, '0');
+        const hour = String(baseDate.getHours()).padStart(2, '0');
+        const minute = String(baseDate.getMinutes()).padStart(2, '0');
+        const second = String(baseDate.getSeconds()).padStart(2, '0');
         
         return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
     }

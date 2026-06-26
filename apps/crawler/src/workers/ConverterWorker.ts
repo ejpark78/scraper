@@ -113,7 +113,7 @@ async function main() {
         }
 
         const converter = tf.converter;
-        let meta = await converter.convertHtmlToMarkdown(rawContent, id, rawDoc.url || '');
+        let meta: any = await converter.convertHtmlToMarkdown(rawContent, id, rawDoc.url || '');
 
         if (meta.rawContent) {
           meta.rawContent = FormatUtils.cleanMarkdownLinks(meta.rawContent);

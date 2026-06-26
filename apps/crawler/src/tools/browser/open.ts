@@ -10,7 +10,7 @@
 import { chromium, BrowserContext, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
-import { AppConfig } from '../config/AppConfig';
+import { AppConfig } from '/app/src/config/AppConfig';
 
 // 📅 YYYY-MM-DD_HH-mm-ss 형식의 타임스탬프 생성 헬퍼
 function getTimestamp(): string {

@@ -29,7 +29,7 @@ try {
   // 1. HTML 태그 제거
   {
     const input = '<div id="foo">Hello <b>World</b></div>';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.strictEqual(output, 'Hello World', 'HTML tags should be stripped');
     console.log('✅ HTML 태그 제거');
   }
@@ -37,7 +37,7 @@ try {
   // 2. 인라인 " - " → 마크다운 리스트 변환 (3개 이상, newline 1개 이하)
   {
     const input = 'item A - item B - item C - item D';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.ok(output.startsWith('- item A'), 'Should convert to bullet list');
     assert.ok(output.includes('\n- item B'), 'Second item on new line');
     assert.ok(output.includes('\n- item C'), 'Third item on new line');
@@ -48,7 +48,7 @@ try {
   // 3. "- " 변환 조건: 3개 미만이면 그대로
   {
     const input = 'just one - two items';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.strictEqual(output, input, 'Less than 3 dash groups should be preserved');
     console.log('✅ "- " 변환 조건: 3개 미만 보존');
   }
@@ -56,7 +56,7 @@ try {
   // 4. "- " 변환 조건: 이미 newline 있으면 건너뛰기
   {
     const input = 'a - b\nc - d\ne - f';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.strictEqual(output, input, 'Content with newlines should not be converted');
     console.log('✅ "- " 변환 조건: newline 있으면 건너뜀');
   }
@@ -64,7 +64,7 @@ try {
   // 5. "\\- " 언이스케이프
   {
     const input = '\\- item one\n\\- item two\n\\- item three';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.ok(!output.includes('\\-'), 'Backslash before dash at line start should be removed');
     assert.ok(output.startsWith('- '), 'Should start with unescaped dash');
     console.log('✅ "\\\\- " 언이스케이프');
@@ -73,7 +73,7 @@ try {
   // 6. 선행 아티클 번호 제거
   {
     const input = "* '#10345'\ncontent";
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.strictEqual(output, 'content', 'Leading article number should be stripped');
     console.log('✅ 선행 아티클 번호 제거');
   }
@@ -81,7 +81,7 @@ try {
   // 7. 리스트 마커 정규화 (* → -)
   {
     const input = '* item one\n* item two';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.ok(output.startsWith('- '), '* should be normalized to - at line start');
     assert.ok(output.includes('\n- '), '* should be normalized to - on subsequent lines');
     console.log('✅ 리스트 마커 정규화 (* → -)');
@@ -90,7 +90,7 @@ try {
   // 8. 헤딩 레벨 시프트 (## → ###)
   {
     const input = '## Section\n### Sub\nContent';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.ok(output.startsWith('### Section'), '## should become ###');
     assert.ok(output.includes('\n#### Sub'), '### should become ####');
     console.log('✅ 헤딩 레벨 시프트 (## → ###)');
@@ -99,7 +99,7 @@ try {
   // 9. 헤딩 레벨 시프트: # (h1) 은 보존
   {
     const input = '# Title\n## Section';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.ok(output.startsWith('# Title'), 'h1 should be preserved');
     assert.ok(output.includes('\n### Section'), 'h2 should still shift');
     console.log('✅ 헤딩 레벨 시프트: h1 보존');
@@ -108,7 +108,7 @@ try {
   // 10. 실제 #4265 JSON-LD 스타일 입력
   {
     const input = '요약: - 첫째 항목입니다. 내용이 들어갑니다. - 둘째 항목입니다. 더 많은 내용. - 셋째 항목입니다. - 넷째 항목입니다.';
-    const output = (converter as any).cleanContent(input);
+    const output = (converter as unknown as { cleanContent: (html: string) => string }).cleanContent(input);
     assert.ok(output.startsWith('- 요약:'), 'Should start with dash');
     assert.ok(output.includes('\n- 둘째'), 'Second item on new line');
     assert.ok(output.includes('\n- 셋째'), 'Third item on new line');
@@ -242,24 +242,28 @@ try {
 
   console.log('\n── generateMetaTableMarkdown 로직 ──');
 
-  function generateMetaTableMarkdown(silver: any, bronze: any, collection: string): string {
+  function generateMetaTableMarkdown(
+    silver: Record<string, unknown>,
+    bronze: Record<string, unknown>,
+    collection: string
+  ): string {
     const rows: string[] = [];
-    const title = silver.title || silver.jobTitle || '';
+    const title = (silver.title as string) || (silver.jobTitle as string) || '';
     if (title) rows.push(`| **Title (제목)** | ${title} |`);
-    const company = silver.companyName || '';
+    const company = (silver.companyName as string) || '';
     if (company) rows.push(`| **Company (회사)** | ${company} |`);
-    const loc = silver.location || '';
+    const loc = (silver.location as string) || '';
     if (loc) rows.push(`| **Location (위치)** | ${loc} |`);
-    const docId = silver.jobId || silver.id || silver.topicId || silver.postId || bronze.jobId || '';
+    const docId = (silver.jobId as string) || (silver.id as string) || (silver.topicId as string) || (silver.postId as string) || (bronze.jobId as string) || '';
     if (docId) rows.push(`| **Document ID** | \`${docId}\` |`);
     let source = 'Database';
     if (collection.includes('geeknews')) source = 'GeekNews';
     else if (collection.includes('linkedin')) source = 'LinkedIn';
     rows.push(`| **Source (출처)** | ${source} (\`${collection}\`) |`);
-    const url = bronze.url || silver.url || '';
+    const url = (bronze.url as string) || (silver.url as string) || '';
     if (url) rows.push(`| **URL** | [Link ↗](${url}) |`);
     const dateVal = silver.updatedAt || silver.collectedAt || silver.createdAt || bronze.scrapedAt;
-    if (dateVal) rows.push(`| **Date (수집일)** | ${new Date(dateVal).toLocaleString('ko-KR')} |`);
+    if (dateVal) rows.push(`| **Date (수집일)** | ${new Date(dateVal as string | number | Date).toLocaleString('ko-KR')} |`);
     if (rows.length === 0) return '';
     return `\n\n---\n\n### 📋 LLM Wiki Metadata\n\n| Key (속성) | Value (값) |\n| :--- | :--- |\n${rows.join('\n')}\n`;
   }
@@ -279,9 +283,9 @@ try {
   console.log('\n🎉 [성공] 모든 GeekNews Converter 테스트가 통과되었습니다!');
   process.exit(0);
 
-} catch (error: any) {
-  console.error(`\n❌ 테스트 실패: ${error.message}`);
-  console.error(error.stack);
+} catch (error: unknown) {
+  console.error(`\n❌ 테스트 실패: ${(error as Error).message}`);
+  console.error((error as Error).stack);
   process.exit(1);
 }
 })();

@@ -11,6 +11,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import { BaseConverter } from '../../../core/BaseConverter';
+import { UrlUtils } from '../../../utils/UrlUtils';
+import { DateUtils } from '../../../utils/DateUtils';
+import { NamingUtils } from '../../../utils/NamingUtils';
+import { IConverter } from '../../../core/IConverter';
 
 import { JobMeta } from './site.config';
 
@@ -151,7 +155,7 @@ export class LinkedInMarkdownConverter extends BaseConverter<JobMeta> {
         // 회사명 추출
         let company = $('.topcard__flavor a, .job-details-jobs-unified-top-card__company-name, [data-tracking-control-name="public_jobs_topcard-company-name"]').first().text().trim().replace(/\s+/g, ' ');
         if (!company) {
-            let ogDesc = $('meta[property="og:description"]').attr('content') || '';
+            const ogDesc = $('meta[property="og:description"]').attr('content') || '';
             if (ogDesc.includes(' hiring ')) {
                 company = ogDesc.split(' hiring ')[0].replace(/Posted.*?\.\s*/i, '').trim().replace(/\s+/g, ' ');
             } else {
@@ -165,7 +169,7 @@ export class LinkedInMarkdownConverter extends BaseConverter<JobMeta> {
         // 공고 제목 추출
         let jobTitle = $('.topcard__title, h1, .job-details-jobs-unified-top-card__job-title').first().text().trim().replace(/\s+/g, ' ');
         if (!jobTitle) {
-            let ogTitle = $('meta[property="og:title"]').attr('content') || '';
+            const ogTitle = $('meta[property="og:title"]').attr('content') || '';
             jobTitle = ogTitle.includes(' hiring ') ? ogTitle.split(' hiring ')[1]?.split(' in ')[0] : ogTitle;
             if (jobTitle) jobTitle = jobTitle.trim().replace(/\s+/g, ' ');
         }
@@ -294,9 +298,9 @@ export class LinkedInMarkdownConverter extends BaseConverter<JobMeta> {
 
         const metaDesc = $('meta[name="description"]').attr('content') || '';
         const metaMatch = metaDesc.match(/Posted\s+([^.]+)\./i);
-        let dateMeta = metaMatch ? metaMatch[1].trim() : '';
+        const dateMeta = metaMatch ? metaMatch[1].trim() : '';
 
-        let postedDate = DateUtils.parseRelativeDate(dateClass, dateMeta, baseDateInput);
+        const postedDate = DateUtils.parseRelativeDate(dateClass, dateMeta, baseDateInput);
 
         const companyId = $('meta[name="companyId"]').attr('content') || '정보 없음';
         const industryId = $('meta[name="industryIds"]').attr('content') || '정보 없음';
@@ -329,8 +333,8 @@ export class LinkedInMarkdownConverter extends BaseConverter<JobMeta> {
             const markup = descriptionContainer.find('.show-more-less-html__markup').first();
             const target = (markup.length > 0 && markup.text().trim().length > 0) ? markup : descriptionContainer;
             
-            let rawMarkdown = this.elementToMarkdown($, target[0]);
-            let formattedText = rawMarkdown
+            const rawMarkdown = this.elementToMarkdown($, target[0]);
+            const formattedText = rawMarkdown
                 .replace(/\r/g, '')
                 .replace(/\n{3,}/g, '\n\n')
                 .trim();
@@ -370,9 +374,9 @@ export class LinkedInMarkdownConverter extends BaseConverter<JobMeta> {
 
             if (!splitDone) {
                 jdText = formattedText;
-                let metaDesc = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || '';
+                const metaDesc = $('meta[property="og:description"]').attr('content') || $('meta[name="description"]').attr('content') || '';
                 if (metaDesc) {
-                    let cleanMeta = metaDesc
+                    const cleanMeta = metaDesc
                         .replace(/^Posted\s+[^.]+\.\s*/i, '')
                         .replace(/^Posted\s+[^.일년주월시분초]+\.\s*/i, '')
                         .split(/See\s+this\s+and\s+similar/i)[0]

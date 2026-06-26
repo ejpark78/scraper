@@ -118,7 +118,7 @@ export class GptersNewsletterContents extends BasePipeline<GptersMeta> {
             parsedJson = JSON.parse(rawJsonContent);
         } catch { /* ignore */ }
 
-        let updatedMarkdown = meta.rawContent;
+        const updatedMarkdown = meta.rawContent;
         try {
             const fieldsMap: Record<string, string> = {};
             if (Array.isArray(parsedJson.fields)) {
@@ -128,11 +128,11 @@ export class GptersNewsletterContents extends BasePipeline<GptersMeta> {
             }
             const htmlContent = (fieldsMap.content || parsedJson.shortContent || '').replace(/\\(["nrt\\])/g, (_: string, c: string) => ({ '"': '"', 'n': '\n', 'r': '\r', 't': '\t', '\\': '\\' } as Record<string, string>)[c] || _);
 
-            const { downloadImages } = await import('../../utils/imageDownloader');
+            const { downloadImages } = await import('../../../utils/imageDownloader');
             const { updatedMarkdown: newMarkdown } = await downloadImages({
                 htmlContent,
                 markdown: meta.rawContent,
-                publishedAt: meta.publishedAt || undefined,
+                publishedAt: meta.publishedAt ? (meta.publishedAt instanceof Date ? meta.publishedAt.toISOString() : String(meta.publishedAt)) : undefined,
                 docId: id,
                 siteDir: descriptor.key,
                 siteDomain: descriptor.domain || 'gpters.org',

@@ -3,10 +3,12 @@
 Extracts styled HTML structures including embedded images and text alignment.
 """
 
-import sys
 import argparse
+import sys
 from pathlib import Path
+
 import fitz
+
 
 class HTMLConverter:
     """Converter to output high fidelity HTML files from PDF documents."""
@@ -57,18 +59,17 @@ class HTMLConverter:
       margin: 20px auto;
     }
   </style>""")
-  
+
         html_pages.append("</head>\n<body>\n<div class='container'>")
 
-        import base64
         import html
 
         for idx, page in enumerate(doc):
             if idx > 0:
                 html_pages.append(f"<div class='page-separator'>Page {idx + 1}</div>")
-            
+
             page_dict = page.get_text("dict")
-            
+
             # Calculate font sizes to determine heading threshold
             sizes = []
             for block in page_dict.get("blocks", []):
@@ -76,27 +77,27 @@ class HTMLConverter:
                     for line in block.get("lines", []):
                         for span in line.get("spans", []):
                             sizes.append(span.get("size", 10.0))
-            
+
             sizes.sort()
             median_size = sizes[len(sizes) // 2] if sizes else 10.0
             heading_threshold = median_size * 1.25
 
             seen_texts = set()
-            
+
             img_counter = 0
             for block in page_dict.get("blocks", []):
                 if block.get("type") == 0:  # Text block
                     block_text_parts = []
                     block_sizes = []
                     is_bold = False
-                    
+
                     for line in block.get("lines", []):
                         line_text_parts = []
                         for span in line.get("spans", []):
                             span_text = span.get("text", "")
                             if not span_text.strip():
                                 continue
-                            
+
                             # Deduplicate shadow/duplicate texts written in close coordinates
                             bbox = span.get("bbox", (0, 0, 0, 0))
                             # Rounding to 1 decimal place to catch tiny overlaps
@@ -104,57 +105,57 @@ class HTMLConverter:
                             if coord_key in seen_texts:
                                 continue
                             seen_texts.add(coord_key)
-                            
+
                             line_text_parts.append(span_text)
                             block_sizes.append(span.get("size", 10.0))
                             if span.get("flags", 0) & 16:
                                 is_bold = True
-                        
+
                         if line_text_parts:
                             line_text = "".join(line_text_parts)
                             block_text_parts.append(line_text)
-                    
+
                     if not block_text_parts:
                         continue
-                    
+
                     # Merge lines in block with spaces, avoiding consecutive spaces
                     block_text = " ".join([p.strip() for p in block_text_parts if p.strip()])
                     if not block_text:
                         continue
-                    
+
                     avg_size = sum(block_sizes) / len(block_sizes) if block_sizes else median_size
                     escaped_text = html.escape(block_text)
-                    
+
                     if is_bold and avg_size < heading_threshold:
                         escaped_text = f"<strong>{escaped_text}</strong>"
-                    
+
                     if avg_size >= heading_threshold * 1.5:
                         html_pages.append(f"<h1>{escaped_text}</h1>")
                     elif avg_size >= heading_threshold:
                         html_pages.append(f"<h2>{escaped_text}</h2>")
                     else:
                         html_pages.append(f"<p>{escaped_text}</p>")
-                        
+
                 elif block.get("type") == 1:  # Image block
                     image_bytes = block.get("image")
                     ext = block.get("ext", "png")
                     if image_bytes:
                         import re
                         img_counter += 1
-                        
+
                         images_dir = pdf_path.parent / "images"
                         images_dir.mkdir(parents=True, exist_ok=True)
-                        
+
                         safe_stem = re.sub(r"\s+", "_", pdf_path.stem)
                         img_filename = f"{safe_stem}_page_{idx + 1}_img_{img_counter}.{ext}"
                         img_file_path = images_dir / img_filename
-                        
+
                         img_file_path.write_bytes(image_bytes)
                         html_pages.append(f'<img src="images/{img_filename}" alt="image" />')
 
         html_pages.append("</div>\n</body>\n</html>")
         doc.close()
- 
+
         output_path = pdf_path.with_suffix('.html')
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text("\n".join(html_pages), encoding="utf-8")
@@ -168,10 +169,10 @@ def main():
     parser.add_argument("--output", default="output", help="Output directory")
 
     args = parser.parse_args()
-    
+
     input_path = Path(args.input)
     converter = HTMLConverter(args.output)
-    
+
     try:
         converter.convert(input_path)
         print("Conversion completed successfully.")

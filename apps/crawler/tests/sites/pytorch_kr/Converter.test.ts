@@ -74,13 +74,13 @@ for (const tc of testCases) {
   assert.ok(result.rawContent.includes('📝 본문 내용'), `#${tc.id}: Should contain 본문 내용 header`);
   assert.ok(result.rawContent.includes('원본 링크'), `#${tc.id}: Should contain 원본 링크`);
   assert.ok(result.publishedAt !== null, `#${tc.id}: publishedAt should be extracted`);
-  assert.ok(result.publishedAt!.includes('T'), `#${tc.id}: publishedAt should be ISO format`);
+  assert.ok(result.publishedAt!.toISOString().includes('T'), `#${tc.id}: publishedAt should be ISO format`);
   console.log(`✅ #${tc.id}: ${result.title.substring(0, 40)}... (${result.content.length} chars)`);
 }
 
 console.log('\n🎉 [성공] 모든 PyTorchKR Converter 테스트가 통과되었습니다!');
-} catch (e: any) {
-  console.error(`\n❌ 테스트 실패: ${e.message}`);
+} catch (e: unknown) {
+  console.error(`\n❌ 테스트 실패: ${(e as Error).message}`);
   process.exit(1);
 }
 })();

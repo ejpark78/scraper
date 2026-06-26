@@ -87,7 +87,7 @@ export class LinkedInList {
         if (ext === '.json') {
             const config: Config = JSON.parse(fs.readFileSync(configFilePath, 'utf-8'));
             if (descriptor.scraper?.generateUrls) {
-                urls = descriptor.scraper.generateUrls(config, { skipDirectUrls: !isLoggedIn });
+                urls = descriptor.scraper.generateUrls(config as any, { skipDirectUrls: !isLoggedIn });
             }
         } else {
             urls = fs.readFileSync(configFilePath, 'utf-8')

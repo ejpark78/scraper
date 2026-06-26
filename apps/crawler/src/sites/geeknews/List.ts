@@ -175,7 +175,7 @@ class GeekNewsList extends BaseListService {
                         if (titleEl.length === 0) continue;
 
                         const title = titleEl.text().trim();
-                        let relativeUrl = titleEl.attr('href') || '';
+                        const relativeUrl = titleEl.attr('href') || '';
                         if (!relativeUrl) continue;
 
                         let topicUrl = '';
@@ -188,7 +188,7 @@ class GeekNewsList extends BaseListService {
 
                         if (!topicUrl) continue;
 
-                        let detailUrl = `https://${descriptor.domain}/${topicUrl.replace(/^\//, '')}`;
+                        const detailUrl = `https://${descriptor.domain}/${topicUrl.replace(/^\//, '')}`;
 
                         let id = '';
                         const match = topicUrl.match(/id=(\d+)/);
@@ -254,7 +254,7 @@ class GeekNewsList extends BaseListService {
                     if (titleEl.length === 0) continue;
 
                     const title = titleEl.text().trim();
-                    let relativeUrl = titleEl.attr('href') || '';
+                    const relativeUrl = titleEl.attr('href') || '';
                     if (!relativeUrl) continue;
 
                     let topicUrl = '';
@@ -267,7 +267,7 @@ class GeekNewsList extends BaseListService {
 
                     if (!topicUrl) continue;
 
-                    let detailUrl = `https://${descriptor.domain || 'news.hada.io'}/${topicUrl.replace(/^\//, '')}`;
+                    const detailUrl = `https://${descriptor.domain || 'news.hada.io'}/${topicUrl.replace(/^\//, '')}`;
 
                     let id = '';
                     const match = topicUrl.match(/id=(\d+)/);
