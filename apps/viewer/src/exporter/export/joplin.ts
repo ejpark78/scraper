@@ -1,8 +1,9 @@
 import type { WikiDocsBook, ExportOptions } from '../types';
 import { sanitizeFilename } from './base';
 import { generateIndex } from '../generators';
+import { AppConfig } from '../../config/AppConfig';
 
-const JOPLIN_API_URL = process.env.JOPLIN_API_URL || 'http://host.docker.internal:41184';
+const JOPLIN_API_URL = AppConfig.JOPLIN_API_URL;
 
 export async function exportToJoplin(
   book: WikiDocsBook,
@@ -16,7 +17,7 @@ export async function exportToJoplin(
 
   const targetApiUrl = apiUrl || JOPLIN_API_URL;
 
-  let bookFolder;
+  let bookFolder: { id: string };
   try {
     bookFolder = await createBookFolder(book.title, token, targetApiUrl);
   } catch (error) {

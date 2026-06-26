@@ -99,4 +99,9 @@ export class AppConfig {
      * Target crawler site (defaults to linkedin)
      */
     public static readonly SITE: string = process.env.SITE || 'linkedin';
+
+    /**
+     * Joplin API Web Clipper Connection URL
+     */
+    public static readonly JOPLIN_API_URL: string = process.env.JOPLIN_API_URL || 'http://host.docker.internal:41184';
 }

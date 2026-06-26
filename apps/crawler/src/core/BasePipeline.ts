@@ -12,6 +12,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { DateUtils, FormatUtils } from '../utils';
 import { AppConfig } from '../config/AppConfig';
+import Redis from 'ioredis';
 
 export abstract class BasePipeline<TMeta> {
     // 🔒 동시 워커 간 중복 수집 타겟 선점 방지용 인메모리 뮤텍스 셋
@@ -24,12 +25,12 @@ export abstract class BasePipeline<TMeta> {
     protected abstract getDomainName(): string; // "채용공고" 또는 "회사정보"
     protected abstract executeScrape(url: string, tempHtmlPath: string): Promise<void>;
     protected abstract processMetadata(htmlContent: string, id: string, url: string): TMeta | Promise<TMeta>;
-    protected abstract saveResults(meta: TMeta, id: string, tempHtmlPath: string, redisInstance?: any): Promise<{ targetDirName: string }>;
+    protected abstract saveResults(meta: TMeta, id: string, tempHtmlPath: string, redisInstance?: Redis | null): Promise<{ targetDirName: string }>;
 
     /**
      * 🚀 개별 URL 단일 수집 기동용 공개 메서드 (Redis 워커 등 외부 큐 연동용)
      */
-    public async processSingleUrl(url: string, redisInstance?: any): Promise<string | null> {
+    public async processSingleUrl(url: string, redisInstance?: Redis | null): Promise<string | null> {
         const id = this.extractId(url);
         if (!id) return null;
 
@@ -50,8 +51,9 @@ export abstract class BasePipeline<TMeta> {
             
             console.log(`✨ [성공] ID: ${id} | 분류: ${result.targetDirName}`);
             return id;
-        } catch (err: any) {
-            console.error(`❌ 대상 ${id} 처리 도중 오류 발생: ${err.message}`);
+        } catch (err: unknown) {
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            console.error(`❌ 대상 ${id} 처리 도중 오류 발생: ${errorMsg}`);
             if (fs.existsSync(tempHtmlPath)) {
                 fs.unlinkSync(tempHtmlPath);
             }
@@ -86,7 +88,7 @@ export abstract class BasePipeline<TMeta> {
 
         // 0. Redis 연동 및 캐시 로드
         const redisUrl = AppConfig.REDIS_URL;
-        let redis: any = null;
+        let redis: Redis | null = null;
         let useRedisCache = false;
         try {
             const Redis = require('ioredis');
@@ -103,8 +105,9 @@ export abstract class BasePipeline<TMeta> {
             });
             useRedisCache = true;
             console.log(`📡 [Redis Cache] Redis 연결 성공 (${redisUrl}). 실시간 분산 캐시를 사용합니다.`);
-        } catch (e: any) {
-            console.warn(`⚠️ [Redis Cache Warning] Redis 연결 실패. 데이터베이스 스캔으로 대체합니다: ${e.message}`);
+        } catch (e: unknown) {
+            const errorMsg = e instanceof Error ? e.message : String(e);
+            console.warn(`⚠️ [Redis Cache Warning] Redis 연결 실패. 데이터베이스 스캔으로 대체합니다: ${errorMsg}`);
         }
 
         // 1. 캐시 로드 및 구축 (Redis 우선 사용)
