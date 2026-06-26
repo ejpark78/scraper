@@ -10,7 +10,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MailyJoshConverter } from '../../../../src/crawler/sites/maily/josh/Converter';
+import { MailyJoshConverter } from '../../../../src/sites/maily/josh/Converter';
 
 console.log('🧪 [시작] MailyJosh Converter 단위 테스트\n');
 

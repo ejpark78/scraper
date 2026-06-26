@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as cheerio from 'cheerio';
 import TurndownService from 'turndown';
-import { DailyDoseDSConverter } from '../../../src/crawler/sites/dailydoseofds/Converter';
+import { DailyDoseDSConverter } from '../../../src/sites/dailydoseofds/Converter';
 
 const converter = new DailyDoseDSConverter();
 

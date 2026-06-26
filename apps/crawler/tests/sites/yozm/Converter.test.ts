@@ -10,7 +10,7 @@
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { YozmConverter } from '../../../src/crawler/sites/yozm/Converter';
+import { YozmConverter } from '../../../src/sites/yozm/Converter';
 
 console.log('🧪 [시작] Yozm Converter 단위 테스트\n');
 

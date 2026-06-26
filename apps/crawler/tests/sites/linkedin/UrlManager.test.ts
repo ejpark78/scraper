@@ -8,7 +8,7 @@
  */
 
 import * as assert from 'assert';
-import { descriptor, Config } from '../../../src/crawler/sites/linkedin/jobs/site.config';
+import { descriptor, Config } from '../../../src/sites/linkedin/jobs/site.config';
 
 console.log('🧪 [시작] url_manager.ts 단위 테스트(Unit Test)를 실행합니다.');
 
