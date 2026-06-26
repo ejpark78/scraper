@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { DailyDoseDSConverter } from '../crawler/sites/dailydoseofds/Converter';
-import { GeekNewsConverter } from '../crawler/sites/geeknews/Converter';
-import { PyTorchKRConverter } from '../crawler/sites/pytorch_kr/Converter';
+import { DailyDoseDSConverter } from '../sites/dailydoseofds/Converter';
+import { GeekNewsConverter } from '../sites/geeknews/Converter';
+import { PyTorchKRConverter } from '../sites/pytorch_kr/Converter';
 
 (async () => {
     // 1. DailyDoseDS fixtures

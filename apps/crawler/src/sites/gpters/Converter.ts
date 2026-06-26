@@ -7,13 +7,12 @@
  * @lastUpdated 2026-06-11
  */
 
-import * as prettier from 'prettier';
-import { IConverter } from '../../core/IConverter';
+import { BaseConverter } from '../../core/BaseConverter';
 import { DateUtils } from '../../utils/DateUtils';
 
 import { GptersMeta, descriptor } from './news/site.config';
 
-export class GptersConverter implements IConverter<GptersMeta> {
+export class GptersConverter extends BaseConverter<GptersMeta> {
     
     public async convertHtmlToMarkdown(htmlOrJsonContent: string, id: string, url: string): Promise<GptersMeta> {
         let post: any = {};
@@ -73,17 +72,8 @@ export class GptersConverter implements IConverter<GptersMeta> {
         };
     }
     
-    public async prettify(rawText: string): Promise<string> {
-        const formatted = await prettier.format(rawText, {
-            parser: 'markdown',
-            proseWrap: 'preserve',
-            tabWidth: 2,
-            printWidth: 100
-        });
-        return formatted.trim() + '\n';
-    }
-
     public async prettifyJson(rawJsonStr: string): Promise<string> {
+        const prettier = require('prettier');
         if (!rawJsonStr.trim()) return rawJsonStr;
         const formatted = await prettier.format(rawJsonStr, {
             parser: 'json',
@@ -91,17 +81,6 @@ export class GptersConverter implements IConverter<GptersMeta> {
             printWidth: 100
         });
         return formatted.trim() + '\n';
-    }
-    
-    public async prettifyAndSave(rawText: string, outputPath: string): Promise<void> {
-        const result = await this.prettify(rawText);
-        const fs = require('fs');
-        const path = require('path');
-        const parentDir = path.dirname(outputPath);
-        if (!fs.existsSync(parentDir)) {
-            fs.mkdirSync(parentDir, { recursive: true });
-        }
-        fs.writeFileSync(outputPath, result, 'utf-8');
     }
 
     public async prettifyJsonAndSave(rawJsonStr: string, outputPath: string): Promise<void> {

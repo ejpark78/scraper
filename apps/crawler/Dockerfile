@@ -28,7 +28,7 @@ WORKDIR /app
 
 # Install dependencies using cache layers
 COPY package*.json ./
-RUN npm install && npm cache clean --force
+RUN npm install --legacy-peer-deps && npm cache clean --force
 
 # Copy source files
 COPY . .

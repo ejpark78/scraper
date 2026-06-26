@@ -39,15 +39,19 @@
     "queue:fix-urls": "ts-node src/scripts/fix-urls.ts",
     "log:grep-errors": "ts-node src/scripts/grep-errors.ts",
     "config:generate": "ts-node src/scripts/generate-sites-config.ts",
-    "test:urls": "ts-node ../../tests/sites/linkedin/UrlManager.test.ts",
-    "test:mcp": "ts-node ../../tests/sites/linkedin/McpClient.test.ts",
-    "test:recursive": "ts-node ../../tests/recursive/RecursiveScrape.test.ts",
-    "test:sites": "ts-node ../../tests/sites/dailydoseofds/Converter.test.ts && ts-node ../../tests/sites/geeknews/Converter.test.ts && ts-node ../../tests/sites/maily/josh/Converter.test.ts && ts-node ../../tests/sites/pytorch_kr/Converter.test.ts && ts-node ../../tests/sites/yozm/Converter.test.ts",
+    "test:urls": "ts-node -P tsconfig.json tests/sites/linkedin/UrlManager.test.ts",
+    "test:mcp": "ts-node -P tsconfig.json tests/sites/linkedin/McpClient.test.ts",
+    "test:recursive": "ts-node -P tsconfig.json tests/recursive/RecursiveScrape.test.ts",
+    "test:sites": "ts-node -P tsconfig.json tests/sites/dailydoseofds/Converter.test.ts && ts-node -P tsconfig.json tests/sites/geeknews/Converter.test.ts && ts-node -P tsconfig.json tests/sites/maily/josh/Converter.test.ts && ts-node -P tsconfig.json tests/sites/pytorch_kr/Converter.test.ts && ts-node -P tsconfig.json tests/sites/yozm/Converter.test.ts",
     "extract:article": "ts-node src/scripts/extract_article.ts",
     "debug:html": "ts-node src/scripts/debug_html.ts",
     "worker:scraper": "ts-node src/workers/ScraperWorker.ts",
     "worker:converter": "ts-node src/workers/ConverterWorker.ts",
-    "worker:indexer": "ts-node src/workers/IndexerWorker.ts"
+    "worker:indexer": "ts-node src/workers/IndexerWorker.ts",
+    "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts'",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "cheerio": "^1.2.0",
@@ -64,12 +68,15 @@
     "turndown": "^7.2.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.21.0",
     "@types/cheerio": "^0.22.35",
     "@types/jsdom": "^28.0.3",
     "@types/mailparser": "^3.4.6",
     "@types/node": "^25.9.2",
     "@types/turndown": "^5.0.6",
+    "eslint": "^9.21.0",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.0"
   }
 }

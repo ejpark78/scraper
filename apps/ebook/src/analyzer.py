@@ -3,11 +3,12 @@
 Extracts TOC structure, allows interactive chapter offset alignment, and prints summaries.
 """
 
-from pathlib import Path
-import os
 import json
+import os
 import re
 import sys
+from pathlib import Path
+
 import fitz
 
 from .split_chapter import BookProfile, ChapterDef
@@ -61,7 +62,7 @@ class PDFAnalyzer:
             if not all_files:
                 print(f"No PDF or EPUB files found under: {path}")
                 return None
-            
+
             last_profile = None
             for f in all_files:
                 try:
@@ -75,11 +76,15 @@ class PDFAnalyzer:
             books_path = path.parent / "books.json"
             if books_path.exists():
                 try:
-                    with open(str(books_path), 'r', encoding='utf-8') as f:
+                    with open(str(books_path), encoding='utf-8') as f:
                         config = json.load(f)
                     if path.name in config:
-                        print(f"  Config for '{path.name}' already exists in books.json. Skipping analysis (overwrite=False).")
+                        print(
+                            f"  Config for '{path.name}' already exists in books.json. "
+                            "Skipping analysis (overwrite=False)."
+                        )
                         return None
+
                 except Exception as e:
                     print(f"  Failed to read books.json for skip check: {e}")
 
@@ -150,23 +155,23 @@ class PDFAnalyzer:
 
         if sys.stdin.isatty():
             self._verify_offsets(doc, profile)
-            
+
         profile.body_font_size = self._estimate_body_font(doc)
         doc.close()
 
         # Save configuration
         self._save_books_config(profile, path.parent)
-        print(f"\nSaved to books.json")
+        print("\nSaved to books.json")
         print(f"Estimated body font size: {profile.body_font_size:.1f}pt")
 
         return profile
 
     def _analyze_epub(self, epub_path: Path) -> BookProfile:
-        import ebooklib
-        from ebooklib import epub
-        from bs4 import BeautifulSoup
         import warnings
-        from bs4 import XMLParsedAsHTMLWarning
+
+        import ebooklib
+        from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
+        from ebooklib import epub
 
         warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
@@ -187,7 +192,7 @@ class PDFAnalyzer:
         for idx, item in enumerate(docs):
             content = item.get_content()
             soup = BeautifulSoup(content, "lxml")
-            
+
             # Find title
             title = None
             h1 = soup.find("h1")
@@ -210,11 +215,11 @@ class PDFAnalyzer:
                 end_page=idx + 1,
                 include=include
             ))
-            
+
             print(f"  [{idx+1:2d}] {title:60s} (Include: {include})")
 
         self._save_books_config(profile, epub_path.parent)
-        print(f"\nSaved to books.json")
+        print("\nSaved to books.json")
         return profile
 
     def _build_part_chapters(self, toc: list, total_pages: int) -> list:
@@ -345,20 +350,25 @@ class PDFAnalyzer:
         books_path = raw_dir / "books.json"
         config = {}
         if books_path.exists():
-            with open(str(books_path), 'r', encoding='utf-8') as f:
+            with open(str(books_path), encoding='utf-8') as f:
                 config = json.load(f)
 
         pdf_name = profile.path.name
         existing = config.get(pdf_name)
         if existing:
             if sys.stdin.isatty():
-                ans = input(f"  Config for '{pdf_name}' already exists in books.json. Overwrite? [y/N] ").strip().lower()
+                prompt = f"  Config for '{pdf_name}' already exists in books.json. Overwrite? [y/N] "
+                ans = input(prompt).strip().lower()
                 if not ans.startswith('y'):
                     print("  Skipped saving to books.json.")
                     return
             else:
-                print(f"  Config for '{pdf_name}' already exists in books.json. Skipping overwrite (non-interactive mode).")
+                print(
+                    f"  Config for '{pdf_name}' already exists in books.json. "
+                    "Skipping overwrite (non-interactive mode)."
+                )
                 return
+
 
         chapters = []
         for ch in profile.chapters:

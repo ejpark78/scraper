@@ -70,11 +70,11 @@ export class AiCasebookContents extends BasePipeline<AiCasebookMeta> {
 
     // Download images locally
     try {
-      const { downloadImages } = await import('../utils/imageDownloader');
+      const { downloadImages } = await import('../../utils/imageDownloader');
       const { updatedMarkdown } = await downloadImages({
         htmlContent: rawHtml,
         markdown: meta.rawContent,
-        publishedAt: meta.publishedAt || undefined,
+        publishedAt: meta.publishedAt ? (meta.publishedAt instanceof Date ? meta.publishedAt.toISOString() : String(meta.publishedAt)) : undefined,
         docId: id,
         siteDir: descriptor.key,
         siteDomain: descriptor.domain || 'aicasebook.dev',

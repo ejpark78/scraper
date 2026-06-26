@@ -54,7 +54,7 @@ export class Logger {
     // Extract site/url from AsyncLocalStorage context or meta or message brackets [site_name]
     const context = this.contextStorage.getStore();
     let site = meta?.site || context?.site || '';
-    let url = meta?.url || context?.url || '';
+    const url = meta?.url || context?.url || '';
 
     if (!site) {
       const match = message.match(/\[([a-zA-Z0-9_-]+)\]/);

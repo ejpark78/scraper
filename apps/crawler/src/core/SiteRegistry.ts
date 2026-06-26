@@ -14,8 +14,8 @@ import type { IConverter, IFileSaver } from './IConverter';
 
 export interface IndexSpec {
   collection: `bronze/${string}` | `silver/${string}`;
-  fields: Record<string, any>;
-  options?: any;
+  fields: Record<string, unknown>;
+  options?: object;
 }
 
 export interface SiteDescriptor {
@@ -39,13 +39,13 @@ export interface SiteDescriptor {
     excludePatterns?: string[];
     urlFilter?: (url: string) => boolean;
     htmlSourcesToScan?: string[];
-    generateUrls?: (config: any, options?: any) => string[];
+    generateUrls?: (config: Record<string, unknown>, options?: Record<string, unknown>) => string[];
   };
 
   converter?: {
-    converter: IConverter<any> & Partial<IFileSaver>;
+    converter: IConverter<unknown> & Partial<IFileSaver>;
     targetCollection: string;
-    filter: (id: string) => Record<string, any>;
+    filter: (id: string) => Record<string, unknown>;
     statusCollection?: string;
     statusFilterField?: string;
     completedSetKey: string;
@@ -54,7 +54,7 @@ export interface SiteDescriptor {
   targetLoader?: {
     collectionName: `silver/${string}`;
     filterField: string;
-    buildDocument: (id: string, meta: any) => Record<string, any>;
+    buildDocument: (id: string, meta: unknown) => Record<string, unknown>;
   };
 
   listsCollectionName?: `bronze/${string}`;
@@ -62,8 +62,8 @@ export interface SiteDescriptor {
 
   refreshSilver?: {
     saveJson?: boolean;
-    extractId?: (doc: any) => string;
-    getSilverFields?: (meta: any) => Record<string, any>;
+    extractId?: (doc: Record<string, unknown>) => string;
+    getSilverFields?: (meta: unknown) => Record<string, unknown>;
     imageDownload?: {
       enabled: boolean;
       htmlSource?: 'rawContent' | 'shortContent';
@@ -97,12 +97,13 @@ function discoverSites(): void {
             collectionName: s.bronzeCollectionName,
             updateFilterKey: s.updateFilterKey || 'id',
           } : undefined
-        } as any);
+        } as unknown as SiteDescriptor);
       }
       console.log(`✅ [SiteRegistry] Loaded ${staticConfigs.length} site descriptors statically from config/sites.json`);
       return;
-    } catch (err: any) {
-      console.error(`[SiteRegistry] Failed to load static config from ${staticConfigPath}: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error(`[SiteRegistry] Failed to load static config from ${staticConfigPath}: ${errorMsg}`);
     }
   }
 
@@ -124,8 +125,9 @@ function discoverSites(): void {
           }
           registry.set(mod.descriptor.key, mod.descriptor);
         }
-      } catch (err: any) {
-        console.error(`[SiteRegistry] Failed to load config: ${configPath} - ${err.message}`);
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        console.error(`[SiteRegistry] Failed to load config: ${configPath} - ${errorMsg}`);
         throw err;
       }
     }
@@ -144,8 +146,9 @@ function discoverSites(): void {
             }
             registry.set(mod.descriptor.key, mod.descriptor);
           }
-        } catch (err: any) {
-          console.error(`[SiteRegistry] Failed to load config: ${subConfigPath} - ${err.message}`);
+        } catch (err: unknown) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          console.error(`[SiteRegistry] Failed to load config: ${subConfigPath} - ${errorMsg}`);
           throw err;
         }
       }

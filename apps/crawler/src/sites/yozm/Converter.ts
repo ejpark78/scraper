@@ -8,12 +8,11 @@
  */
 
 import * as cheerio from 'cheerio';
-import * as prettier from 'prettier';
-import { IConverter } from '../../core/IConverter';
+import { BaseConverter } from '../../core/BaseConverter';
 import { YozmMeta } from './site.config';
 import { DateUtils } from '../../utils/DateUtils';
 
-export class YozmConverter implements IConverter<YozmMeta> {
+export class YozmConverter extends BaseConverter<YozmMeta> {
 
   private findNewsLd($: cheerio.CheerioAPI): Record<string, any> | null {
     let result: Record<string, any> | null = null;
@@ -160,58 +159,4 @@ export class YozmConverter implements IConverter<YozmMeta> {
     };
   }
 
-  private htmlToMarkdown(html: string): string {
-    try {
-      const TurndownService = require('turndown');
-      const turndownService = new TurndownService({
-        headingStyle: 'atx',
-        hr: '---',
-        bulletListMarker: '-',
-        codeBlockStyle: 'fenced',
-        emDelimiter: '*',
-      });
-
-      turndownService.remove('script');
-      turndownService.remove('style');
-      turndownService.remove('nav');
-      turndownService.remove('iframe');
-      turndownService.remove('noscript');
-      turndownService.remove('button');
-      turndownService.remove('select');
-      turndownService.remove('textarea');
-      turndownService.remove('form');
-      
-      let markdown = turndownService.turndown(html);
-      
-      // HTML 태그 기반의 강제 줄바꿈 보정 (정규식 활용)
-      // P, DIV 등의 블록 요소가 변환된 후 붙어버리는 경우를 대비해 줄바꿈 강화
-      markdown = markdown.replace(/\n\s*\n\s*\n/g, '\n\n');
-      
-      return markdown.trim();
-    } catch {
-      const $ = cheerio.load(html);
-      return $.text().trim();
-    }
-  }
-
-  public async prettify(rawText: string): Promise<string> {
-    const formatted = await prettier.format(rawText, {
-      parser: 'markdown',
-      proseWrap: 'preserve',
-      tabWidth: 2,
-      printWidth: 100,
-    });
-    return formatted.trim() + '\n';
-  }
-
-  public async prettifyAndSave(rawText: string, outputPath: string): Promise<void> {
-    const result = await this.prettify(rawText);
-    const fs = require('fs');
-    const path = require('path');
-    const parentDir = path.dirname(outputPath);
-    if (!fs.existsSync(parentDir)) {
-      fs.mkdirSync(parentDir, { recursive: true });
-    }
-    fs.writeFileSync(outputPath, result, 'utf-8');
-  }
 }

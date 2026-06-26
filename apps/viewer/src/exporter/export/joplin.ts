@@ -1,8 +1,9 @@
 import type { WikiDocsBook, ExportOptions } from '../types';
 import { sanitizeFilename } from './base';
 import { generateIndex } from '../generators';
+import { AppConfig } from '../../config/AppConfig';
 
-const JOPLIN_API_URL = process.env.JOPLIN_API_URL || 'http://host.docker.internal:41184';
+const JOPLIN_API_URL = AppConfig.JOPLIN_API_URL;
 
 export async function exportToJoplin(
   book: WikiDocsBook,
@@ -16,11 +17,11 @@ export async function exportToJoplin(
 
   const targetApiUrl = apiUrl || JOPLIN_API_URL;
 
-  let bookFolder;
+  let bookFolder: { id: string };
   try {
     bookFolder = await createBookFolder(book.title, token, targetApiUrl);
   } catch (error) {
-    throw new Error(`Joplin에 연결할 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${targetApiUrl})에 접근 가능한지 확인해주세요.`);
+    throw new Error(`Joplin에 연결할 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}\nJoplin 앱이 실행 중이고 웹 클리퍼가 활성화되어 있으며, API URL(${targetApiUrl})에 접근 가능한지 확인해주세요.`, { cause: error });
   }
 
   for (const chapter of book.chapters) {

@@ -28,3 +28,8 @@
 |:---|:---|:---|
 | 사이트 크롤러/파이프라인 | [develop_sites_skills.md](../../.agents/skills/develop_sites_skills.md) | Bronze→Silver 파이프라인, Base 클래스 |
 | HTML/스크래핑 디버깅 | [html_debugging_skills.md](../../.agents/skills/html_debugging_skills.md) | HtmlDebugger 유틸, HTML 덤프 |
+
+3. **테스트 및 격리 모듈 실행 규정**:
+   - 단위 테스트 실행 시 패키지별 로컬 의존성 격리 문제를 방지하기 위해, `ts-node` 실행 스크립트 작성 시 명시적으로 프로젝트 파일 지정 옵션(`-P tsconfig.json`)을 의무 명시합니다.
+   - 로컬 의존성이 얽혀 모듈을 로드하지 못하는 현상을 방지하기 위해, 환경 빌드 및 단위 테스트 기동 전에 반드시 로컬 패키지 영역(`apps/crawler`)에서 명시적인 `npm install`을 실행하여 의존성을 정합해 두어야 합니다.
+

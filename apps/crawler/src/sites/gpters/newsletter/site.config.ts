@@ -120,8 +120,8 @@ export const descriptor: SiteDescriptor = {
 
   refreshSilver: {
     saveJson: true,
-    extractId: (doc) => doc.id || doc.postId || '',
-    getSilverFields: (meta) => ({
+    extractId: (doc: any) => doc.id || doc.postId || '',
+    getSilverFields: (meta: any) => ({
       id: meta.id,
       title: meta.title,
       url: meta.url,

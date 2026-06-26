@@ -8,13 +8,12 @@
  */
 
 import * as cheerio from 'cheerio';
-import * as prettier from 'prettier';
-import { IConverter } from '../../core/IConverter';
+import { BaseConverter } from '../../core/BaseConverter';
 import { DateUtils } from '../../utils/DateUtils';
 
 import { PyTorchKRMeta } from './site.config';
 
-export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
+export class PyTorchKRConverter extends BaseConverter<PyTorchKRMeta> {
     
     public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<PyTorchKRMeta> {
         const $ = cheerio.load(htmlContent, { _useHtmlParser2: true } as any);
@@ -65,7 +64,7 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
         const publishedAt = DateUtils.parseSafeDate(publishedAtStr);
 
         // Extract content from built-in selectors (synchronous HTML parse)
-        let contentText = this.extractContentFromHtml($, title);
+        const contentText = this.extractContentFromHtml($, title);
 
         // Build result
         const fullContent = `${title}\n${contentText}`;
@@ -186,24 +185,4 @@ export class PyTorchKRConverter implements IConverter<PyTorchKRMeta> {
         }
     }
 
-    public async prettify(rawText: string): Promise<string> {
-        const formatted = await prettier.format(rawText, {
-            parser: 'markdown',
-            proseWrap: 'preserve',
-            tabWidth: 2,
-            printWidth: 100
-        });
-        return formatted.trim() + '\n';
-    }
-    
-    public async prettifyAndSave(rawText: string, outputPath: string): Promise<void> {
-        const result = await this.prettify(rawText);
-        const fs = require('fs');
-        const path = require('path');
-        const parentDir = path.dirname(outputPath);
-        if (!fs.existsSync(parentDir)) {
-            fs.mkdirSync(parentDir, { recursive: true });
-        }
-        fs.writeFileSync(outputPath, result, 'utf-8');
-    }
 }

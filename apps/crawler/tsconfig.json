@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "target": "es2022",
     "module": "commonjs",
     "lib": ["es2022", "dom"],
@@ -12,13 +13,5 @@
     "outDir": "./dist",
     "rootDir": ".",
     "baseUrl": ".",
-    "paths": {
-      "*database/mongo": ["../../packages/database/mongo.ts"],
-      "*database/meili": ["../../packages/database/meili.ts"],
-      "*config/AppConfig": ["../../packages/config/AppConfig.ts"],
-      "@wiki/database": ["../../packages/database/index.ts"],
-      "@wiki/config": ["../../packages/config/index.ts"]
-    }
-  },
-  "include": ["src/**/*"]
+  }
 }

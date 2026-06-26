@@ -9,7 +9,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { BasePipeline } from '../../core/BasePipeline';
+import { BasePipeline } from '../../../core/BasePipeline';
 import { LinkedInMarkdownConverter } from './Converter';
 import { LinkedInCrawler } from '../Crawler';
 import { UrlUtils } from '../../../utils';

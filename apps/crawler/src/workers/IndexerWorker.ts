@@ -12,8 +12,9 @@ import { MongoDatabase } from '../database/mongo';
 import { MeiliSearchDatabase } from '../database/meili';
 import { Logger } from '../utils';
 import { getSite, getIndexName } from '../core/SiteRegistry';
+import { AppConfig } from '../config/AppConfig';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
+const REDIS_URL = AppConfig.REDIS_URL;
 const INDEX_QUEUE = 'index_queue';
 const DEAD_LETTER_QUEUE = 'dead_letter_queue';
 
@@ -23,10 +24,34 @@ interface IndexPayload {
   attempt?: number;
 }
 
+let redisClient: Redis | null = null;
+const mongoDb = MongoDatabase.getInstance();
+
+async function shutdown(signal: string) {
+  Logger.info(`[Indexer] Received ${signal}. Starting graceful shutdown...`);
+  try {
+    if (redisClient) {
+      await redisClient.quit();
+      Logger.info('[Indexer] Redis connection closed.');
+    }
+    await mongoDb.close();
+    Logger.info('[Indexer] MongoDB connection closed.');
+    process.exit(0);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    Logger.error(`[Indexer] Error during shutdown: ${errorMsg}`);
+    process.exit(1);
+  }
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
 async function main() {
   Logger.info(`Connecting to Redis at ${REDIS_URL}...`);
-  const redis = new Redis(REDIS_URL);
-  const mongo = MongoDatabase.getInstance();
+  redisClient = new Redis(REDIS_URL);
+  const redis = redisClient;
+  const mongo = mongoDb;
   const meili = MeiliSearchDatabase.getInstance();
 
   await mongo.connect();
@@ -100,7 +125,8 @@ async function main() {
           await meili.addDocuments(targetIndex, [meiliDoc]);
           Logger.info(`[Indexer] Successfully indexed to Meilisearch for [${site}] ID: ${id}`);
 
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
           Logger.error(`[Indexer] Indexing failed for [${site}] ID: ${id} on attempt ${attempt}`, err);
 
           if (attempt < 3) {
@@ -108,20 +134,21 @@ async function main() {
             await redis.rpush(INDEX_QUEUE, JSON.stringify(retryTask));
             Logger.info(`[Indexer] Re-queued task to retry. Attempt: ${attempt + 1}`);
           } else {
-            const deadTask = { site, id, error: err.message, failedAt: new Date().toISOString() };
+            const deadTask = { site, id, error: errorMsg, failedAt: new Date().toISOString() };
             await redis.rpush(DEAD_LETTER_QUEUE, JSON.stringify(deadTask));
             Logger.error(`[Indexer] Max retry attempts exceeded. Moved index ID: ${id} to dead_letter_queue`);
           }
         }
       });
 
-    } catch (loopErr: any) {
-      Logger.error(`[Indexer] Worker loop exception: ${loopErr.message}`, loopErr);
+    } catch (loopErr: unknown) {
+      const errorMsg = loopErr instanceof Error ? loopErr.message : String(loopErr);
+      Logger.error(`[Indexer] Worker loop exception: ${errorMsg}`, loopErr);
     }
   }
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   Logger.error('Fatal crash on Indexer Worker', err);
   process.exit(1);
 });

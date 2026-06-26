@@ -127,7 +127,7 @@ export class BaseRefreshUrls {
             } else {
                 query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $ne: 'failed' } };
             }
-            let targets: any[] = [];
+            const targets: any[] = [];
             const targetCursor = urlsColl.find(query, { projection: { id: 1, url: 1 } });
             for await (const doc of targetCursor) {
                 targets.push({ id: doc.id, url: doc.url });

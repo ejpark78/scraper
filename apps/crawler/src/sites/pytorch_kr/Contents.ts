@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BasePipeline } from '../../core/BasePipeline';
 import { PyTorchKRConverter } from './Converter';
-import { BrowserPool } from '../../../tools/browser/pool';
+import { BrowserPool } from '../../tools/browser/pool';
 import { descriptor, PyTorchKRMeta } from './site.config';
 
 export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
@@ -117,13 +117,13 @@ export class PyTorchKRContents extends BasePipeline<PyTorchKRMeta> {
         const rawHtml = fs.readFileSync(tempHtmlPath, 'utf-8');
 
         // Download images from rawHtml and replace URLs in markdown
-        let updatedMarkdown = meta.rawContent;
+        const updatedMarkdown = meta.rawContent;
         try {
-            const { downloadImages } = await import('../utils/imageDownloader');
+            const { downloadImages } = await import('../../utils/imageDownloader');
             const { updatedMarkdown: newMarkdown } = await downloadImages({
                 htmlContent: rawHtml,
                 markdown: meta.rawContent,
-                publishedAt: meta.publishedAt || undefined,
+                publishedAt: meta.publishedAt ? (meta.publishedAt instanceof Date ? meta.publishedAt.toISOString() : String(meta.publishedAt)) : undefined,
                 docId: id,
                 siteDir: descriptor.key,
                 siteDomain: descriptor.domain || 'discuss.pytorch.kr',

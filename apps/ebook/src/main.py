@@ -24,7 +24,7 @@ class EbookPipeline:
 
     def load_books_config(self, books_json_path: Path) -> dict:
         if books_json_path.exists():
-            with open(str(books_json_path), "r", encoding="utf-8") as f:
+            with open(str(books_json_path), encoding="utf-8") as f:
                 return json.load(f)
         return {}
 

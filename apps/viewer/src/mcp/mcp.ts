@@ -283,14 +283,14 @@ function registerMcpHandlers(server: Server) {
         try {
           queryObj = JSON.parse(queryStr);
         } catch (e: any) {
-          throw new Error(`Invalid JSON in query: ${e.message}`);
+          throw new Error(`Invalid JSON in query: ${e.message}`, { cause: e });
         }
 
         if (projStr) {
           try {
             projObj = JSON.parse(projStr);
           } catch (e: any) {
-            throw new Error(`Invalid JSON in projection: ${e.message}`);
+            throw new Error(`Invalid JSON in projection: ${e.message}`, { cause: e });
           }
         }
 
@@ -327,7 +327,7 @@ function registerMcpHandlers(server: Server) {
           try {
             optionsObj = JSON.parse(optionsStr);
           } catch (e: any) {
-            throw new Error(`Invalid JSON in options: ${e.message}`);
+            throw new Error(`Invalid JSON in options: ${e.message}`, { cause: e });
           }
         }
 

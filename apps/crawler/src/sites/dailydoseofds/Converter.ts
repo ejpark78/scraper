@@ -8,13 +8,13 @@
  */
 
 import * as cheerio from 'cheerio';
-import TurndownService from 'turndown';
-import { IConverter } from '../../core/IConverter';
+import { BaseConverter } from '../../core/BaseConverter';
 import { DateUtils } from '../../utils/DateUtils';
+import TurndownService from 'turndown';
 
 import { DailyDoseDSMeta } from './site.config';
 
-export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
+export class DailyDoseDSConverter extends BaseConverter<DailyDoseDSMeta> {
     public async convertHtmlToMarkdown(htmlContent: string, id: string, url: string): Promise<DailyDoseDSMeta> {
         const $ = cheerio.load(htmlContent);
         
@@ -87,7 +87,4 @@ export class DailyDoseDSConverter implements IConverter<DailyDoseDSMeta> {
         };
     }
 
-    public async prettifyAndSave(id: string, html: string): Promise<void> {
-        // Not implemented for this site
-    }
 }

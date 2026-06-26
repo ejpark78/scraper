@@ -95,7 +95,7 @@ export class MongoDatabase {
         if (!this.client) return;
 
         try {
-            const createIdx = async (dbName: string, col: string, spec: any, opts?: any) => {
+            const createIdx = async (dbName: string, col: string, spec: Document, opts?: object) => {
                 try {
                     if (!this.client) return;
                     await this.client.db(dbName).collection(col).createIndex(spec, opts);
