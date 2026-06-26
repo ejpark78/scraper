@@ -68,7 +68,7 @@
     "turndown": "^7.2.4"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.21.0",
     "@types/cheerio": "^0.22.35",
     "@types/jsdom": "^28.0.3",
     "@types/mailparser": "^3.4.6",
