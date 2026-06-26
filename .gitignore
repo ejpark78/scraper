@@ -11,3 +11,4 @@ notebooks/.*
 *.pyc
 .venv/
 .pytest_cache/
+.ruff_cache/
