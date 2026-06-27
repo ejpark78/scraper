@@ -13,5 +13,5 @@
 - [x] **산출물 및 보고서 작성**
   - [x] `098-update-translate-pipeline.review.md` 작성
   - [x] `098-update-translate-pipeline.walkthrough.md` 작성
-- [ ] **변경 사항 커밋 및 머지**
-  - [ ] `scripts/agents/commit-changes.sh` 실행을 통한 로컬 저장소 커밋 및 develop으로의 자동 머지 진행
+- [x] **변경 사항 커밋 및 머지**
+  - [x] `scripts/agents/commit-changes.sh` 실행을 통한 로컬 저장소 커밋 및 develop으로의 자동 머지 진행
