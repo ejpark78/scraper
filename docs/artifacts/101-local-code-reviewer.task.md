@@ -1,0 +1,4 @@
+- [x] `scripts/agents/review-changes.sh` 및 `scripts/agents/ai-reviewer.ts` 스크립트 작성 및 권한 지정
+- [x] `package.json` 파일에 `npm run review` 명령어 연결
+- [x] `scripts/agents/commit-changes.sh` 라이프사이클에 AI 코드 리뷰 단계 자동 수행 추가
+- [x] 변경 사항 및 자가 검토서 작성 및 검증

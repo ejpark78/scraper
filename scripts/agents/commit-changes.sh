@@ -107,6 +107,14 @@ if [ -n "$(git status --porcelain)" ]; then
     exit 1
   fi
 
+  # 실행 가능한 AI 코드 리뷰 수행
+  if [ -f "scripts/agents/review-changes.sh" ]; then
+    echo "🤖 Running AI Code Review Check..."
+    if ! bash scripts/agents/review-changes.sh; then
+      echo "⚠️ AI Review check script failed to run. Proceeding with commit..."
+    fi
+  fi
+
   # 변경이 일어난 패키지 식별 및 개별 test.sh 실행
   echo "🔍 Running static verification tests..."
   

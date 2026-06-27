@@ -16,7 +16,8 @@
     "type-check:crawler": "npm run type-check --prefix apps/crawler",
     "type-check:viewer": "npm run type-check --prefix apps/viewer",
     "type-check:ebook": "cd apps/ebook && .venv/bin/python -m poethepoet type-check",
-    "type-check": "npm run type-check:crawler && npm run type-check:viewer && npm run type-check:ebook"
+    "type-check": "npm run type-check:crawler && npm run type-check:viewer && npm run type-check:ebook",
+    "review": "bash scripts/agents/review-changes.sh"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
