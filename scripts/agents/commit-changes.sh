@@ -10,6 +10,14 @@
 # Dependencies:   git, awk, bash (v4+)
 # ==============================================================================
 
+# Parse arguments
+AUTO_MERGE=false
+for arg in "$@"; do
+  if [ "$arg" = "--merge" ]; then
+    AUTO_MERGE=true
+  fi
+done
+
 # staged 파일의 상세 diff를 파싱하여 출력하는 헬퍼 함수
 show_file_diff() {
   local file="$1"
@@ -201,6 +209,43 @@ if [ -n "$(git status --porcelain)" ]; then
 
   git commit -m "$MSG" > /dev/null
   echo "✅ Committed: $MSG"
+
+  if [ "$AUTO_MERGE" = true ]; then
+    FEAT_BRANCH="$BRANCH_NAME"
+    if [ "$FEAT_BRANCH" != "develop" ] && [ "$FEAT_BRANCH" != "main" ]; then
+      echo "🔀 Auto-merge option detected. Transitioning to develop..."
+      if git checkout develop; then
+        if git merge "$FEAT_BRANCH"; then
+          echo "✅ Successfully merged $FEAT_BRANCH into develop branch."
+        else
+          echo "❌ ERROR: Merge conflict detected! Please resolve conflicts manually." >&2
+          exit 1
+        fi
+      else
+        echo "❌ ERROR: Failed to checkout develop branch." >&2
+        exit 1
+      fi
+    fi
+  fi
 else
   echo "✨ No changes to commit."
+
+  if [ "$AUTO_MERGE" = true ]; then
+    BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+    FEAT_BRANCH="$BRANCH_NAME"
+    if [ "$FEAT_BRANCH" != "develop" ] && [ "$FEAT_BRANCH" != "main" ]; then
+      echo "🔀 Auto-merge option detected (No changes). Transitioning to develop..."
+      if git checkout develop; then
+        if git merge "$FEAT_BRANCH"; then
+          echo "✅ Successfully merged $FEAT_BRANCH into develop branch."
+        else
+          echo "❌ ERROR: Merge conflict detected!" >&2
+          exit 1
+        fi
+      else
+        echo "❌ ERROR: Failed to checkout develop." >&2
+        exit 1
+      fi
+    fi
+  fi
 fi
