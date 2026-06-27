@@ -1,0 +1,5 @@
+- [x] 프로젝트 내 `scripts/agents/ai-reviewer.ts` 제거 완료
+- [x] `scripts/agents/review-changes.sh`에서 외부 API 호출을 배제하고 로컬 정적 도구(eslint, tsc) 기반의 diff 영역 분석기 모드로 전면 개편 완료
+- [x] Antigravity 글로벌 사용자 스킬 디렉토리 `/Users/ejpark/.gemini/config/skills/ai_code_reviewer/SKILL.md`를 생성하여 AI 코드 리뷰 명세 및 프롬프트 로직을 완전히 격리 이관 완료
+- [x] `AGENTS.md` 파일 내 7번째 규칙의 서술을 AI 코드 리뷰어에서 "로컬 정적 코드 리뷰"로 정합하게 개정 완료
+- [x] 변경 내역 및 자가 검토서 작성 및 검증 완료

@@ -169,5 +169,9 @@
 - [102-dockerize-review-tool.task](102-dockerize-review-tool.task.md)
 - [102-dockerize-review-tool.review](102-dockerize-review-tool.review.md)
 - [102-dockerize-review-tool.walkthrough](102-dockerize-review-tool.walkthrough.md)
+- [103-local-review-option.plan](103-local-review-option.plan.md)
+- [103-local-review-option.task](103-local-review-option.task.md)
+- [103-local-review-option.review](103-local-review-option.review.md)
+- [103-local-review-option.walkthrough](103-local-review-option.walkthrough.md)
 
 
