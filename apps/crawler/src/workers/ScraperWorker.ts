@@ -336,9 +336,10 @@ class ScraperWorker {
       const desc = getSite(site);
       if (desc?.scraper?.urlsCollectionName) {
         const urlsColl = await this.mongo.getCollection(desc.scraper.urlsCollectionName as `${'bronze' | 'silver'}/${string}`);
+        const statusVal = isPermanentError ? 'failed_permanent' : 'failed';
         await urlsColl.updateOne(
           { id },
-          { $set: { status: 'failed', failedAt: new Date(), error: errorMsg } },
+          { $set: { status: statusVal, failedAt: new Date(), error: errorMsg } },
           { upsert: true }
         );
       }
