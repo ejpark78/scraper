@@ -54,3 +54,8 @@ prune:
 
 commit:
 	@bash scripts/agents/commit-changes.sh
+
+code-review review:
+	@echo "🤖 Running AI Code Review Skill via Antigravity CLI..."
+	@agy --skill code_review "Run semantic code review on my latest modifications."
+

@@ -173,5 +173,9 @@
 - [103-local-review-option.task](103-local-review-option.task.md)
 - [103-local-review-option.review](103-local-review-option.review.md)
 - [103-local-review-option.walkthrough](103-local-review-option.walkthrough.md)
+- [104-make-agents-review.plan](104-make-agents-review.plan.md)
+- [104-make-agents-review.task](104-make-agents-review.task.md)
+- [104-make-agents-review.review](104-make-agents-review.review.md)
+- [104-make-agents-review.walkthrough](104-make-agents-review.walkthrough.md)
 
 

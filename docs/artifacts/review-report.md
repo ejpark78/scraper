@@ -1,10 +1,9 @@
 # Local Static Code Review Report
-Generated at: Sat Jun 27 12:20:33 KST 2026
+Generated at: Sat Jun 27 12:25:36 KST 2026
 
 ## 📄 Modified Files List
-* `AGENTS.md`
 * `docs/artifacts/INDEX.md`
-* `scripts/agents/review-changes.sh`
+* `scripts/agents/agents.mk`
 
 ## 🚨 Diagnostic Reports
 ### Lint Diagnostics
