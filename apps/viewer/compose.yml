@@ -49,6 +49,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - PORT=3000
       - IS_VIEWER=true
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOST_PROJECT_PATH:-.}/data:/app/data

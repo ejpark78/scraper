@@ -50,8 +50,30 @@ echo "${STAGED_DIFF}" >> "${TEMP_DIFF_FILE}"
 echo "=== UNSTAGED CHANGES ===" >> "${TEMP_DIFF_FILE}"
 echo "${UNSTAGED_DIFF}" >> "${TEMP_DIFF_FILE}"
 
-# Run the TypeScript reviewer script
-npx ts-node -T scripts/agents/ai-reviewer.ts "${TEMP_DIFF_FILE}"
+# Check if running inside a Docker container or if host has running docker worker container
+IS_CONTAINER=false
+if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then
+  IS_CONTAINER=true
+fi
 
-# Cleanup
+# Detect running docker service "worker" for proxying
+RUNNING_WORKER_ID=$(docker compose ps -q worker 2>/dev/null || echo "")
+
+if [ "${IS_CONTAINER}" = "false" ] && [ -n "${RUNNING_WORKER_ID}" ]; then
+  echo "🐳 Running code review inside Docker worker container..."
+  
+  # Copy temporary diff to container
+  docker cp "${TEMP_DIFF_FILE}" "${RUNNING_WORKER_ID}:/tmp/review_diff.patch"
+  
+  # Run execution proxy inside docker compose context
+  docker compose exec -T -e GEMINI_API_KEY="${GEMINI_API_KEY}" worker npx ts-node -T scripts/agents/ai-reviewer.ts "/tmp/review_diff.patch"
+  
+  # Cleanup inside container
+  docker compose exec -T worker rm -f "/tmp/review_diff.patch"
+else
+  # Fallback to local execution if inside container or no docker container is running
+  npx ts-node -T scripts/agents/ai-reviewer.ts "${TEMP_DIFF_FILE}"
+fi
+
+# Cleanup local temp file
 rm -f "${TEMP_DIFF_FILE}"

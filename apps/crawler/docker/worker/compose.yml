@@ -26,6 +26,7 @@ services:
       - URLS=${URLS:-}
       - HTML=${HTML:-}
       - MD=${MD:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
