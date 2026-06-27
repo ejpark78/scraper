@@ -9,7 +9,9 @@
 | 5 | 041-050 | [041-050.archive.md](041-050.archive.md) | 19 |
 | 6 | 051-060 | [051-060.archive.md](051-060.archive.md) | 2 |
 | 7 | 061-070 | [061-070.archive.md](061-070.archive.md) | 19 |
-| 8 | 071-080 | [071-080.archive.md](071-080.archive.md) | 4 |
+| 8 | 071-080 | [071-080.archive.md](071-080.archive.md) | 8 |
+| 9 | 081-090 | [081-090.archive.md](081-090.archive.md) | 19 |
+| 10 | 091-100 | [091-100.archive.md](091-100.archive.md) | 14 |
 
 ## 📂 상세 아카이브 내역 (Archived Details)
 
@@ -113,20 +115,47 @@
 - [076-improve-index-md-visualization.summary](071-080.archive.md#076-improve-index-md-visualizationsummary)
 - [077-fix-archive-overwrite-issue.plan](071-080.archive.md#077-fix-archive-overwrite-issueplan)
 - [077-fix-archive-overwrite-issue.summary](071-080.archive.md#077-fix-archive-overwrite-issuesummary)
-- [078-refactor-rules-and-dry.plan](078-refactor-rules-and-dry.plan.md)
-- [078-refactor-rules-and-dry.task](078-refactor-rules-and-dry.task.md)
-- [078-refactor-rules-and-dry.review](078-refactor-rules-and-dry.review.md)
-- [078-refactor-rules-and-dry.walkthrough](078-refactor-rules-and-dry.walkthrough.md)
-- [079-fix-tool-path-rules.plan](079-fix-tool-path-rules.plan.md)
-- [079-fix-tool-path-rules.task](079-fix-tool-path-rules.task.md)
-- [079-fix-tool-path-rules.review](079-fix-tool-path-rules.review.md)
-- [079-fix-tool-path-rules.walkthrough](079-fix-tool-path-rules.walkthrough.md)
-- [080-enforce-feature-branch.plan](080-enforce-feature-branch.plan.md)
-- [080-enforce-feature-branch.task](080-enforce-feature-branch.task.md)
-- [080-enforce-feature-branch.review](080-enforce-feature-branch.review.md)
-- [080-enforce-feature-branch.walkthrough](080-enforce-feature-branch.walkthrough.md)
-- [081-fix-artifacts-rule-spec.plan](081-fix-artifacts-rule-spec.plan.md)
-- [081-fix-artifacts-rule-spec.task](081-fix-artifacts-rule-spec.task.md)
-- [081-fix-artifacts-rule-spec.review](081-fix-artifacts-rule-spec.review.md)
-- [081-fix-artifacts-rule-spec.walkthrough](081-fix-artifacts-rule-spec.walkthrough.md)
+- [078-refactor-rules-and-dry.plan](071-080.archive.md#078-refactor-rules-and-dryplan)
+- [078-refactor-rules-and-dry.summary](071-080.archive.md#078-refactor-rules-and-drysummary)
+- [079-fix-tool-path-rules.summary](071-080.archive.md#079-fix-tool-path-rulessummary)
+- [080-enforce-feature-branch.summary](071-080.archive.md#080-enforce-feature-branchsummary)
+
+### 📦 아카이브: 081-090 (081-090.archive.md)
+
+- [081-fix-artifacts-rule-spec.plan](081-090.archive.md#081-fix-artifacts-rule-specplan)
+- [081-fix-artifacts-rule-spec.summary](081-090.archive.md#081-fix-artifacts-rule-specsummary)
+- [082-anti-pattern-analysis.summary](081-090.archive.md#082-anti-pattern-analysissummary)
+- [083-refactor-converters-and-shutdown.plan](081-090.archive.md#083-refactor-converters-and-shutdownplan)
+- [083-refactor-converters-and-shutdown.summary](081-090.archive.md#083-refactor-converters-and-shutdownsummary)
+- [084-move-tests-to-crawler.plan](081-090.archive.md#084-move-tests-to-crawlerplan)
+- [085-test-compilation-issue.issue](081-090.archive.md#085-test-compilation-issueissue)
+- [085-update-crawler-rules.plan](081-090.archive.md#085-update-crawler-rulesplan)
+- [085-update-crawler-rules.summary](081-090.archive.md#085-update-crawler-rulessummary)
+- [086-refactor-indexer-and-meili.plan](081-090.archive.md#086-refactor-indexer-and-meiliplan)
+- [086-refactor-indexer-and-meili.summary](081-090.archive.md#086-refactor-indexer-and-meilisummary)
+- [087-refactor-core-typings-and-config.plan](081-090.archive.md#087-refactor-core-typings-and-configplan)
+- [087-refactor-core-typings-and-config.summary](081-090.archive.md#087-refactor-core-typings-and-configsummary)
+- [087-refactor-viewer-config-and-typings.plan](081-090.archive.md#087-refactor-viewer-config-and-typingsplan)
+- [088-integrate-linters-and-checkers.summary](081-090.archive.md#088-integrate-linters-and-checkerssummary)
+- [089-integrate-lint-lifecycle.plan](081-090.archive.md#089-integrate-lint-lifecycleplan)
+- [089-integrate-lint-lifecycle.summary](081-090.archive.md#089-integrate-lint-lifecyclesummary)
+- [090-fix-crawler-type-errors.plan](081-090.archive.md#090-fix-crawler-type-errorsplan)
+- [090-fix-crawler-type-errors.summary](081-090.archive.md#090-fix-crawler-type-errorssummary)
+
+### 📦 아카이브: 091-100 (091-100.archive.md)
+
+- [091-enforce-docker-verification.plan](091-100.archive.md#091-enforce-docker-verificationplan)
+- [092-fix-crawler-lint-warnings.plan](091-100.archive.md#092-fix-crawler-lint-warningsplan)
+- [093-fix-eslint-peer-deps.plan](091-100.archive.md#093-fix-eslint-peer-depsplan)
+- [093-fix-eslint-peer-deps.summary](091-100.archive.md#093-fix-eslint-peer-depssummary)
+- [094-disable-auto-crawl-stats.plan](091-100.archive.md#094-disable-auto-crawl-statsplan)
+- [094-disable-auto-crawl-stats.summary](091-100.archive.md#094-disable-auto-crawl-statssummary)
+- [095-integrate-failed-permanent-status.plan](091-100.archive.md#095-integrate-failed-permanent-statusplan)
+- [095-integrate-failed-permanent-status.summary](091-100.archive.md#095-integrate-failed-permanent-statussummary)
+- [096-auto-merge-commit-changes.plan](091-100.archive.md#096-auto-merge-commit-changesplan)
+- [096-auto-merge-commit-changes.summary](091-100.archive.md#096-auto-merge-commit-changessummary)
+- [097-set-merge-as-default-in-commit-changes.plan](091-100.archive.md#097-set-merge-as-default-in-commit-changesplan)
+- [097-set-merge-as-default-in-commit-changes.summary](091-100.archive.md#097-set-merge-as-default-in-commit-changessummary)
+- [098-update-translate-pipeline.plan](091-100.archive.md#098-update-translate-pipelineplan)
+- [098-update-translate-pipeline.summary](091-100.archive.md#098-update-translate-pipelinesummary)
 
