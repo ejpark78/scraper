@@ -11,10 +11,10 @@
 # ==============================================================================
 
 # Parse arguments
-AUTO_MERGE=false
+AUTO_MERGE=true
 for arg in "$@"; do
-  if [ "$arg" = "--merge" ]; then
-    AUTO_MERGE=true
+  if [ "$arg" = "--no-merge" ]; then
+    AUTO_MERGE=false
   fi
 done
 
