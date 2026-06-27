@@ -177,5 +177,9 @@
 - [104-make-agents-review.task](104-make-agents-review.task.md)
 - [104-make-agents-review.review](104-make-agents-review.review.md)
 - [104-make-agents-review.walkthrough](104-make-agents-review.walkthrough.md)
+- [105-make-agents-push.plan](105-make-agents-push.plan.md)
+- [105-make-agents-push.task](105-make-agents-push.task.md)
+- [105-make-agents-push.review](105-make-agents-push.review.md)
+- [105-make-agents-push.walkthrough](105-make-agents-push.walkthrough.md)
 
 
