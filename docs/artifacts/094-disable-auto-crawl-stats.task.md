@@ -7,5 +7,5 @@
   - [x] 최초 진입 시 데이터 조회 유도용 반응형 상태 `hasQueriedStats` 추가
   - [x] `fetchCrawlStats` 완료 시 `hasQueriedStats.value = true` 설정
   - [x] 템플릿 영역에서 데이터가 없거나 조회 전일 때 메시지를 `hasQueriedStats`에 따라 다르게 출력
-- [ ] ESLint 및 빌드 확인
-- [ ] Git 커밋 수행 (`commit-changes.sh`)
+- [x] ESLint 및 빌드 확인
+- [x] Git 커밋 수행 (`commit-changes.sh`)
