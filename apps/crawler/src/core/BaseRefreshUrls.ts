@@ -125,7 +125,7 @@ export class BaseRefreshUrls {
                 query = { status: 'failed' };
                 console.log(`🔧 ERROR_RESET mode: fetching only failed URLs...`);
             } else {
-                query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $ne: 'failed' } };
+                query = { ...(overwrite ? {} : { id: { $nin: completedIds } }), status: { $nin: ['failed', 'failed_permanent'] } };
             }
             const targets: any[] = [];
             const targetCursor = urlsColl.find(query, { projection: { id: 1, url: 1 } });

@@ -167,7 +167,6 @@ watch(logSearchQuery, () => {
 onMounted(() => {
   fetchQueues();
   fetchErrors();
-  fetchCrawlStats();
 });
 
 // Methods
@@ -248,6 +247,7 @@ async function fetchErrors() {
 
 // Daily Crawl Stats States
 const loadingCrawlStats = ref<boolean>(false);
+const hasQueriedStats = ref<boolean>(false);
 const crawlStats = ref<any[]>([]);
 const selectedSite = ref<string>('all');
 const dateType = ref<string>('collected');
@@ -295,6 +295,7 @@ function formatCollectionName(collName: string): string {
 
 async function fetchCrawlStats() {
   loadingCrawlStats.value = true;
+  hasQueriedStats.value = true;
   try {
     const response = await fetch(`/api/site-stats/search?startDate=${startDateInput.value}&endDate=${endDateInput.value}&dateType=${dateType.value}`);
     const data = await response.json();
@@ -538,6 +539,10 @@ async function addUrlQueue() {
           <div v-if="loadingCrawlStats" class="loading-container" style="height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px;">
             <div class="spinner"></div>
             <span style="color: var(--text-muted); font-size: 12px;">일별 수집 통계를 집계하고 있습니다...</span>
+          </div>
+
+          <div v-else-if="!hasQueriedStats" class="empty-state" style="height: 250px; display: flex; justify-content: center; align-items: center;">
+            <span style="color: var(--text-muted); font-size: 12px;">📅 날짜 범위를 설정한 후 [조회] 버튼을 클릭해 주세요.</span>
           </div>
 
           <div v-else-if="!crawlStats || crawlStats.length === 0" class="empty-state" style="height: 250px; display: flex; justify-content: center; align-items: center;">
