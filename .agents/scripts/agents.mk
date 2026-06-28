@@ -65,5 +65,9 @@ push:
 pms:
 	@npx ts-node .agents/scripts/sync-pms.ts
 
+pms-token-gitea:
+	@docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all
+
+
 
 

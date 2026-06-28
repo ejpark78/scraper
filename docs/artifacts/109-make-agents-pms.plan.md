@@ -29,6 +29,10 @@
 ```makefile
 agents-pms:
 	docker compose -p scraper exec -T app-node uv run ts-node scripts/agents/sync-pms.ts
+
+# Gitea API 토큰 CLI 생성 헬퍼
+agents-pms-token-gitea:
+	docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all
 ```
 
 ---
@@ -52,3 +56,7 @@ agents-pms:
 ### Phase 3: Makefile 통합 및 테스트
 * `Makefile`에 `agents-pms` 타겟 추가.
 * 기존 `docs/artifacts` 내 전체 아티팩트(소급 적용) 대상 동기화 테스트 및 검증.
+
+### Phase 4: CLI 토큰 생성 헬퍼 추가
+* `agents.mk`에 `agents-pms-token-gitea` 타겟 추가하여 CLI에서 원버튼으로 Gitea 토큰을 발행할 수 있게 유도.
+

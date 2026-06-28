@@ -35,7 +35,11 @@
 이 기능을 사용하기 위해 사용자는 로컬 환경 변수를 채워야 합니다:
 
 1. **Gitea API Token 발급**:
-   * Gitea(예: `https://gitea.127.0.0.1.nip.io/`) 로그인 후 `설정 > 애플리케이션 > 토큰 생성`에서 권한을 가진 토큰을 발급합니다.
+    * 터미널에서 다음 명령어를 실행하여 CLI로 Gitea 토큰을 즉시 생성 및 획득합니다:
+      ```bash
+      make agents-pms-token-gitea
+      ```
+
 2. **Vikunja API Token 발급**:
    * Vikunja(예: `https://vikunja.127.0.0.1.nip.io/`) 로그인 후 `설정 > API 토큰`에서 새 토큰을 발급받습니다.
 3. **.env 설정**:
