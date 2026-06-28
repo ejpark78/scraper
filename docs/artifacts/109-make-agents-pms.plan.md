@@ -77,7 +77,7 @@ agents-pms-token:
 
 ### Phase 2: 동기화 스크스크립트 개발 (`scripts/agents/sync-pms.ts`)
 * `docs/artifacts/` 전체 스캔 및 아티팩트 그룹화 (접두사 번호 기준).
-* **아카이브 파싱 및 복원**: `###-###.archive.md` 형식의 아카이브 압축 파일을 탐색하여, 마크다운 본문 파싱을 통해 과거 1번부터 100번까지의 각 개별 아티팩트 본문 및 메타데이터를 개별 `ArtifactGroup` 객체로 동적 추출/복원하고 개별 이슈로 변환하는 로직 구현.
+* **아카이브 파싱 및 복원**: `###-###.archive.md` 형식 of 아카이브 압축 파일을 탐색하여, 마크다운 본문 파싱을 통해 과거 1번부터 100번까지의 각 개별 아티팩트 본문 및 메타데이터를 개별 `ArtifactGroup` 객체로 동적 추출/복원하고 개별 이슈로 변환하는 로직 구현.
 * **조건부 프로젝트 리셋 옵션**: 무조건적인 리셋을 배제하고, 실행 시 `--reset` 인자가 주입되었을 때만 조건부로 Gitea 저장소 및 Vikunja 프로젝트를 파괴(DELETE)하도록 구현. 평상시 기본 동작은 멱등성 있는 추가/업데이트(Upsert)로 작동하여 데이터 보존.
 * **역사적 아티팩트 상태 제어**: 아카이브 구간에 해당하는 **100번 이하(SCR-001 ~ SCR-100)**의 아티팩트들은 이미 완료된 프로젝트 역사이므로, Gitea 이슈 상태를 무조건 `closed`, Vikunja 버킷을 무조건 `Done`으로 매핑하여 강제 동기화.
 * Gitea API 호출 로직:
@@ -88,7 +88,9 @@ agents-pms-token:
   * **태스크 목록 조회 API의 50개 페이지네이션 한계 극복**: `page=1, 2, ...` 순차 루프 조회를 통해 기존 태스크를 누락 없이 100% 수집하여 중복 카드 생성 원인 박멸.
   * 프로젝트의 디폴트 뷰 목록에서 **'Kanban' 뷰를 정확하게 탐색하여 식별** (`GET /projects/{id}/views`).
   * 식별된 Kanban View 소속 Standard Buckets(Planned, In Progress, Done) 생성 및 확인 (`/projects/{id}/views/{viewId}/buckets`).
+  * **마크다운 상세 개행 보존 처리**: Vikunja 마크다운 렌더링 호환성을 위해 설명 본문 텍스트 내의 모든 단일 줄바꿈(`\n`)을 공백 2개가 포함된 줄바꿈(`  \n`)으로 치환하여 렌더링 시 한 줄 뭉침 현상 방지.
   * 태스크 생성/업데이트 시 `bucket_id`를 페이로드에 명시적으로 주입하고, 이와 병행하여 타겟 Kanban View의 특정 버킷으로 관계 설정 및 이동 API 호출 (`POST /projects/{id}/views/{viewId}/buckets/{bucketId}/tasks`)을 수행하여 멱등성 있는 카드 배치를 보장함.
+
 
 ### Phase 3: Makefile 통합 및 테스트
 * `Makefile`에 `agents-pms` 타겟 추가 (기본 멱등 업데이트).

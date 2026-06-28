@@ -375,9 +375,9 @@ async function syncVikunja(groups: ArtifactGroup[]) {
 
     // 대표 아티팩트의 설명/상세
     let description = `## Artifact Documentation (${group.id})\n\n`;
-    if (group.planFile) description += `- Plan: \`${group.planFile}\`\n`;
-    if (group.taskFile) description += `- Task: \`${group.taskFile}\`\n`;
-    if (group.walkthroughFile) description += `- Walkthrough: \`${group.walkthroughFile}\`\n`;
+    if (group.planFile) description += `- Plan: \`${group.planFile}\`  \n`;
+    if (group.taskFile) description += `- Task: \`${group.taskFile}\`  \n`;
+    if (group.walkthroughFile) description += `- Walkthrough: \`${group.walkthroughFile}\`  \n`;
 
     const artifactsDir = path.join(process.cwd(), 'docs/artifacts');
     const targetFile = group.walkthroughFile || group.planFile || group.taskFile;
@@ -390,8 +390,14 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     }
 
     if (fileContent) {
+      // Vikunja 마크다운 렌더러가 줄바꿈을 씹고 한 줄로 만드는 현상을 막기 위해
+      // 모든 단일 개행(\n) 뒤에 공백 2개(Standard hard wrap)를 주입합니다.
+      const formattedContent = fileContent
+        .replace(/\r\n/g, '\n')
+        .replace(/(?<!  )\n/g, '  \n');
+
       description += `\n\n### 🔍 핵심 요약 및 내용 (${targetFile})\n\n\`\`\`markdown\n`;
-      description += fileContent.length > 3000 ? fileContent.substring(0, 3000) + '\n\n...(본문 중략)...' : fileContent;
+      description += formattedContent.length > 3000 ? formattedContent.substring(0, 3000) + '\n\n...(본문 중략)...' : formattedContent;
       description += `\n\`\`\``;
     }
 

@@ -1,5 +1,5 @@
 # Local Static Code Review Report
-Generated at: Sun Jun 28 13:18:16 KST 2026
+Generated at: Sun Jun 28 13:20:55 KST 2026
 
 ## 📄 Modified Files List
 * `.agents/scripts/sync-pms.ts`
