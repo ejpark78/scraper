@@ -63,3 +63,19 @@ opencode:
 
 ollama:
 	ollama launch opencode --model gemma4:31b-cloud
+
+# --- Gitea Token Utilities ---
+
+gitea-token-curl:
+	@echo "🔑 Gitea API를 통해 신규 토큰을 발급합니다..."
+	@curl -s -k -X POST -u "gitea-admin:admin12345" \
+		-H "Content-Type: application/json" \
+		-d '{"name":"antigravity-token-$$(shell date +%s)","scopes":["all"]}' \
+		"https://gitea.localhost/api/v1/users/gitea-admin/tokens" | grep -o '"sha1":"[^"]*' | cut -d'"' -f4 || echo "❌ 토큰 생성 실패"
+
+gitea-token-tea:
+	@echo "🍵 tea CLI 로그인 설정을 추가하고 토큰을 확인합니다..."
+	@tea login add --name local-gitea --url https://gitea.localhost --username gitea-admin --password admin12345 --insecure --insecure-skip-verify || true
+	@echo "🔑 생성된 tea API 토큰:"
+	@cat ~/.config/tea/config.yml 2>/dev/null | grep -A 5 "local-gitea" || echo "❌ tea 설정 파일을 읽을 수 없습니다."
+
