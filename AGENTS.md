@@ -30,8 +30,8 @@
 * **사전 환경 진단 철저**: 환경 변조 전 `docker inspect` 등으로 컨테이너 베이스 및 경로 구조를 분석한 후 작업을 진행합니다. ad-hoc식(임시방편) 해결이나 헬스체크 임의 삭제를 금지합니다.
 
 ### 3. Git 및 협업 방식 (Git & Collaboration)
-* **Git Flow 브랜치 전략 준수**: `main` 직접 수정 절대 금지, 브랜치 전환 전 커밋 완료 필수, 충돌 시 강제 푸시 금지 등 [Git Flow Guide](.agents/rules/git_flow.md)를 따릅니다. 작업 시작 시 브랜치를 확인하고 `main` 또는 `develop`일 경우 브랜치 전환을 제안합니다. 작업 완료 후에는 `scripts/agents/commit-changes.sh`를 활용해 커밋 및 머지를 처리합니다.
-* **자동 Git 커밋**: 유효한 편집 직후 또는 특정 단위 작업 완료 시 `scripts/agents/commit-changes.sh`를 실행하여 로컬 저장소에 저장합니다.
+* **Git Flow 브랜치 전략 준수**: `main` 직접 수정 절대 금지, 브랜치 전환 전 커밋 완료 필수, 충돌 시 강제 푸시 금지 등 [Git Flow Guide](.agents/rules/git_flow.md)를 따릅니다. 작업 시작 시 브랜치를 확인하고 `main` 또는 `develop`일 경우 브랜치 전환을 제안합니다. 작업 완료 후에는 `npm run commit`을 활용해 커밋 및 머지를 처리합니다.
+* **자동 Git 커밋**: 유효한 편집 직후 또는 특정 단위 작업 완료 시 `npm run commit`을 실행하여 로컬 저장소에 저장합니다.
 * **상대경로 링크 사용**: 문서 내에서는 상대경로를 사용하고(예: `[Worker](src/Worker.ts)`), `file://` scheme 사용을 금지합니다.
 * **사용자 중요 정보 고지 의무**: 인프라 변경, 계정 정보(ID, 임시 비번), 웹 접속 주소 등 핵심 설정 변경이 발생한 경우, 아티팩트뿐만 아니라 채팅창에도 요약 고지해야 합니다.
 
