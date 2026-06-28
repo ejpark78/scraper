@@ -1,21 +1,23 @@
-# 로컬 Gitea 및 Vikunja 인프라 구축 계획서 (수정안 - Vikunja 헬스체크 오류 수정)
+# 로컬 Gitea 및 Vikunja 인프라 구축 계획서 (수정안 - Vikunja 최신화 및 Dockerfile 빌드)
 
-이 계획서는 Vikunja 컨테이너 내부의 `wget` 명령어 누락으로 인한 Unhealthy 루프 및 Traefik 라우팅 404 차단 현상을 해결하기 위해 헬스체크 방식을 교정하는 조치를 다룹니다.
+이 계획서는 Vikunja의 버전을 최신 공식 릴리즈(`latest`)로 올리면서, 컨테이너 내부에 `curl`이 없어 발생하는 헬스체크 오류를 완치하기 위해 전용 Dockerfile을 빌드하여 가동하는 조치를 다룹니다.
 
 ## Proposed Changes
 
 ### [Docker Tools Setup]
 
+#### [NEW] [Dockerfile](file:///Users/ejpark/workspace/scraper/docker/tools/vikunja/Dockerfile)
+- 최신 공식 이미지(`FROM vikunja/vikunja:latest`)를 기반으로 하고, 헬스체크가 정상 수행될 수 있도록 `curl` 패키지를 설치하는 빌드 정의 파일 생성
+
 #### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/vikunja/compose.yml)
-- 헬스체크 명령 수정:
-  - 기존: `["CMD", "wget", "--spider", "-q", "http://localhost:3456/api/v1/info"]`
-  - 변경: `["CMD", "curl", "-f", "http://localhost:3456/api/v1/info"]`
+- `image: vikunja/vikunja:0.24.2` 대신 `build` 속성을 활용해 로컬 `Dockerfile` 경로 지정
+- `image: local/vikunja:latest` 로 자체 이미지 태그 정의
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. `make up-vikunja` 컨테이너 재생성 구동
-2. `docker compose -p scraper ps`를 실행하여 `scraper-vikunja-1` 컨테이너가 `healthy` 상태로 전환되는지 확인
-3. `https://vikunja.localhost/` 웹 브라우저 최종 접속 성공 여부 체크
+1. `make up-vikunja` 시 `--build` 옵션을 결합해 빌드 가동
+2. `docker compose -p scraper ps` 결과 상 `healthy` 상태로의 전입 유무 점검
+3. `https://vikunja.localhost/` 최종 브라우저 접속 확인
