@@ -10,11 +10,11 @@
 
 # --- Infrastructure Tools ---
 
-up-tools: up-kasm up-mongo up-redis up-yacht up-dozzle up-cronicle up-jupyter
+up-tools: up-kasm up-mongo up-redis up-yacht up-dozzle up-cronicle up-jupyter up-gitea up-vikunja
 	@echo "✅ 모든 Tools가 실행되었습니다."
 
 down-tools:
-	$(COMPOSE) --profile tools down traefik kasm mongo-express redisinsight yacht dozzle cronicle jupyter
+	$(COMPOSE) --profile tools down traefik kasm mongo-express redisinsight yacht dozzle cronicle jupyter gitea vikunja
 	@echo "🛑 Tools가 중지되었습니다."
 
 up-kasm:
@@ -44,6 +44,14 @@ up-cronicle:
 up-jupyter:
 	$(COMPOSE) --profile tools up -d --build jupyter
 	@echo "🚀 Jupyter GUI가 실행되었습니다. https://jupyter.localhost 에 접속하세요."
+
+up-gitea:
+	$(COMPOSE) --profile tools up -d gitea
+	@echo "🚀 Gitea GUI가 실행되었습니다. https://gitea.localhost 에 접속하세요."
+
+up-vikunja:
+	$(COMPOSE) --profile tools up -d vikunja
+	@echo "🚀 Vikunja GUI가 실행되었습니다. https://vikunja.localhost 에 접속하세요."
 
 # --- Coding Agents ---
 
