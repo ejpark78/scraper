@@ -2,7 +2,7 @@
  * ==============================================================================
  * 🤖 Gitea API Helper Script (gitea.ts)
  * ==============================================================================
- * @description  Gitea API를 호출하여 이슈 생성, 댓글 등록, 이슈 마감을 제어하는 헬퍼 유틸리티입니다.
+ * @description  Gitea API를 호출하여 이슈 생성, 조회, 수정, 댓글 등록, 이슈 마감을 제어하는 헬퍼 유틸리티입니다.
  *               기존의 gitea-mcp 및 tea CLI의 대화형(interactive) 실행 장애를 대체합니다.
  * @constraints  .env 파일의 자격 증명(GITEA_ACCESS_TOKEN)을 사용합니다.
  *               Strict Typing 및 OOP Patterns 아키텍처 규칙을 상시 준수합니다.
@@ -56,6 +56,8 @@ class Config {
 
 interface IssueResponse {
   number: number;
+  title: string;
+  body: string;
   html_url: string;
 }
 
@@ -103,6 +105,14 @@ class GiteaClient {
     return text.replace(/\[br\]/g, '\n');
   }
 
+  public async getIssue(issueId: string): Promise<IssueResponse> {
+    return await this.request<IssueResponse>(`/repos/${this.config.repo}/issues/${issueId}`, 'GET');
+  }
+
+  public async updateIssue(issueId: string, title: string, body: string): Promise<void> {
+    await this.request<void>(`/repos/${this.config.repo}/issues/${issueId}`, 'PATCH', { title, body });
+  }
+
   public async createIssue(title: string, body: string): Promise<void> {
     console.log(`🚀 Gitea 이슈 생성 중... [${title}]`);
     const formattedTitle = this.formatText(title);
@@ -123,6 +133,30 @@ class GiteaClient {
     console.log(`🔒 이슈 #${issueId} 마감 중...`);
     await this.request<void>(`/repos/${this.config.repo}/issues/${issueId}`, 'PATCH', { state: 'closed' });
     console.log(`✅ 이슈 #${issueId} 가 마감(Closed)되었습니다.`);
+  }
+
+  public async fixLegacyIssues(issueIds: string[]): Promise<void> {
+    console.log(`⚙️ 기존 깨진 이슈 본문 복구 프로세스 시작... 대상 이슈: [${issueIds.join(', ')}]`);
+    for (const id of issueIds) {
+      try {
+        const issue = await this.getIssue(id);
+        const originalBody = issue.body;
+        
+        // 본문 내 리터럴 '\n' (즉 \\n) 문자열을 실제 개행 문자로 변환
+        const fixedBody = originalBody.replace(/\\n/g, '\n');
+
+        if (originalBody !== fixedBody) {
+          await this.updateIssue(id, issue.title, fixedBody);
+          console.log(`   ✅ 이슈 #${id} 본문 복구 완료!`);
+        } else {
+          console.log(`   ℹ️ 이슈 #${id} 는 이미 정상 포맷이거나 치환할 문자열이 없습니다.`);
+        }
+      } catch (e) {
+        const err = e as Error;
+        console.error(`   ❌ 이슈 #${id} 복구 실패:`, err.message);
+      }
+    }
+    console.log('🎉 일괄 복구 프로세스가 성공적으로 완료되었습니다.');
   }
 }
 
@@ -162,8 +196,17 @@ class GiteaController {
         await client.closeIssue(args[1]);
         break;
 
+      case 'fix-legacy-issues':
+        if (args.length < 2) {
+          console.error('Usage: npm run gitea fix-legacy-issues <issueId1> <issueId2> ...');
+          process.exit(1);
+        }
+        const ids = args.slice(1);
+        await client.fixLegacyIssues(ids);
+        break;
+
       default:
-        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, close-issue');
+        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, close-issue, fix-legacy-issues');
         process.exit(1);
     }
   }
