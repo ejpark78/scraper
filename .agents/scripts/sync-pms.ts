@@ -238,8 +238,8 @@ async function syncGitea(groups: ArtifactGroup[]) {
     const matchedIssue = existingIssues.find((iss: any) => iss.title.startsWith(`[SCR-${group.id}]`));
 
     if (matchedIssue) {
-      // 이슈 상태 동기화 (walkthrough가 있으면 closed, 없으면 open)
-      const state = group.walkthroughFile ? 'closed' : 'open';
+      // 이슈 상태 동기화 (walkthrough가 있거나 100번 이하의 역사적 아티팩트는 closed, 그 외는 open)
+      const state = (group.walkthroughFile || Number(group.id) <= 100) ? 'closed' : 'open';
       if (matchedIssue.body !== body || matchedIssue.state !== state) {
         console.log(`🔄 Gitea 이슈 업데이트: ${issueTitle}`);
         await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues/${matchedIssue.number}`, {
@@ -257,8 +257,8 @@ async function syncGitea(groups: ArtifactGroup[]) {
           assignees: [REPO_OWNER],
         }),
       });
-      // 완료된 상태인 경우 닫아줌
-      if (group.walkthroughFile) {
+      // 완료된 상태이거나 100번 이하인 경우 즉시 닫아줌
+      if (group.walkthroughFile || Number(group.id) <= 100) {
         const freshIssuesRes = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues?state=all`);
         const freshIssues = await freshIssuesRes.json();
         const createdIssue = freshIssues.find((iss: any) => iss.title.startsWith(`[SCR-${group.id}]`));
@@ -324,7 +324,7 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     
     // 타스크 상태에 기반한 적절한 버킷 결정
     let targetBucketName = 'Planned';
-    if (group.walkthroughFile) {
+    if (group.walkthroughFile || Number(group.id) <= 100) {
       targetBucketName = 'Done';
     } else if (group.taskFile) {
       targetBucketName = 'In Progress';
