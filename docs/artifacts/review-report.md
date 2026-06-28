@@ -1,9 +1,9 @@
 # Local Static Code Review Report
-Generated at: Sun Jun 28 10:07:35 KST 2026
+Generated at: Sun Jun 28 10:08:11 KST 2026
 
 ## 📄 Modified Files List
-* `AGENTS.md`
-* `docs/artifacts/106-setup-gitea-vikunja.plan.md`
+* `docker/tools/gitea/compose.yml`
+* `docker/tools/vikunja/compose.yml`
 * `docs/artifacts/106-setup-gitea-vikunja.task.md`
 * `docs/artifacts/106-setup-gitea-vikunja.walkthrough.md`
 
