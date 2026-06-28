@@ -315,7 +315,10 @@ async function syncVikunja(groups: ArtifactGroup[]) {
   // 디폴트 뷰(View) 획득 및 검증
   const viewsRes = await callVikunja(`/projects/${projectId}/views`);
   const views = viewsRes.status === 200 ? await viewsRes.json() : [];
-  let view = views[0];
+  let view = views.find((v: any) => v.title === 'Kanban');
+  if (!view) {
+    view = views[0];
+  }
   if (!view) {
     console.log(`🏗️  디폴트 Kanban 뷰를 생성합니다.`);
     const newViewRes = await callVikunja(`/projects/${projectId}/views`, {
