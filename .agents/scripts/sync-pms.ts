@@ -394,9 +394,10 @@ async function syncVikunja(groups: ArtifactGroup[]) {
       const cleanedContent = fileContent.replace(/\r/g, '');
       const formattedContent = cleanedContent.replace(/(?<!  )\n/g, '  \n');
 
-      description += `\n\n### 🔍 핵심 요약 및 내용 (${targetFile})\n\n\`\`\`markdown\n`;
+      // 백틱 중첩으로 인한 Vikunja 파서 Plain Text 폴백 에러를 해결하기 위해 코드블록 감싸기를 해제합니다.
+      description += `\n\n---\n\n### 🔍 핵심 요약 및 내용 (${targetFile})\n\n`;
       description += formattedContent.length > 3000 ? formattedContent.substring(0, 3000) + '\n\n...(본문 중략)...' : formattedContent;
-      description += `\n\`\`\``;
+      description += `\n\n---\n`;
     }
 
     description = description.replace(/\r/g, '');
