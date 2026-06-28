@@ -27,7 +27,8 @@ services:
       - GITEA__actions__ENABLED=true
       - TZ=Asia/Seoul
     volumes:
-      - ${HOST_PROJECT_PATH:-.}/data/.services/gitea:/data
+      - ${HOST_PROJECT_PATH:-.}/data/.services/gitea/data:/data
+      - ${HOST_PROJECT_PATH:-.}/data/.services/gitea/repositories:/var/lib/gitea/git
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/"]

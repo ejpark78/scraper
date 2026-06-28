@@ -14,6 +14,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT_DIR}"
 
+# 로컬 Traefik 도메인 및 SSL 인증 에러 우회를 위한 로컬 바이패스 주입
+git config http.sslVerify false
+
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 # Rule: This release automation expects origin/develop or local develop as baseline.
