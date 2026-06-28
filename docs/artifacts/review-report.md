@@ -1,8 +1,11 @@
 # Local Static Code Review Report
-Generated at: Sun Jun 28 13:32:38 KST 2026
+Generated at: Sun Jun 28 13:46:23 KST 2026
 
 ## 📄 Modified Files List
+* `.agents/scripts/agents.mk`
 * `.agents/scripts/sync-pms.ts`
+* `compose.yml`
+* `docker/tools/tools.mk`
 
 ## 🚨 Diagnostic Reports
 ### Lint Diagnostics

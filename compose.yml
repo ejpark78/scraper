@@ -22,7 +22,6 @@ include:
   - docker/tools/kasm/compose.yml
   - docker/tools/opencode/compose.yml
   - docker/tools/gitea/compose.yml
-  - docker/tools/vikunja/compose.yml
   - docker/tools/yacht/compose.yml
   - docker/tools/onwatch/compose.yml
   - docker/infra/mongodb/compose.yml

@@ -70,7 +70,7 @@ pms-reset:
 
 pms-token:
 	@echo "=============================================================================="
-	@echo "⚙️  Gitea & Vikunja PMS 동기화용 환경 변수 설정 안내"
+	@echo "⚙️  Gitea PMS 동기화용 환경 변수 설정 안내"
 	@echo "아래 텍스트 블록을 복사하여 프로젝트 최상위의 .env 파일에 추가해 주십시오."
 	@echo "=============================================================================="
 	@echo ""
@@ -81,15 +81,6 @@ pms-token:
 	   echo "GITEA_API_TOKEN=$$g_tok"; \
 	 else \
 	   echo "GITEA_API_TOKEN=기존_발행된_Gitea_토큰_값 (토큰 재생성 실패)"; \
-	 fi
-	@echo "VIKUNJA_API_URL=https://vikunja.127.0.0.1.nip.io/api/v1"
-	@v_tok=$$(curl -k -s -X POST https://vikunja.127.0.0.1.nip.io/api/v1/login \
-	   -H "Content-Type: application/json" \
-	   -d '{"username": "vikunja-admin", "password": "admin12345"}' | tr -d '\r' | tr -d '\n' | sed 's/.*"token":"\([^"]*\)".*/\1/'); \
-	 if [ -n "$$v_tok" ]; then \
-	   echo "VIKUNJA_API_TOKEN=$$v_tok"; \
-	 else \
-	   echo "VIKUNJA_API_TOKEN=Vikunja_로그인_실패"; \
 	 fi
 	@echo ""
 	@echo "=============================================================================="

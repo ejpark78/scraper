@@ -25,105 +25,16 @@ function loadEnv() {
 
 loadEnv();
 
-// 마크다운 문서를 Vikunja 호환 HTML로 변환하는 자체 가벼운 헬퍼 함수
-function mdToHtml(md: string): string {
-  const lines = md.replace(/\r/g, '').split('\n');
-  let html = '';
-  let inList = false;
-  let inCode = false;
-  let codeLang = '';
-  let codeContent: string[] = [];
-
-  for (const line of lines) {
-    // 코드 블록 처리
-    if (line.startsWith('```')) {
-      if (inCode) {
-        inCode = false;
-        const escaped = codeContent.join('\n')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-        html += `<pre><code class="language-${codeLang}">${escaped}</code></pre>\n`;
-        codeContent = [];
-      } else {
-        inCode = true;
-        codeLang = line.slice(3).trim() || 'plaintext';
-      }
-      continue;
-    }
-
-    if (inCode) {
-      codeContent.push(line);
-      continue;
-    }
-
-    // 리스트 처리
-    if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
-      if (!inList) {
-        html += '<ul>\n';
-        inList = true;
-      }
-      const content = line.trim().substring(2);
-      html += `  <li>${parseInlineMarkdown(content)}</li>\n`;
-      continue;
-    } else {
-      if (inList) {
-        html += '</ul>\n';
-        inList = false;
-      }
-    }
-
-    // 빈 줄 처리
-    if (line.trim() === '') {
-      continue;
-    }
-
-    // 제목 및 구분선 처리
-    if (line.startsWith('# ')) {
-      html += `<h1>${parseInlineMarkdown(line.slice(2))}</h1>\n`;
-    } else if (line.startsWith('## ')) {
-      html += `<h2>${parseInlineMarkdown(line.slice(3))}</h2>\n`;
-    } else if (line.startsWith('### ')) {
-      html += `<h3>${parseInlineMarkdown(line.slice(4))}</h3>\n`;
-    } else if (line.startsWith('#### ')) {
-      html += `<h4>${parseInlineMarkdown(line.slice(5))}</h4>\n`;
-    } else if (line.startsWith('---')) {
-      html += '<hr>\n';
-    } else {
-      // 일반 단락
-      html += `<p>${parseInlineMarkdown(line)}</p>\n`;
-    }
-  }
-
-  if (inList) {
-    html += '</ul>\n';
-  }
-
-  return html;
-}
-
-function parseInlineMarkdown(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
-}
-
 const GITEA_API_URL = process.env.GITEA_API_URL || 'https://gitea.127.0.0.1.nip.io/api/v1';
 const GITEA_API_TOKEN = process.env.GITEA_API_TOKEN;
-const VIKUNJA_API_URL = process.env.VIKUNJA_API_URL || 'https://vikunja.127.0.0.1.nip.io/api/v1';
-const VIKUNJA_API_TOKEN = process.env.VIKUNJA_API_TOKEN;
 
 const REPO_OWNER = 'gitea-admin';
 const REPO_NAME = 'scraper';
 
 const SHOULD_RESET = process.argv.includes('--reset');
 
-if (!GITEA_API_TOKEN || !VIKUNJA_API_TOKEN) {
-  console.error('❌ 에러: GITEA_API_TOKEN 또는 VIKUNJA_API_TOKEN 환경 변수가 설정되지 않았습니다.');
+if (!GITEA_API_TOKEN) {
+  console.error('❌ 에러: GITEA_API_TOKEN 환경 변수가 설정되지 않았습니다.');
   console.error('       .env 파일에 값을 입력한 후 다시 실행해 주십시오.');
   process.exit(1);
 }
@@ -198,24 +109,21 @@ function scanArtifacts(): ArtifactGroup[] {
         else if (currentType === 'task') groups[currentId].taskFile = `(Archived Task in ${file})`;
         else if (currentType === 'walkthrough') groups[currentId].walkthroughFile = `(Archived Walkthrough in ${file})`;
       }
-      currentBodyLines = [];
     };
 
-    for (const line of lines) {
-      const headerMatch = line.match(/^## (\d{3})-(.+?)\.(plan|task|walkthrough|spec|adr|walkthrough)$/);
+    for (const rawLine of lines) {
+      const line = rawLine.replace(/\r/g, '');
+      const headerMatch = line.match(/^## (\d{3})-(.+?)\.(plan|task|walkthrough)$/);
+      
       if (headerMatch) {
         flushCurrent();
         currentId = headerMatch[1];
         currentTitle = headerMatch[2].replace(/-/g, ' ');
-        const matchedType = headerMatch[3];
-        if (matchedType === 'spec' || matchedType === 'adr') {
-          currentType = 'plan'; // spec 이나 adr은 plan으로 분류
-        } else {
-          currentType = matchedType as 'plan' | 'task' | 'walkthrough';
-        }
+        currentType = headerMatch[3] as 'plan' | 'task' | 'walkthrough';
+        currentBodyLines = [];
       } else {
         if (currentId) {
-          currentBodyLines.push(line);
+          currentBodyLines.push(rawLine);
         }
       }
     }
@@ -242,21 +150,52 @@ async function callGitea(endpoint: string, options: RequestInit = {}) {
   return response;
 }
 
-// 3. Vikunja API 호출용 헬퍼 함수
-async function callVikunja(endpoint: string, options: RequestInit = {}) {
-  const url = `${VIKUNJA_API_URL}${endpoint}`;
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${VIKUNJA_API_TOKEN}`,
-    ...(options.headers || {}),
-  };
-
-  const response = await fetch(url, { ...options, headers });
-  if (!response.ok && response.status !== 404) {
-    const text = await response.text();
-    throw new Error(`Vikunja API 오류 (${response.status} ${response.statusText}): ${text}`);
+// Gitea 라벨 자동 검증 및 생성 및 ID 맵핑 반환
+async function ensureGiteaLabels(): Promise<{ [name: string]: number }> {
+  const labelsRes = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/labels`);
+  let existingLabels = labelsRes.status === 200 ? await labelsRes.json() : [];
+  
+  const requiredLabels = [
+    { name: 'status/planned', color: 'd4c5f9', description: 'Planned Task' },
+    { name: 'status/in-progress', color: 'fbca04', description: 'In Progress Task' },
+    { name: 'status/done', color: '0e8a16', description: 'Done Task' }
+  ];
+  
+  const labelMap: { [name: string]: number } = {};
+  
+  for (const label of requiredLabels) {
+    let found = existingLabels.find((l: any) => l.name === label.name);
+    if (!found) {
+      console.log(`🏷️  Gitea 라벨 생성: ${label.name}`);
+      const createRes = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/labels`, {
+        method: 'POST',
+        body: JSON.stringify(label),
+      });
+      found = await createRes.json();
+    }
+    labelMap[label.name] = found.id;
   }
-  return response;
+  
+  return labelMap;
+}
+
+// 태스크 체크박스 상태 판독 도우미 함수
+function isTaskCompleted(taskFile: string | undefined, virtualTaskContent: string | undefined): boolean {
+  let content = '';
+  if (virtualTaskContent) {
+    content = virtualTaskContent;
+  } else if (taskFile && !taskFile.startsWith('(Archived')) {
+    const taskPath = path.join(process.cwd(), 'docs/artifacts', taskFile);
+    if (fs.existsSync(taskPath)) {
+      content = fs.readFileSync(taskPath, 'utf8');
+    }
+  }
+  
+  if (!content) return false;
+  
+  // 미완료 체크박스 '- [ ]'가 있으면 완료가 아님
+  const hasUnfinished = /-\s*\[\s*\]/g.test(content);
+  return !hasUnfinished;
 }
 
 // Gitea 저장소 확보 및 이슈 동기화
@@ -293,6 +232,9 @@ async function syncGitea(groups: ArtifactGroup[]) {
     });
     console.log(`✅ Gitea 저장소가 성공적으로 생성되었습니다.`);
   }
+
+  // 필수 라벨 구성 및 ID 매핑 획득
+  const labelMap = await ensureGiteaLabels();
 
   // 기존 이슈 목록 가져오기
   const issuesRes = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues?state=all`);
@@ -331,36 +273,74 @@ async function syncGitea(groups: ArtifactGroup[]) {
       body += `\n\`\`\``;
     }
 
+    body = body.replace(/\r/g, '');
+
+    // 진행 상태 및 목표 라벨/이슈 상태 결정
+    let targetState = 'open';
+    let targetLabel = 'status/planned';
+    
+    // 현재 세션에서 다루어지는 피처 번호 보호 목록 (강제 In Progress)
+    const activeSessionIds = ['109', '110'];
+
+    const isArchiveDone = Number(group.id) <= 100;
+    const hasWalkthrough = !!group.walkthroughFile;
+    const allChecked = isTaskCompleted(group.taskFile, group.virtualContent?.task);
+
+    // 100번 이하 완료 건이거나, 활성 세션 번호가 아니면서 walkthrough 존재 및 체크박스 완료된 경우 Done
+    const isDone = isArchiveDone || 
+      (!activeSessionIds.includes(group.id) && hasWalkthrough && allChecked);
+
+    if (isDone) {
+      targetState = 'closed';
+      targetLabel = 'status/done';
+    } else if (group.taskFile) {
+      targetState = 'open';
+      targetLabel = 'status/in-progress';
+    }
 
     // 매칭 이슈 검색
     const matchedIssue = existingIssues.find((iss: any) => iss.title.startsWith(`[SCR-${group.id}]`));
 
     if (matchedIssue) {
-      // 이슈 상태 동기화 (walkthrough가 있거나 100번 이하의 역사적 아티팩트는 closed, 그 외는 open)
-      const state = (group.walkthroughFile || Number(group.id) <= 100) ? 'closed' : 'open';
-      if (matchedIssue.body !== body || matchedIssue.state !== state) {
-        console.log(`🔄 Gitea 이슈 업데이트: ${issueTitle}`);
+      // 기존 라벨 확인 및 변경 여부 판단
+      const currentLabels = matchedIssue.labels || [];
+      const currentStatusLabel = currentLabels.find((l: any) => l.name.startsWith('status/'));
+      const isLabelDifferent = !currentStatusLabel || currentStatusLabel.name !== targetLabel;
+
+      if (matchedIssue.body !== body || matchedIssue.state !== targetState || isLabelDifferent) {
+        console.log(`🔄 Gitea 이슈 업데이트: ${issueTitle} (상태: ${targetState}, 라벨: ${targetLabel})`);
+        
+        // 라벨 교체 ID 배열 구성 (기존 status/ 라벨의 ID를 제외하고 새 라벨 ID 추가)
+        const labelIds = currentLabels
+          .filter((l: any) => !l.name.startsWith('status/'))
+          .map((l: any) => l.id);
+        labelIds.push(labelMap[targetLabel]);
+
         await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues/${matchedIssue.number}`, {
           method: 'PATCH',
-          body: JSON.stringify({ body, state }),
+          body: JSON.stringify({
+            body,
+            state: targetState,
+            labels: labelIds,
+          }),
         });
       }
     } else {
-      console.log(`➕ Gitea 신규 이슈 생성: ${issueTitle}`);
-      await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues`, {
+      console.log(`➕ Gitea 신규 이슈 생성: ${issueTitle} (라벨: ${targetLabel})`);
+      const createRes = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues`, {
         method: 'POST',
         body: JSON.stringify({
           title: issueTitle,
           body: body,
           assignees: [REPO_OWNER],
+          labels: [labelMap[targetLabel]],
         }),
       });
-      // 완료된 상태이거나 100번 이하인 경우 즉시 닫아줌
-      if (group.walkthroughFile || Number(group.id) <= 100) {
-        const freshIssuesRes = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues?state=all`);
-        const freshIssues = await freshIssuesRes.json();
-        const createdIssue = freshIssues.find((iss: any) => iss.title.startsWith(`[SCR-${group.id}]`));
-        if (createdIssue) {
+
+      // Done 판정 상태라면 생성 직후 즉시 닫아줌
+      if (isDone) {
+        const createdIssue = await createRes.json();
+        if (createdIssue && createdIssue.number) {
           await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues/${createdIssue.number}`, {
             method: 'PATCH',
             body: JSON.stringify({ state: 'closed' }),
@@ -372,171 +352,8 @@ async function syncGitea(groups: ArtifactGroup[]) {
   console.log('✅ Gitea 아티팩트 동기화 완료!');
 }
 
-// Vikunja 프로젝트 및 칸반 카드 동기화
-async function syncVikunja(groups: ArtifactGroup[]) {
-  console.log('\n🎯 Vikunja 아티팩트 동기화 진행 중...');
-
-  // 1. 프로젝트 확인 및 생성
-  const projectsRes = await callVikunja('/projects');
-  const projects = projectsRes.status === 200 ? await projectsRes.json() : [];
-  let project = projects.find((p: any) => p.title === REPO_NAME);
-
-  if (project && SHOULD_RESET) {
-    console.log(`🗑️ [Reset] Vikunja 기존 '${REPO_NAME}' 프로젝트를 삭제합니다...`);
-    await callVikunja(`/projects/${project.id}`, { method: 'DELETE' });
-    project = null;
-  }
-
-  if (!project) {
-    console.log(`📦 Vikunja에 '${REPO_NAME}' 프로젝트를 생성합니다.`);
-    const newProjRes = await callVikunja('/projects', {
-      method: 'PUT',
-      body: JSON.stringify({ title: REPO_NAME }),
-    });
-    project = await newProjRes.json();
-    console.log(`✅ Vikunja 프로젝트가 생성되었습니다.`);
-  }
-
-  const projectId = project.id;
-
-  // 디폴트 뷰(View) 획득 및 검증
-  const viewsRes = await callVikunja(`/projects/${projectId}/views`);
-  const views = viewsRes.status === 200 ? await viewsRes.json() : [];
-  let view = views.find((v: any) => v.title === 'Kanban');
-  if (!view) {
-    view = views[0];
-  }
-  if (!view) {
-    console.log(`🏗️  디폴트 Kanban 뷰를 생성합니다.`);
-    const newViewRes = await callVikunja(`/projects/${projectId}/views`, {
-      method: 'PUT',
-      body: JSON.stringify({ title: 'Kanban', type: 'kanban' }),
-    });
-    view = await newViewRes.json();
-  }
-  const viewId = view.id;
-
-  // 2. 표준 칸반 버킷 구성 확인 및 생성 (프로젝트 뷰 하위로 지정)
-  const bucketsRes = await callVikunja(`/projects/${projectId}/views/${viewId}/buckets`);
-  let buckets = bucketsRes.status === 200 ? await bucketsRes.json() : [];
-
-  const requiredBucketNames = ['Planned', 'In Progress', 'Done'];
-  const bucketMap: { [name: string]: number } = {};
-
-  for (const name of requiredBucketNames) {
-    let bucket = buckets.find((b: any) => b.title === name);
-    if (!bucket) {
-      console.log(`🏗️  Vikunja 버킷 생성: ${name}`);
-      const newBucketRes = await callVikunja(`/projects/${projectId}/views/${viewId}/buckets`, {
-        method: 'PUT',
-        body: JSON.stringify({ title: name }),
-      });
-      bucket = await newBucketRes.json();
-    }
-    bucketMap[name] = bucket.id;
-  }
-
-  // 3. 기존 태스크 목록 가져오기 (페이지네이션 대응)
-  const existingTasks: any[] = [];
-  let page = 1;
-  while (true) {
-    const tasksRes = await callVikunja(`/projects/${projectId}/tasks?page=${page}`);
-    if (tasksRes.status !== 200) break;
-    const tasksPage = await tasksRes.json();
-    if (!Array.isArray(tasksPage) || tasksPage.length === 0) break;
-    existingTasks.push(...tasksPage);
-    page++;
-  }
-
-  for (const group of groups) {
-    const taskTitle = `[SCR-${group.id}] ${group.title}`;
-    
-    // 타스크 상태에 기반한 적절한 버킷 결정
-    let targetBucketName = 'Planned';
-    if (group.walkthroughFile || Number(group.id) <= 100) {
-      targetBucketName = 'Done';
-    } else if (group.taskFile) {
-      targetBucketName = 'In Progress';
-    }
-    const targetBucketId = bucketMap[targetBucketName];
-
-    // 대표 아티팩트의 설명/상세
-    let description = `## Artifact Documentation (${group.id})\n\n`;
-    if (group.planFile) description += `- Plan: \`${group.planFile}\`  \n`;
-    if (group.taskFile) description += `- Task: \`${group.taskFile}\`  \n`;
-    if (group.walkthroughFile) description += `- Walkthrough: \`${group.walkthroughFile}\`  \n`;
-
-    const artifactsDir = path.join(process.cwd(), 'docs/artifacts');
-    const targetFile = group.walkthroughFile || group.planFile || group.taskFile;
-    let fileContent = '';
-    if (group.virtualContent) {
-      fileContent = group.virtualContent.walkthrough || group.virtualContent.plan || group.virtualContent.task || '';
-    }
-    if (!fileContent && targetFile && !targetFile.startsWith('(Archived')) {
-      fileContent = fs.readFileSync(path.join(artifactsDir, targetFile), 'utf8');
-    }
-
-    if (fileContent) {
-      // 모든 캐리지 리턴(\r)을 완벽히 제거하여 DB 및 렌더러 오작동을 차단합니다.
-      const cleanedContent = fileContent.replace(/\r/g, '');
-      const formattedContent = cleanedContent.replace(/(?<!  )\n/g, '  \n');
-
-      // 백틱 중첩으로 인한 Vikunja 파서 Plain Text 폴백 에러를 해결하기 위해 코드블록 감싸기를 해제합니다.
-      description += `\n\n---\n\n### 🔍 핵심 요약 및 내용 (${targetFile})\n\n`;
-      description += formattedContent.length > 3000 ? formattedContent.substring(0, 3000) + '\n\n...(본문 중략)...' : formattedContent;
-      description += `\n\n---\n`;
-    }
-
-    description = description.replace(/\r/g, '');
-    const htmlDescription = mdToHtml(description);
-
-    const matchedTask = existingTasks.find((t: any) => t.title.startsWith(`[SCR-${group.id}]`));
-    let taskId: number | null = null;
-
-    if (matchedTask) {
-      taskId = matchedTask.id;
-      // 정보 업데이트
-      if (matchedTask.description !== htmlDescription || matchedTask.bucket_id !== targetBucketId) {
-        console.log(`🔄 Vikunja 태스크 본문 및 버킷 업데이트: ${taskTitle}`);
-        await callVikunja(`/tasks/${matchedTask.id}`, {
-          method: 'POST',
-          body: JSON.stringify({
-            description: htmlDescription,
-            bucket_id: targetBucketId,
-          }),
-        });
-      }
-    } else {
-      // 신규 태스크 생성
-      console.log(`➕ Vikunja 신규 태스크 생성: ${taskTitle}`);
-      const createRes = await callVikunja(`/projects/${projectId}/tasks`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          title: taskTitle,
-          description: htmlDescription,
-          bucket_id: targetBucketId,
-        }),
-      });
-      const createdTask = await createRes.json();
-      taskId = createdTask.id;
-    }
-
-    // 버킷 관계 설정 및 이동 API 호출 (Kanban View 상의 버킷 이동)
-    if (taskId) {
-      await callVikunja(`/projects/${projectId}/views/${viewId}/buckets/${targetBucketId}/tasks`, {
-        method: 'POST',
-        body: JSON.stringify({
-          task_id: taskId,
-        }),
-      });
-    }
-  }
-
-  console.log('✅ Vikunja 아티팩트 동기화 완료!');
-}
-
 async function main() {
-  console.log('🚀 PMS 동기화 유틸리티를 시작합니다.');
+  console.log('🚀 PMS 동기화 유틸리티를 시작합니다. (Gitea 단일 통합 버젼)');
   const groups = scanArtifacts();
   console.log(`📊 발견된 아티팩트 그룹 개수: ${groups.length}개`);
   
@@ -547,7 +364,6 @@ async function main() {
 
   try {
     await syncGitea(groups);
-    await syncVikunja(groups);
     console.log('\n🎉 모든 PMS 아티팩트 동기화가 안전하게 종료되었습니다.');
   } catch (error) {
     console.error('\n❌ PMS 동기화 중 오류 발생:', error);

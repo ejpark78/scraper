@@ -10,11 +10,11 @@
 
 # --- Infrastructure Tools ---
 
-up-tools: up-kasm up-mongo up-redis up-yacht up-dozzle up-cronicle up-jupyter up-gitea up-vikunja
+up-tools: up-kasm up-mongo up-redis up-yacht up-dozzle up-cronicle up-jupyter up-gitea
 	@echo "✅ 모든 Tools가 실행되었습니다."
 
 down-tools:
-	$(COMPOSE) --profile tools down traefik kasm mongo-express redisinsight yacht dozzle cronicle jupyter gitea vikunja
+	$(COMPOSE) --profile tools down traefik kasm mongo-express redisinsight yacht dozzle cronicle jupyter gitea
 	@echo "🛑 Tools가 중지되었습니다."
 
 up-kasm:
@@ -55,22 +55,6 @@ up-gitea:
 	fi
 	@echo "🚀 Gitea GUI가 실행되었습니다. https://gitea.localhost 에 접속하세요."
 
-up-vikunja:
-	$(COMPOSE) --profile tools up -d vikunja
-	@echo "⏳ Vikunja 컨테이너가 안정화될 때까지 대기합니다..."
-	@sleep 5
-	@if ! $(COMPOSE) exec -T vikunja /app/vikunja/vikunja user list | grep -q "vikunja-admin"; then \
-		echo "⚙️ Vikunja 초기 관리자(vikunja-admin) 계정을 생성합니다..."; \
-		echo "admin12345" | $(COMPOSE) exec -T vikunja /app/vikunja/vikunja user create --email admin@example.com --username vikunja-admin --password admin12345 || true; \
-		$(COMPOSE) exec -T vikunja /app/vikunja/vikunja user set-admin vikunja-admin --admin || true; \
-	fi
-	@echo "🔍 Vikunja 계정 생성 결과 검증..."
-	@if $(COMPOSE) exec -T vikunja /app/vikunja/vikunja user list | grep -q "vikunja-admin"; then \
-		echo "✅ [SUCCESS] Vikunja 초기 관리자 계정(vikunja-admin)이 정상 검증되었습니다."; \
-	else \
-		echo "❌ [ERROR] Vikunja 계정 생성 검증이 실패했습니다. 컨테이너 로그를 확인해 주십시오."; \
-	fi
-	@echo "🚀 Vikunja GUI가 실행되었습니다. https://vikunja.localhost 에 접속하세요."
 
 # --- Coding Agents ---
 
