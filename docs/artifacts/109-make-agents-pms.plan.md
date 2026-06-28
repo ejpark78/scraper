@@ -78,7 +78,7 @@ agents-pms-token:
 ### Phase 2: 동기화 스크립트 개발 (`scripts/agents/sync-pms.ts`)
 * `docs/artifacts/` 전체 스캔 및 아티팩트 그룹화 (접두사 번호 기준).
 * **아카이브 파싱 및 복원**: `###-###.archive.md` 형식의 아카이브 압축 파일을 탐색하여, 마크다운 본문 파싱을 통해 과거 1번부터 100번까지의 각 개별 아티팩트 본문 및 메타데이터를 개별 `ArtifactGroup` 객체로 동적 추출/복원하고 개별 이슈로 변환하는 로직 구현.
-* **프로젝트 리셋 및 클린 재생성**: 동기화 시작 전, 기존 데이터 혼선 및 뒤섞임을 해결하기 위해 Gitea의 `scraper` 저장소 및 Vikunja의 `scraper` 프로젝트를 강제로 완전히 삭제(DELETE API 호출)한 뒤 깨끗하게 새로 구축하여 데이터 정합성 보장.
+* **조건부 프로젝트 리셋 옵션**: 무조건적인 리셋을 배제하고, 실행 시 `--reset` 인자가 주입되었을 때만 조건부로 Gitea 저장소 및 Vikunja 프로젝트를 파괴(DELETE)하도록 구현. 평상시 기본 동작은 멱등성 있는 추가/업데이트(Upsert)로 작동하여 데이터 보존.
 * **역사적 아티팩트 상태 제어**: 아카이브 구간에 해당하는 **100번 이하(SCR-001 ~ SCR-100)**의 아티팩트들은 이미 완료된 프로젝트 역사이므로, Gitea 이슈 상태를 무조건 `closed`, Vikunja 버킷을 무조건 `Done`으로 매핑하여 강제 동기화.
 * Gitea API 호출 로직:
   * Repository 검색/생성.
@@ -88,15 +88,11 @@ agents-pms-token:
   * Standard Buckets(Planned, In Progress, Done) 생성 및 확인.
   * Task 검색/생성/이동/설명(Description)에 아티팩트 요약 내용 추가 구현 (아카이브 추출 정보 포함).
 
-
-
-
-
 ### Phase 3: Makefile 통합 및 테스트
-* `Makefile`에 `agents-pms` 타겟 추가.
+* `Makefile`에 `agents-pms` 타겟 추가 (기본 멱등 업데이트).
+* `Makefile`에 `agents-pms-reset` 타겟 추가 (`--reset` 인자 주입하여 전체 파괴 후 재생성).
 * 기존 `docs/artifacts` 내 전체 아티팩트(소급 적용) 대상 동기화 테스트 및 검증.
 
 ### Phase 4: CLI 토큰 생성 헬퍼 및 계정 검증 추가
 * `agents.mk`에 `agents-pms-token` 타겟을 추가하되, TTY 오류를 방지하기 위해 `exec -T` 대신 `-it`를 사용하도록 수정.
 * `tools.mk`의 `up-vikunja` 규칙 내에서 계정 생성 시 TTY 에러가 발생하지 않도록 패스워드를 표준 입력(STDIN)으로 안전하게 넘겨주고, 생성이 완료된 후 다시 한 번 계정이 성공적으로 존재하는지 검증(Test)하는 출력 로직을 통합.
-

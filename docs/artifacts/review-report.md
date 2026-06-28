@@ -1,7 +1,8 @@
 # Local Static Code Review Report
-Generated at: Sun Jun 28 12:22:48 KST 2026
+Generated at: Sun Jun 28 12:24:14 KST 2026
 
 ## 📄 Modified Files List
+* `.agents/scripts/agents.mk`
 * `.agents/scripts/sync-pms.ts`
 * `docs/artifacts/109-make-agents-pms.plan.md`
 

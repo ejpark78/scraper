@@ -33,6 +33,8 @@ const VIKUNJA_API_TOKEN = process.env.VIKUNJA_API_TOKEN;
 const REPO_OWNER = 'gitea-admin';
 const REPO_NAME = 'scraper';
 
+const SHOULD_RESET = process.argv.includes('--reset');
+
 if (!GITEA_API_TOKEN || !VIKUNJA_API_TOKEN) {
   console.error('❌ 에러: GITEA_API_TOKEN 또는 VIKUNJA_API_TOKEN 환경 변수가 설정되지 않았습니다.');
   console.error('       .env 파일에 값을 입력한 후 다시 실행해 주십시오.');
@@ -174,24 +176,36 @@ async function callVikunja(endpoint: string, options: RequestInit = {}) {
 async function syncGitea(groups: ArtifactGroup[]) {
   console.log('\n🐙 Gitea 아티팩트 동기화 진행 중...');
 
-  // 기존 저장소 강제 삭제 (리셋)
-  try {
-    console.log(`🗑️ Gitea 기존 '${REPO_NAME}' 저장소를 초기화하기 위해 삭제합니다...`);
-    await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}`, { method: 'DELETE' });
-  } catch (err) {
-    // 무시
+  let repoExists = false;
+
+  if (SHOULD_RESET) {
+    try {
+      console.log(`🗑️ [Reset] Gitea 기존 '${REPO_NAME}' 저장소를 삭제합니다...`);
+      await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}`, { method: 'DELETE' });
+    } catch (err) {
+      // 무시
+    }
+  } else {
+    try {
+      const res = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}`);
+      if (res.status === 200) repoExists = true;
+    } catch (err) {
+      // 무시
+    }
   }
 
-  console.log(`📦 Gitea에 '${REPO_NAME}' 저장소를 새로 생성합니다.`);
-  await callGitea('/user/repos', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: REPO_NAME,
-      private: true,
-      description: 'LinkedIn Clipper & Scraper Project Hub',
-    }),
-  });
-  console.log(`✅ Gitea 저장소가 성공적으로 생성되었습니다.`);
+  if (!repoExists) {
+    console.log(`📦 Gitea에 '${REPO_NAME}' 저장소를 생성합니다.`);
+    await callGitea('/user/repos', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: REPO_NAME,
+        private: true,
+        description: 'LinkedIn Clipper & Scraper Project Hub',
+      }),
+    });
+    console.log(`✅ Gitea 저장소가 성공적으로 생성되었습니다.`);
+  }
 
   // 기존 이슈 목록 가져오기
   const issuesRes = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues?state=all`);
@@ -280,18 +294,21 @@ async function syncVikunja(groups: ArtifactGroup[]) {
   const projects = projectsRes.status === 200 ? await projectsRes.json() : [];
   let project = projects.find((p: any) => p.title === REPO_NAME);
 
-  if (project) {
-    console.log(`🗑️ Vikunja 기존 '${REPO_NAME}' 프로젝트를 초기화하기 위해 삭제합니다...`);
+  if (project && SHOULD_RESET) {
+    console.log(`🗑️ [Reset] Vikunja 기존 '${REPO_NAME}' 프로젝트를 삭제합니다...`);
     await callVikunja(`/projects/${project.id}`, { method: 'DELETE' });
+    project = null;
   }
 
-  console.log(`📦 Vikunja에 '${REPO_NAME}' 프로젝트를 새로 생성합니다.`);
-  const newProjRes = await callVikunja('/projects', {
-    method: 'PUT',
-    body: JSON.stringify({ title: REPO_NAME }),
-  });
-  project = await newProjRes.json();
-  console.log(`✅ Vikunja 프로젝트가 생성되었습니다.`);
+  if (!project) {
+    console.log(`📦 Vikunja에 '${REPO_NAME}' 프로젝트를 생성합니다.`);
+    const newProjRes = await callVikunja('/projects', {
+      method: 'PUT',
+      body: JSON.stringify({ title: REPO_NAME }),
+    });
+    project = await newProjRes.json();
+    console.log(`✅ Vikunja 프로젝트가 생성되었습니다.`);
+  }
 
   const projectId = project.id;
 

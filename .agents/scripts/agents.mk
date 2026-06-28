@@ -65,6 +65,9 @@ push:
 pms:
 	@npx ts-node .agents/scripts/sync-pms.ts
 
+pms-reset:
+	@npx ts-node .agents/scripts/sync-pms.ts --reset
+
 pms-token:
 	@echo "=============================================================================="
 	@echo "⚙️  Gitea & Vikunja PMS 동기화용 환경 변수 설정 안내"
