@@ -2,7 +2,7 @@
  * ==============================================================================
  * 🤖 Gitea API Helper Script (gitea.ts)
  * ==============================================================================
- * @description  Gitea API를 호출하여 이슈 생성, 조회, 수정, 댓글 등록, 이슈 마감을 제어하는 헬퍼 유틸리티입니다.
+ * @description  Gitea API를 호출하여 이슈 생성, 조회, 수정, 댓글 등록/수정/조회, 이슈 마감을 제어하는 헬퍼 유틸리티입니다.
  *               기존의 gitea-mcp 및 tea CLI의 대화형(interactive) 실행 장애를 대체합니다.
  * @constraints  .env 파일의 자격 증명(GITEA_ACCESS_TOKEN)을 사용합니다.
  *               Strict Typing 및 OOP Patterns 아키텍처 규칙을 상시 준수합니다.
@@ -63,6 +63,7 @@ interface IssueResponse {
 
 interface CommentResponse {
   id: number;
+  body: string;
 }
 
 /**
@@ -129,6 +130,13 @@ class GiteaClient {
     console.log(`✅ 댓글이 등록되었습니다! [ID: ${data.id}]`);
   }
 
+  public async updateComment(commentId: string, body: string): Promise<void> {
+    console.log(`💬 댓글 ID #${commentId} 수정 중...`);
+    const formattedBody = this.formatText(body);
+    await this.request<void>(`/repos/${this.config.repo}/issues/comments/${commentId}`, 'PATCH', { body: formattedBody });
+    console.log(`✅ 댓글 ID #${commentId} 수정이 정상 완료되었습니다.`);
+  }
+
   public async closeIssue(issueId: string): Promise<void> {
     console.log(`🔒 이슈 #${issueId} 마감 중...`);
     await this.request<void>(`/repos/${this.config.repo}/issues/${issueId}`, 'PATCH', { state: 'closed' });
@@ -188,6 +196,14 @@ class GiteaController {
         await client.createComment(args[1], args[2]);
         break;
 
+      case 'update-comment':
+        if (args.length < 3) {
+          console.error('Usage: npm run gitea update-comment <commentId> <body>');
+          process.exit(1);
+        }
+        await client.updateComment(args[1], args[2]);
+        break;
+
       case 'close-issue':
         if (args.length < 2) {
           console.error('Usage: npm run gitea close-issue <issueId>');
@@ -206,7 +222,7 @@ class GiteaController {
         break;
 
       default:
-        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, close-issue, fix-legacy-issues');
+        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, update-comment, close-issue, fix-legacy-issues');
         process.exit(1);
     }
   }
