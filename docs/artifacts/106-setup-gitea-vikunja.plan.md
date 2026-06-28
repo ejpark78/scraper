@@ -1,35 +1,26 @@
-# 로컬 Gitea 및 Vikunja 인프라 구축 계획서 (수정안 - networks 명시적 공유 지정)
+# AGENTS.md 규칙 보완을 통한 재발 방지 계획서
 
-이 계획서는 Traefik이 Gitea 및 Vikunja 서비스 컨테이너를 완벽히 인지하여 라우팅할 수 있도록, 각 컴포즈 파일에 디폴트 네트워크 바인딩 명시를 보완하는 설정을 다룹니다.
+이 계획서는 에이전트의 자의적 추측 수정 및 계획서 제안 단계에서의 임의 코드 수정을 통제하기 위해 프로젝트 규칙문서(`AGENTS.md`)를 보완하는 내용을 다룹니다.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **명시적 기본 네트워크 소속 지정**:
->   - Gitea(`docker/tools/gitea/compose.yml`) 및 Vikunja(`docker/tools/vikunja/compose.yml`)에 `networks: [default]`(또는 networks 하위 default 지정)을 선언하여 Traefik과 완전히 동일한 브릿지 네트워크 도메인을 확보합니다.
+> - **AGENTS.md 보완 지점**:
+>   - **피드백 루프에서의 계획 우선 원칙**: 사용자가 수정한 지시 사항(예: 특정 설정 제거 지시)에 대해 에이전트가 예외 원인을 추측하여 반대 동작을 임의로 수행하는 것을 엄격히 금지합니다.
+>   - **계획서 선승인 의무 강조**: 어떠한 중간 피드백 상황(수정, 원복 요청 포함)이라도 계획서가 업데이트되어 사용자의 승인을 받기 전까지는 `replace_file_content` 등의 파일 변조 도구를 절대로 호출하지 못하도록 규칙문서 내 제약을 추가합니다.
 
 ## Proposed Changes
 
-### [Docker Tools Setup]
+### [Rules Update]
 
-#### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/gitea/compose.yml)
-- `networks` 정의 명시 추가:
-  ```yaml
-  networks:
-    - default
-  ```
-
-#### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/vikunja/compose.yml)
-- `networks` 정의 명시 추가:
-  ```yaml
-  networks:
-    - default
-  ```
+#### [MODIFY] [AGENTS.md](file:///Users/ejpark/workspace/scraper/AGENTS.md)
+- 규칙 2번(계획 수립 철저 및 자율 일괄 실행) 부분에 다음 세부 항목 보완:
+  - *"사용자의 피드백이나 지시에 대해 에이전트가 자의적인 추측(예: '제거하면 에러가 날 것이므로 임의 유지/추가')을 섞는 행위를 엄격히 금지합니다. 사용자의 지시 사항은 예외 없이 우선 적용되어야 합니다."*
+  - *"피드백 반영 등으로 계획이 갱신되는 중간 대화 단계에서도, 갱신된 계획서가 사용자로부터 최종 승인(Proceed)되기 전에는 실제 소스 코드나 설정 수정 도구를 절대로 먼저 호출하지 마십시오."*
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. `make up-gitea` 및 `make up-vikunja` 구동 후
-2. `https://gitea.localhost` 웹 브라우저 접속하여 404 에러가 해결되고 로그인 홈 화면이 표시되는지 최종 확인
+1. AGENTS.md 수정 사항을 적용하여 에이전트가 다음 턴부터 이 규칙을 강제로 로드하도록 갱신
