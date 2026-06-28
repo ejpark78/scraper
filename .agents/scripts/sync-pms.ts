@@ -393,12 +393,13 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     if (matchedTask) {
       taskId = matchedTask.id;
       // 정보 업데이트
-      if (matchedTask.description !== description) {
-        console.log(`🔄 Vikunja 태스크 본문 업데이트: ${taskTitle}`);
+      if (matchedTask.description !== description || matchedTask.bucket_id !== targetBucketId) {
+        console.log(`🔄 Vikunja 태스크 본문 및 버킷 업데이트: ${taskTitle}`);
         await callVikunja(`/tasks/${matchedTask.id}`, {
           method: 'POST',
           body: JSON.stringify({
             description: description,
+            bucket_id: targetBucketId,
           }),
         });
       }
@@ -410,6 +411,7 @@ async function syncVikunja(groups: ArtifactGroup[]) {
         body: JSON.stringify({
           title: taskTitle,
           description: description,
+          bucket_id: targetBucketId,
         }),
       });
       const createdTask = await createRes.json();

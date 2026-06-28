@@ -75,7 +75,7 @@ agents-pms-token:
 * Gitea 및 Vikunja 컨테이너의 서비스 도메인 및 API URL 설정 (`.env.example` 및 `src/config/AppConfig.ts` 또는 유사 구성 연동).
 * 연동용 토큰 변수 정의 (`GITEA_API_TOKEN`, `VIKUNJA_API_TOKEN`).
 
-### Phase 2: 동기화 스크립트 개발 (`scripts/agents/sync-pms.ts`)
+### Phase 2: 동기화 스크스크립트 개발 (`scripts/agents/sync-pms.ts`)
 * `docs/artifacts/` 전체 스캔 및 아티팩트 그룹화 (접두사 번호 기준).
 * **아카이브 파싱 및 복원**: `###-###.archive.md` 형식의 아카이브 압축 파일을 탐색하여, 마크다운 본문 파싱을 통해 과거 1번부터 100번까지의 각 개별 아티팩트 본문 및 메타데이터를 개별 `ArtifactGroup` 객체로 동적 추출/복원하고 개별 이슈로 변환하는 로직 구현.
 * **조건부 프로젝트 리셋 옵션**: 무조건적인 리셋을 배제하고, 실행 시 `--reset` 인자가 주입되었을 때만 조건부로 Gitea 저장소 및 Vikunja 프로젝트를 파괴(DELETE)하도록 구현. 평상시 기본 동작은 멱등성 있는 추가/업데이트(Upsert)로 작동하여 데이터 보존.
@@ -83,11 +83,13 @@ agents-pms-token:
 * Gitea API 호출 로직:
   * Repository 검색/생성.
   * Issue 검색/생성/본문 업데이트 (아카이브 추출 정보 포함).
-* Vikunja API 호출 로직 (Kanban View 전용 버킷 맵핑):
+* Vikunja API 호출 로직 (이중 버킷 주입으로 데이터 정합성 보장):
   * Project/Board 검색/생성.
   * 프로젝트의 디폴트 뷰 목록에서 **'Kanban' 뷰를 정확하게 탐색하여 식별** (`GET /projects/{id}/views`).
   * 식별된 Kanban View 소속 Standard Buckets(Planned, In Progress, Done) 생성 및 확인 (`/projects/{id}/views/{viewId}/buckets`).
-  * Task 생성 후, 타겟 Kanban View의 특정 버킷으로 관계 설정 및 이동 API 호출 (`POST /projects/{id}/views/{viewId}/buckets/{bucketId}/tasks`)을 수행하여 멱등성 있는 카드 배치 달성.
+  * **태스크 생성/업데이트 API에 `bucket_id` 주입을 복원**하여 기본 버킷 속성을 일치시킴.
+  * **태스크 생성/업데이트 시 `bucket_id`를 페이로드에 명시적으로 주입**하고, 이와 병행하여 타겟 Kanban View의 특정 버킷으로 관계 설정 및 이동 API 호출 (`POST /projects/{id}/views/{viewId}/buckets/{bucketId}/tasks`)을 수행하여 멱등성 있는 카드 배치를 보장함.
+
 
 
 
