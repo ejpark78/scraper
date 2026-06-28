@@ -63,28 +63,6 @@ code-review review:
 push:
 	@bash .agents/scripts/push-changes.sh
 
-pms:
-	@npx ts-node .agents/scripts/sync-pms.ts
-
-pms-reset:
-	@npx ts-node .agents/scripts/sync-pms.ts --reset
-
-pms-token:
-	@echo "=============================================================================="
-	@echo "⚙️  Gitea PMS 동기화용 환경 변수 설정 안내"
-	@echo "아래 텍스트 블록을 복사하여 프로젝트 최상위의 .env 파일에 추가해 주십시오."
-	@echo "=============================================================================="
-	@echo ""
-	@echo "GITEA_API_URL=https://gitea.127.0.0.1.nip.io/api/v1"
-	@sqlite3 data/.services/gitea/gitea/gitea.db "DELETE FROM access_token WHERE name='agents-pms-sync';" 2>/dev/null || true
-	@g_tok=$$(docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all 2>/dev/null | grep -o 'Access token was successfully created:.*' | cut -d' ' -f6 | tr -d '\r' | tr -d '\n'); \
-	 if [ -n "$$g_tok" ]; then \
-	   echo "GITEA_API_TOKEN=$$g_tok"; \
-	 else \
-	   echo "GITEA_API_TOKEN=기존_발행된_Gitea_토큰_값 (토큰 재생성 실패)"; \
-	 fi
-	@echo ""
-	@echo "=============================================================================="
 
 
 
