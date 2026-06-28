@@ -196,5 +196,7 @@
 - [112-install-tea-cli.task](112-install-tea-cli.task.md)
 - [112-install-tea-cli.review](112-install-tea-cli.review.md)
 - [112-install-tea-cli.walkthrough](112-install-tea-cli.walkthrough.md)
+- [113-transition-to-gitea-issues.plan](113-transition-to-gitea-issues.plan.md)
+- [113-transition-to-gitea-issues.task](113-transition-to-gitea-issues.task.md)
 
 
