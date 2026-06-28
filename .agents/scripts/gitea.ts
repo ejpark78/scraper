@@ -67,6 +67,12 @@ interface CommentResponse {
   body: string;
 }
 
+interface TimelineEvent {
+  type: string;
+  event: string;
+  commit_id?: string;
+}
+
 /**
  * Gitea API 통신을 담당하는 Client 클래스 (SRP 준수)
  */
@@ -116,7 +122,7 @@ class GiteaClient {
   }
 
   public async getIssues(): Promise<IssueResponse[]> {
-    return await this.request<IssueResponse[]>(`/repos/${this.config.repo}/issues?state=all&limit=150`, 'GET');
+    return await this.request<IssueResponse[]>(`/repos/${this.config.repo}/issues?state=all&limit=250`, 'GET');
   }
 
   public async getIssue(issueId: string): Promise<IssueResponse> {
@@ -125,6 +131,10 @@ class GiteaClient {
 
   public async getComments(issueId: string): Promise<CommentResponse[]> {
     return await this.request<CommentResponse[]>(`/repos/${this.config.repo}/issues/${issueId}/comments`, 'GET');
+  }
+
+  public async getTimeline(issueId: string): Promise<TimelineEvent[]> {
+    return await this.request<TimelineEvent[]>(`/repos/${this.config.repo}/issues/${issueId}/timeline`, 'GET');
   }
 
   public async updateIssue(issueId: string, title: string, body: string): Promise<void> {
@@ -183,7 +193,7 @@ class GiteaClient {
   }
 
   public async retroactiveCommitLinks(): Promise<void> {
-    console.log('🔍 전체 이슈 대상 Commit Diff 링크 소급 매핑 프로세스 기동 (v2)...');
+    console.log('🔍 전체 이슈 대상 Commit Diff 링크 소급 매핑 프로세스 기동 (v3)...');
     try {
       const issues = await this.getIssues();
       console.log(`📄 조회된 Gitea 이슈 개수: ${issues.length}`);
@@ -202,25 +212,41 @@ class GiteaClient {
           continue;
         }
 
-        // Git 커밋 히스토리에서 해당 이슈 번호를 기칭하는 커밋 해시 추적
-        // 예: feat(115), feat(092), fix(98), feat(92) 등
+        let commitHash: string | undefined = undefined;
+
+        // 1단계: Git 커밋 메시지에서 번호 매칭 시도
         const paddedIssueId = String(issueId).padStart(3, '0'); // 예: 92 -> 092
-        
-        // 예외 매핑: 이슈 #92는 브랜치 번호 오인으로 115번 커밋에 대응됨
         let gitLogCmd = `git log --grep="(${issueId})" --grep="(${paddedIssueId})" --oneline -n 1`;
         if (issueId === 92) {
           gitLogCmd = `git log --grep="(115)" --oneline -n 1`;
         }
         
         const logOutput = this.runGitCmd(gitLogCmd);
+        if (logOutput) {
+          commitHash = logOutput.split(/\s+/)[0];
+        }
 
-        if (!logOutput) {
-          console.log(`   ℹ️ 이슈 #${issueId}: 매칭되는 Git 커밋 이력을 찾지 못했습니다. 건너뜁니다.`);
+        // 2단계: Gitea 이슈 타임라인 API를 역추적하여 커밋 참조 해시 추출 (Fallback)
+        if (!commitHash) {
+          try {
+            const timeline = await this.getTimeline(String(issueId));
+            // event === 'reference' 혹은 commit_id가 있는 객체 추적
+            const commitRef = timeline.find((e) => e.commit_id && e.commit_id.length > 0);
+            if (commitRef) {
+              commitHash = commitRef.commit_id;
+              console.log(`   🎯 이슈 #${issueId} ➡ Gitea 타임라인 참조 역추적 성공! [${commitHash}]`);
+            }
+          } catch (e) {
+            // timeline 조회 실패 시 로깅 생략
+          }
+        }
+
+        if (!commitHash) {
+          console.log(`   ℹ️ 이슈 #${issueId}: 매칭되는 Git 커밋 및 Gitea 타임라인 참조를 찾지 못했습니다. 건너뜁니다.`);
           continue;
         }
 
-        const commitHash = logOutput.split(/\s+/)[0];
-        console.log(`   🎯 이슈 #${issueId} ➡ 매칭 커밋 해시: [${commitHash}] (${logOutput.substring(commitHash.length + 1)})`);
+        console.log(`   🎯 이슈 #${issueId} ➡ 매칭 커밋 해시: [${commitHash}]`);
 
         const reportComment = comments.find((c) => c.body.includes('🏁 작업 완료 보고'));
 
