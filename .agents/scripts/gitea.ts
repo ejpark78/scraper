@@ -98,24 +98,16 @@ class GiteaClient {
     }
   }
 
-  private formatText(text: string): string {
-    // 쉘에서 리터럴로 넘어온 '\n' 문자열을 실제 줄바꿈 문자로 변환
-    return text.replace(/\\n/g, '\n');
-  }
-
   public async createIssue(title: string, body: string): Promise<void> {
     console.log(`🚀 Gitea 이슈 생성 중... [${title}]`);
-    const formattedTitle = this.formatText(title);
-    const formattedBody = this.formatText(body);
-    const data = await this.request<IssueResponse>(`/repos/${this.config.repo}/issues`, 'POST', { title: formattedTitle, body: formattedBody });
+    const data = await this.request<IssueResponse>(`/repos/${this.config.repo}/issues`, 'POST', { title, body });
     console.log(`✅ 이슈가 성공적으로 생성되었습니다! [Issue #${data.number}]`);
     console.log(`🔗 URL: ${data.html_url}`);
   }
 
   public async createComment(issueId: string, body: string): Promise<void> {
     console.log(`💬 이슈 #${issueId} 에 댓글 등록 중...`);
-    const formattedBody = this.formatText(body);
-    const data = await this.request<CommentResponse>(`/repos/${this.config.repo}/issues/${issueId}/comments`, 'POST', { body: formattedBody });
+    const data = await this.request<CommentResponse>(`/repos/${this.config.repo}/issues/${issueId}/comments`, 'POST', { body });
     console.log(`✅ 댓글이 등록되었습니다! [ID: ${data.id}]`);
   }
 
