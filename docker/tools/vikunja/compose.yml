@@ -25,10 +25,6 @@ services:
     depends_on:
       traefik:
         condition: service_healthy
-    networks:
-      default:
-        aliases:
-          - vikunja.localhost
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3456/api/v1/info"]

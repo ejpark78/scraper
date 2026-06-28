@@ -1,15 +1,15 @@
-# Gitea & Vikunja 로컬 인프라 구축 결과보고서 (Traefik 연동 보완 반영)
+# Gitea & Vikunja 로컬 인프라 구축 결과보고서 (네트워크 단순화 반영)
 
 ## 변경 사항 및 구성 완료 요약
 
-Traefik 프록시망 내부에서 Gitea 및 Vikunja 컨테이너의 도메인을 찾지 못하는 문제를 해결하기 위해 공통 네트워크 통신 및 구동 의존성을 명세하였습니다.
+컴포즈 파일 내에서 개별 `networks` 및 에일리어스 설정을 명시하지 않고도 공용 디폴트 컴포즈 브릿지 네트워크 환경에서 문제없이 통신하도록 정비하였습니다.
 
-1. **Gitea 컴포즈 파일 보완**:
-   - `depends_on: traefik (condition: service_healthy)`를 명세하여 Traefik 프록시 준비 완료 후 기동되도록 강제했습니다.
-   - `networks.default.aliases`를 명세하여 프록시 내부망에서 `gitea.localhost`로 컨테이너를 올바르게 색인할 수 있도록 보완했습니다.
-2. **Vikunja 컴포즈 파일 보완**:
-   - `depends_on: traefik (condition: service_healthy)`를 명세하여 Traefik 프록시 준비 완료 후 기동되도록 강제했습니다.
-   - `networks.default.aliases`를 명세하여 프록시 내부망에서 `vikunja.localhost`로 컨테이너를 올바르게 색인할 수 있도록 보완했습니다.
+1. **Gitea 컴포즈 파일 간소화**:
+   - 불필요한 `networks.default.aliases` 선언 블록을 삭제했습니다.
+2. **Vikunja 컴포즈 파일 간소화**:
+   - 불필요한 `networks.default.aliases` 선언 블록을 삭제했습니다.
+3. **영속성 및 의존성**:
+   - `depends_on: traefik` 조건부 가동 설정은 유지하여 Traefik 프록시 로드 보장 구조를 지속 관리합니다.
 
 ---
 
@@ -21,6 +21,6 @@ Traefik 프록시망 내부에서 Gitea 및 Vikunja 컨테이너의 도메인을
 docker compose -p scraper --profile tools up -d --force-recreate
 ```
 
-기동 완료 후 아래 도메인들로 정상적인 로그인을 시도하실 수 있습니다.
-- **Gitea**: [https://gitea.localhost/](https://gitea.localhost/) (ID: `admin` / PW: `admin12345`)
+기동 완료 후 아래 도메인들로 정상 접속하실 수 있습니다.
+- **Gitea**: [https://gitea.localhost/](https://gitea.localhost/)
 - **Vikunja**: [https://vikunja.localhost/](https://vikunja.localhost/)
