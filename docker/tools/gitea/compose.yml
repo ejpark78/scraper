@@ -21,7 +21,7 @@ services:
       - GITEA__server__SSH_PORT=2222
       - GITEA__server__DOMAIN=gitea.localhost
       - GITEA__security__INSTALL_LOCK=true
-      - GITEA__security__ADMIN_USERNAME=admin
+      - GITEA__security__ADMIN_USERNAME=gitea-admin
       - GITEA__security__ADMIN_PASSWORD=admin12345
       - GITEA__security__ADMIN_EMAIL=admin@example.com
       - TZ=Asia/Seoul
