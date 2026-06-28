@@ -10,6 +10,14 @@
     },
     "viewer-mcp": {
       "url": "https://mcp.localhost/sse"
+    },
+    "gitea": {
+      "command": "./.agents/bin/gitea-mcp",
+      "args": [
+        "-t", "stdio",
+        "-H", "https://gitea.localhost",
+        "-k"
+      ]
     }
   }
 }
