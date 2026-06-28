@@ -1,17 +1,16 @@
-# Gitea & Vikunja 로컬 인프라 구축 결과보고서 (macOS 호환성 보완 반영)
+# Gitea & Vikunja 로컬 인프라 구축 결과보고서 (볼륨 표준 규격 맞춤 반영)
 
 ## 변경 사항 및 구성 완료 요약
 
-macOS 환경에서 볼륨 마운트 시의 잠재적인 경로 매핑 에러와 파일 포맷 에러(/etc/timezone 등)를 해결하도록 조치하였습니다.
+모노레포 인프라 서비스 규격에 부합하도록 볼륨 마운트 경로를 `${HOST_PROJECT_PATH:-.}/data/.services/...` 구조로 리팩토링하였습니다.
 
-1. **Gitea 볼륨 마운트 수정**:
-   - macOS 호환성을 저해하는 `/etc/timezone` 및 `/etc/localtime` 볼륨 바인딩을 제거했습니다.
-   - 컨테이너 내부 타임존은 환경변수 `TZ=Asia/Seoul`을 통해 안정적으로 주입되도록 보장했습니다.
-   - 호스트 마운트 상대 경로를 루트 기준 격리된 디렉토리인 `./docker/tools/gitea/data`로 명확화하였습니다.
-2. **Vikunja 볼륨 마운트 수정**:
-   - 호스트 마운트 상대 경로를 루트 기준 격리된 디렉토리인 `./docker/tools/vikunja/data` 및 `./docker/tools/vikunja/db`로 명확화하였습니다.
-3. **루트 compose.yml 연동**:
-   - 기존의 `include` 지시자를 통한 중앙 관리 구조를 그대로 유지하였습니다.
+1. **Gitea 볼륨 마운트 표준화**:
+   - 호스트 마운트 경로: `${HOST_PROJECT_PATH:-.}/data/.services/gitea:/data`
+2. **Vikunja 볼륨 마운트 표준화**:
+   - 호스트 파일 경로: `${HOST_PROJECT_PATH:-.}/data/.services/vikunja/files:/app/vikunja/files`
+   - 호스트 DB 경로: `${HOST_PROJECT_PATH:-.}/data/.services/vikunja/db:/db`
+3. **영속 데이터 격리**:
+   - 이를 통해 모든 로컬 컨테이너의 데이터 및 상태 저장 위치가 프로젝트 루트의 `data/` 폴더 하위로 통합 관리됩니다.
 
 ---
 

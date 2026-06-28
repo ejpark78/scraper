@@ -17,8 +17,8 @@ services:
       - VIKUNJA_SERVICE_PUBLICURL=https://vikunja.localhost/
       - TZ=Asia/Seoul
     volumes:
-      - ./docker/tools/vikunja/data:/app/vikunja/files
-      - ./docker/tools/vikunja/db:/db
+      - ${HOST_PROJECT_PATH:-.}/data/.services/vikunja/files:/app/vikunja/files
+      - ${HOST_PROJECT_PATH:-.}/data/.services/vikunja/db:/db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3456/api/v1/info"]

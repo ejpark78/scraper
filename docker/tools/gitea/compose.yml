@@ -19,7 +19,7 @@ services:
       - GITEA__server__DOMAIN=gitea.localhost
       - TZ=Asia/Seoul
     volumes:
-      - ./docker/tools/gitea/data:/data
+      - ${HOST_PROJECT_PATH:-.}/data/.services/gitea:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/"]
