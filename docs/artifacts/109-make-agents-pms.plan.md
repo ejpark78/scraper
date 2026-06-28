@@ -48,7 +48,7 @@ agents-pms-token:
 	@echo "VIKUNJA_API_URL=https://vikunja.127.0.0.1.nip.io/api/v1"
 	@v_tok=$$(curl -k -s -X POST https://vikunja.127.0.0.1.nip.io/api/v1/login \
 	   -H "Content-Type: application/json" \
-	   -d '{"username": "vikunja-admin", "password": "admin12345"}' | sed 's/.*"token":"\([^"]*\)".*/\1/' | tr -d '\r' | tr -d '\n'); \
+	   -d '{"username": "vikunja-admin", "password": "admin12345"}' | tr -d '\r' | tr -d '\n' | sed 's/.*"token":"\([^"]*\)".*/\1/'); \
 	 if [ -n "$$v_tok" ]; then \
 	   echo "VIKUNJA_API_TOKEN=$$v_tok"; \
 	 else \
@@ -57,6 +57,8 @@ agents-pms-token:
 	@echo ""
 	@echo "=============================================================================="
 ```
+
+
 
 
 
