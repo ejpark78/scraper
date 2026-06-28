@@ -21,6 +21,8 @@ services:
       - VIKUNJA_DATABASE_TYPE=sqlite
       - VIKUNJA_DATABASE_PATH=/db/vikunja.db
       - VIKUNJA_SERVICE_PUBLICURL=https://vikunja.localhost/
+      - VIKUNJA_SERVICE_JWTTTL=604800
+      - VIKUNJA_SERVICE_JWTSECRET=my-super-secret-key-for-jwt-stabilization-pms
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/vikunja/files:/app/vikunja/files
