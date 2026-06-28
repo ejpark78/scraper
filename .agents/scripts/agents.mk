@@ -17,11 +17,16 @@ AGENTS_FLAG = --agent=$(AGENTS)
         compress-rules \
         usage \
         prune \
-        commit
+        commit \
+        wiki
 
 dump:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --all-targets --all $(AGENTS_FLAG)
 	@$(MAKE) -f .agents/scripts/agents.mk compress-rules
+	@$(MAKE) -f .agents/scripts/agents.mk wiki
+
+wiki:
+	@bash .agents/scripts/sync-wiki.sh
 
 dump-transcripts:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --transcript --all $(AGENTS_FLAG)
