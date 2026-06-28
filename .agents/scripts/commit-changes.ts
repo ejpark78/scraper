@@ -182,9 +182,15 @@ class GiteaClient {
     return await response.json() as T;
   }
 
+  private formatText(text: string): string {
+    // [br] 기호만 실제 줄바꿈 문자로 변환합니다.
+    return text.replace(/\[br\]/g, '\n');
+  }
+
   public async createComment(issueId: string, body: string): Promise<void> {
     console.log(`💬 Gitea 이슈 #${issueId} 에 코멘트 등록 중...`);
-    await this.request<any>(`/repos/${this.config.repo}/issues/${issueId}/comments`, 'POST', { body });
+    const formattedBody = this.formatText(body);
+    await this.request<any>(`/repos/${this.config.repo}/issues/${issueId}/comments`, 'POST', { body: formattedBody });
     console.log('✅ 코멘트 등록이 완료되었습니다.');
   }
 
