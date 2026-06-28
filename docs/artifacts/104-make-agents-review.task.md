@@ -1,4 +1,0 @@
-- [x] `.agents/skills/code_review.md` 생성 및 정밀 AI 분석 룰 정의 완료
-- [x] 이전 임시 폴더 `/Users/ejpark/.gemini/config/skills/ai_code_reviewer` 삭제 완료
-- [x] `scripts/agents/agents.mk`에 `agents-code-review` 및 `agents-review` 타겟 추가 완료
-- [x] `docs/artifacts/INDEX.md` 및 `104-make-agents-review` 산출물 이력 보완

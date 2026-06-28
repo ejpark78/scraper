@@ -1,3 +1,0 @@
-- [x] `scripts/agents/push-changes.sh` 자동화 스크립트 작성 완료
-- [x] `scripts/agents/agents.mk`에 `agents-push` 처리용 `push` 타겟 추가 완료
-- [x] 변경 사항 및 자가 검토서 작성 및 검증 완료

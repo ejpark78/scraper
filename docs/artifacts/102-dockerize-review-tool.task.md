@@ -1,4 +1,0 @@
-- [x] `compose.yml` (apps/crawler 및 apps/viewer) 파일들에 `GEMINI_API_KEY` 환경변수 연동 주입 추가
-- [x] `scripts/agents/review-changes.sh` 호스트 감지 및 실행 중인 Docker 컨테이너(worker) 내부 명령 위임(Proxying) 처리 추가
-- [x] `AGENTS.md` 파일 내 7번째 제약조건(Docker 중심 테스트 및 실행)을 보강하여 AI 코드 리뷰도 컨테이너 내부로 위임 실행할 것을 명문화
-- [x] 변경 사항 검토 완료
