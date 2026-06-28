@@ -184,5 +184,9 @@
 - [106-setup-gitea-vikunja.plan](106-setup-gitea-vikunja.plan.md)
 - [106-setup-gitea-vikunja.task](106-setup-gitea-vikunja.task.md)
 - [106-setup-gitea-vikunja.walkthrough](106-setup-gitea-vikunja.walkthrough.md)
+- [108-reorganize-docker-scripts.plan](108-reorganize-docker-scripts.plan.md)
+- [108-reorganize-docker-scripts.task](108-reorganize-docker-scripts.task.md)
+- [108-reorganize-docker-scripts.review](108-reorganize-docker-scripts.review.md)
+- [108-reorganize-docker-scripts.walkthrough](108-reorganize-docker-scripts.walkthrough.md)
 
 

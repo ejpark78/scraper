@@ -108,9 +108,9 @@ if [ -n "$(git status --porcelain)" ]; then
   fi
 
   # 실행 가능한 AI 코드 리뷰 수행
-  if [ -f "scripts/agents/review-changes.sh" ]; then
+  if [ -f ".agents/scripts/review-changes.sh" ]; then
     echo "🤖 Running AI Code Review Check..."
-    if ! bash scripts/agents/review-changes.sh; then
+    if ! bash .agents/scripts/review-changes.sh; then
       echo "⚠️ AI Review check script failed to run. Proceeding with commit..."
     fi
   fi

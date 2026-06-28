@@ -22,7 +22,7 @@ AGENTS_FLAG = --agent=$(AGENTS)
 
 dump:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --all-targets --all $(AGENTS_FLAG)
-	@$(MAKE) -f scripts/agents/agents.mk compress-rules
+	@$(MAKE) -f .agents/scripts/agents.mk compress-rules
 
 dump-transcripts:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --transcript --all $(AGENTS_FLAG)
@@ -41,7 +41,7 @@ compress-rules:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts --compress
 
 squash:
-	@bash scripts/agents/squash-artifacts.sh
+	@bash .agents/scripts/squash-artifacts.sh
 
 lint-rules:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts --lint
@@ -53,13 +53,13 @@ prune:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --prune
 
 commit:
-	@bash scripts/agents/commit-changes.sh
+	@bash .agents/scripts/commit-changes.sh
 
 code-review review:
 	@echo "🤖 Running AI Code Review Skill via Antigravity CLI..."
 	@agy --skill code_review "Run semantic code review on my latest modifications."
 
 push:
-	@bash scripts/agents/push-changes.sh
+	@bash .agents/scripts/push-changes.sh
 
 

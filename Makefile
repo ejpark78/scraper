@@ -11,7 +11,7 @@
 # @lastUpdated 2026-06-11
 # ==============================================================================
 
-include scripts/environments.mk
+include docker/environments.mk
 
 COMPOSE := HOST_PROJECT_PATH=$(shell pwd) docker compose -p scraper
 export COMPOSE
@@ -22,9 +22,9 @@ export COMPOSE
 lint:
 	$(COMPOSE) run --rm $(RUN_USER) worker npx yaml-lint compose.yml "docker/**/*.yml"
 
--include scripts/utils/browser.mk
--include scripts/utils/docker.mk
--include scripts/tools/tools.mk
+-include docker/browser.mk
+-include docker/docker.mk
+-include docker/tools/tools.mk
 
 # crawler app forwarding
 list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug:
@@ -41,15 +41,15 @@ gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
 
 # db utils
 mongo-%:
-	@$(MAKE) -f scripts/utils/mongo.mk $*
+	@$(MAKE) -f docker/infra/mongodb/mongo.mk $*
 
 # agent utils
 agents-%:
-	@$(MAKE) -f scripts/agents/agents.mk $*
+	@$(MAKE) -f .agents/scripts/agents.mk $*
 
 # meili utils
 ms-%:
-	@$(MAKE) -f scripts/utils/meili.mk $*
+	@$(MAKE) -f docker/infra/meilisearch/meili.mk $*
 
 # ebook utils
 ebook-%:
