@@ -25,6 +25,93 @@ function loadEnv() {
 
 loadEnv();
 
+// 마크다운 문서를 Vikunja 호환 HTML로 변환하는 자체 가벼운 헬퍼 함수
+function mdToHtml(md: string): string {
+  const lines = md.replace(/\r/g, '').split('\n');
+  let html = '';
+  let inList = false;
+  let inCode = false;
+  let codeLang = '';
+  let codeContent: string[] = [];
+
+  for (const line of lines) {
+    // 코드 블록 처리
+    if (line.startsWith('```')) {
+      if (inCode) {
+        inCode = false;
+        const escaped = codeContent.join('\n')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        html += `<pre><code class="language-${codeLang}">${escaped}</code></pre>\n`;
+        codeContent = [];
+      } else {
+        inCode = true;
+        codeLang = line.slice(3).trim() || 'plaintext';
+      }
+      continue;
+    }
+
+    if (inCode) {
+      codeContent.push(line);
+      continue;
+    }
+
+    // 리스트 처리
+    if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+      if (!inList) {
+        html += '<ul>\n';
+        inList = true;
+      }
+      const content = line.trim().substring(2);
+      html += `  <li>${parseInlineMarkdown(content)}</li>\n`;
+      continue;
+    } else {
+      if (inList) {
+        html += '</ul>\n';
+        inList = false;
+      }
+    }
+
+    // 빈 줄 처리
+    if (line.trim() === '') {
+      continue;
+    }
+
+    // 제목 및 구분선 처리
+    if (line.startsWith('# ')) {
+      html += `<h1>${parseInlineMarkdown(line.slice(2))}</h1>\n`;
+    } else if (line.startsWith('## ')) {
+      html += `<h2>${parseInlineMarkdown(line.slice(3))}</h2>\n`;
+    } else if (line.startsWith('### ')) {
+      html += `<h3>${parseInlineMarkdown(line.slice(4))}</h3>\n`;
+    } else if (line.startsWith('#### ')) {
+      html += `<h4>${parseInlineMarkdown(line.slice(5))}</h4>\n`;
+    } else if (line.startsWith('---')) {
+      html += '<hr>\n';
+    } else {
+      // 일반 단락
+      html += `<p>${parseInlineMarkdown(line)}</p>\n`;
+    }
+  }
+
+  if (inList) {
+    html += '</ul>\n';
+  }
+
+  return html;
+}
+
+function parseInlineMarkdown(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+}
+
 const GITEA_API_URL = process.env.GITEA_API_URL || 'https://gitea.127.0.0.1.nip.io/api/v1';
 const GITEA_API_TOKEN = process.env.GITEA_API_TOKEN;
 const VIKUNJA_API_URL = process.env.VIKUNJA_API_URL || 'https://vikunja.127.0.0.1.nip.io/api/v1';
@@ -401,6 +488,7 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     }
 
     description = description.replace(/\r/g, '');
+    const htmlDescription = mdToHtml(description);
 
     const matchedTask = existingTasks.find((t: any) => t.title.startsWith(`[SCR-${group.id}]`));
     let taskId: number | null = null;
@@ -408,12 +496,12 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     if (matchedTask) {
       taskId = matchedTask.id;
       // 정보 업데이트
-      if (matchedTask.description !== description || matchedTask.bucket_id !== targetBucketId) {
+      if (matchedTask.description !== htmlDescription || matchedTask.bucket_id !== targetBucketId) {
         console.log(`🔄 Vikunja 태스크 본문 및 버킷 업데이트: ${taskTitle}`);
         await callVikunja(`/tasks/${matchedTask.id}`, {
           method: 'POST',
           body: JSON.stringify({
-            description: description,
+            description: htmlDescription,
             bucket_id: targetBucketId,
           }),
         });
@@ -425,7 +513,7 @@ async function syncVikunja(groups: ArtifactGroup[]) {
         method: 'PUT',
         body: JSON.stringify({
           title: taskTitle,
-          description: description,
+          description: htmlDescription,
           bucket_id: targetBucketId,
         }),
       });
