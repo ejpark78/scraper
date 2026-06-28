@@ -11,10 +11,7 @@ trigger: plan, spec, adr, design
 
 ### 1. Gitea 이슈 기반 계획 수립
 * 물리적 작업(코드 수정, 설정 편집 등)을 시작하기 전에 반드시 Gitea 이슈를 생성하고, 이슈 본문에 세부 작업 계획 및 체크리스트(Markdown To-Do list)를 명확히 기재합니다.
-* 계획 수립 시 `tea` CLI 활용을 권장합니다:
-  ```bash
-  tea issue create --title "<task_type>(<scope>): <summary>" --description "<detailed_plan_and_checklist>"
-  ```
+* 계획 수립 시 Gitea MCP 또는 Gitea API 직접 호출 활용을 권장합니다.
 * 이슈 생성이 완료되면 생성된 Gitea 이슈 링크를 사용자에게 즉시 제시하고 승인을 요청합니다.
 
 ### 2. 사용자 검토 및 최종 승인
@@ -23,5 +20,5 @@ trigger: plan, spec, adr, design
 
 ### 3. 자율 일괄 실행 및 결과 보고
 * 계획이 최종 승인된 후에는 에이전트가 단일 턴 내에서 자율적으로 계획된 모든 구현 작업을 일괄 처리합니다.
-* 구현이 완료되고 정적 검증(`npm run lint`, `npm run type-check`)이 통과하면, 작업 내역과 검증 결과를 정리하여 `tea comment`를 활용해 Gitea 이슈에 댓글로 결과 보고서를 등록하고, `tea issue close`를 통해 이슈를 종결 처리합니다.
+* 구현이 완료되고 정적 검증(`npm run lint`, `npm run type-check`)이 통과하면, 작업 내역과 검증 결과를 정리하여 Gitea MCP 또는 Gitea API를 활용해 Gitea 이슈에 댓글로 결과 보고서를 등록하고, 이슈를 종결(Close) 처리합니다.
 * 작업 완료 즉시 `scripts/agents/commit-changes.sh`를 실행하여 로컬 저장소에 커밋합니다.
