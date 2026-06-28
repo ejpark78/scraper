@@ -45,6 +45,11 @@ interface ArtifactGroup {
   planFile?: string;
   taskFile?: string;
   walkthroughFile?: string;
+  virtualContent?: {
+    plan?: string;
+    task?: string;
+    walkthrough?: string;
+  };
 }
 
 // 1. docs/artifacts 디렉토리 스캔 및 그룹화
@@ -58,8 +63,8 @@ function scanArtifacts(): ArtifactGroup[] {
   const files = fs.readdirSync(artifactsDir);
   const groups: { [key: string]: ArtifactGroup } = {};
 
+  // A. 일반 개별 아티팩트 파일 스캔
   for (const file of files) {
-    // 3자리 숫자 접두사 패턴 검사
     const match = file.match(/^(\d{3})-(.+?)\.(plan|task|walkthrough)\.md$/);
     if (!match) continue;
 
@@ -73,6 +78,59 @@ function scanArtifacts(): ArtifactGroup[] {
     if (type === 'plan') groups[id].planFile = file;
     else if (type === 'task') groups[id].taskFile = file;
     else if (type === 'walkthrough') groups[id].walkthroughFile = file;
+  }
+
+  // B. 아카이브 파일 파싱하여 개별 아티팩트 복원
+  for (const file of files) {
+    const archiveMatch = file.match(/^(\d{3})-(\d{3})\.archive\.md$/);
+    if (!archiveMatch) continue;
+
+    const archivePath = path.join(artifactsDir, file);
+    const content = fs.readFileSync(archivePath, 'utf8');
+    const lines = content.split('\n');
+
+    let currentId = '';
+    let currentTitle = '';
+    let currentType: 'plan' | 'task' | 'walkthrough' | '' = '';
+    let currentBodyLines: string[] = [];
+
+    const flushCurrent = () => {
+      if (currentId && currentType && currentBodyLines.length > 0) {
+        if (!groups[currentId]) {
+          groups[currentId] = { id: currentId, title: currentTitle, virtualContent: {} };
+        }
+        if (!groups[currentId].virtualContent) {
+          groups[currentId].virtualContent = {};
+        }
+        groups[currentId].virtualContent[currentType] = currentBodyLines.join('\n');
+        
+        // 가상 상태 파일 설정
+        if (currentType === 'plan') groups[currentId].planFile = `(Archived Plan in ${file})`;
+        else if (currentType === 'task') groups[currentId].taskFile = `(Archived Task in ${file})`;
+        else if (currentType === 'walkthrough') groups[currentId].walkthroughFile = `(Archived Walkthrough in ${file})`;
+      }
+      currentBodyLines = [];
+    };
+
+    for (const line of lines) {
+      const headerMatch = line.match(/^## (\d{3})-(.+?)\.(plan|task|walkthrough|spec|adr|walkthrough)$/);
+      if (headerMatch) {
+        flushCurrent();
+        currentId = headerMatch[1];
+        currentTitle = headerMatch[2].replace(/-/g, ' ');
+        const matchedType = headerMatch[3];
+        if (matchedType === 'spec' || matchedType === 'adr') {
+          currentType = 'plan'; // spec 이나 adr은 plan으로 분류
+        } else {
+          currentType = matchedType as 'plan' | 'task' | 'walkthrough';
+        }
+      } else {
+        if (currentId) {
+          currentBodyLines.push(line);
+        }
+      }
+    }
+    flushCurrent();
   }
 
   return Object.values(groups).sort((a, b) => Number(a.id) - Number(b.id));
@@ -161,12 +219,20 @@ async function syncGitea(groups: ArtifactGroup[]) {
 
     // 대표 파일 내용(예: plan 또는 walkthrough의 요약)을 상세 내용으로 추가
     const targetFile = group.walkthroughFile || group.planFile || group.taskFile;
-    if (targetFile) {
-      const fileContent = fs.readFileSync(path.join(artifactsDir, targetFile), 'utf8');
+    let fileContent = '';
+    if (group.virtualContent) {
+      fileContent = group.virtualContent.walkthrough || group.virtualContent.plan || group.virtualContent.task || '';
+    }
+    if (!fileContent && targetFile && !targetFile.startsWith('(Archived')) {
+      fileContent = fs.readFileSync(path.join(artifactsDir, targetFile), 'utf8');
+    }
+
+    if (fileContent) {
       body += `\n\n### 🔍 핵심 요약 및 내용 (${targetFile})\n\n\`\`\`markdown\n`;
       body += fileContent.length > 5000 ? fileContent.substring(0, 5000) + '\n\n...(본문 중략)...' : fileContent;
       body += `\n\`\`\``;
     }
+
 
     // 매칭 이슈 검색
     const matchedIssue = existingIssues.find((iss: any) => iss.title.startsWith(`[SCR-${group.id}]`));
@@ -273,12 +339,20 @@ async function syncVikunja(groups: ArtifactGroup[]) {
 
     const artifactsDir = path.join(process.cwd(), 'docs/artifacts');
     const targetFile = group.walkthroughFile || group.planFile || group.taskFile;
-    if (targetFile) {
-      const fileContent = fs.readFileSync(path.join(artifactsDir, targetFile), 'utf8');
+    let fileContent = '';
+    if (group.virtualContent) {
+      fileContent = group.virtualContent.walkthrough || group.virtualContent.plan || group.virtualContent.task || '';
+    }
+    if (!fileContent && targetFile && !targetFile.startsWith('(Archived')) {
+      fileContent = fs.readFileSync(path.join(artifactsDir, targetFile), 'utf8');
+    }
+
+    if (fileContent) {
       description += `\n\n### 🔍 핵심 요약 및 내용 (${targetFile})\n\n\`\`\`markdown\n`;
       description += fileContent.length > 3000 ? fileContent.substring(0, 3000) + '\n\n...(본문 중략)...' : fileContent;
       description += `\n\`\`\``;
     }
+
 
 
     const matchedTask = existingTasks.find((t: any) => t.title.startsWith(`[SCR-${group.id}]`));

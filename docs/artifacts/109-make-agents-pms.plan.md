@@ -77,13 +77,15 @@ agents-pms-token:
 
 ### Phase 2: 동기화 스크립트 개발 (`scripts/agents/sync-pms.ts`)
 * `docs/artifacts/` 전체 스캔 및 아티팩트 그룹화 (접두사 번호 기준).
+* **아카이브 파싱 및 복원**: `###-###.archive.md` 형식의 아카이브 압축 파일을 탐색하여, 마크다운 본문 파싱을 통해 과거 1번부터 100번까지의 각 개별 아티팩트 본문 및 메타데이터를 개별 `ArtifactGroup` 객체로 동적 추출/복원하고 개별 이슈로 변환하는 로직 구현.
 * Gitea API 호출 로직:
   * Repository 검색/생성.
-  * Issue 검색/생성/본문 업데이트.
+  * Issue 검색/생성/본문 업데이트 (아카이브 추출 정보 포함).
 * Vikunja API 호출 로직:
   * Project/Board 검색/생성.
   * Standard Buckets(Planned, In Progress, Done) 생성 및 확인.
-  * Task 검색/생성/이동/설명(Description)에 아티팩트 요약 내용 추가 구현.
+  * Task 검색/생성/이동/설명(Description)에 아티팩트 요약 내용 추가 구현 (아카이브 추출 정보 포함).
+
 
 
 ### Phase 3: Makefile 통합 및 테스트
