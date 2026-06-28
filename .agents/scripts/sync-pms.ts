@@ -174,27 +174,24 @@ async function callVikunja(endpoint: string, options: RequestInit = {}) {
 async function syncGitea(groups: ArtifactGroup[]) {
   console.log('\n🐙 Gitea 아티팩트 동기화 진행 중...');
 
-  // 저장소 존재 여부 확인
-  let repoExists = false;
+  // 기존 저장소 강제 삭제 (리셋)
   try {
-    const res = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}`);
-    if (res.status === 200) repoExists = true;
+    console.log(`🗑️ Gitea 기존 '${REPO_NAME}' 저장소를 초기화하기 위해 삭제합니다...`);
+    await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}`, { method: 'DELETE' });
   } catch (err) {
-    console.log(`ℹ️  저장소 조회가 실패했습니다. 생성을 시도합니다.`);
+    // 무시
   }
 
-  if (!repoExists) {
-    console.log(`📦 Gitea에 '${REPO_NAME}' 저장소가 없습니다. 새로 생성합니다.`);
-    await callGitea('/user/repos', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: REPO_NAME,
-        private: true,
-        description: 'LinkedIn Clipper & Scraper Project Hub',
-      }),
-    });
-    console.log(`✅ Gitea 저장소가 성공적으로 생성되었습니다.`);
-  }
+  console.log(`📦 Gitea에 '${REPO_NAME}' 저장소를 새로 생성합니다.`);
+  await callGitea('/user/repos', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: REPO_NAME,
+      private: true,
+      description: 'LinkedIn Clipper & Scraper Project Hub',
+    }),
+  });
+  console.log(`✅ Gitea 저장소가 성공적으로 생성되었습니다.`);
 
   // 기존 이슈 목록 가져오기
   const issuesRes = await callGitea(`/repos/${REPO_OWNER}/${REPO_NAME}/issues?state=all`);
@@ -283,15 +280,18 @@ async function syncVikunja(groups: ArtifactGroup[]) {
   const projects = projectsRes.status === 200 ? await projectsRes.json() : [];
   let project = projects.find((p: any) => p.title === REPO_NAME);
 
-  if (!project) {
-    console.log(`📦 Vikunja에 '${REPO_NAME}' 프로젝트가 없습니다. 생성합니다.`);
-    const newProjRes = await callVikunja('/projects', {
-      method: 'PUT',
-      body: JSON.stringify({ title: REPO_NAME }),
-    });
-    project = await newProjRes.json();
-    console.log(`✅ Vikunja 프로젝트가 생성되었습니다.`);
+  if (project) {
+    console.log(`🗑️ Vikunja 기존 '${REPO_NAME}' 프로젝트를 초기화하기 위해 삭제합니다...`);
+    await callVikunja(`/projects/${project.id}`, { method: 'DELETE' });
   }
+
+  console.log(`📦 Vikunja에 '${REPO_NAME}' 프로젝트를 새로 생성합니다.`);
+  const newProjRes = await callVikunja('/projects', {
+    method: 'PUT',
+    body: JSON.stringify({ title: REPO_NAME }),
+  });
+  project = await newProjRes.json();
+  console.log(`✅ Vikunja 프로젝트가 생성되었습니다.`);
 
   const projectId = project.id;
 
