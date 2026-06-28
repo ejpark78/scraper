@@ -30,10 +30,19 @@
 agents-pms:
 	docker compose -p scraper exec -T app-node uv run ts-node scripts/agents/sync-pms.ts
 
-# Gitea API 토큰 CLI 생성 헬퍼
-agents-pms-token-gitea:
-	docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all
+# Gitea 및 Vikunja API 토큰 CLI 생성 통합 헬퍼
+agents-pms-token:
+	@echo "🔑 Gitea Access Token 생성 중..."
+	@docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all || true
+	@echo "\n🔑 Vikunja JWT Token 생성용 로그인 절차..."
+	@read -p "Vikunja Username: " v_user; \
+	 read -s -p "Vikunja Password: " v_pass; \
+	 echo ""; \
+	 curl -k -s -X POST https://vikunja.127.0.0.1.nip.io/api/v1/login \
+	   -H "Content-Type: application/json" \
+	   -d "{\"username\": \"$$v_user\", \"password\": \"$$v_pass\"}" | grep -o '"token":"[^"]*' | grep -o '[^o]*$$' || echo "Vikunja 로그인 실패"
 ```
+
 
 ---
 
@@ -58,5 +67,5 @@ agents-pms-token-gitea:
 * 기존 `docs/artifacts` 내 전체 아티팩트(소급 적용) 대상 동기화 테스트 및 검증.
 
 ### Phase 4: CLI 토큰 생성 헬퍼 추가
-* `agents.mk`에 `agents-pms-token-gitea` 타겟 추가하여 CLI에서 원버튼으로 Gitea 토큰을 발행할 수 있게 유도.
+* `agents.mk`에 `agents-pms-token` 타겟을 추가하여 CLI에서 원버튼으로 Gitea 토큰 및 Vikunja 토큰을 모두 발행/출력할 수 있게 유도.
 

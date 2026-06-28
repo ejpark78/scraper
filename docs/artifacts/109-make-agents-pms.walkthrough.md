@@ -34,14 +34,13 @@
 
 이 기능을 사용하기 위해 사용자는 로컬 환경 변수를 채워야 합니다:
 
-1. **Gitea API Token 발급**:
-    * 터미널에서 다음 명령어를 실행하여 CLI로 Gitea 토큰을 즉시 생성 및 획득합니다:
+1. **Gitea & Vikunja API Token 발급**:
+    * 터미널에서 다음 명령어를 실행하여 CLI로 Gitea 토큰과 Vikunja JWT 토큰을 한 번에 생성 및 획득합니다:
       ```bash
-      make agents-pms-token-gitea
+      make agents-pms-token
       ```
+    * 명령어가 실행되면 Gitea 토큰을 먼저 출력한 뒤, Vikunja Username과 Password를 순서대로 물어보아 인증을 시도하고 JWT 토큰을 리턴합니다.
 
-2. **Vikunja API Token 발급**:
-   * Vikunja(예: `https://vikunja.127.0.0.1.nip.io/`) 로그인 후 `설정 > API 토큰`에서 새 토큰을 발급받습니다.
 3. **.env 설정**:
    * 로컬 프로젝트 루트의 `.env` 파일에 아래 내용을 기입하고 토큰을 붙여넣습니다:
      ```bash
