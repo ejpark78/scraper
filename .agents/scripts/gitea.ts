@@ -116,7 +116,7 @@ class GiteaClient {
   }
 
   public async getIssues(): Promise<IssueResponse[]> {
-    return await this.request<IssueResponse[]>(`/repos/${this.config.repo}/issues?state=all&limit=100`, 'GET');
+    return await this.request<IssueResponse[]>(`/repos/${this.config.repo}/issues?state=all&limit=150`, 'GET');
   }
 
   public async getIssue(issueId: string): Promise<IssueResponse> {
@@ -183,18 +183,35 @@ class GiteaClient {
   }
 
   public async retroactiveCommitLinks(): Promise<void> {
-    console.log('🔍 전체 이슈 대상 Commit Diff 링크 소급 매핑 프로세스 기동...');
+    console.log('🔍 전체 이슈 대상 Commit Diff 링크 소급 매핑 프로세스 기동 (v2)...');
     try {
       const issues = await this.getIssues();
       console.log(`📄 조회된 Gitea 이슈 개수: ${issues.length}`);
 
       for (const issue of issues) {
         const issueId = issue.number;
-        
+        const comments = await this.getComments(String(issueId));
+
+        // 엄밀한 검사: 본문(body)이나 댓글(comments) 타임라인 통틀어 Commit Diff 링크(/commit/)가 존재하는지 확인
+        const hasDiffLink = issue.body.includes('Gitea Commit Diff') ||
+                            issue.body.includes('/commit/') ||
+                            comments.some((c) => c.body.includes('Gitea Commit Diff') || c.body.includes('/commit/'));
+
+        if (hasDiffLink) {
+          console.log(`   ℹ️ 이슈 #${issueId}: 이미 Commit Diff 링크가 매핑되어 있습니다. 건너뜁니다.`);
+          continue;
+        }
+
         // Git 커밋 히스토리에서 해당 이슈 번호를 기칭하는 커밋 해시 추적
         // 예: feat(115), feat(092), fix(98), feat(92) 등
         const paddedIssueId = String(issueId).padStart(3, '0'); // 예: 92 -> 092
-        const gitLogCmd = `git log --grep="(${issueId})" --grep="(${paddedIssueId})" --oneline -n 1`;
+        
+        // 예외 매핑: 이슈 #92는 브랜치 번호 오인으로 115번 커밋에 대응됨
+        let gitLogCmd = `git log --grep="(${issueId})" --grep="(${paddedIssueId})" --oneline -n 1`;
+        if (issueId === 92) {
+          gitLogCmd = `git log --grep="(115)" --oneline -n 1`;
+        }
+        
         const logOutput = this.runGitCmd(gitLogCmd);
 
         if (!logOutput) {
@@ -205,23 +222,21 @@ class GiteaClient {
         const commitHash = logOutput.split(/\s+/)[0];
         console.log(`   🎯 이슈 #${issueId} ➡ 매칭 커밋 해시: [${commitHash}] (${logOutput.substring(commitHash.length + 1)})`);
 
-        // 해당 이슈에 등록된 댓글 목록 확인
-        const comments = await this.getComments(String(issueId));
         const reportComment = comments.find((c) => c.body.includes('🏁 작업 완료 보고'));
 
         if (reportComment) {
-          // 이미 Gitea Commit Diff 링크가 코멘트에 달려 있는지 확인
-          if (reportComment.body.includes('Gitea Commit Diff') || reportComment.body.includes('/commit/')) {
-            console.log(`      ℹ️ 이미 완료 보고 댓글에 Commit Diff 링크가 매핑되어 있습니다. 건너뜁니다.`);
-          } else {
-            // 소급 링크 삽입
-            const retroactiveLink = `[br][br]### 🔗 Gitea Commit Diff 링크 (소급 매핑)[br]- [Commit Diff #${commitHash.substring(0, 8)}](https://gitea.localhost/${this.config.repo}/commit/${commitHash})`;
-            const updatedBody = reportComment.body + retroactiveLink;
-            await this.updateComment(String(reportComment.id), updatedBody);
-            console.log(`      ✅ 댓글 ID #${reportComment.id} 에 Commit Diff 링크 소급 주입 완료!`);
-          }
+          // 1. 완료 보고 댓글이 존재할 시, 해당 댓글 하단에 덧붙임
+          const retroactiveLink = `[br][br]### 🔗 Gitea Commit Diff 링크 (소급 매핑)[br]- [Commit Diff #${commitHash.substring(0, 8)}](https://gitea.localhost/${this.config.repo}/commit/${commitHash})`;
+          const updatedBody = reportComment.body + retroactiveLink;
+          await this.updateComment(String(reportComment.id), updatedBody);
+          console.log(`      ✅ 댓글 ID #${reportComment.id} 에 Commit Diff 링크 소급 주입 완료!`);
         } else {
-          console.log(`      ℹ️ 완료 보고 댓글이 존재하지 않습니다. 건너뜁니다.`);
+          // 2. 완료 보고 댓글이 존재하지 않는 과거 이슈 (#1~#91 등) ➡ 이슈 본문(body) 가장 하단에 직접 주입
+          const retroactiveLink = `[br][br]### 🔗 Gitea Commit Diff 링크 (소급 매핑)[br]- [Commit Diff #${commitHash.substring(0, 8)}](https://gitea.localhost/${this.config.repo}/commit/${commitHash})`;
+          const updatedIssueBody = issue.body + retroactiveLink;
+          const formattedBody = this.formatText(updatedIssueBody);
+          await this.updateIssue(String(issueId), issue.title, formattedBody);
+          console.log(`      ✅ 이슈 #${issueId} 본문(body)에 직접 Commit Diff 링크 소급 주입 완료!`);
         }
       }
       console.log('🎉 전체 이슈 대상 Commit Diff 링크 소급 매핑이 완료되었습니다!');
