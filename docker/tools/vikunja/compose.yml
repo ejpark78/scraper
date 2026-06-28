@@ -11,6 +11,9 @@ services:
     image: vikunja/vikunja:0.24.2
     profiles:
       - tools
+    depends_on:
+      traefik:
+        condition: service_healthy      
     environment:
       - VIKUNJA_DATABASE_TYPE=sqlite
       - VIKUNJA_DATABASE_PATH=/db/vikunja.db
@@ -19,6 +22,13 @@ services:
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/vikunja/files:/app/vikunja/files
       - ${HOST_PROJECT_PATH:-.}/data/.services/vikunja/db:/db
+    depends_on:
+      traefik:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - vikunja.localhost
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3456/api/v1/info"]

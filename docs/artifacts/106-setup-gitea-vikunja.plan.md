@@ -1,31 +1,55 @@
-# 로컬 Gitea 및 Vikunja 인프라 구축 계획서 (수정안 - Gitea 자동 계정 생성 추가)
+# 로컬 Gitea 및 Vikunja 인프라 구축 계획서 (수정안 - Traefik 라우팅 에러 보완)
 
-이 계획서는 Gitea 컨테이너 구동 시 초기 관리자(Admin) 계정을 수동 가입 없이 환경 변수를 통해 자동으로 프로비저닝(Provisioning)하는 설정을 추가하는 계획을 다룹니다.
+이 계획서는 Traefik이 Gitea 및 Vikunja 컨테이너로 라우팅하지 못해 발생하는 404 에러를 수정하기 위해, 네트워크 통합 및 컴포즈 실행 종속성 설정을 보완하는 내용을 다룹니다.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **보안 설정 및 자동 계정 생성**:
->   - `INSTALL_LOCK=true`를 설정하여 초기 설정 화면 진입 단계를 생략합니다.
->   - `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_EMAIL` 설정을 주입하여 컨테이너 생성 시 관리자 계정을 자동으로 생성합니다.
->   - 기본 비밀번호(예: `admin12345`)는 임시로 지정해 두었으며 첫 로그인 후 원하시는 값으로 변경을 권장합니다.
+> - **Traefik 종속성 명시**:
+>   - Gitea와 Vikunja 서비스에 `depends_on: traefik` 관계(조건: `service_healthy`)를 명시하여, 프록시망이 활성화된 후 트래픽 수신 준비가 끝난 시점에 두 서비스가 로드되도록 제어합니다.
+> - **공용 네트워크 바인딩 명시**:
+>   - `default` 컴포즈 네트워크에 대한 바인딩 정의를 보완하여 다른 인프라 컨테이너들과의 통신 단절을 방지합니다.
 
 ## Proposed Changes
 
 ### [Docker Tools Setup]
 
 #### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/gitea/compose.yml)
-- Gitea 서비스의 `environment` 목록에 초기 계정 자동 생성용 보안 설정 추가:
-  - `GITEA__security__INSTALL_LOCK=true`
-  - `GITEA__security__ADMIN_USERNAME=admin`
-  - `GITEA__security__ADMIN_PASSWORD=admin12345`
-  - `GITEA__security__ADMIN_EMAIL=admin@example.com`
+- `depends_on` 추가:
+  ```yaml
+  depends_on:
+    traefik:
+      condition: service_healthy
+  ```
+- `networks` 정의 추가:
+  ```yaml
+  networks:
+    default:
+      aliases:
+        - gitea.localhost
+  ```
+
+#### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/vikunja/compose.yml)
+- `depends_on` 추가:
+  ```yaml
+  depends_on:
+    traefik:
+      condition: service_healthy
+  ```
+- `networks` 정의 추가:
+  ```yaml
+  networks:
+    default:
+      aliases:
+        - vikunja.localhost
+  ```
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. 설정 완료 후 컴포즈 컨테이너 재생성 구동:
-   - `docker compose -p scraper --profile tools up -d --force-recreate gitea`
-2. `https://gitea.localhost` 웹 브라우저 접속 후 `admin` / `admin12345` 계정으로 즉시 로그인 되는지 체크
+1. 변경 사항 적용 후 전체 프로파일 도구 가동:
+   - `docker compose -p scraper --profile tools up -d --force-recreate`
+2. `docker compose -p scraper ps`를 통해 모든 컨테이너가 동일 네트워크에 정상 기동되었는지 상태 진단
+3. 브라우저로 `https://gitea.localhost` 및 `https://vikunja.localhost` 접근하여 404가 해결되고 정상 로드되는지 검증

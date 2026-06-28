@@ -11,6 +11,9 @@ services:
     image: gitea/gitea:1.21.11-rootless
     profiles:
       - tools
+    depends_on:
+      traefik:
+        condition: service_healthy      
     environment:
       - GITEA__database__DB_TYPE=sqlite3
       - GITEA__database__PATH=/data/gitea/gitea.db
@@ -24,6 +27,13 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/gitea:/data
+    depends_on:
+      traefik:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - gitea.localhost
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/"]
