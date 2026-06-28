@@ -102,7 +102,7 @@ function scanArtifacts(): ArtifactGroup[] {
         if (!groups[currentId].virtualContent) {
           groups[currentId].virtualContent = {};
         }
-        groups[currentId].virtualContent[currentType] = currentBodyLines.join('\n');
+        groups[currentId].virtualContent![currentType] = currentBodyLines.join('\n');
         
         // 가상 상태 파일 설정
         if (currentType === 'plan') groups[currentId].planFile = `(Archived Plan in ${file})`;
