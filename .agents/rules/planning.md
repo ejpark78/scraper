@@ -2,25 +2,26 @@
 trigger: plan, spec, adr, design
 ---
 
-## 📋 Execution & Review Planning Rule
+## 📋 Gitea Issue-Based Planning Rule
 
 > [!IMPORTANT]
-> **Language Rule**: All output documents generated for the user (such as `plan.md`, `action_items.md`, and `reviews.md`) must be written in natural, highly detailed Korean, avoiding unnatural translated phrasing. Other rule and skill reference files may be in English.
+> **Language Rule**: Gitea에 등록하는 이슈 본문 계획서 및 체크리스트는 반드시 자연스럽고 상세한 **한국어**로 작성합니다.
 
-This rule is activated and applied **only** when the user explicitly requests a plan by saying **"plan this"**, **"make a plan"**, or equivalent planning requests. (For general instructions or simple tasks, perform the physical work immediately without going through a planning stage.)
+이 규칙은 사용자가 계획을 요청하거나 파일 수정/환경 변경을 수반하는 작업을 개시할 때 적용됩니다. (간단한 읽기 전용 진단 등의 작업은 즉시 수행할 수 있습니다.)
 
-1. **Archive Existing Plan on Review Approval or New Plan Request**:
-   * Immediately after the user agrees to/approves the previous completion review (`./.agents/reviews.md`), or at the moment a new planning request flows in, move (archive) the following files located in the root directory to the backup folder to preserve the trace of previous work:
-     * Target files: `./.agents/plan.md`, `./.agents/action_items.md`, `./.agents/reviews.md`
-     * Target path: `./.agents/tasks/{4-digit number}-YYYY-MM-DDTHHMMSS/` (Create a directory using the next 4-digit sequence following the previous task folder, combined with the current timestamp, and move the files there.)
+### 1. Gitea 이슈 기반 계획 수립
+* 물리적 작업(코드 수정, 설정 편집 등)을 시작하기 전에 반드시 Gitea 이슈를 생성하고, 이슈 본문에 세부 작업 계획 및 체크리스트(Markdown To-Do list)를 명확히 기재합니다.
+* 계획 수립 시 `tea` CLI 활용을 권장합니다:
+  ```bash
+  tea issue create --title "<task_type>(<scope>): <summary>" --description "<detailed_plan_and_checklist>"
+  ```
+* 이슈 생성이 완료되면 생성된 Gitea 이슈 링크를 사용자에게 즉시 제시하고 승인을 요청합니다.
 
-2. **Create Plan and Action Items Files**:
-   * Upon receiving a planning request, the agent must create the following two files **before** actually executing the task (e.g., modifying code, running commands):
-     * **`./.agents/plan.md`**: A comprehensive project plan detailing the task objectives, analysis results, step-by-step implementation scenarios, and validation plans.
-     * **`./.agents/action_items.md`**: A checklist document (To-Do List) showing detailed implementation tasks and their progress status.
+### 2. 사용자 검토 및 최종 승인
+* 이슈 링크가 포함된 계획이 제시되면, 사용자가 해당 계획을 검토한 후 승인(Proceed 버튼 클릭, Gitea 승인 댓글, 또는 채팅 승인 등)할 때까지 대기합니다.
+* 승인이 떨어지기 전에는 실제 소스 코드나 설정 수정 도구(replace_file_content 등)를 절대 먼저 실행하지 마십시오.
 
-3. **User Review and Approval**:
-   * After writing the above files, the agent must request the user's review of the plan and action items checklist. The agent can proceed with actual physical tasks (code modifications, deletions, terminal executions, etc.) only after the user reviews and approves them (e.g., by clicking 'Proceed' or giving approval).
-
-4. **Execution Completion and Review Request**:
-   * Once the task implementation and validation are completed according to the approved plan, the agent must generate a final **`./.agents/reviews.md`** file to report task completion and self-validation results, and request a final review from the user.
+### 3. 자율 일괄 실행 및 결과 보고
+* 계획이 최종 승인된 후에는 에이전트가 단일 턴 내에서 자율적으로 계획된 모든 구현 작업을 일괄 처리합니다.
+* 구현이 완료되고 정적 검증(`npm run lint`, `npm run type-check`)이 통과하면, 작업 내역과 검증 결과를 정리하여 `tea comment`를 활용해 Gitea 이슈에 댓글로 결과 보고서를 등록하고, `tea issue close`를 통해 이슈를 종결 처리합니다.
+* 작업 완료 즉시 `scripts/agents/commit-changes.sh`를 실행하여 로컬 저장소에 커밋합니다.
