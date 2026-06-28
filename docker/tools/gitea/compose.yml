@@ -19,9 +19,7 @@ services:
       - GITEA__server__DOMAIN=gitea.localhost
       - TZ=Asia/Seoul
     volumes:
-      - ./data:/data
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - ./docker/tools/gitea/data:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/"]

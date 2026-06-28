@@ -1,49 +1,35 @@
-# 로컬 Gitea 및 Vikunja 인프라 구축 계획서
+# 로컬 Gitea 및 Vikunja 인프라 구축 계획서 (수정안 - macOS 호환성 반영)
 
-이 계획서는 외부 SaaS 의존성을 제거하고, Docker Compose 환경 하에 로컬 Git 미러링/호스팅 서비스인 **Gitea**와 프로젝트/이슈/일정 관리 시스템인 **Vikunja**를 독립 실행하는 구축 계획을 다룹니다.
+이 계획서는 macOS 환경에서의 호환성 문제를 해결하기 위해 볼륨 마운트 구조를 재조정하고, 안전한 타임존 설정 방식으로 전환하는 내용을 다룹니다.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - **네트워크 및 프록시 설정**: 기존 `docker/infra/traefik/`에 구성된 역방향 프록시(Traefik) 네트워크(`traefik-public` 또는 내부망 명칭)를 연동하여 도메인 경유 접속을 지원하도록 구성합니다.
-> - **데이터 영속성 보장**: 컨테이너가 내려가도 데이터가 보존되도록 로컬 호스트 볼륨 바인딩(예: `./data/` 하위 경로)을 안전하게 지정합니다.
-> - **리소스 관리**: Vikunja와 Gitea는 Go 언어 기반으로 매우 경량이지만, 데이터베이스(PostgreSQL, Redis 등)가 포함되므로 개발 장비에 부담을 최소화하는 구조로 설계합니다.
+> - **macOS 볼륨 마운트 오류 방지**: Gitea 컨테이너 설정에 포함된 `/etc/timezone` 및 `/etc/localtime` 볼륨 바인딩을 제거하고 환경변수 `TZ=Asia/Seoul`로만 타임존을 맞춥니다.
+> - **마운트 경로 일관성**: 상대 경로 볼륨 매핑 시 컨테이너가 루트 `compose.yml` 기준으로 실행되므로, 상대 경로가 의도하지 않은 위치로 꼬이지 않도록 명확하게 마운트 디렉토리를 정의합니다.
+>   - Gitea: `./docker/tools/gitea/data` 경로를 호스트 디렉토리로 매핑
+>   - Vikunja: `./docker/tools/vikunja/data` 및 `./docker/tools/vikunja/db` 경로를 호스트 디렉토리로 매핑
 
 ## Open Questions
 
-- 기존 Traefik 구성이 프록시 허용하고 있는 로컬 개발용 서브도메인이 있는지 확인이 필요합니다 (예: `*.localhost` 또는 `gitea.localhost`, `vikunja.localhost`).
+- Gitea의 데이터 디렉토리와 Vikunja의 데이터 디렉토리를 프로젝트 루트 하위의 `docker/tools/gitea/data` 및 `docker/tools/vikunja/data`에 생성하여 프로젝트 파일들과 섞이지 않도록 격리하려 합니다.
 
 ## Proposed Changes
 
 ### [Docker Infra & Tools Setup]
 
-기존 모노레포의 `docker/tools/` 하위에 각각 서비스를 배치합니다.
+#### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/gitea/compose.yml)
+- macOS에서 에러를 유발하는 `/etc/timezone` 및 `/etc/localtime` 볼륨 마운트 제거
+- 볼륨 마운트 절대 경로 설정 및 안정성 확보를 위해 상대경로 매핑 위치를 `./docker/tools/gitea/data` 기반으로 구체화
 
-#### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/compose.yml)
-- `include` 지시자 목록에 `docker/tools/gitea/compose.yml` 및 `docker/tools/vikunja/compose.yml` 추가
-
-#### [NEW] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/gitea/compose.yml)
-- Gitea 서비스 단독 구성 (SQLite3 기반)
-- 외부 Traefik 라우팅을 위한 Label 지정 및 `scraper_network` 연결
-- Gitea 볼륨 매핑 (`./data/gitea`)
-
-#### [NEW] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/vikunja/compose.yml)
-- Vikunja API 서버 및 Frontend 통합 구성 (SQLite3 데이터베이스 적용)
-- Vikunja 백그라운드 태스크 처리를 위한 구성
-- 외부 Traefik 라우팅을 위한 Label 지정 및 `scraper_network` 연결
-- Vikunja 볼륨 매핑 (`./data/vikunja`)
-
-#### [MODIFY] [INDEX.md](file:///Users/ejpark/workspace/scraper/docs/artifacts/INDEX.md)
-- `106-setup-gitea-vikunja` 아티팩트 항목을 색인 문서에 추가합니다.
+#### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/vikunja/compose.yml)
+- Vikunja 볼륨 마운트 경로를 루트 기준 실행에 안전하도록 `./docker/tools/vikunja/data` 및 `./docker/tools/vikunja/db` 로 명시
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. Docker Compose 명령어로 각 툴 빌드 및 백그라운드 가동 확인
-   - `docker compose -f docker/tools/gitea/compose.yml up -d`
-   - `docker compose -f docker/tools/vikunja/compose.yml up -d`
-2. Traefik 라우팅 또는 로컬 포트를 통한 웹 콘솔 정상 접근 확인
-3. Gitea에서 GitHub Repo Mirroring 정상 동작 여부 체크
-4. Vikunja 로그인 및 칸반 보드 생성 테스트
+1. Gitea 및 Vikunja 컴포즈 파일에 대한 설정 구문 검사:
+   - `docker compose -f compose.yml config` (루트 기준 로드가 정상적으로 되고 볼륨 경로가 올바르게 보간되는지 확인)
+2. 정상 구동 후 컨테이너 내부 타임존 및 `date` 명령 확인
