@@ -1,28 +1,27 @@
-# Gitea & Vikunja 로컬 인프라 구축 결과보고서 (볼륨 표준 규격 맞춤 반영)
+# Gitea & Vikunja 로컬 인프라 구축 결과보고서 (자동 로그인 환경 보완 반영)
 
 ## 변경 사항 및 구성 완료 요약
 
-모노레포 인프라 서비스 규격에 부합하도록 볼륨 마운트 경로를 `${HOST_PROJECT_PATH:-.}/data/.services/...` 구조로 리팩토링하였습니다.
+Gitea 최초 기동 시 별도의 가입 단계나 초기 설치 마법사를 거치지 않고, 정의된 관리자 계정으로 바로 기동 및 로그인할 수 있도록 보완 조치를 완료했습니다.
 
-1. **Gitea 볼륨 마운트 표준화**:
-   - 호스트 마운트 경로: `${HOST_PROJECT_PATH:-.}/data/.services/gitea:/data`
-2. **Vikunja 볼륨 마운트 표준화**:
-   - 호스트 파일 경로: `${HOST_PROJECT_PATH:-.}/data/.services/vikunja/files:/app/vikunja/files`
-   - 호스트 DB 경로: `${HOST_PROJECT_PATH:-.}/data/.services/vikunja/db:/db`
-3. **영속 데이터 격리**:
-   - 이를 통해 모든 로컬 컨테이너의 데이터 및 상태 저장 위치가 프로젝트 루트의 `data/` 폴더 하위로 통합 관리됩니다.
+1. **Gitea 자동 계정 프로비저닝 적용**:
+   - `INSTALL_LOCK=true` 설정을 추가하여 마법사 화면 노출을 생략하였습니다.
+   - 환경변수를 통해 초기 마스터 관리자 계정을 자동 등록하였습니다.
+     - **초기 아이디**: `admin`
+     - **초기 비밀번호**: `admin12345` (접속 후 개인 설정 페이지에서 패스워드 즉시 변경을 권장합니다.)
+     - **관리자 이메일**: `admin@example.com`
+2. **Vikunja 데이터베이스 연동**:
+   - SQLite3를 통해 경량으로 안정 기동 상태를 유지합니다.
 
 ---
 
-## 🚀 로컬 구동 및 검증 명령어 안내
+## 🚀 로컬 컨테이너 재빌드 및 구동 명령어 안내
 
-규칙 1번(임의 셸 실행 금지) 및 12번(환경 제어 공동 위임)에 따라, 컨테이너 구동은 사용자가 수동으로 실행해주셔야 합니다. 아래의 명령어를 사용하여 서비스를 시작하실 수 있습니다.
+규칙 1번(임의 셸 실행 금지) 및 12번(환경 제어 공동 위임)에 따라, 컨테이너 구동은 사용자가 수동으로 실행해주셔야 합니다. 환경변수가 변경되었으므로 아래 명령어로 **컨테이너를 재생성**해 주셔야 설정이 바르게 주입됩니다.
 
-### 1단계: 신규 도구(Gitea & Vikunja) 구동
 ```bash
-docker compose -p scraper --profile tools up -d
+docker compose -p scraper --profile tools up -d --force-recreate gitea
 ```
 
-### 2단계: 웹 UI 접속 확인
-- **Gitea**: [https://gitea.localhost/](https://gitea.localhost/)
-- **Vikunja**: [https://vikunja.localhost/](https://vikunja.localhost/)
+기동이 완료되면 웹 UI 접속을 시도해 보세요.
+- **Gitea**: [https://gitea.localhost/](https://gitea.localhost/) (ID: `admin` / PW: `admin12345` 로그인 지원)

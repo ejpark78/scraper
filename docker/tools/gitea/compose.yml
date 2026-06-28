@@ -17,6 +17,10 @@ services:
       - GITEA__server__ROOT_URL=https://gitea.localhost/
       - GITEA__server__SSH_PORT=2222
       - GITEA__server__DOMAIN=gitea.localhost
+      - GITEA__security__INSTALL_LOCK=true
+      - GITEA__security__ADMIN_USERNAME=admin
+      - GITEA__security__ADMIN_PASSWORD=admin12345
+      - GITEA__security__ADMIN_EMAIL=admin@example.com
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/gitea:/data
