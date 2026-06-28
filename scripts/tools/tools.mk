@@ -47,6 +47,12 @@ up-jupyter:
 
 up-gitea:
 	$(COMPOSE) --profile tools up -d gitea
+	@echo "⏳ Gitea 컨테이너가 안정화될 때까지 대기합니다..."
+	@sleep 5
+	@if ! $(COMPOSE) exec -T -u 1000 gitea gitea admin user list | grep -q "admin"; then \
+		echo "⚙️ Gitea 초기 관리자(admin) 계정을 생성합니다..."; \
+		$(COMPOSE) exec -T -u 1000 gitea gitea admin user create --admin --username admin --password admin12345 --email admin@example.com || true; \
+	fi
 	@echo "🚀 Gitea GUI가 실행되었습니다. https://gitea.localhost 에 접속하세요."
 
 up-vikunja:
