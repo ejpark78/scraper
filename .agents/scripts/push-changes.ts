@@ -12,6 +12,37 @@
  */
 
 import { execSync } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+
+/**
+ * 릴리즈 환경변수를 래핑하는 ReleaseConfig 클래스
+ */
+class ReleaseConfig {
+  public readonly accessToken: string | undefined;
+  public readonly repo: string = 'gitea-admin/scraper';
+
+  constructor() {
+    this.loadEnv();
+    this.accessToken = process.env.GITEA_ACCESS_TOKEN || process.env.GITEA_API_TOKEN;
+  }
+
+  private loadEnv(): void {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (!fs.existsSync(envPath)) return;
+
+    const content = fs.readFileSync(envPath, 'utf-8');
+    content.split('\n').forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+
+      const parts = trimmed.split('=');
+      const key = parts[0].trim();
+      const value = parts.slice(1).join('=').trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
+      process.env[key] = value;
+    });
+  }
+}
 
 /**
  * Git 릴리즈 커맨드 수행을 위한 GitReleaseService 클래스
@@ -45,13 +76,20 @@ class GitReleaseService {
  */
 class ReleaseHelper {
   private git: GitReleaseService;
+  private config: ReleaseConfig;
 
-  constructor(git: GitReleaseService) {
+  constructor(git: GitReleaseService, config: ReleaseConfig) {
     this.git = git;
+    this.config = config;
   }
 
   public execute(): void {
     console.log('🚀 push-changes release sequence 시작...');
+
+    if (!this.config.accessToken) {
+      console.error('❌ ERROR: GITEA_ACCESS_TOKEN이 설정되어 있지 않아 원격지 Push를 수행할 수 없습니다.');
+      process.exit(1);
+    }
 
     // 로컬 Traefik 도메인 및 SSL 인증 에러 우회를 위한 로컬 바이패스 주입
     this.git.runCmd('git config http.sslVerify false');
@@ -71,8 +109,10 @@ class ReleaseHelper {
       this.git.runCmd('git checkout develop');
     }
 
+    const pushUrl = `https://gitea-admin:${this.config.accessToken}@gitea.localhost/${this.config.repo}.git`;
+
     console.log("🚀 로컬 'develop' 브랜치를 origin에 push 중...");
-    this.git.runCmd('git push origin develop');
+    this.git.runCmd(`git push "${pushUrl}" develop`);
 
     console.log("🔀 'develop' 변경 사항을 'main' 브랜치에 merge 중...");
     this.git.runCmd('git checkout main');
@@ -87,7 +127,7 @@ class ReleaseHelper {
     }
 
     console.log("🚀 로컬 'main' 브랜치를 origin에 push 중...");
-    this.git.runCmd('git push origin main');
+    this.git.runCmd(`git push "${pushUrl}" main`);
 
     console.log("🔙 'develop' 브랜치로 복귀 중...");
     this.git.runCmd('git checkout develop');
@@ -96,7 +136,8 @@ class ReleaseHelper {
   }
 }
 
-// Execution Entrypoint
+// Global Execution Entrypoint
+const releaseConfig = new ReleaseConfig();
 const gitService = new GitReleaseService();
-const releaseHelper = new ReleaseHelper(gitService);
+const releaseHelper = new ReleaseHelper(gitService, releaseConfig);
 releaseHelper.execute();
