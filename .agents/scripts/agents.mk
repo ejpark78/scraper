@@ -21,7 +21,7 @@ AGENTS_FLAG = --agent=$(AGENTS)
         wiki
 
 dump:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --all-targets --all $(AGENTS_FLAG)
+	@npm run agents:sessions -- --all-targets --all $(AGENTS_FLAG)
 	@$(MAKE) -f .agents/scripts/agents.mk compress-rules
 	@$(MAKE) -f .agents/scripts/agents.mk wiki
 
@@ -29,32 +29,32 @@ wiki:
 	@bash .agents/scripts/sync-wiki.sh
 
 dump-transcripts:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --transcript --all $(AGENTS_FLAG)
+	@npm run agents:sessions -- --transcript --all $(AGENTS_FLAG)
 
 dump-context:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --context --all $(AGENTS_FLAG)
+	@npm run agents:sessions -- --context --all $(AGENTS_FLAG)
 
 dump-brain:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --brain --all $(AGENTS_FLAG)
+	@npm run agents:sessions -- --brain --all $(AGENTS_FLAG)
 
 dump-sysinfo:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --sysinfo
+	@npm run agents:sessions -- --sysinfo
 
 compress-rules:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --context --all $(AGENTS_FLAG)
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts --compress
+	@npm run agents:sessions -- --context --all $(AGENTS_FLAG)
+	@npm run agents:rules -- --compress
 
 lint-rules:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts --lint
+	@npm run agents:rules -- --lint
 
 usage:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/usage.ts
+	@npm run agents:usage
 
 prune:
-	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --prune
+	@npm run agents:sessions -- --prune
 
 commit:
-	@bash .agents/scripts/commit-changes.sh
+	@npm run commit
 
 code-review review:
 	@echo "🤖 Running AI Code Review Skill via Antigravity CLI..."

@@ -19,7 +19,10 @@
     "type-check": "npm run type-check:crawler && npm run type-check:viewer && npm run type-check:ebook",
     "review": "bash scripts/agents/review-changes.sh",
     "gitea": "ts-node .agents/scripts/gitea.ts",
-    "commit": "ts-node .agents/scripts/commit-changes.ts"
+    "commit": "ts-node .agents/scripts/commit-changes.ts",
+    "agents:sessions": "ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts",
+    "agents:rules": "ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts",
+    "agents:usage": "ts-node --project apps/agents/tsconfig.json apps/agents/usage.ts"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
