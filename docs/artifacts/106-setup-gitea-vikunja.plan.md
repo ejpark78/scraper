@@ -1,23 +1,23 @@
-# 로컬 Gitea 및 Vikunja 인프라 구축 계획서 (수정안 - USER 0 지정을 통한 빌드 복구)
+# AGENTS.md 규칙 보완 계획서 (세션 개선 및 행동 지침 명문화)
 
-이 계획서는 Vikunja 이미지 빌드 도중 발생하는 `unable to find user root` 오류를 해결하기 위해, 빌드 명세의 root 사용자를 UID 0으로 선언하여 curl 설치 및 헬스체크를 정상 완결하는 조치를 다룹니다.
+이 계획서는 빌드 환경 지레짐작 오동작 및 땜빵식 정비 꼼수 재발을 방지하기 위해 분석 및 반성 결과를 `AGENTS.md`에 공식 규정으로 새겨 정립하는 조치를 다룹니다.
 
 ## Proposed Changes
 
-### [Docker Tools Setup]
+### [Rules Update]
 
-#### [MODIFY] [Dockerfile](file:///Users/ejpark/workspace/scraper/docker/tools/vikunja/Dockerfile)
-- `USER root` ➡️ `USER 0`으로 변경하여 빌드 권한 맵 매핑 에러 해결
-
-#### [MODIFY] [compose.yml](file:///Users/ejpark/workspace/scraper/docker/tools/vikunja/compose.yml)
-- `build` 및 `local/vikunja:latest` 빌드 이미지 매핑 복원
-- `healthcheck` 블록 복원 (curl 기반 헬스 확인 수행)
+#### [MODIFY] [AGENTS.md](file:///Users/ejpark/workspace/scraper/AGENTS.md)
+- 주요 제약 사항(Critical Constraints) 하단 영역에 규칙 20번, 21번, 22번 추가:
+  - **20. 사전 환경 진단 철저**:
+    - 도커 빌드나 환경 변조 전, 대상 이미지의 베이스(OS, scratch 여부), 가상 경로 구조 등을 `docker inspect`나 사전 읽기 도구로 분석하기 전에는 환경 설정을 지레짐작으로 고치지 마십시오.
+  - **21. 땜빵식(Ad-hoc) 해결 금지**:
+    - 헬스체크를 임의 삭제하는 등의 편법으로 에러를 덮으려 하지 마십시오. 멀티스테이지 등 표준 컨테이너 설계에 부합하는 정석 해법을 1순위로 고민해야 합니다.
+  - **22. 마크다운 아티팩트 오염 방지**:
+    - `task.md` 등 마크다운 문서 갱신 시, 문구 교체 도구(`replace_file_content`)의 줄 오차로 인한 컨텍스트 꼬임(루프)을 예방하기 위해 `write_to_file`의 `Overwrite=true` 속성을 이용한 전체 덮어쓰기 사용을 적극 지향하십시오.
 
 ---
 
 ## Verification Plan
 
 ### Manual Verification
-1. `make up-vikunja` 실행 시 에러 없이 커스텀 curl 이미지가 빌드되는지 확인
-2. `docker compose -p scraper ps` 결과 상 `healthy` 상태 점검
-3. `https://vikunja.localhost/` 최종 브라우저 접속 확인
+1. AGENTS.md 파일 갱신 후 다음 턴부터 해당 강화된 행동 수칙이 인지되는지 확인

@@ -20,7 +20,7 @@
 4. **투명한 이슈 처리**: 오류는 즉시 보고합니다. 무음 복구 금지. 사용자 리뷰 없이 자가 트러블슈팅은 최대 2회.
 5. **상대경로 링크**: 문서에서는 상대경로를 사용하세요 (예: `[Worker](src/Worker.ts)`). `file://` 사용 금지.
 6. **자동 Git 커밋 및 작업 완료 후 커밋**: 유효한 편집 직후 또는 특정 단위 작업(기능 추가, 버그 수정 등)이 완료될 때마다 반드시 `scripts/agents/commit-changes.sh`를 실행하여 로컬 저장소에 커밋합니다. 또한 다음 작업을 위해 브랜치를 전환하기 전에도 변경 사항이 누락되지 않도록 커밋을 완료해야 합니다.
-7. **Docker 중심 테스트 및 실행**: 로컬 스크립트는 `docker compose` 내부망에서 실행 및 진단해야 합니다. 호스트에 DB 포트를 직접 노출하지 말고 Traefik 프록시 도메인을 경유하여 통신하며, Netshoot 진단이나 MCP 도구를 사용합니다. 정적 스타일 및 타입 검증(`npm run lint`, `npm run type-check`) 뿐만 아니라 로컬 정적 코드 리뷰(`npm run review`) 도구 또한 호스트 전역 환경 의존성을 배제하기 위해 실행 중인 Docker 컨테이너 내부로 위임(Proxying)하여 격리 실행되도록 구성해야 합니다. 호스트 단독 검증 과정에서의 경로 불일치로 인해 모노레포 패키지 격리 구조를 해치는 임의 수정(예: 격리 패키지 외부의 상대 경로 모듈 강제 매핑 등)을 엄격히 금지하며, 필요 시 Docker 환경 내부망 기준으로 실행해야 합니다. 자세한 구성과 볼륨 마운트 해결 규칙은 [Docker Environment Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/docker_environment.md)를 상시 참고하세요.
+7. **Docker 중심 테스트 및 실행**: 로컬 스크립트는 `docker compose` 내부망에서 실행 및 진단해야 합니다. 호스트에 DB 포트를 직접 노출하지 말고 Traefik 프록시 도메인을 경유하여 통신하며, Netshoot 진단이나 MCP 도구를 사용합니다. 정적 스타일 및 타입 검증(`npm run lint`, `npm run type-check`) 뿐만 아니라 로컬 정적 코드 리뷰(`npm run review`) 도구 또한 호스트 전역 환경 의존성을 배제하기 위해 실행 중인 Docker 컨테이너 내부로 위임(Proxying)하여 격리 실행되도록 구성해야 합니다. 호스트 단독 검증 과정에서의 경로 불일치로 인해 모노레포 패키지 격리 구조를 해치는 임의 수정(예: 격리 패키지 외부의 상대 경로 모듈 강제 매핑 등)을 엄격히 금지하며, 필요 시 Docker environment 내부망 기준으로 실행해야 합니다. 자세한 구성과 볼륨 마운트 해결 규칙은 [Docker Environment Guide](.agents/rules/docker_environment.md)를 상시 참고하세요.
 8. **Python 및 uv 가상환경 실행**: Python 스크립트 실행 및 패키지 관리 시, 호스트의 전역 Python을 사용하지 말고 반드시 `uv run` 또는 `docker compose` 가상환경 컨텍스트 내에서 실행해야 합니다.
 9. **트랜스크립트 내보내기 (수동 실행)**: 세션 시작 시 `make agents-dump`를 자동 실행하지 마세요. 사용자가 요청하거나 세션 결과를 요약할 때만 명령어 라인을 제공하세요.
 10. **동시 백그라운드 작업 금지**: 경쟁 상태 및 DB/시스템 상태 손상을 방지하기 위해, 각 명령어에 대한 사용자의 명시적 승인 없이 여러 백그라운드 명령어/태스크를 병렬 실행하지 마세요. 활성 백그라운드 작업이 완전히 종료되고 종료 상태를 확인한 후에만 다음 명령어 승인을 요청하세요.
@@ -30,12 +30,12 @@
 14. **범위 외 수정 금지**: 사용자가 명시적으로 요청한 범위 밖의 파일은 수정하지 마세요.
 15. **추측 수정 금지**: 추측에 기반한 코드 수정은 엄격히 금지됩니다. 문제의 근본 원인을 모르면 사용자에게 문의하세요.
 16. **개별 패키지 전용 규칙의 격리**: crawler 및 viewer 전용 세부 실행 방식/제약 조건은 각각 `apps/crawler/AGENTS.md` 및 `apps/viewer/AGENTS.md` 파일에 정의합니다. 에이전트는 해당 하위 디렉토리 작업 시 개별 규칙을 확인하고 준수해야 합니다.
-17. **Git Flow 브랜치 전략 및 에이전트 행동 지침**: `main` 직접 수정 절대 금지, 브랜치 전환 전 `commit-changes.sh` 실행 완료 필수, 충돌 시 강제 푸시 금지 등 핵심 동작 룰을 준수합니다. 특히 작업 세션 시작 시 반드시 현재 git 브랜치를 식별하고, `main` 브랜치일 경우 코드 수정을 시작하기 전에 브랜치 전환(`git checkout develop` 또는 `git checkout -b feature/*`)을 제안하고 사용자에게 경고해야 합니다. 구체적인 브랜치 명명법과 커밋/머지 절차는 [Git Flow Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/git_flow.md)를 로드하여 준수해야 합니다. 또한, 피처 작업이 끝나면 최종 커밋 후 원래 기준 브랜치(예: `develop`)로 이동(checkout)하여 머지(merge)를 진행해야 합니다. 이때 자동화를 위해 `scripts/agents/commit-changes.sh` 스크립트(기본 머지 기능 활성화됨)를 활용하여 단일 턴에 커밋과 머지를 한 번에 처리하는 것을 권장합니다. (머지 없이 커밋만 하려면 `--no-merge` 옵션을 활용합니다.) Git 히스토리를 조사할 때는 단발성 명령어를 반복 실행하여 덤프 루프를 돌지 말고 단일 턴에 통합 조회해야 합니다.
+17. **Git Flow 브랜치 전략 및 에이전트 행동 지침**: `main` 직접 수정 절대 금지, 브랜치 전환 전 `commit-changes.sh` 실행 완료 필수, 충돌 시 강제 푸시 금지 등 핵심 동작 룰을 준수합니다. 특히 작업 세션 시작 시 반드시 현재 git 브랜치를 식별하고, `main` 브랜치일 경우 코드 수정을 시작하기 전에 브랜치 전환(`git checkout develop` 또는 `git checkout -b feature/*`)을 제안하고 사용자에게 경고해야 합니다. 구체적인 브랜치 명명법과 커밋/머지 절차는 [Git Flow Guide](.agents/rules/git_flow.md)를 로드하여 준수해야 합니다. 또한, 피처 작업이 끝나면 최종 커밋 후 원래 기준 브랜치(예: `develop`)로 이동(checkout)하여 머지(merge)를 진행해야 합니다. 이때 자동화를 위해 `scripts/agents/commit-changes.sh` 스크립트(기본 머지 기능 활성화됨)를 활용하여 단일 턴에 커밋과 머지를 한 번에 처리하는 것을 권장합니다. (머지 없이 커밋만 하려면 `--no-merge` 옵션을 활용합니다.) Git 히스토리를 조사할 때는 단발성 명령어를 반복 실행하여 덤프 루프를 돌지 말고 단일 턴에 통합 조회해야 합니다.
 18. **개발 생명주기 내 정적 검증 강제**: 소스 코드를 커밋하거나 원격 저장소에 반영하기 전, 에이전트와 개발자는 반드시 정적 스타일 검증(`npm run lint`) 및 정적 타입 검증(`npm run type-check`)을 성공해야 합니다. 검사 에러가 존재하는 상태에서의 강제 커밋은 금지됩니다.
 19. **사용자 중요 정보 채팅 고지 의무**: 인프라 구축이나 코드 수정 과정에서 생성/변경된 계정 정보(ID, 임시 비밀번호), 로컬 웹 접속 주소, 핵심 환경 설정 정보 등 사용자가 직접 조작하고 테스트해야 하는 변경 사항은 아티팩트 문서에만 기술하지 말고, 반드시 해당 턴 완료 시 채팅창에도 선제적이고 요약하여 명확하게 알리십시오.
-
-
-
+20. **사전 환경 진단 철저**: 도커 빌드나 환경 변조 전, 대상 이미지의 베이스(OS, scratch 여부), 가상 경로 구조 등을 `docker inspect`나 사전 읽기 도구로 분석하기 전에는 환경 설정을 지레짐작으로 고치지 마십시오.
+21. **땜빵식(Ad-hoc) 해결 금지**: 헬스체크를 임의 삭제하는 등의 편법으로 에러를 덮으려 하지 마십시오. 멀티스테이지 등 표준 컨테이너 설계에 부합하는 정석 해법을 1순위로 고민해야 합니다.
+22. **마크다운 아티팩트 오염 방지**: `task.md` 등 마크다운 문서 갱신 시, 문구 교체 도구(`replace_file_content`)의 줄 오차로 인한 컨텍스트 꼬임(루프)을 예방하기 위해 `write_to_file`의 `Overwrite=true` 속성을 이용한 전체 덮어쓰기 사용을 적극 지향하십시오.
 
 ## ⚠️ 보안 규칙 (Security Rules)
 - **ENV 접근 금지**: `.env` 또는 `.env.*` 파일에 접근하지 마세요. `.env.example`을 참조하세요.
@@ -45,10 +45,10 @@
 * **공통 규칙 및 DRY 원칙 준수**: 모든 개발 및 리팩터링 작업 시 strict typing, OOP 설계, 에러 처리, 그리고 **DRY(Don't Repeat Yourself) 규칙**을 상시 준수해야 합니다. 구체적인 설계 요구사항은 [Engineering & Architecture Guide](.agents/rules/engineering_architecture.md) 규칙 파일을 반드시 상시 로드하여 이행하세요.
 
 ## 🛠️ 기술 스택별 작업 규칙 (Tech Stack Rules)
-* **코딩 규칙 준수**: 코딩 작업 시 strict typing(`any` 금지), class OOP 설계, `uv` 의존성 도구 관리 등의 언어별 코딩 스타일을 명확히 알아야 합니다. 상세 코딩 가이드는 [Tech Stack Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/tech_stack.md)를 로드하여 규칙을 따르세요.
+* **코딩 규칙 준수**: 코딩 작업 시 strict typing(`any` 금지), class OOP 설계, `uv` 의존성 도구 관리 등의 언어별 코딩 스타일을 명확히 알아야 합니다. 상세 코딩 가이드는 [Tech Stack Guide](.agents/rules/tech_stack.md)를 로드하여 규칙을 따르세요.
 
 ## 📝 Documentation Lifecycle Rules
-* **문서화 의무 준수**: 모든 기능 변경은 Spec -> Plan -> Review -> Walkthrough 수명 주기를 밟으며 3자리 접두사를 가진 아티팩트로 보존해야 합니다. 상세 작성 템플릿과 Squash 정책은 [Documentation Lifecycle Guide](file:///Users/ejpark/workspace/scraper/.agents/rules/documentation_lifecycle.md)를 상시 참고하세요.
+* **문서화 의무 준수**: 모든 기능 변경은 Spec -> Plan -> Review -> Walkthrough 수명 주기를 밟으며 3자리 접두사를 가진 아티팩트로 보존해야 합니다. 상세 작성 템플릿과 Squash 정책은 [Documentation Lifecycle Guide](.agents/rules/documentation_lifecycle.md)를 상시 참고하세요.
 
 ## 🧭 Agent Skill Directory Map
 
