@@ -57,7 +57,16 @@ up-gitea:
 
 up-vikunja:
 	$(COMPOSE) --profile tools up -d vikunja
+# 	@echo "⏳ Vikunja 컨테이너가 안정화될 때까지 대기합니다..."
+# 	@sleep 5
+# 	@if ! $(COMPOSE) exec -T -u 1000 vikunja /app/vikunja/vikunja user list | grep -q "vikunja-admin"; then \
+# 		echo "⚙️ Vikunja 초기 관리자(vikunja-admin) 계정을 생성합니다..."; \
+# 		$(COMPOSE) exec -T -u 1000 vikunja /app/vikunja/vikunja user create --email admin@example.com --username vikunja-admin --password admin12345 || true; \
+# 		$(COMPOSE) exec -T -u 1000 vikunja /app/vikunja/vikunja user set-admin vikunja-admin --admin || true; \
+# 	fi
 	@echo "🚀 Vikunja GUI가 실행되었습니다. https://vikunja.localhost 에 접속하세요."
+
+
 
 # --- Coding Agents ---
 

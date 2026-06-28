@@ -1,25 +1,25 @@
-FROM alpine:3.19 AS builder
-RUN apk add --no-cache curl
+FROM vikunja/vikunja:latest AS official
 
-FROM vikunja/vikunja:latest
+FROM alpine:3.19
 
-# curl 실행 바이너리 주입
-COPY --from=builder /usr/bin/curl /usr/bin/curl
+# Install curl, bash, sqlite, ca-certificates, and tzdata
+RUN apk add --no-cache curl bash sqlite ca-certificates tzdata
 
-# 동작에 핵심적으로 필요한 동적 링크 공유 라이브러리 일체 COPY
-COPY --from=builder /lib/ld-musl-*.so.1 /lib/
-COPY --from=builder /lib/libz.so.1 /lib/
-COPY --from=builder /usr/lib/libcurl.so.4 /usr/lib/
-COPY --from=builder /usr/lib/libssl.so.3 /usr/lib/
-COPY --from=builder /usr/lib/libcrypto.so.3 /usr/lib/
-COPY --from=builder /usr/lib/libnghttp2.so.14 /usr/lib/
-COPY --from=builder /usr/lib/libbrotlidec.so.1 /usr/lib/
-COPY --from=builder /usr/lib/libbrotlicommon.so.1 /usr/lib/
+# Create the workdir
+WORKDIR /app/vikunja
 
-# 누락된 curl 의존 라이브러리 3종 추가 카피
-COPY --from=builder /usr/lib/libcares.so.2 /usr/lib/
-COPY --from=builder /usr/lib/libidn2.so.0 /usr/lib/
-COPY --from=builder /usr/lib/libpsl.so.5 /usr/lib/
+# Copy the binary and files from the official image
+COPY --from=official /app/vikunja /app/vikunja
+COPY --from=official /etc/ssl/certs /etc/ssl/certs
 
-# 컨테이너 실행 사용자를 Vikunja 기본(1000)으로 원복
+# Set up user and group matching UID 1000
+RUN addgroup -g 1000 vikunja && adduser -u 1000 -G vikunja -D vikunja
 USER 1000
+
+# Set environment variables
+ENV VIKUNJA_SERVICE_ROOTPATH=/app/vikunja/
+ENV VIKUNJA_DATABASE_PATH=/db/vikunja.db
+
+ENTRYPOINT [ "/app/vikunja/vikunja" ]
+EXPOSE 3456
+

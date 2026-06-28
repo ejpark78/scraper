@@ -35,5 +35,4 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.vikunja.rule=Host(`vikunja.localhost`) || Host(`vikunja.127.0.0.1.nip.io`)"
       - "traefik.http.routers.vikunja.entrypoints=websecure"
-      - "traefik.http.routers.vikunja.tls=true"
       - "traefik.http.services.vikunja.loadbalancer.server.port=3456"
