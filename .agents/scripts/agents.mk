@@ -73,7 +73,7 @@ pms-token:
 	@echo ""
 	@echo "GITEA_API_URL=https://gitea.127.0.0.1.nip.io/api/v1"
 	@sqlite3 data/.services/gitea/gitea/gitea.db "DELETE FROM access_token WHERE name='agents-pms-sync';" 2>/dev/null || true
-	@g_tok=$$(docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all 2>/dev/null | grep -o 'Access token was successfully created:.*' | cut -d' ' -f6); \
+	@g_tok=$$(docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all 2>/dev/null | grep -o 'Access token was successfully created:.*' | cut -d' ' -f6 | tr -d '\r' | tr -d '\n'); \
 	 if [ -n "$$g_tok" ]; then \
 	   echo "GITEA_API_TOKEN=$$g_tok"; \
 	 else \
@@ -82,7 +82,7 @@ pms-token:
 	@echo "VIKUNJA_API_URL=https://vikunja.127.0.0.1.nip.io/api/v1"
 	@v_tok=$$(curl -k -s -X POST https://vikunja.127.0.0.1.nip.io/api/v1/login \
 	   -H "Content-Type: application/json" \
-	   -d '{"username": "vikunja-admin", "password": "admin12345"}' | sed 's/.*"token":"\([^"]*\)".*/\1/'); \
+	   -d '{"username": "vikunja-admin", "password": "admin12345"}' | sed 's/.*"token":"\([^"]*\)".*/\1/' | tr -d '\r' | tr -d '\n'); \
 	 if [ -n "$$v_tok" ]; then \
 	   echo "VIKUNJA_API_TOKEN=$$v_tok"; \
 	 else \
@@ -90,6 +90,7 @@ pms-token:
 	 fi
 	@echo ""
 	@echo "=============================================================================="
+
 
 
 
