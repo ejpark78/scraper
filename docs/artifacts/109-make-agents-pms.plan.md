@@ -83,10 +83,13 @@ agents-pms-token:
 * Gitea API 호출 로직:
   * Repository 검색/생성.
   * Issue 검색/생성/본문 업데이트 (아카이브 추출 정보 포함).
-* Vikunja API 호출 로직:
+* Vikunja API 호출 로직 (Project View 기반 버킷 맵핑):
   * Project/Board 검색/생성.
-  * Standard Buckets(Planned, In Progress, Done) 생성 및 확인.
-  * Task 검색/생성/이동/설명(Description)에 아티팩트 요약 내용 추가 구현 (아카이브 추출 정보 포함).
+  * 디폴트 Kanban View 조회 및 획득 (`GET /projects/{id}/views`).
+  * View 소속 Standard Buckets(Planned, In Progress, Done) 생성 및 확인 (`/projects/{id}/views/{viewId}/buckets`).
+  * Task 생성 후, View의 특정 버킷으로 관계 설정 및 이동 API 호출 (`POST /projects/{id}/views/{viewId}/buckets/{bucketId}/tasks`)을 수행하여 멱등성 있는 카드 배치 달성.
+
+
 
 ### Phase 3: Makefile 통합 및 테스트
 * `Makefile`에 `agents-pms` 타겟 추가 (기본 멱등 업데이트).

@@ -312,8 +312,22 @@ async function syncVikunja(groups: ArtifactGroup[]) {
 
   const projectId = project.id;
 
-  // 2. 표준 칸반 버킷 구성 확인 및 생성
-  const bucketsRes = await callVikunja(`/projects/${projectId}/buckets`);
+  // 디폴트 뷰(View) 획득 및 검증
+  const viewsRes = await callVikunja(`/projects/${projectId}/views`);
+  const views = viewsRes.status === 200 ? await viewsRes.json() : [];
+  let view = views[0];
+  if (!view) {
+    console.log(`🏗️  디폴트 Kanban 뷰를 생성합니다.`);
+    const newViewRes = await callVikunja(`/projects/${projectId}/views`, {
+      method: 'PUT',
+      body: JSON.stringify({ title: 'Kanban', type: 'kanban' }),
+    });
+    view = await newViewRes.json();
+  }
+  const viewId = view.id;
+
+  // 2. 표준 칸반 버킷 구성 확인 및 생성 (프로젝트 뷰 하위로 지정)
+  const bucketsRes = await callVikunja(`/projects/${projectId}/views/${viewId}/buckets`);
   let buckets = bucketsRes.status === 200 ? await bucketsRes.json() : [];
 
   const requiredBucketNames = ['Planned', 'In Progress', 'Done'];
@@ -323,7 +337,7 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     let bucket = buckets.find((b: any) => b.title === name);
     if (!bucket) {
       console.log(`🏗️  Vikunja 버킷 생성: ${name}`);
-      const newBucketRes = await callVikunja(`/projects/${projectId}/buckets`, {
+      const newBucketRes = await callVikunja(`/projects/${projectId}/views/${viewId}/buckets`, {
         method: 'PUT',
         body: JSON.stringify({ title: name }),
       });
@@ -370,31 +384,41 @@ async function syncVikunja(groups: ArtifactGroup[]) {
       description += `\n\`\`\``;
     }
 
-
-
     const matchedTask = existingTasks.find((t: any) => t.title.startsWith(`[SCR-${group.id}]`));
+    let taskId: number | null = null;
 
     if (matchedTask) {
-      // 정보 업데이트 및 버킷 이동
-      if (matchedTask.bucket_id !== targetBucketId || matchedTask.description !== description) {
-        console.log(`🔄 Vikunja 태스크 업데이트 및 버킷 이동 (${targetBucketName}): ${taskTitle}`);
+      taskId = matchedTask.id;
+      // 정보 업데이트
+      if (matchedTask.description !== description) {
+        console.log(`🔄 Vikunja 태스크 본문 업데이트: ${taskTitle}`);
         await callVikunja(`/tasks/${matchedTask.id}`, {
           method: 'POST',
           body: JSON.stringify({
-            bucket_id: targetBucketId,
             description: description,
           }),
         });
       }
     } else {
       // 신규 태스크 생성
-      console.log(`➕ Vikunja 신규 태스크 생성 (${targetBucketName}): ${taskTitle}`);
-      await callVikunja(`/projects/${projectId}/tasks`, {
+      console.log(`➕ Vikunja 신규 태스크 생성: ${taskTitle}`);
+      const createRes = await callVikunja(`/projects/${projectId}/tasks`, {
         method: 'PUT',
         body: JSON.stringify({
           title: taskTitle,
           description: description,
-          bucket_id: targetBucketId,
+        }),
+      });
+      const createdTask = await createRes.json();
+      taskId = createdTask.id;
+    }
+
+    // 버킷 관계 설정 및 이동 API 호출 (Kanban View 상의 버킷 이동)
+    if (taskId) {
+      await callVikunja(`/projects/${projectId}/views/${viewId}/buckets/${targetBucketId}/tasks`, {
+        method: 'POST',
+        body: JSON.stringify({
+          task_id: taskId,
         }),
       });
     }
