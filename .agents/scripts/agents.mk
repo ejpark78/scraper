@@ -66,13 +66,30 @@ pms:
 	@npx ts-node .agents/scripts/sync-pms.ts
 
 pms-token:
-	@echo "🔑 Gitea Access Token 생성 중..."
-	@docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all 2>/dev/null || echo "ℹ️ Gitea 토큰이 이미 존재하거나 생성할 수 없습니다. (기존 토큰 유지)"
+	@echo "=============================================================================="
+	@echo "⚙️  Gitea & Vikunja PMS 동기화용 환경 변수 설정 안내"
+	@echo "아래 텍스트 블록을 복사하여 프로젝트 최상위의 .env 파일에 추가해 주십시오."
+	@echo "=============================================================================="
 	@echo ""
-	@echo "🔑 Vikunja JWT Token 자동 획득 중..."
-	@curl -k -s -X POST https://vikunja.127.0.0.1.nip.io/api/v1/login \
+	@echo "GITEA_API_URL=https://gitea.127.0.0.1.nip.io/api/v1"
+	@g_tok=$$(docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all 2>/dev/null | grep -o 'Access token was successfully created:.*' | cut -d' ' -f6); \
+	 if [ -n "$$g_tok" ]; then \
+	   echo "GITEA_API_TOKEN=$$g_tok"; \
+	 else \
+	   echo "GITEA_API_TOKEN=기존_발행된_Gitea_토큰_값 (이미 토큰이 존재하여 재출력 불가)"; \
+	 fi
+	@echo "VIKUNJA_API_URL=https://vikunja.127.0.0.1.nip.io/api/v1"
+	@v_tok=$$(curl -k -s -X POST https://vikunja.127.0.0.1.nip.io/api/v1/login \
 	   -H "Content-Type: application/json" \
-	   -d '{"username": "vikunja-admin", "password": "admin12345"}' | grep -o '"token":"[^"]*' | grep -o '[^"]*$$' || echo "Vikunja 로그인 실패"
+	   -d '{"username": "vikunja-admin", "password": "admin12345"}' | grep -o '"token":"[^"]*' | grep -o '[^"]*$$'); \
+	 if [ -n "$$v_tok" ]; then \
+	   echo "VIKUNJA_API_TOKEN=$$v_tok"; \
+	 else \
+	   echo "VIKUNJA_API_TOKEN=Vikunja_로그인_실패"; \
+	 fi
+	@echo ""
+	@echo "=============================================================================="
+
 
 
 
