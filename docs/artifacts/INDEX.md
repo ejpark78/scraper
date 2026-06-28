@@ -188,5 +188,9 @@
 - [108-reorganize-docker-scripts.task](108-reorganize-docker-scripts.task.md)
 - [108-reorganize-docker-scripts.review](108-reorganize-docker-scripts.review.md)
 - [108-reorganize-docker-scripts.walkthrough](108-reorganize-docker-scripts.walkthrough.md)
+- [111-setup-gitea-actions.plan](111-setup-gitea-actions.plan.md)
+- [111-setup-gitea-actions.task](111-setup-gitea-actions.task.md)
+- [111-setup-gitea-actions.review](111-setup-gitea-actions.review.md)
+- [111-setup-gitea-actions.walkthrough](111-setup-gitea-actions.walkthrough.md)
 
 

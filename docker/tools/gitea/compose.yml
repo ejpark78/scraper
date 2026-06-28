@@ -24,6 +24,7 @@ services:
       - GITEA__security__ADMIN_USERNAME=gitea-admin
       - GITEA__security__ADMIN_PASSWORD=admin12345
       - GITEA__security__ADMIN_EMAIL=admin@example.com
+      - GITEA__actions__ENABLED=true
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/gitea:/data
@@ -39,3 +40,20 @@ services:
       - "traefik.http.routers.gitea.entrypoints=websecure"
       - "traefik.http.routers.gitea.tls=true"
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+
+  act_runner:
+    image: gitea/act_runner:latest
+    profiles:
+      - tools
+    depends_on:
+      gitea:
+        condition: service_healthy
+    environment:
+      - GITEA_INSTANCE_URL=http://gitea:3000
+      - GITEA_RUNNER_REGISTRATION_TOKEN_FILE=/data/token
+      - GITEA_RUNNER_NAME=local-runner
+      - GITEA_RUNNER_LABELS=ubuntu-latest:docker://node:18-bullseye,ubuntu-22.04:docker://node:18-bullseye
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOST_PROJECT_PATH:-.}/data/.services/gitea/act_runner:/data
+    restart: unless-stopped
