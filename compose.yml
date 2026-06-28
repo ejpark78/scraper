@@ -28,5 +28,5 @@ include:
   - docker/infra/meilisearch/compose.yml
   - docker/infra/redis/compose.yml
   - docker/infra/traefik/compose.yml
-  - docker/tools/docs/compose.yml
+  - docker/tools/obsidian/compose.yml
   - docker/infra/autoheal/compose.yml

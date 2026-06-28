@@ -9,7 +9,6 @@
 services:
   autoheal:
     image: willfarrell/autoheal:latest
-    container_name: autoheal
     profiles:
       - infrastructure
       - worker

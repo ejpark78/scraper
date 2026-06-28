@@ -7,9 +7,8 @@
 # ==============================================================================
 
 services:
-  docs:
+  obsidian:
     image: lscr.io/linuxserver/obsidian:latest
-    container_name: scraper-docs
     profiles:
       - tools
     security_opt:
