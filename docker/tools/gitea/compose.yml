@@ -27,9 +27,6 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/gitea:/data
-    depends_on:
-      traefik:
-        condition: service_healthy
     networks:
       default:
         aliases:
