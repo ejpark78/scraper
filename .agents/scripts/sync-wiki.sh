@@ -40,12 +40,11 @@ find "$DUMP_DIR" -type f -name "context_memory.md" | while read -r file; do
     fi
 done
 
-# 3. OpenKB 지식 컴파일 실행
-echo "🧠 Compiling knowledge via OpenKB (PageIndex)..."
-# openkb add 명령어로 raw/ 안의 문서를 지식화합니다.
-# (파일이 없거나 추가할 것이 없다면 패스)
+# 3. OpenKB 지식 컴파일 실행 (Docker Compose 위임)
+echo "🧠 Compiling knowledge via OpenKB inside Container (PageIndex)..."
+# openkb 컨테이너를 실행하여 raw/ 안의 문서를 지식화합니다.
 if [ "$(ls -A ${OPENKB_DIR}/raw)" ]; then
-    openkb --kb-dir "$OPENKB_DIR" add "${OPENKB_DIR}/raw/"
+    docker compose -p scraper run --rm openkb add /data/openkb/raw/
 else
     echo "   No raw logs found to compound."
 fi

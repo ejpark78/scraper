@@ -1,0 +1,23 @@
+# ==============================================================================
+# 🧠 OpenKB Compiler Service Block (Pre-built Image Version)
+# ==============================================================================
+
+services:
+  openkb:
+    build:
+      context: ${HOST_PROJECT_PATH:-.}/docker/tools/openkb
+      dockerfile: Dockerfile
+    container_name: scraper-openkb
+    profiles:
+      - tools
+    depends_on:
+      - ollama
+    environment:
+      # OpenAI / litellm 규격을 만족시키기 위한 더미 api_key 주입
+      - OPENAI_API_KEY=anything
+      - LLM_API_KEY=anything
+      - OLLAMA_API_BASE=http://ollama:11434
+      - OPENAI_API_BASE=http://ollama:11434/v1
+    volumes:
+      - ${HOST_PROJECT_PATH:-.}/data/openkb:/data/openkb
+    working_dir: /data/openkb
