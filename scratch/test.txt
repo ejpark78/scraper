@@ -1,0 +1,1 @@
+Gitea [br] newline format validation check dummy.
