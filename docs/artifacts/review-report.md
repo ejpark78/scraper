@@ -1,9 +1,9 @@
 # Local Static Code Review Report
-Generated at: Sun Jun 28 11:25:18 KST 2026
+Generated at: Sun Jun 28 11:58:26 KST 2026
 
 ## 📄 Modified Files List
-* `Makefile`
-* `docs/artifacts/INDEX.md`
+* `.agents/scripts/agents.mk`
+* `.env.example`
 
 ## 🚨 Diagnostic Reports
 ### Lint Diagnostics

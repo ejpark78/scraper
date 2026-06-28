@@ -62,4 +62,8 @@ code-review review:
 push:
 	@bash .agents/scripts/push-changes.sh
 
+pms:
+	@npx ts-node .agents/scripts/sync-pms.ts
+
+
 
