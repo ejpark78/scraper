@@ -44,7 +44,7 @@ services:
       - "traefik.http.routers.gitea.tls=true"
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
 
-  act_runner:
+  gitea_runner:
     image: gitea/act_runner:latest
     profiles:
       - tools
