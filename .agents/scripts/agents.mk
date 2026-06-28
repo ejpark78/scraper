@@ -69,13 +69,19 @@ pms-token:
 	@echo "🔑 Gitea Access Token 생성 중..."
 	@docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all || true
 	@echo ""
-	@echo "🔑 Vikunja JWT Token 생성용 로그인 절차..."
+	@echo "🔑 Vikunja 계정 확인 및 로그인 절차..."
 	@read -p "Vikunja Username: " v_user; \
 	 read -s -p "Vikunja Password: " v_pass; \
 	 echo ""; \
+	 read -p "Vikunja Email (계정 생성용): " v_email; \
+	 echo "👤 Vikunja 계정 생성 시도..."; \
+	 docker compose -p scraper exec -T vikunja /app/vikunja/vikunja user create --username "$$v_user" --password "$$v_pass" --email "$$v_email" || true; \
+	 echo ""; \
+	 echo "🔑 Vikunja JWT Token 획득 중..."; \
 	 curl -k -s -X POST https://vikunja.127.0.0.1.nip.io/api/v1/login \
 	   -H "Content-Type: application/json" \
 	   -d "{\"username\": \"$$v_user\", \"password\": \"$$v_pass\"}" | grep -o '"token":"[^"]*' | grep -o '[^"]*$$' || echo "Vikunja 로그인 실패"
+
 
 
 
