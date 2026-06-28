@@ -181,5 +181,8 @@
 - [105-make-agents-push.task](105-make-agents-push.task.md)
 - [105-make-agents-push.review](105-make-agents-push.review.md)
 - [105-make-agents-push.walkthrough](105-make-agents-push.walkthrough.md)
+- [106-setup-gitea-vikunja.plan](106-setup-gitea-vikunja.plan.md)
+- [106-setup-gitea-vikunja.task](106-setup-gitea-vikunja.task.md)
+- [106-setup-gitea-vikunja.walkthrough](106-setup-gitea-vikunja.walkthrough.md)
 
 

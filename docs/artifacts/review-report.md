@@ -1,9 +1,9 @@
 # Local Static Code Review Report
-Generated at: Sat Jun 27 12:27:09 KST 2026
+Generated at: Sun Jun 28 09:31:15 KST 2026
 
 ## 📄 Modified Files List
+* `compose.yml`
 * `docs/artifacts/INDEX.md`
-* `scripts/agents/agents.mk`
 
 ## 🚨 Diagnostic Reports
 ### Lint Diagnostics
