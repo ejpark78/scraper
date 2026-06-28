@@ -70,6 +70,7 @@ agents-pms-token:
 * `Makefile`에 `agents-pms` 타겟 추가.
 * 기존 `docs/artifacts` 내 전체 아티팩트(소급 적용) 대상 동기화 테스트 및 검증.
 
-### Phase 4: CLI 토큰 생성 헬퍼 추가
-* `agents.mk`에 `agents-pms-token` 타겟을 추가하여 CLI에서 원버튼으로 Gitea 토큰 및 Vikunja 토큰을 모두 발행/출력할 수 있게 유도.
+### Phase 4: CLI 토큰 생성 헬퍼 및 계정 검증 추가
+* `agents.mk`에 `agents-pms-token` 타겟을 추가하되, TTY 오류를 방지하기 위해 `exec -T` 대신 `-it`를 사용하도록 수정.
+* `tools.mk`의 `up-vikunja` 규칙 내에서 계정 생성 시 TTY 에러가 발생하지 않도록 패스워드를 표준 입력(STDIN)으로 안전하게 넘겨주고, 생성이 완료된 후 다시 한 번 계정이 성공적으로 존재하는지 검증(Test)하는 출력 로직을 통합.
 
