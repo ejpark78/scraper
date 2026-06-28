@@ -72,11 +72,12 @@ pms-token:
 	@echo "=============================================================================="
 	@echo ""
 	@echo "GITEA_API_URL=https://gitea.127.0.0.1.nip.io/api/v1"
+	@sqlite3 data/.services/gitea/gitea/gitea.db "DELETE FROM access_token WHERE name='agents-pms-sync';" 2>/dev/null || true
 	@g_tok=$$(docker compose -p scraper exec -it gitea gitea admin user generate-access-token --username gitea-admin --token-name agents-pms-sync --scopes all 2>/dev/null | grep -o 'Access token was successfully created:.*' | cut -d' ' -f6); \
 	 if [ -n "$$g_tok" ]; then \
 	   echo "GITEA_API_TOKEN=$$g_tok"; \
 	 else \
-	   echo "GITEA_API_TOKEN=기존_발행된_Gitea_토큰_값 (이미 토큰이 존재하여 재출력 불가)"; \
+	   echo "GITEA_API_TOKEN=기존_발행된_Gitea_토큰_값 (토큰 재생성 실패)"; \
 	 fi
 	@echo "VIKUNJA_API_URL=https://vikunja.127.0.0.1.nip.io/api/v1"
 	@v_tok=$$(curl -k -s -X POST https://vikunja.127.0.0.1.nip.io/api/v1/login \
@@ -89,6 +90,7 @@ pms-token:
 	 fi
 	@echo ""
 	@echo "=============================================================================="
+
 
 
 
