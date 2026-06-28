@@ -1,5 +1,0 @@
-#!/bin/bash
-if [ -f "/Users/ejpark/workspace/scraper/.env" ]; then
-  export $(grep -v '^#' /Users/ejpark/workspace/scraper/.env | grep -v '^$' | xargs)
-fi
-exec "/Users/ejpark/workspace/scraper/.agents/bin/gitea-mcp-bin" "$@"

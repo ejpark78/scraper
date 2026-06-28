@@ -17,7 +17,8 @@
     "type-check:viewer": "npm run type-check --prefix apps/viewer",
     "type-check:ebook": "cd apps/ebook && .venv/bin/python -m poethepoet type-check",
     "type-check": "npm run type-check:crawler && npm run type-check:viewer && npm run type-check:ebook",
-    "review": "bash scripts/agents/review-changes.sh"
+    "review": "bash scripts/agents/review-changes.sh",
+    "gitea": "ts-node .agents/scripts/gitea.ts"
   },
   "devDependencies": {
     "@types/node": "^25.9.2",
