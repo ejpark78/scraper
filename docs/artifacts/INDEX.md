@@ -192,5 +192,9 @@
 - [111-setup-gitea-actions.task](111-setup-gitea-actions.task.md)
 - [111-setup-gitea-actions.review](111-setup-gitea-actions.review.md)
 - [111-setup-gitea-actions.walkthrough](111-setup-gitea-actions.walkthrough.md)
+- [112-install-tea-cli.plan](112-install-tea-cli.plan.md)
+- [112-install-tea-cli.task](112-install-tea-cli.task.md)
+- [112-install-tea-cli.review](112-install-tea-cli.review.md)
+- [112-install-tea-cli.walkthrough](112-install-tea-cli.walkthrough.md)
 
 

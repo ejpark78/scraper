@@ -1,8 +1,7 @@
 # Local Static Code Review Report
-Generated at: Sun Jun 28 16:25:27 KST 2026
+Generated at: Sun Jun 28 16:28:55 KST 2026
 
 ## 📄 Modified Files List
-* `docker/tools/gitea/compose.yml`
 * `docs/artifacts/INDEX.md`
 
 ## 🚨 Diagnostic Reports
