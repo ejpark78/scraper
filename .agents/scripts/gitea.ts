@@ -122,7 +122,22 @@ class GiteaClient {
   }
 
   public async getIssues(): Promise<IssueResponse[]> {
-    return await this.request<IssueResponse[]>(`/repos/${this.config.repo}/issues?state=all&limit=250`, 'GET');
+    let allIssues: IssueResponse[] = [];
+    let page = 1;
+    const limit = 50;
+
+    while (true) {
+      const data = await this.request<IssueResponse[]>(`/repos/${this.config.repo}/issues?state=all&type=all&limit=${limit}&page=${page}`, 'GET');
+      if (!data || data.length === 0) {
+        break;
+      }
+      allIssues = allIssues.concat(data);
+      if (data.length < limit) {
+        break;
+      }
+      page++;
+    }
+    return allIssues;
   }
 
   public async getIssue(issueId: string): Promise<IssueResponse> {
