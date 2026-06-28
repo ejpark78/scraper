@@ -83,7 +83,8 @@ agents-pms-token:
 * Vikunja API 호출 로직:
   * Project/Board 검색/생성.
   * Standard Buckets(Planned, In Progress, Done) 생성 및 확인.
-  * Task 검색/생성/이동.
+  * Task 검색/생성/이동/설명(Description)에 아티팩트 요약 내용 추가 구현.
+
 
 ### Phase 3: Makefile 통합 및 테스트
 * `Makefile`에 `agents-pms` 타겟 추가.

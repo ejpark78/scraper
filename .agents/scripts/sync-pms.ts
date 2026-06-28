@@ -271,6 +271,16 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     if (group.taskFile) description += `- Task: \`${group.taskFile}\`\n`;
     if (group.walkthroughFile) description += `- Walkthrough: \`${group.walkthroughFile}\`\n`;
 
+    const artifactsDir = path.join(process.cwd(), 'docs/artifacts');
+    const targetFile = group.walkthroughFile || group.planFile || group.taskFile;
+    if (targetFile) {
+      const fileContent = fs.readFileSync(path.join(artifactsDir, targetFile), 'utf8');
+      description += `\n\n### 🔍 핵심 요약 및 내용 (${targetFile})\n\n\`\`\`markdown\n`;
+      description += fileContent.length > 3000 ? fileContent.substring(0, 3000) + '\n\n...(본문 중략)...' : fileContent;
+      description += `\n\`\`\``;
+    }
+
+
     const matchedTask = existingTasks.find((t: any) => t.title.startsWith(`[SCR-${group.id}]`));
 
     if (matchedTask) {
