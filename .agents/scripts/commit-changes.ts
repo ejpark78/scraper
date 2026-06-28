@@ -1,12 +1,13 @@
 /**
  * ==============================================================================
- * 🤖 Auto Commit & Merge Helper Script (commit-changes.ts)
+ * 🤖 All-In-One Commit, Push, and Gitea Issue Automator (commit-changes.ts)
  * ==============================================================================
- * @description  수정된 파일을 탐색하고 린트/컴파일 검사를 수행한 뒤,
- *               Conventional Commit 형태의 메시지로 커밋 및 develop 병합을 자동화합니다.
+ * @description  로컬 변경 사항을 검증/커밋하고, develop 브랜치에 병합(Merge)한 뒤,
+ *               자동으로 원격 저장소에 Push하고 해당 Gitea 이슈에 완료 보고 댓글(Commit Diff 포함)과
+ *               이슈 마감(Close)까지 원스톱으로 처리하는 통합 릴리즈 파이프라인입니다.
  * @constraints  main 브랜치 직접 커밋 방지 기능 내장.
  *               Strict Typing 및 OOP Patterns 아키텍처 규칙을 상시 준수합니다.
- * @dependencies git CLI, Node.js child_process
+ * @dependencies git CLI, Node.js child_process, Gitea API (fetch)
  * @lastUpdated  2026-06-29
  * ==============================================================================
  */
@@ -16,14 +17,40 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 /**
- * 커밋 스크립트의 실행 파라미터를 래핑하는 Config 클래스
+ * Gitea API 및 릴리즈 설정을 총괄하는 Config 클래스
  */
-class CommitConfig {
+class PipelineConfig {
   public readonly autoMerge: boolean;
+  public readonly apiUrl: string;
+  public readonly accessToken: string | undefined;
+  public readonly repo: string = 'gitea-admin/scraper';
 
   constructor() {
     const args = process.argv.slice(2);
     this.autoMerge = !args.includes('--no-merge');
+
+    this.loadEnv();
+    this.apiUrl = process.env.GITEA_API_URL || 'https://gitea.localhost/api/v1';
+    this.accessToken = process.env.GITEA_ACCESS_TOKEN || process.env.GITEA_API_TOKEN;
+
+    // Self-signed 인증서 오류 우회
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  }
+
+  private loadEnv(): void {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (!fs.existsSync(envPath)) return;
+
+    const content = fs.readFileSync(envPath, 'utf-8');
+    content.split('\n').forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) return;
+
+      const parts = trimmed.split('=');
+      const key = parts[0].trim();
+      const value = parts.slice(1).join('=').trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
+      process.env[key] = value;
+    });
   }
 }
 
@@ -124,6 +151,51 @@ class GitService {
 }
 
 /**
+ * Gitea API와의 직접 통신을 전담하는 GiteaClient 클래스
+ */
+class GiteaClient {
+  private config: PipelineConfig;
+
+  constructor(config: PipelineConfig) {
+    this.config = config;
+  }
+
+  private async request<T>(endpoint: string, method: string, body?: object): Promise<T> {
+    if (!this.config.accessToken) {
+      throw new Error('GITEA_ACCESS_TOKEN이 유효하지 않아 Gitea API를 호출할 수 없습니다.');
+    }
+    const url = `${this.config.apiUrl}${endpoint}`;
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Authorization': `token ${this.config.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP Error ${response.status}: ${errorText}`);
+    }
+
+    return await response.json() as T;
+  }
+
+  public async createComment(issueId: string, body: string): Promise<void> {
+    console.log(`💬 Gitea 이슈 #${issueId} 에 코멘트 등록 중...`);
+    await this.request<any>(`/repos/${this.config.repo}/issues/${issueId}/comments`, 'POST', { body });
+    console.log('✅ 코멘트 등록이 완료되었습니다.');
+  }
+
+  public async closeIssue(issueId: string): Promise<void> {
+    console.log(`🔒 Gitea 이슈 #${issueId} 마감 중...`);
+    await this.request<void>(`/repos/${this.config.repo}/issues/${issueId}`, 'PATCH', { state: 'closed' });
+    console.log(`✅ 이슈 #${issueId} 가 정상 마감(Closed)되었습니다.`);
+  }
+}
+
+/**
  * 정적 검사 및 린트 검증을 대행하는 ValidationService 클래스
  */
 class ValidationService {
@@ -176,17 +248,19 @@ class ValidationService {
 }
 
 /**
- * Auto Commit 프로세스를 조율하는 Coordinator 클래스
+ * 로컬 커밋, 원격지 푸시, 이슈 종결 전체 흐름을 제어하는 Master Coordinator 클래스
  */
-class CommitCoordinator {
-  private config: CommitConfig;
+class ReleaseCoordinator {
+  private config: PipelineConfig;
   private git: GitService;
   private validator: ValidationService;
+  private gitea: GiteaClient;
 
-  constructor(config: CommitConfig, git: GitService, validator: ValidationService) {
+  constructor(config: PipelineConfig, git: GitService, validator: ValidationService, gitea: GiteaClient) {
     this.config = config;
     this.git = git;
     this.validator = validator;
+    this.gitea = gitea;
   }
 
   private generateCommitMessage(branchName: string): string {
@@ -215,15 +289,20 @@ class CommitCoordinator {
     return 'chore: commit changes';
   }
 
-  public execute(): void {
+  public async execute(): Promise<void> {
     const statusPorcelain = this.git.runCmd('git status --porcelain', true);
     const branchName = this.git.runCmd('git rev-parse --abbrev-ref HEAD');
 
     if (branchName === 'main') {
       console.error('❌ ERROR: Direct commit to \'main\' branch is strictly prohibited by Git Flow guidelines.');
-      console.error('   Please create or checkout a feature or develop branch first.');
       process.exit(1);
     }
+
+    let parsedIssueId: string | null = null;
+    const featureMatch = branchName.match(/^feature\/([0-9]{3})-(.+)$/);
+    const hotfixMatch = branchName.match(/^hotfix\/([0-9]{3})-(.+)$/);
+    if (featureMatch) parsedIssueId = featureMatch[1];
+    else if (hotfixMatch) parsedIssueId = hotfixMatch[1];
 
     if (statusPorcelain) {
       this.validator.runCodeReview();
@@ -247,14 +326,14 @@ class CommitCoordinator {
       this.git.runCmd(`git commit -m "${msg}"`);
       console.log(`✅ Committed: ${msg}`);
 
-      this.attemptAutoMerge(branchName);
+      await this.runReleaseSequence(branchName, parsedIssueId);
     } else {
       console.log('✨ No changes to commit.');
-      this.attemptAutoMerge(branchName);
+      await this.runReleaseSequence(branchName, parsedIssueId);
     }
   }
 
-  private attemptAutoMerge(branchName: string): void {
+  private async runReleaseSequence(branchName: string, issueId: string | null): Promise<void> {
     if (this.config.autoMerge && branchName !== 'develop' && branchName !== 'main') {
       console.log('🔀 Auto-merge option detected. Transitioning to develop...');
       try {
@@ -265,14 +344,54 @@ class CommitCoordinator {
         console.error('❌ ERROR: Merge conflict detected! Please resolve conflicts manually.');
         process.exit(1);
       }
+
+      // 원격 Gitea 저장소로 push 진행
+      this.pushToRemote();
+
+      // 커밋 해시 획득 및 Gitea 이슈 자동 코멘트 & 클로즈
+      if (issueId && this.config.accessToken) {
+        const latestCommitHash = this.git.runCmd('git rev-parse HEAD');
+        await this.postGiteaReport(issueId, latestCommitHash);
+      }
+    }
+  }
+
+  private pushToRemote(): void {
+    console.log("📤 로컬 'develop' 변경 사항을 원격 Gitea 서버로 푸시(push) 중...");
+    if (!this.config.accessToken) {
+      console.warn('⚠️  Warning: GITEA_ACCESS_TOKEN이 유효하지 않아 Push를 진행할 수 없습니다.');
+      return;
+    }
+    const pushUrl = `https://gitea-admin:${this.config.accessToken}@gitea.localhost/${this.config.repo}.git`;
+    this.git.runCmd(`git push "${pushUrl}" develop --no-verify`);
+    console.log('✅ 원격 저장소 동기화가 정상 완료되었습니다.');
+  }
+
+  private async postGiteaReport(issueId: string, commitHash: string): Promise<void> {
+    const commentBody = `## 🏁 작업 완료 보고 (All-In-One 자동화)
+
+이슈 #${issueId} 관련 변경 사항이 성공적으로 검증되어 \`develop\` 브랜치에 자동 병합 및 원격 저장소 동기화(Push) 완료되었습니다.
+
+### 🔗 Gitea Commit Diff 링크 (변경 사항 확인)
+- [Commit Diff #${commitHash.substring(0, 8)}](https://gitea.localhost/${this.config.repo}/commit/${commitHash})
+
+이슈 처리가 완수되어 본 이슈를 자동으로 마감합니다.`;
+
+    try {
+      await this.gitea.createComment(issueId, commentBody);
+      await this.gitea.closeIssue(issueId);
+      console.log('🎉 Gitea 이슈 코멘트 작성 및 마감 완료!');
+    } catch (error: any) {
+      console.error('⚠️ Gitea API 호출 실패:', error.message);
     }
   }
 }
 
-// Execution Entrypoint
-const config = new CommitConfig();
+// Global Execution Entrypoint
+const config = new PipelineConfig();
 const git = new GitService();
 const validator = new ValidationService();
-const coordinator = new CommitCoordinator(config, git, validator);
+const gitea = new GiteaClient(config);
+const coordinator = new ReleaseCoordinator(config, git, validator, gitea);
 
 coordinator.execute();
