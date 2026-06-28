@@ -69,7 +69,6 @@
 ## 💡 Token Efficiency Rules
 1. **아티팩트 사전 스캔 금지**: `docs/artifacts/` 문서는 자동으로 읽지 않음. 필요 시 INDEX.md에서 번호 확인 후 직접 Read.
 2. **AGENTS.md 유지보수**: 불필요한 예제/중복 발견 시 능동적으로 정리.
-3. **Compact 정기 정리**: 10세션마다 또는 아티팩트 50개 초과 시 `make agents-squash` 권장.
 
 ---
 

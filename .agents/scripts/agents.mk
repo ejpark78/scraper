@@ -15,7 +15,6 @@ AGENTS_FLAG = --agent=$(AGENTS)
         dump-brain \
         dump-sysinfo \
         compress-rules \
-        squash \
         usage \
         prune \
         commit
@@ -39,9 +38,6 @@ dump-sysinfo:
 compress-rules:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts --context --all $(AGENTS_FLAG)
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts --compress
-
-squash:
-	@bash .agents/scripts/squash-artifacts.sh
 
 lint-rules:
 	@npx ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts --lint

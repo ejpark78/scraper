@@ -4,7 +4,7 @@
 # 🤖 review-changes.sh
 # ==============================================================================
 # Design Context: Run fast local static code reviews (Lint & Type check) 
-#                 only on modified files in git diff. Generates local report.
+#                 only on modified files in git diff and print output to console.
 # Constraints:    Must run offline without requiring external API keys.
 # ==============================================================================
 
@@ -24,21 +24,13 @@ if [ -z "${MODIFIED_FILES}" ]; then
   exit 0
 fi
 
-REPORT_PATH="docs/artifacts/review-report.md"
-mkdir -p "$(dirname "${REPORT_PATH}")"
-
-# Start generating report
-echo "# Local Static Code Review Report" > "${REPORT_PATH}"
-echo "Generated at: $(date)" >> "${REPORT_PATH}"
-echo "" >> "${REPORT_PATH}"
-echo "## 📄 Modified Files List" >> "${REPORT_PATH}"
-
+echo "📄 Modified Files List:"
 HAS_TS_CHANGES=false
 HAS_PY_CHANGES=false
 
 for file in ${MODIFIED_FILES}; do
   if [ -f "${file}" ]; then
-    echo "* \`${file}\`" >> "${REPORT_PATH}"
+    echo "  - ${file}"
     if [[ "${file}" =~ \.tsx?$ || "${file}" =~ \.jsx?$ ]]; then
       HAS_TS_CHANGES=true
     elif [[ "${file}" =~ \.py$ ]]; then
@@ -47,8 +39,7 @@ for file in ${MODIFIED_FILES}; do
   fi
 done
 
-echo "" >> "${REPORT_PATH}"
-echo "## 🚨 Diagnostic Reports" >> "${REPORT_PATH}"
+echo ""
 
 # Check if running inside a Docker container or if host has running docker worker container
 IS_CONTAINER=false
@@ -60,7 +51,6 @@ RUNNING_WORKER_ID=$(docker compose ps -q worker 2>/dev/null || echo "")
 # Execute diagnostic helper in Docker or locally
 run_lint_check() {
   local target_file="$1"
-  echo "Checking \`${target_file}\`..."
   
   if [ "${IS_CONTAINER}" = "false" ] && [ -n "${RUNNING_WORKER_ID}" ]; then
     # Proxying to docker container
@@ -80,9 +70,6 @@ run_lint_check() {
 }
 
 echo "🏃 Running lint diagnostics..."
-echo "### Lint Diagnostics" >> "${REPORT_PATH}"
-echo "\`\`\`text" >> "${REPORT_PATH}"
-
 LINT_ERRORS=""
 for file in ${MODIFIED_FILES}; do
   if [ -f "${file}" ]; then
@@ -95,20 +82,20 @@ for file in ${MODIFIED_FILES}; do
   fi
 done
 
+HAS_ERRORS=false
+
 if [ -n "${LINT_ERRORS}" ]; then
-  echo -e "${LINT_ERRORS}" >> "${REPORT_PATH}"
+  echo -e "⚠️  Lint issues detected:\n"
   echo -e "${LINT_ERRORS}"
+  HAS_ERRORS=true
 else
-  echo "Clean! No lint issues detected." >> "${REPORT_PATH}"
-  echo "Clean! No lint issues detected."
+  echo "✅ Clean! No lint issues detected."
 fi
-echo "\`\`\`" >> "${REPORT_PATH}"
 
 # Run compile / type checks if TypeScript changed
 if [ "${HAS_TS_CHANGES}" = "true" ]; then
+  echo ""
   echo "🏃 Running TypeScript Type Checking..."
-  echo "### TypeScript Type Checker Output" >> "${REPORT_PATH}"
-  echo "\`\`\`text" >> "${REPORT_PATH}"
   
   TSC_OUT=""
   if [ "${IS_CONTAINER}" = "false" ] && [ -n "${RUNNING_WORKER_ID}" ]; then
@@ -120,20 +107,23 @@ if [ "${HAS_TS_CHANGES}" = "true" ]; then
   fi
   
   if [ -n "${TSC_OUT}" ]; then
-    echo "${TSC_OUT}" >> "${REPORT_PATH}"
-    # Print summary to terminal
+    echo "${TSC_OUT}"
     if [[ "${TSC_OUT}" == *"error"* ]]; then
-      echo "⚠️  TypeScript compilation contains errors. See ${REPORT_PATH} for details."
+      echo "⚠️  TypeScript compilation contains errors."
+      HAS_ERRORS=true
     else
-      echo "TypeScript Compilation Clean!"
+      echo "✅ TypeScript Compilation Clean!"
     fi
   else
-    echo "No compilation diagnostics run." >> "${REPORT_PATH}"
+    echo "No compilation diagnostics run."
   fi
-  echo "\`\`\`" >> "${REPORT_PATH}"
 fi
 
-echo "" >> "${REPORT_PATH}"
-echo "### 🎯 Final Local Verdict: [Complete] Local static validation passed." >> "${REPORT_PATH}"
-echo "💾 Review report saved to: ${REPORT_PATH}"
-echo "✨ Offline local review completed."
+echo ""
+if [ "${HAS_ERRORS}" = "true" ]; then
+  echo "❌ Local static validation failed. Please fix the errors before committing."
+  exit 1
+else
+  echo "🎯 Final Local Verdict: [Complete] Local static validation passed."
+  exit 0
+fi
