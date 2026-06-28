@@ -106,13 +106,13 @@ function main() {
   }
 
   if (statusPorcelain) {
-    // Run AI Code Review if exists
-    if (fs.existsSync('.agents/scripts/review-changes.sh')) {
-      console.log('🤖 Running AI Code Review Check...');
+    // Run Code Review if exists
+    if (fs.existsSync('.agents/scripts/review-changes.ts')) {
+      console.log('🤖 Running Code Review Check...');
       try {
-        execSync('bash .agents/scripts/review-changes.sh', { stdio: 'inherit' });
+        execSync('npx ts-node .agents/scripts/review-changes.ts', { stdio: 'inherit' });
       } catch (e) {
-        console.log('⚠️ AI Review check script failed to run. Proceeding with commit...');
+        console.log('⚠️ Review check script failed to run. Proceeding with commit...');
       }
     }
 

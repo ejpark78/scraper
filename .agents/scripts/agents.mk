@@ -26,7 +26,7 @@ dump:
 	@$(MAKE) -f .agents/scripts/agents.mk wiki
 
 wiki:
-	@bash .agents/scripts/sync-wiki.sh
+	@npm run wiki
 
 dump-transcripts:
 	@npm run agents:sessions -- --transcript --all $(AGENTS_FLAG)
@@ -61,7 +61,7 @@ code-review review:
 	@agy --skill code_review "Run semantic code review on my latest modifications."
 
 push:
-	@bash .agents/scripts/push-changes.sh
+	@npm run push
 
 
 

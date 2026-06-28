@@ -17,9 +17,11 @@
     "type-check:viewer": "npm run type-check --prefix apps/viewer",
     "type-check:ebook": "cd apps/ebook && .venv/bin/python -m poethepoet type-check",
     "type-check": "npm run type-check:crawler && npm run type-check:viewer && npm run type-check:ebook",
-    "review": "bash scripts/agents/review-changes.sh",
+    "review": "ts-node .agents/scripts/review-changes.ts",
     "gitea": "ts-node .agents/scripts/gitea.ts",
     "commit": "ts-node .agents/scripts/commit-changes.ts",
+    "push": "ts-node .agents/scripts/push-changes.ts",
+    "wiki": "ts-node .agents/scripts/sync-wiki.ts",
     "agents:sessions": "ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts",
     "agents:rules": "ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts",
     "agents:usage": "ts-node --project apps/agents/tsconfig.json apps/agents/usage.ts"
