@@ -1,11 +1,8 @@
 # Local Static Code Review Report
-Generated at: Sun Jun 28 10:00:32 KST 2026
+Generated at: Sun Jun 28 10:01:16 KST 2026
 
 ## 📄 Modified Files List
-* `docs/artifacts/106-setup-gitea-vikunja.plan.md`
-* `docs/artifacts/106-setup-gitea-vikunja.task.md`
-* `docs/artifacts/106-setup-gitea-vikunja.walkthrough.md`
-* `scripts/tools/tools.mk`
+* `docker/tools/vikunja/compose.yml`
 
 ## 🚨 Diagnostic Reports
 ### Lint Diagnostics
