@@ -88,8 +88,9 @@ agents-pms-token:
   * **태스크 목록 조회 API의 50개 페이지네이션 한계 극복**: `page=1, 2, ...` 순차 루프 조회를 통해 기존 태스크를 누락 없이 100% 수집하여 중복 카드 생성 원인 박멸.
   * 프로젝트의 디폴트 뷰 목록에서 **'Kanban' 뷰를 정확하게 탐색하여 식별** (`GET /projects/{id}/views`).
   * 식별된 Kanban View 소속 Standard Buckets(Planned, In Progress, Done) 생성 및 확인 (`/projects/{id}/views/{viewId}/buckets`).
-  * **마크다운 상세 개행 보존 처리**: Vikunja 마크다운 렌더링 호환성을 위해 설명 본문 텍스트 내의 모든 단일 줄바꿈(`\n`)을 공백 2개가 포함된 줄바꿈(`  \n`)으로 치환하여 렌더링 시 한 줄 뭉침 현상 방지.
+  * **마크다운 상세 개행 및 캐리지 리턴 정제**: Vikunja 마크다운 렌더러 및 DB의 오작동을 유발하는 모든 캐리지 리턴 문자(`\r`)를 완벽히 제거하고 단일 줄바꿈(`\n`) 통일 후 공백 2개(`  \n`) 규칙을 적용하여 한 줄 뭉침 현상 영구 소독.
   * 태스크 생성/업데이트 시 `bucket_id`를 페이로드에 명시적으로 주입하고, 이와 병행하여 타겟 Kanban View의 특정 버킷으로 관계 설정 및 이동 API 호출 (`POST /projects/{id}/views/{viewId}/buckets/{bucketId}/tasks`)을 수행하여 멱등성 있는 카드 배치를 보장함.
+
 
 
 ### Phase 3: Makefile 통합 및 테스트

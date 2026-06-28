@@ -390,16 +390,16 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     }
 
     if (fileContent) {
-      // Vikunja 마크다운 렌더러가 줄바꿈을 씹고 한 줄로 만드는 현상을 막기 위해
-      // 모든 단일 개행(\n) 뒤에 공백 2개(Standard hard wrap)를 주입합니다.
-      const formattedContent = fileContent
-        .replace(/\r\n/g, '\n')
-        .replace(/(?<!  )\n/g, '  \n');
+      // 모든 캐리지 리턴(\r)을 완벽히 제거하여 DB 및 렌더러 오작동을 차단합니다.
+      const cleanedContent = fileContent.replace(/\r/g, '');
+      const formattedContent = cleanedContent.replace(/(?<!  )\n/g, '  \n');
 
       description += `\n\n### 🔍 핵심 요약 및 내용 (${targetFile})\n\n\`\`\`markdown\n`;
       description += formattedContent.length > 3000 ? formattedContent.substring(0, 3000) + '\n\n...(본문 중략)...' : formattedContent;
       description += `\n\`\`\``;
     }
+
+    description = description.replace(/\r/g, '');
 
     const matchedTask = existingTasks.find((t: any) => t.title.startsWith(`[SCR-${group.id}]`));
     let taskId: number | null = null;
