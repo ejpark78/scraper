@@ -28,15 +28,19 @@ fi
 echo "📁 Copying raw dump session memory into OpenKB raw store..."
 mkdir -p "${OPENKB_DIR}/raw"
 
-# 모든 세션 폴더에서 context_memory.md 검색 후 OpenKB raw 디렉토리에 고유 식별 명칭으로 복사
-find "$DUMP_DIR" -type f -name "context_memory.md" | while read -r file; do
-    # 경로에서 세션 ID 추출
-    session_id=$(basename "$(dirname "$file")")
-    target_name="${session_id}_context.md"
+# 모든 세션 폴더에서 transcript.md 검색 후 OpenKB raw 디렉토리에 고유 식별 명칭(ISO날짜_UUID)으로 복사
+find "$DUMP_DIR" -type f -name "transcript.md" | while read -r file; do
+    # 0001-e6673877... 형태의 세션 폴더명
+    tag_folder=$(basename "$(dirname "$file")")
+    # 시퀀스 번호 제거 후 UUID 추출
+    session_uuid=$(echo "$tag_folder" | sed -E 's/^[0-9]+-//')
+    # 상위 시각 폴더 (예: 2026-06-28T211048)
+    date_folder=$(basename "$(dirname "$(dirname "$file")")")
+    target_name="${date_folder}_${session_uuid}_transcript.md"
     
     if [ ! -f "${OPENKB_DIR}/raw/${target_name}" ] || [ "$file" -nt "${OPENKB_DIR}/raw/${target_name}" ]; then
         cp "$file" "${OPENKB_DIR}/raw/${target_name}"
-        echo "   + Copied new/updated session context: $target_name"
+        echo "   + Copied new/updated session transcript: $target_name"
     fi
 done
 
