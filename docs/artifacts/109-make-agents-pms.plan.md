@@ -83,16 +83,12 @@ agents-pms-token:
 * Gitea API 호출 로직:
   * Repository 검색/생성.
   * Issue 검색/생성/본문 업데이트 (아카이브 추출 정보 포함).
-* Vikunja API 호출 로직 (이중 버킷 주입으로 데이터 정합성 보장):
+* Vikunja API 호출 로직 (페이지네이션 전수 수집 및 이중 버킷 주입):
   * Project/Board 검색/생성.
+  * **태스크 목록 조회 API의 50개 페이지네이션 한계 극복**: `page=1, 2, ...` 순차 루프 조회를 통해 기존 태스크를 누락 없이 100% 수집하여 중복 카드 생성 원인 박멸.
   * 프로젝트의 디폴트 뷰 목록에서 **'Kanban' 뷰를 정확하게 탐색하여 식별** (`GET /projects/{id}/views`).
   * 식별된 Kanban View 소속 Standard Buckets(Planned, In Progress, Done) 생성 및 확인 (`/projects/{id}/views/{viewId}/buckets`).
-  * **태스크 생성/업데이트 API에 `bucket_id` 주입을 복원**하여 기본 버킷 속성을 일치시킴.
-  * **태스크 생성/업데이트 시 `bucket_id`를 페이로드에 명시적으로 주입**하고, 이와 병행하여 타겟 Kanban View의 특정 버킷으로 관계 설정 및 이동 API 호출 (`POST /projects/{id}/views/{viewId}/buckets/{bucketId}/tasks`)을 수행하여 멱등성 있는 카드 배치를 보장함.
-
-
-
-
+  * 태스크 생성/업데이트 시 `bucket_id`를 페이로드에 명시적으로 주입하고, 이와 병행하여 타겟 Kanban View의 특정 버킷으로 관계 설정 및 이동 API 호출 (`POST /projects/{id}/views/{viewId}/buckets/{bucketId}/tasks`)을 수행하여 멱등성 있는 카드 배치를 보장함.
 
 ### Phase 3: Makefile 통합 및 테스트
 * `Makefile`에 `agents-pms` 타겟 추가 (기본 멱등 업데이트).

@@ -349,9 +349,17 @@ async function syncVikunja(groups: ArtifactGroup[]) {
     bucketMap[name] = bucket.id;
   }
 
-  // 3. 기존 태스크 목록 가져오기
-  const tasksRes = await callVikunja(`/projects/${projectId}/tasks`);
-  const existingTasks = tasksRes.status === 200 ? await tasksRes.json() : [];
+  // 3. 기존 태스크 목록 가져오기 (페이지네이션 대응)
+  const existingTasks: any[] = [];
+  let page = 1;
+  while (true) {
+    const tasksRes = await callVikunja(`/projects/${projectId}/tasks?page=${page}`);
+    if (tasksRes.status !== 200) break;
+    const tasksPage = await tasksRes.json();
+    if (!Array.isArray(tasksPage) || tasksPage.length === 0) break;
+    existingTasks.push(...tasksPage);
+    page++;
+  }
 
   for (const group of groups) {
     const taskTitle = `[SCR-${group.id}] ${group.title}`;
