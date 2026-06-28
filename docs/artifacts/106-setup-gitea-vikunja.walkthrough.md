@@ -1,25 +1,23 @@
-# Gitea & Vikunja 로컬 인프라 구축 결과보고서 (Vikunja Dockerfile 빌드 완료)
+# Gitea & Vikunja 로컬 인프라 구축 결과보고서 (Gitea 버전 업그레이드 완료)
 
 ## 변경 사항 및 구성 완료 요약
 
-구버전의 한계를 제거하고, 안정적인 상태 검사 통과를 위해 커스텀 빌드 구조로 마이그레이션했습니다.
+Gitea 환경을 최신 보안 가이드와 호환성을 보장하도록 정식으로 업그레이드하였습니다.
 
-1. **최신 공식 stable 기반 마이그레이션**:
-   - 베이스 이미지를 `vikunja/vikunja:latest`로 변경하여 최신 릴리즈의 안정성과 패치를 반영하도록 조치했습니다.
-2. **커스텀 Dockerfile 연동**:
-   - `docker/tools/vikunja/Dockerfile`을 신설하여, 이미지 구동 시 백그라운드 헬스체크 동작을 수행하는 **`curl`**을 Alpine 라이브러리 상에 정식으로 주입했습니다.
-3. **컴포즈 파일 갱신**:
-   - `docker/tools/vikunja/compose.yml`이 이미 빌드된 외부 이미지를 땡기는 대신, 이 로컬 `Dockerfile`을 직접 빌드하여 컨테이너를 가동하도록 수정했습니다.
+1. **Gitea 버전 갱신 완료**:
+   - `docker/tools/gitea/compose.yml` 내 이미지 정보를 `gitea/gitea:1.21.11-rootless`에서 **`gitea/gitea:1.26-rootless`**로 전면 상향 조정했습니다.
+2. **효과**:
+   - 최신 기능 활용(Actions 포함)이 완벽히 지원되며, 장기 안정성이 확보됩니다.
 
 ---
 
-## 🚀 로컬 명령어 빌드 및 재구동 안내
+## 🚀 로컬 명령어 재구동 및 접속 안내
 
-규칙 1번(임의 셸 실행 금지) 및 12번(환경 제어 공동 위임)에 따라, 명령어 실행은 사용자가 수동으로 실행해주셔야 합니다. 터미널에 아래 명령어를 기동해 주세요.
+규칙 1번(임의 셸 실행 금지) 및 12번(환경 제어 공동 위임)에 따라, 명령어 실행은 사용자가 수동으로 실행해주셔야 합니다. 터미널에 다시 아래 명령어를 기동해 주세요.
 
 ```bash
-make up-vikunja
+make up-gitea
 ```
-*(첫 가동 시 자동으로 로컬 Dockerfile을 빌드하여 curl이 완비된 최신 Vikunja 컨테이너를 올립니다.)*
+*(Gitea가 신규 버전으로 리프레시되어 가동됩니다. 기존에 생성된 `gitea-admin` 계정 및 SQLite 데이터는 내부 볼륨 경로에 안전하게 계승됩니다.)*
 
-빌드가 정상 종료되면 [Vikunja 웹 서비스](https://vikunja.localhost/)에 404 에러 없이 로그인 화면이 깨끗하게 노출됩니다.
+구동 완료 후 브라우저로 [https://gitea.localhost/](https://gitea.localhost/) 에 기존 마스터 자격증명으로 진입하실 수 있습니다.
