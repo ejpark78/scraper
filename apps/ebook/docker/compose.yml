@@ -1,8 +1,8 @@
 services:
   ebook:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ${HOST_PROJECT_PATH:-.}/apps/ebook
+      dockerfile: docker/Dockerfile
     image: scraper/ebook:latest
     profiles:
       - ebook

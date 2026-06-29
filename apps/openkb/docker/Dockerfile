@@ -6,10 +6,17 @@ FROM python:3.13-slim
 # ghcr.io/astral-sh/uv 이미지에서 uv 바이너리를 복사하여 시스템에 설치
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+WORKDIR /app
+
+# 의존성 복사 및 패키지 인스톨
+COPY pyproject.toml /app/
+RUN uv pip install --system --no-cache --prerelease=allow -r pyproject.toml
+
+# 스크립트 복사
+COPY src/ /app/src/
+
+# 기본 작업 디렉토리 지정 (기록할 볼륨이 마운트되는 경로)
 WORKDIR /data/openkb
 
-# uv를 사용하여 초고속 병렬 패키지 인스톨 수행 (--prerelease=allow 포함)
-RUN uv pip install --system --no-cache --prerelease=allow openkb==0.3.0
-
-# 실행 진입점 정의
+# 실행 진입점 정의 (기본값)
 ENTRYPOINT ["openkb"]

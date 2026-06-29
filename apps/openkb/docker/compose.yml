@@ -5,8 +5,8 @@
 services:
   openkb:
     build:
-      context: ${HOST_PROJECT_PATH:-.}/apps/openkb/docker
-      dockerfile: Dockerfile
+      context: ${HOST_PROJECT_PATH:-.}/apps/openkb
+      dockerfile: docker/Dockerfile
     container_name: scraper-openkb
     profiles:
       - tools
@@ -21,5 +21,5 @@ services:
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/openkb:/data/openkb
       - ${HOST_PROJECT_PATH:-.}/data/agents:/data/agents
-      - ${HOST_PROJECT_PATH:-.}/apps/openkb:/data/apps/openkb
+      - ${HOST_PROJECT_PATH:-.}/data/gitea-wiki:/data/gitea-wiki
     working_dir: /data/openkb

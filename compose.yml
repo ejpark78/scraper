@@ -14,7 +14,7 @@
 include:
   - apps/crawler/docker/gmail/compose.yml
   - apps/crawler/docker/worker/compose.yml
-  - apps/ebook/compose.yml
+  - apps/ebook/docker/compose.yml
   - apps/viewer/compose.yml
   - docker/tools/gitea/compose.yml
   - docker/infra/mongodb/compose.yml

@@ -6,14 +6,21 @@ import urllib.error
 import subprocess
 from pathlib import Path
 
-# 컨테이너 기준 마운트된 볼륨 경로 설정
-DUMP_DIR = Path("/data/agents/agy").resolve()
-OPENKB_DIR = Path("/data/openkb").resolve()
+# 환경에 따른 경로 및 Ollama 호스트 동적 감지
+if Path("/data").exists():
+    PROJECT_ROOT = Path("/data")
+    OLLAMA_HOST = "host.docker.internal"
+else:
+    PROJECT_ROOT = Path("/Users/ejpark/workspace/scraper")
+    OLLAMA_HOST = "127.0.0.1"
+
+DUMP_DIR = (PROJECT_ROOT / "agents/agy").resolve()
+OPENKB_DIR = (PROJECT_ROOT / "openkb").resolve()
 RAW_STORE = OPENKB_DIR / "raw"
 CACHE_PATH = OPENKB_DIR / ".openkb_cache.json"
 
-OLLAMA_ENDPOINT = "http://host.docker.internal:11434/api/generate"
-OLLAMA_TAGS_ENDPOINT = "http://host.docker.internal:11434/api/tags"
+OLLAMA_ENDPOINT = f"http://{OLLAMA_HOST}:11434/api/generate"
+OLLAMA_TAGS_ENDPOINT = f"http://{OLLAMA_HOST}:11434/api/tags"
 
 class OpenKbCache:
     def __init__(self, cache_path: Path):
@@ -197,14 +204,15 @@ def main():
 
     print(f"✨ Processed: {processed_count} files, Skipped: {skipped_count} files.")
 
-    print("🧠 Compiling knowledge via OpenKB inside Container (PageIndex)...")
+    print("🧠 Compiling knowledge via OpenKB (PageIndex)...")
     raw_contents = os.listdir(RAW_STORE) if RAW_STORE.exists() else []
     if raw_contents:
         try:
-            subprocess.run(["openkb", "add", "/data/openkb/raw/"], check=True)
+            subprocess.run(["openkb", "add", str(RAW_STORE)], check=True)
             print("✅ OpenKB Compile execution complete.")
         except subprocess.CalledProcessError as e:
             print(f"❌ [OpenKB] 컴파일 명령어 실행 실패: {str(e)}")
+            exit(1)
             exit(1)
     else:
         print("   No raw logs found to compound.")

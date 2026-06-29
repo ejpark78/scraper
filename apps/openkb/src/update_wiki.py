@@ -6,9 +6,14 @@ from pathlib import Path
 
 class WikiConfig:
     def __init__(self):
-        self.project_root = Path('/Users/ejpark/workspace/scraper')
-        self.openkb_dir = self.project_root / 'data/openkb'
-        self.wiki_dir = self.project_root / 'data/gitea-wiki'
+        if Path('/data').exists():
+            self.project_root = Path('/data')
+            self.openkb_dir = self.project_root / 'openkb'
+            self.wiki_dir = self.project_root / 'gitea-wiki'
+        else:
+            self.project_root = Path('/Users/ejpark/workspace/scraper')
+            self.openkb_dir = self.project_root / 'data/openkb'
+            self.wiki_dir = self.project_root / 'data/gitea-wiki'
 
 def copy_dir(src: Path, dest: Path):
     if not src.exists():
