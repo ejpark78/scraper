@@ -21,8 +21,7 @@
     "gitea": "ts-node .agents/scripts/gitea.ts",
     "commit": "ts-node .agents/scripts/commit-changes.ts",
     "push": "ts-node .agents/scripts/push-changes.ts",
-    "openkb": "ts-node .agents/scripts/openkb.ts",
-    "wiki": "ts-node .agents/scripts/update_wiki.ts",
+    "wiki": "python3 apps/openkb/update_wiki.py",
     "agents:sessions": "ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts",
     "agents:rules": "ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts",
     "agents:usage": "ts-node --project apps/agents/tsconfig.json apps/agents/usage.ts"
