@@ -108,26 +108,9 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     # 세션 전체에서 이슈 번호 감지 시도 (가장 먼저 나오는 것을 대표로 설정)
     issue_match = re.search(r"(?:#|이슈\s*|버그\s*|feature/)([0-9]{3})", content, re.IGNORECASE)
     
-    # 모든 USER_REQUEST 구역 추출 및 클렌징 (코드 블록, 연속된 영문 로그 라인 제거)
+    # 모든 USER_REQUEST 구역 추출 및 전체 결합 (별도 필터링 제외)
     user_requests = re.findall(r"<USER_REQUEST>([\s\S]*?)</USER_REQUEST>", content)
-    cleaned_user_texts = []
-    for req in user_requests:
-        # 1. 백틱 코드 블록 제거
-        req_clean = re.sub(r"```[\s\S]*?```", "", req)
-        # 2. 영문 대문자/소문자, 숫자, 일부 특수문자만 포함된 긴 로그성 라인 제거 (공백 제외 한 줄이 주로 영문/숫자/기호인 경우)
-        lines = req_clean.split("\n")
-        filtered_lines = []
-        for line in lines:
-            trimmed = line.strip()
-            # 만약 한 줄의 대다수(70% 이상)가 영문/숫자/특수기호이면서 30자 이상 길면 로그로 필터링
-            if len(trimmed) > 30:
-                english_char_count = len(re.findall(r"[a-zA-Z0-9_\-\.\/\\:\(\)\{\}\[\]\=\+\&\?\;\,\<\>\'\"]", trimmed))
-                if (english_char_count / len(trimmed)) > 0.7:
-                    continue
-            filtered_lines.append(line)
-        cleaned_user_texts.append("\n".join(filtered_lines).strip())
-    
-    user_request_combined = "\n".join([t for t in cleaned_user_texts if t]).strip()
+    user_request_combined = "\n".join([req.strip() for req in user_requests if req.strip()]).strip()
     
     # 모든 에이전트 단계의 설명 문장(자연어 보고내용) 추출 및 노이즈 제거
     agent_blocks = re.findall(r"### \[Step \d+\] 🤖 Agent([\s\S]*?)(?=### \[Step \d+\]|$)", content)
