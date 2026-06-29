@@ -116,9 +116,13 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
         cleaned = re.sub(r">\s*\*\*Result\*\*[\s\S]*?(?=\n\n|$)", "", cleaned)
         cleaned = cleaned.strip()
         if cleaned:
-            # 줄바꿈 정리 및 너무 긴 영어 출력 등 필터링하여 자연어 텍스트만 취합
+            # 툴 호출이나 실행 로그를 제거한 후 남은 문장 중에서
+            # 각 턴의 '마지막 1~2문장'(결론/Verdicts)만 추출
             lines = [l.strip() for l in cleaned.split("\n") if l.strip() and not l.strip().startswith(">")]
-            agent_summaries.append(" ".join(lines))
+            if lines:
+                # 마지막에 위치한 핵심 결과 문장(최대 3라인)만 추출하여 턴별 결론으로 설정
+                verdict_lines = lines[-3:]
+                agent_summaries.append(" ".join(verdict_lines))
             
     agent_response_combined = "\n".join(agent_summaries).strip()
     
