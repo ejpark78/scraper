@@ -23,7 +23,8 @@ AGENTS_FLAG = --agent=$(AGENTS)
 dump:
 	@npm run agents:sessions -- --all-targets --all $(AGENTS_FLAG)
 	@$(MAKE) -f .agents/scripts/agents.mk compress-rules
-	@$(MAKE) -f .agents/scripts/agents.mk wiki
+	@npm run openkb
+	@npm run wiki
 
 wiki:
 	@npm run wiki
