@@ -14,7 +14,7 @@ ENV UV_PROJECT_ENVIRONMENT=/usr/local
 WORKDIR /app
 
 # 의존성 복사 및 패키지 인스톨
-COPY pyproject.toml /app/
+COPY pyproject.toml uv.lock /app/
 RUN uv pip install --system --no-cache --prerelease=allow -r pyproject.toml
 
 # 스크립트 복사
