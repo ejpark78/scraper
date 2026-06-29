@@ -95,60 +95,44 @@ class OllamaClient:
             print(f"⚠️ Ollama 요약 생성 실패: {str(e)}")
         return ""
 
-def segment_file(file_path: Path, date_folder: str, model: str):
+def extract_title(content: str, date_folder: str, model: str) -> str:
     date_part = date_folder.split("T")[0]
-    with open(file_path, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    request_matches = list(re.finditer(r"<USER_REQUEST>([\s\S]*?)</USER_REQUEST>", content))
     
-    if not request_matches:
-        summary = OllamaClient.summarize(content, model) or "agent_session"
-        return [{
-            "conversation": content,
-            "title": f"{date_part}_{summary}.md"
-        }]
-
-    segments = []
-    for i, match in enumerate(request_matches):
-        request_text = match.group(1).strip()
-        start_idx = match.start()
-        end_idx = request_matches[i+1].start() if i + 1 < len(request_matches) else len(content)
-        conversation = content[start_idx:end_idx].strip()
-
-        issue_no = ""
-        issue_match = re.search(r"(?:#|이슈\s*|버그\s*|feature/)([0-9]{3})", request_text, re.IGNORECASE)
-        if issue_match:
-            issue_no = f"_#{issue_match.group(1)}"
-
-        if issue_no:
-            first_line = request_text.split("\n")[0]
-            first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line)
-            first_line = re.sub(r"https?://[^\s]+", "", first_line).strip()
-            clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
-            clean_title = re.sub(r"\s+", "_", clean_title)[:40]
-            if not clean_title:
-                clean_title = "issue_task"
-            title = f"{date_part}{issue_no}_{clean_title}.md"
-        else:
-            summary = OllamaClient.summarize(conversation, model)
-            if summary:
-                title = f"{date_part}_{summary}.md"
-            else:
-                first_line = request_text.split("\n")[0]
-                first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line).strip()
-                clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
-                clean_title = re.sub(r"\s+", "_", clean_title)[:40]
-                if not clean_title:
-                    clean_title = "agent_session"
-                title = f"{date_part}_{clean_title}.md"
-
-        segments.append({
-            "conversation": conversation,
-            "title": title
-        })
-
-    return segments
+    # 세션 전체에서 이슈 번호 감지 시도 (가장 먼저 나오는 것을 대표로 설정)
+    issue_match = re.search(r"(?:#|이슈\s*|버그\s*|feature/)([0-9]{3})", content, re.IGNORECASE)
+    
+    # 첫 번째 USER_REQUEST 구역 추출 시도 (요약 정보 획득용)
+    first_request_match = re.search(r"<USER_REQUEST>([\s\S]*?)</USER_REQUEST>", content)
+    first_request_text = first_request_match.group(1).strip() if first_request_match else ""
+    
+    if issue_match:
+        issue_no = f"_#{issue_match.group(1)}"
+        # 첫 번째 USER_REQUEST의 첫 줄이나 대표 문장을 가공해 파일명에 활용
+        ref_text = first_request_text if first_request_text else content[:300]
+        first_line = ref_text.split("\n")[0]
+        first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line)
+        first_line = re.sub(r"https?://[^\s]+", "", first_line).strip()
+        clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
+        clean_title = re.sub(r"\s+", "_", clean_title)[:40]
+        if not clean_title:
+            clean_title = "issue_task"
+        return f"{date_part}{issue_no}_{clean_title}.md"
+    
+    # 이슈 번호가 없으면 Ollama 요약 활용
+    summary = OllamaClient.summarize(content, model)
+    if summary:
+        return f"{date_part}_{summary}.md"
+    
+    # Ollama 요약 실패 시 첫 요청 기반 타이틀링
+    if first_request_text:
+        first_line = first_request_text.split("\n")[0]
+        first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line).strip()
+        clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
+        clean_title = re.sub(r"\s+", "_", clean_title)[:40]
+        if clean_title:
+            return f"{date_part}_{clean_title}.md"
+            
+    return f"{date_part}_agent_session.md"
 
 def find_transcripts(directory: Path, filename: str) -> list[Path]:
     results = []
@@ -221,13 +205,14 @@ def main():
 
         try:
             date_folder = file_path.parent.parent.name
-            segments = segment_file(file_path, date_folder, model)
-            
-            for seg in segments:
-                dest_path = RAW_STORE / seg["title"]
-                with open(dest_path, "w", encoding="utf-8") as f:
-                    f.write(seg["conversation"])
-                print(f"      + Saved: {seg['title']}")
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                
+            title = extract_title(content, date_folder, model)
+            dest_path = RAW_STORE / title
+            with open(dest_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            print(f"      + Saved: {title}")
 
             cache.update(str(file_path), mtime)
             processed_count += 1
