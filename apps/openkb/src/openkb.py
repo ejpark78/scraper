@@ -168,12 +168,18 @@ def check_ollama_health(model: str) -> bool:
             if response.status == 200:
                 data = json.loads(response.read().decode("utf-8"))
                 models = [m["name"] for m in data.get("models", [])]
-                if model in models or any(model in m for m in models):
-                    print("   ✅ Ollama connection health check passed.")
-                    return True
-                else:
+                if model not in models and not any(model in m for m in models):
                     print(f"   ⚠️ Warning: target model '{model}' not found in active Ollama models.")
-                    return True
+
+        # ⚡ "hello" 더미 추론 테스트 (Pre-warming & 실제 추론 작동 여부 검증)
+        print("⚡ Testing LLM inference with dummy request 'hello' (Pre-warming model)...")
+        test_summary = OllamaClient.summarize("hello", model)
+        if test_summary:
+            print("   ✅ Ollama connection & inference health check passed.")
+            return True
+        else:
+            print("   ❌ Ollama inference failed to return a response.")
+            return False
     except Exception as e:
         print(f"   ❌ Ollama connection health check failed: {str(e)}")
         print("   Please make sure Ollama is running and accessible at the current host address.")
