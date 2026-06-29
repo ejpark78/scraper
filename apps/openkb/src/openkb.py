@@ -162,6 +162,7 @@ def find_transcripts(directory: Path, filename: str) -> list[Path]:
 
 def check_ollama_health(model: str) -> bool:
     print(f"🩺 Checking Ollama connection health (target model: {model})...")
+    print(f"🔗 Ollama API Endpoint: {OLLAMA_ENDPOINT}")
     try:
         req = urllib.request.Request(OLLAMA_TAGS_ENDPOINT)
         with urllib.request.urlopen(req, timeout=3) as response:
