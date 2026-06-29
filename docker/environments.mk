@@ -9,6 +9,7 @@ AUTH             ?= false
 CHUNK_SIZE       ?= 500
 ERROR_RESET      ?= false
 RESET            ?= false
+MODEL            ?= gemma4:e4b
 
 # Runtime Execution Wrapper
 RUN_USER         := --user $(shell id -u):$(shell id -g)
