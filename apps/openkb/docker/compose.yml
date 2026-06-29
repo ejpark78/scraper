@@ -21,7 +21,5 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ${HOST_PROJECT_PATH:-.}/data/openkb:/data/openkb
-      - ${HOST_PROJECT_PATH:-.}/data/agents:/data/agents
-      - ${HOST_PROJECT_PATH:-.}/data/joplin:/data/joplin
+      - ${HOST_PROJECT_PATH:-.}/data:/data
     working_dir: /data/openkb

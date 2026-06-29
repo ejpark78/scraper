@@ -11,7 +11,7 @@ if Path("/data").exists():
     PROJECT_ROOT = Path("/data")
     OLLAMA_HOST = "host.docker.internal"
 else:
-    PROJECT_ROOT = Path("/Users/ejpark/workspace/scraper")
+    PROJECT_ROOT = Path("/Users/ejpark/workspace/scraper/data")
     OLLAMA_HOST = "127.0.0.1"
 
 DUMP_DIR = (PROJECT_ROOT / "agents").resolve()
@@ -25,7 +25,8 @@ OLLAMA_TAGS_ENDPOINT = f"http://{OLLAMA_HOST}:11434/api/tags"
 
 # Ensure runtime working directory is set to openkb base directory for sqlite/settings lookup
 import os
-os.chdir(OPENKB_DIR)
+if OPENKB_DIR.exists():
+    os.chdir(OPENKB_DIR)
 
 class OpenKbCache:
     def __init__(self, cache_path: Path):
