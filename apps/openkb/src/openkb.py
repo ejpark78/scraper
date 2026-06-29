@@ -72,7 +72,7 @@ class OllamaClient:
         try:
             prompt = (
                 "Below is the list of key response summaries and conclusions from an agent during a session.\n"
-                "Please generate a very brief Korean summary (under 45 characters, using Korean, English, numbers, and underscores, no spaces)\n"
+                "Please generate a very brief Korean summary (under 45 characters, using Korean, English, numbers, spaces, and underscores)\n"
                 "representing the core resolution or actions taken during this session.\n"
                 "Output ONLY the summary text, with no extra explanation, quotes, or markdown.\n\n"
                 f"Agent Response:\n{agent_res[:1500]}"
@@ -94,8 +94,9 @@ class OllamaClient:
                 if response.status == 200:
                     res_data = json.loads(response.read().decode("utf-8"))
                     raw_summary = res_data.get("response", "").strip()
+                    # 공백(\s)을 제거하거나 대체하지 않고 그대로 보존하도록 정규식 변경
                     clean = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s_]", "", raw_summary)
-                    clean = re.sub(r"\s+", "_", clean)[:50]
+                    clean = re.sub(r"\s+", " ", clean).strip()[:50]
                     return clean
         except Exception as e:
             print(f"⚠️ Ollama 요약 생성 실패: {str(e)}")
@@ -151,7 +152,7 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
         first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line)
         first_line = re.sub(r"https?://[^\s]+", "", first_line).strip()
         clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
-        clean_title = re.sub(r"\s+", "_", clean_title)[:40]
+        clean_title = re.sub(r"\s+", " ", clean_title).strip()[:40]
         if not clean_title:
             clean_title = "issue_task"
         return f"{date_part}{issue_no}_{clean_title}.md"
@@ -160,7 +161,7 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
         first_line = first_request_text.split("\n")[0]
         first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line).strip()
         clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
-        clean_title = re.sub(r"\s+", "_", clean_title)[:40]
+        clean_title = re.sub(r"\s+", " ", clean_title).strip()[:40]
         if clean_title:
             return f"{date_part}_{clean_title}.md"
             
