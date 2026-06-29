@@ -108,28 +108,50 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     # 세션 전체에서 이슈 번호 감지 시도 (가장 먼저 나오는 것을 대표로 설정)
     issue_match = re.search(r"(?:#|이슈\s*|버그\s*|feature/)([0-9]{3})", content, re.IGNORECASE)
     
-    # 첫 번째 USER_REQUEST 구역 추출 시도 (요약 정보 획득용)
-    first_request_match = re.search(r"<USER_REQUEST>([\s\S]*?)</USER_REQUEST>", content)
-    first_request_text = first_request_match.group(1).strip() if first_request_match else ""
+    # 모든 USER_REQUEST 구역 추출 및 클렌징 (코드 블록, 연속된 영문 로그 라인 제거)
+    user_requests = re.findall(r"<USER_REQUEST>([\s\S]*?)</USER_REQUEST>", content)
+    cleaned_user_texts = []
+    for req in user_requests:
+        # 1. 백틱 코드 블록 제거
+        req_clean = re.sub(r"```[\s\S]*?```", "", req)
+        # 2. 영문 대문자/소문자, 숫자, 일부 특수문자만 포함된 긴 로그성 라인 제거 (공백 제외 한 줄이 주로 영문/숫자/기호인 경우)
+        lines = req_clean.split("\n")
+        filtered_lines = []
+        for line in lines:
+            trimmed = line.strip()
+            # 만약 한 줄의 대다수(70% 이상)가 영문/숫자/특수기호이면서 30자 이상 길면 로그로 필터링
+            if len(trimmed) > 30:
+                english_char_count = len(re.findall(r"[a-zA-Z0-9_\-\.\/\\:\(\)\{\}\[\]\=\+\&\?\;\,\<\>\'\"]", trimmed))
+                if (english_char_count / len(trimmed)) > 0.7:
+                    continue
+            filtered_lines.append(line)
+        cleaned_user_texts.append("\n".join(filtered_lines).strip())
     
-    # 에이전트의 마지막 답변 구역(### [Step ...] 🤖 Agent 이후의 최종 응답 텍스트) 추출 시도
+    user_request_combined = "\n".join([t for t in cleaned_user_texts if t]).strip()
+    
+    # 모든 에이전트 단계의 설명 문장(자연어 보고내용) 추출 및 노이즈 제거
     agent_blocks = re.findall(r"### \[Step \d+\] 🤖 Agent([\s\S]*?)(?=### \[Step \d+\]|$)", content)
-    agent_response = ""
-    if agent_blocks:
-        # 가장 마지막 에이전트 블록에서 툴 호출(> **🛠️ Tool Call**...) 부분을 제거하고 텍스트만 추출
-        last_block = agent_blocks[-1].strip()
-        last_block_cleaned = re.sub(r">\s*\*\*🛠️ Tool Call\*\*[\s\S]*?(?=> \*\*Result\*\*|$)", "", last_block)
-        last_block_cleaned = re.sub(r">\s*\*\*Result\*\*[\s\S]*?(?=\n\n|$)", "", last_block_cleaned)
-        agent_response = last_block_cleaned.strip()
+    agent_summaries = []
+    for block in agent_blocks:
+        # Tool Call, Result 등의 아티팩트 구역 제거
+        cleaned = re.sub(r">\s*\*\*🛠️ Tool Call\*\*[\s\S]*?(?=> \*\*Result\*\*|$)", "", block)
+        cleaned = re.sub(r">\s*\*\*Result\*\*[\s\S]*?(?=\n\n|$)", "", cleaned)
+        cleaned = cleaned.strip()
+        if cleaned:
+            # 줄바꿈 정리 및 너무 긴 영어 출력 등 필터링하여 자연어 텍스트만 취합
+            lines = [l.strip() for l in cleaned.split("\n") if l.strip() and not l.strip().startswith(">")]
+            agent_summaries.append(" ".join(lines))
+            
+    agent_response_combined = "\n".join(agent_summaries).strip()
     
     # 요약용 입력을 위해 빈 텍스트 대체
-    if not first_request_text:
-        first_request_text = content[:500]
-    if not agent_response:
-        agent_response = content[-500:]
+    if not user_request_combined:
+        user_request_combined = content[:500]
+    if not agent_response_combined:
+        agent_response_combined = content[-500:]
 
     # Ollama 요약 활용
-    summary = OllamaClient.summarize(first_request_text, agent_response, model)
+    summary = OllamaClient.summarize(user_request_combined, agent_response_combined, model)
     if summary:
         if issue_match:
             issue_no = f"#{issue_match.group(1)}"
@@ -140,7 +162,7 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     # Ollama 요약 실패 시 Fallback 로직
     if issue_match:
         issue_no = f"_#{issue_match.group(1)}"
-        first_line = first_request_text.split("\n")[0]
+        first_line = user_request_combined.split("\n")[0] if user_request_combined else "issue_task"
         first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line)
         first_line = re.sub(r"https?://[^\s]+", "", first_line).strip()
         clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
@@ -149,8 +171,8 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
             clean_title = "issue_task"
         return f"{date_part}{issue_no}_{clean_title}.md"
     
-    if first_request_text:
-        first_line = first_request_text.split("\n")[0]
+    if user_request_combined:
+        first_line = user_request_combined.split("\n")[0]
         first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line).strip()
         clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
         clean_title = re.sub(r"\s+", "_", clean_title)[:40]
