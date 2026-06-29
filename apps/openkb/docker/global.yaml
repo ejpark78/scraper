@@ -1,0 +1,3 @@
+default_kb: /data/openkb
+known_kbs:
+- /data/openkb
