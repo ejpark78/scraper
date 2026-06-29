@@ -1,5 +1,0 @@
-model: ollama/gemma4:e4b
-api_base: http://host.docker.internal:11434
-api_key: anything
-language: ko
-pageindex_threshold: 20
