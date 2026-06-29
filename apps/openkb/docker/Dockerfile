@@ -24,5 +24,9 @@ COPY . /app/
 # 기본 작업 디렉토리 지정 (기록할 볼륨이 마운트되는 경로)
 WORKDIR /data/openkb
 
+# 진입점 셸 스크립트에 실행 권한 부여
+RUN chmod +x /app/docker/entrypoint.sh
+
 # 실행 진입점 정의 (기본값)
-ENTRYPOINT ["openkb"]
+ENTRYPOINT ["/app/docker/entrypoint.sh"]
+CMD ["openkb"]
