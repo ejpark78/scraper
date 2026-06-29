@@ -16,7 +16,6 @@ prerelease = "allow"
 
 [tool.poe.tasks]
 compile = "python -m src.openkb"
-wiki = "python -m src.update_wiki"
 lint = "ruff check src/"
 format = "ruff format src/"
 format-check = "ruff format --check src/"

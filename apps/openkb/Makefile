@@ -5,16 +5,13 @@ COMPOSE := docker compose -p scraper --project-directory $(ROOT_DIR) -f $(ROOT_D
 
 RUN_USER ?= --user $$(id -u):$$(id -g)
 
-.PHONY: build compile wiki shell lint format type-check
+.PHONY: build compile shell lint format type-check
 
 build:
 	$(COMPOSE) build openkb
 
 compile:
 	$(COMPOSE) run --rm $(RUN_USER) -e OLLAMA_MODEL="$(MODEL)" --entrypoint poe openkb -C /app compile
-
-wiki:
-	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb -C /app wiki
 
 shell:
 	$(COMPOSE) run --rm $(RUN_USER) --entrypoint bash openkb
