@@ -267,8 +267,6 @@ def main():
     if raw_contents:
         try:
             subprocess.run(["openkb", "add", str(RAW_STORE)], check=True)
-            print("🧠 Building knowledge via OpenKB (Static HTML compilation)...")
-            subprocess.run(["openkb", "build"], check=True)
             print("✅ OpenKB Compile execution complete.")
         except subprocess.CalledProcessError as e:
             print(f"❌ [OpenKB] 컴파일 명령어 실행 실패: {str(e)}")
