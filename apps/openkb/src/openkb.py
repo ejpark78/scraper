@@ -238,82 +238,95 @@ def main():
 
     print(f"🧠 Using Ollama Model for semantic summarization: [{model}]")
 
-    transcripts = find_transcripts(DUMP_DIR, "transcript.md")
-    print(f"📁 Processing and splitting raw dump session transcripts (Found {len(transcripts)} files)...")
+    # RAW 환경변수를 통한 컴파일 대상 지정 (기본값은 둘 다 컴파일)
+    raw_env = os.getenv("RAW", "data/agents,data/joplin")
+    targets = [t.strip() for t in raw_env.split(",") if t.strip()]
+    
+    # 디렉토리 이름 매핑
+    compile_agents = any("agents" in t for t in targets)
+    compile_joplin = any("joplin" in t for t in targets)
 
     cache = OpenKbCache(CACHE_PATH)
     processed_count = 0
     skipped_count = 0
 
-    for i, file_path in enumerate(transcripts):
-        mtime = file_path.stat().st_mtime
-        percent = int(((i + 1) / len(transcripts)) * 100)
-
-        if cache.is_up_to_date(str(file_path), mtime):
-            skipped_count += 1
-            if (i + 1) % 10 == 0 or i == len(transcripts) - 1:
-                print(f"   [{i + 1}/{len(transcripts)}] ({percent}%) Skipping cached transcripts...")
-            continue
-
-        relative_path = file_path.relative_to(DUMP_DIR)
-        print(f"   [{i + 1}/{len(transcripts)}] ({percent}%) Analyzing: {relative_path}")
-
-        try:
-            date_folder = file_path.parent.parent.name
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-                
-            title = extract_title(content, date_folder, model)
-            dest_path = RAW_STORE / title
-            with open(dest_path, "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"      + Saved: {title}")
-
-            cache.update(str(file_path), mtime)
-            processed_count += 1
-        except Exception as e:
-            print(f"❌ 파일 처리 중 오류 발생 [{file_path}]: {str(e)}")
+    if compile_agents:
+        transcripts = find_transcripts(DUMP_DIR, "transcript.md")
+        print(f"📁 Processing and splitting raw dump session transcripts (Found {len(transcripts)} files)...")
+        for i, file_path in enumerate(transcripts):
+            mtime = file_path.stat().st_mtime
+            percent = int(((i + 1) / len(transcripts)) * 100)
+    
+            if cache.is_up_to_date(str(file_path), mtime):
+                skipped_count += 1
+                if (i + 1) % 10 == 0 or i == len(transcripts) - 1:
+                    print(f"   [{i + 1}/{len(transcripts)}] ({percent}%) Skipping cached transcripts...")
+                continue
+    
+            relative_path = file_path.relative_to(DUMP_DIR)
+            print(f"   [{i + 1}/{len(transcripts)}] ({percent}%) Analyzing: {relative_path}")
+    
+            try:
+                date_folder = file_path.parent.parent.name
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    
+                title = extract_title(content, date_folder, model)
+                dest_path = RAW_STORE / title
+                with open(dest_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                print(f"      + Saved: {title}")
+    
+                cache.update(str(file_path), mtime)
+                processed_count += 1
+            except Exception as e:
+                print(f"❌ 파일 처리 중 오류 발생 [{file_path}]: {str(e)}")
+    else:
+        print("⏭️ Skipping transcripts compiling (data/agents not in RAW).")
 
     # 📥 Joplin 데이터 연동 프로세스
-    joplin_files = find_joplin_files(JOPLIN_DIR)
-    print(f"📁 Processing Joplin notes (Found {len(joplin_files)} files)...")
-    
     joplin_processed = 0
     joplin_skipped = 0
 
-    for i, file_path in enumerate(joplin_files):
-        mtime = file_path.stat().st_mtime
-        percent = int(((i + 1) / len(joplin_files)) * 100)
-
-        if cache.is_up_to_date(str(file_path), mtime):
-            joplin_skipped += 1
-            continue
-
-        try:
-            # 노트북 폴더명 추출
-            notebook_name = file_path.parent.name
-            filename = file_path.name
-            
-            # OpenKB 컴파일용으로 raw 스토어에 복사 및 Joplin 식별 태그 추가
-            dest_filename = f"Joplin_{notebook_name}_{filename}"
-            dest_path = RAW_STORE / dest_filename
-            
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
+    if compile_joplin:
+        joplin_files = find_joplin_files(JOPLIN_DIR)
+        print(f"📁 Processing Joplin notes (Found {len(joplin_files)} files)...")
+        
+        for i, file_path in enumerate(joplin_files):
+            mtime = file_path.stat().st_mtime
+            percent = int(((i + 1) / len(joplin_files)) * 100)
+    
+            if cache.is_up_to_date(str(file_path), mtime):
+                joplin_skipped += 1
+                continue
+    
+            try:
+                # 노트북 폴더명 추출
+                notebook_name = file_path.parent.name
+                filename = file_path.name
                 
-            # Frontmatter가 없는 경우 식별용 헤더 추가
-            header = f"---\nsource: Joplin\nnotebook: {notebook_name}\n---\n\n"
-            if not content.startswith("---"):
-                content = header + content
+                # OpenKB 컴파일용으로 raw 스토어에 복사 및 Joplin 식별 태그 추가
+                dest_filename = f"Joplin_{notebook_name}_{filename}"
+                dest_path = RAW_STORE / dest_filename
                 
-            with open(dest_path, "w", encoding="utf-8") as f:
-                f.write(content)
-                
-            print(f"      + Processed Joplin Note: {dest_filename}")
-            cache.update(str(file_path), mtime)
-            joplin_processed += 1
-        except Exception as e:
-            print(f"❌ Joplin 파일 처리 중 오류 발생 [{file_path}]: {str(e)}")
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    
+                # Frontmatter가 없는 경우 식별용 헤더 추가
+                header = f"---\nsource: Joplin\nnotebook: {notebook_name}\n---\n\n"
+                if not content.startswith("---"):
+                    content = header + content
+                    
+                with open(dest_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                    
+                print(f"      + Processed Joplin Note: {dest_filename}")
+                cache.update(str(file_path), mtime)
+                joplin_processed += 1
+            except Exception as e:
+                print(f"❌ Joplin 파일 처리 중 오류 발생 [{file_path}]: {str(e)}")
+    else:
+        print("⏭️ Skipping Joplin notes compiling (data/joplin not in RAW).")
 
     print(f"✨ Transcripts - Processed: {processed_count}, Skipped: {skipped_count}")
     print(f"✨ Joplin Notes - Processed: {joplin_processed}, Skipped: {joplin_skipped}")
