@@ -10,9 +10,6 @@ AGENTS ?= agy,opencode
 AGENTS_FLAG = --agent=$(AGENTS)
 
  .PHONY: dump \
-		dump-transcripts \
-        dump-context \
-        dump-brain \
         dump-sysinfo \
         compress-rules \
         usage \
@@ -25,15 +22,6 @@ dump:
 
 wiki:
 	@$(MAKE) -C apps/openkb wiki
-
-dump-transcripts:
-	@npm run agents:sessions -- --transcript --all $(AGENTS_FLAG)
-
-dump-context:
-	@npm run agents:sessions -- --context --all $(AGENTS_FLAG)
-
-dump-brain:
-	@npm run agents:sessions -- --brain --all $(AGENTS_FLAG)
 
 dump-sysinfo:
 	@npm run agents:sessions -- --sysinfo
