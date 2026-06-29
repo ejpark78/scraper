@@ -160,11 +160,36 @@ def find_transcripts(directory: Path, filename: str) -> list[Path]:
                 results.append(Path(root) / f)
     return results
 
+def check_ollama_health(model: str) -> bool:
+    print(f"🩺 Checking Ollama connection health (target model: {model})...")
+    try:
+        req = urllib.request.Request(OLLAMA_TAGS_ENDPOINT)
+        with urllib.request.urlopen(req, timeout=3) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                models = [m["name"] for m in data.get("models", [])]
+                if model in models or any(model in m for m in models):
+                    print("   ✅ Ollama connection health check passed.")
+                    return True
+                else:
+                    print(f"   ⚠️ Warning: target model '{model}' not found in active Ollama models.")
+                    return True
+    except Exception as e:
+        print(f"   ❌ Ollama connection health check failed: {str(e)}")
+        print("   Please make sure Ollama is running and accessible at the current host address.")
+        return False
+    return False
+
 def main():
     print("🤖 Starting OpenKB Compiling Pipeline (Containerized Python Version)...")
     RAW_STORE.mkdir(parents=True, exist_ok=True)
 
     model = OllamaClient.get_available_model()
+    
+    if not check_ollama_health(model):
+        print("❌ Pipeline aborted due to Ollama connection failure.")
+        exit(1)
+
     print(f"🧠 Using Ollama Model for semantic summarization: [{model}]")
 
     transcripts = find_transcripts(DUMP_DIR, "transcript.md")
@@ -212,7 +237,6 @@ def main():
             print("✅ OpenKB Compile execution complete.")
         except subprocess.CalledProcessError as e:
             print(f"❌ [OpenKB] 컴파일 명령어 실행 실패: {str(e)}")
-            exit(1)
             exit(1)
     else:
         print("   No raw logs found to compound.")
