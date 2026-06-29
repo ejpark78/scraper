@@ -61,4 +61,4 @@ viewer-%:
 
 # openkb utils
 openkb-%:
-	@$(MAKE) -C apps/openkb $*
+	@$(MAKE) -C apps/openkb $* MODEL="$(MODEL)"

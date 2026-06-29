@@ -11,7 +11,7 @@ build:
 	$(COMPOSE) build openkb
 
 compile:
-	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb -C /app compile
+	$(COMPOSE) run --rm $(RUN_USER) -e OLLAMA_MODEL="$(MODEL)" --entrypoint poe openkb -C /app compile
 
 wiki:
 	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb -C /app wiki

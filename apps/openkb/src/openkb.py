@@ -191,7 +191,7 @@ def main():
     print("🤖 Starting OpenKB Compiling Pipeline (Containerized Python Version)...")
     RAW_STORE.mkdir(parents=True, exist_ok=True)
 
-    model = OllamaClient.get_available_model()
+    model = os.getenv("OLLAMA_MODEL") or OllamaClient.get_available_model()
     
     if not check_ollama_health(model):
         print("❌ Pipeline aborted due to Ollama connection failure.")
