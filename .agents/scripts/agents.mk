@@ -15,7 +15,6 @@ AGENTS_FLAG = --agent=$(AGENTS)
         dump-brain \
         dump-sysinfo \
         compress-rules \
-        openkb-compile \
         usage \
         prune \
         commit \
@@ -23,9 +22,6 @@ AGENTS_FLAG = --agent=$(AGENTS)
 
 dump:
 	@npm run agents:sessions -- --all-targets --all $(AGENTS_FLAG)
-
-openkb-compile:
-	@$(MAKE) -C apps/openkb compile
 
 wiki:
 	@$(MAKE) -C apps/openkb wiki
