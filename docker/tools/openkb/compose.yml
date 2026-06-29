@@ -14,8 +14,10 @@ services:
       # OpenAI / litellm 규격을 만족시키기 위한 더미 api_key 주입
       - OPENAI_API_KEY=anything
       - LLM_API_KEY=anything
-      - OLLAMA_API_BASE=http://ollama:11434
-      - OPENAI_API_BASE=http://ollama:11434/v1
+      - OLLAMA_API_BASE=http://host.docker.internal:11434
+      - OPENAI_API_BASE=http://host.docker.internal:11434/v1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/openkb:/data/openkb
     working_dir: /data/openkb
