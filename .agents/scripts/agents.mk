@@ -6,7 +6,7 @@
 # Dependencies:   make, ts-node, bash, usage.ts
 # ==============================================================================
 
-AGENTS ?= agy
+AGENTS ?= agy,opencode
 AGENTS_FLAG = --agent=$(AGENTS)
 
  .PHONY: dump \
