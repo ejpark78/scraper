@@ -23,4 +23,5 @@ services:
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/openkb:/data/openkb
       - ${HOST_PROJECT_PATH:-.}/data/agents:/data/agents
+      - ${HOST_PROJECT_PATH:-.}/data/joplin:/data/joplin
     working_dir: /data/openkb

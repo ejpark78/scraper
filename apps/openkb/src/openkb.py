@@ -15,6 +15,7 @@ else:
     OLLAMA_HOST = "127.0.0.1"
 
 DUMP_DIR = (PROJECT_ROOT / "agents").resolve()
+JOPLIN_DIR = (PROJECT_ROOT / "joplin").resolve()
 OPENKB_DIR = (PROJECT_ROOT / "openkb").resolve()
 RAW_STORE = OPENKB_DIR / "raw"
 CACHE_PATH = OPENKB_DIR / ".openkb_cache.json"
@@ -185,6 +186,19 @@ def find_transcripts(directory: Path, filename: str) -> list[Path]:
                 results.append(Path(root) / f)
     return results
 
+def find_joplin_files(directory: Path) -> list[Path]:
+    results = []
+    if not directory.exists():
+        return results
+    for root, _, files in os.walk(directory):
+        for f in files:
+            if f.endswith(".md") and not f.startswith("."):
+                # .tmp_export 등의 임시 디렉토리는 제외
+                if ".tmp_export" in root:
+                    continue
+                results.append(Path(root) / f)
+    return results
+
 def check_ollama_health(model: str) -> bool:
     print(f"🩺 Checking Ollama connection health (target model: {model})...")
     print(f"🔗 Ollama API Endpoint: {OLLAMA_ENDPOINT}")
@@ -260,7 +274,49 @@ def main():
         except Exception as e:
             print(f"❌ 파일 처리 중 오류 발생 [{file_path}]: {str(e)}")
 
-    print(f"✨ Processed: {processed_count} files, Skipped: {skipped_count} files.")
+    # 📥 Joplin 데이터 연동 프로세스
+    joplin_files = find_joplin_files(JOPLIN_DIR)
+    print(f"📁 Processing Joplin notes (Found {len(joplin_files)} files)...")
+    
+    joplin_processed = 0
+    joplin_skipped = 0
+
+    for i, file_path in enumerate(joplin_files):
+        mtime = file_path.stat().st_mtime
+        percent = int(((i + 1) / len(joplin_files)) * 100)
+
+        if cache.is_up_to_date(str(file_path), mtime):
+            joplin_skipped += 1
+            continue
+
+        try:
+            # 노트북 폴더명 추출
+            notebook_name = file_path.parent.name
+            filename = file_path.name
+            
+            # OpenKB 컴파일용으로 raw 스토어에 복사 및 Joplin 식별 태그 추가
+            dest_filename = f"Joplin_{notebook_name}_{filename}"
+            dest_path = RAW_STORE / dest_filename
+            
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                
+            # Frontmatter가 없는 경우 식별용 헤더 추가
+            header = f"---\nsource: Joplin\nnotebook: {notebook_name}\n---\n\n"
+            if not content.startswith("---"):
+                content = header + content
+                
+            with open(dest_path, "w", encoding="utf-8") as f:
+                f.write(content)
+                
+            print(f"      + Processed Joplin Note: {dest_filename}")
+            cache.update(str(file_path), mtime)
+            joplin_processed += 1
+        except Exception as e:
+            print(f"❌ Joplin 파일 처리 중 오류 발생 [{file_path}]: {str(e)}")
+
+    print(f"✨ Transcripts - Processed: {processed_count}, Skipped: {skipped_count}")
+    print(f"✨ Joplin Notes - Processed: {joplin_processed}, Skipped: {joplin_skipped}")
 
     print("🧠 Compiling knowledge via OpenKB (PageIndex)...")
     raw_contents = os.listdir(RAW_STORE) if RAW_STORE.exists() else []
