@@ -68,15 +68,14 @@ class OllamaClient:
         return 'gemma4:e4b'
 
     @staticmethod
-    def summarize(user_req: str, agent_res: str, model: str) -> str:
+    def summarize(agent_res: str, model: str) -> str:
         try:
             prompt = (
-                "Below is the user's request and the agent's response in an agent workspace session.\n"
-                "Please generate a very brief Korean summary (under 40 characters, using Korean, English, numbers, and underscores, no spaces)\n"
-                "representing what was requested and how it was resolved (e.g. '이슈번호_작업요약' or '작업내용_조치결과').\n"
+                "Below is the list of key response summaries and conclusions from an agent during a session.\n"
+                "Please generate a very brief Korean summary (under 45 characters, using Korean, English, numbers, and underscores, no spaces)\n"
+                "representing the core resolution or actions taken during this session.\n"
                 "Output ONLY the summary text, with no extra explanation, quotes, or markdown.\n\n"
-                f"User Request:\n{user_req[:800]}\n\n"
-                f"Agent Response:\n{agent_res[:1000]}"
+                f"Agent Response:\n{agent_res[:1500]}"
             )
             
             payload = {
@@ -108,10 +107,6 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     # 세션 전체에서 이슈 번호 감지 시도 (가장 먼저 나오는 것을 대표로 설정)
     issue_match = re.search(r"(?:#|이슈\s*|버그\s*|feature/)([0-9]{3})", content, re.IGNORECASE)
     
-    # 모든 USER_REQUEST 구역 추출 및 전체 결합 (별도 필터링 제외)
-    user_requests = re.findall(r"<USER_REQUEST>([\s\S]*?)</USER_REQUEST>", content)
-    user_request_combined = "\n".join([req.strip() for req in user_requests if req.strip()]).strip()
-    
     # 모든 에이전트 단계의 설명 문장(자연어 보고내용) 추출 및 노이즈 제거
     agent_blocks = re.findall(r"### \[Step \d+\] 🤖 Agent([\s\S]*?)(?=### \[Step \d+\]|$)", content)
     agent_summaries = []
@@ -128,13 +123,11 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     agent_response_combined = "\n".join(agent_summaries).strip()
     
     # 요약용 입력을 위해 빈 텍스트 대체
-    if not user_request_combined:
-        user_request_combined = content[:500]
     if not agent_response_combined:
         agent_response_combined = content[-500:]
 
     # Ollama 요약 활용
-    summary = OllamaClient.summarize(user_request_combined, agent_response_combined, model)
+    summary = OllamaClient.summarize(agent_response_combined, model)
     if summary:
         if issue_match:
             issue_no = f"#{issue_match.group(1)}"
@@ -143,9 +136,14 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
         return f"{date_part}_{summary}.md"
     
     # Ollama 요약 실패 시 Fallback 로직
+    first_request_match = re.search(r"<USER_REQUEST>([\s\S]*?)</USER_REQUEST>", content)
+    first_request_text = first_request_match.group(1).strip() if first_request_match else ""
+    if not first_request_text:
+        first_request_text = content[:500]
+
     if issue_match:
         issue_no = f"_#{issue_match.group(1)}"
-        first_line = user_request_combined.split("\n")[0] if user_request_combined else "issue_task"
+        first_line = first_request_text.split("\n")[0] if first_request_text else "issue_task"
         first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line)
         first_line = re.sub(r"https?://[^\s]+", "", first_line).strip()
         clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
@@ -154,8 +152,8 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
             clean_title = "issue_task"
         return f"{date_part}{issue_no}_{clean_title}.md"
     
-    if user_request_combined:
-        first_line = user_request_combined.split("\n")[0]
+    if first_request_text:
+        first_line = first_request_text.split("\n")[0]
         first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line).strip()
         clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
         clean_title = re.sub(r"\s+", "_", clean_title)[:40]
