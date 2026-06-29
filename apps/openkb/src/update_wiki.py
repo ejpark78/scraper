@@ -45,6 +45,7 @@ def run_cmd_output(cmd: str, cwd: Path) -> str:
 def main():
     print('🤖 Synchronizing compiled concepts & summaries to Gitea Wiki...')
     config = WikiConfig()
+    os.chdir(config.openkb_dir)
     config.wiki_dir.mkdir(parents=True, exist_ok=True)
 
     concepts_dir = config.openkb_dir / 'wiki/concepts'
@@ -64,13 +65,22 @@ def main():
 
     print('📤 Pushing to Gitea Wiki remote...')
     run_cmd('git config http.sslVerify false', config.wiki_dir)
-
+    run_cmd('git config user.name "WikiSync Agent"', config.wiki_dir)
+    run_cmd('git config user.email "agent@openkb.local"', config.wiki_dir)
+    
     status = run_cmd_output('git status --porcelain', config.wiki_dir)
     if status:
         run_cmd('git add .', config.wiki_dir)
         date_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        run_cmd(f'git commit -m "chore: auto-compound agent session logs {date_str}"', config.wiki_dir)
-        run_cmd('git push origin master', config.wiki_dir)
+        commit_cmd = (
+            'GIT_AUTHOR_NAME="WikiSync Agent" '
+            'GIT_AUTHOR_EMAIL="agent@openkb.local" '
+            'GIT_COMMITTER_NAME="WikiSync Agent" '
+            'GIT_COMMITTER_EMAIL="agent@openkb.local" '
+            f'git commit -m "chore: auto-compound agent session logs {date_str}"'
+        )
+        run_cmd(commit_cmd, config.wiki_dir)
+        run_cmd('git push origin main', config.wiki_dir)
         print('✅ Gitea Wiki Remote synchronisation complete.')
     else:
         print('   No changes detected in Wiki. Push skipped.')

@@ -17,10 +17,12 @@ services:
       - OLLAMA_API_BASE=http://host.docker.internal:11434
       - OPENAI_API_BASE=http://host.docker.internal:11434/v1
       - UV_CACHE_DIR=/tmp/uv_cache
+      - HOME=/data/openkb
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/openkb:/data/openkb
       - ${HOST_PROJECT_PATH:-.}/data/agents:/data/agents
       - ${HOST_PROJECT_PATH:-.}/data/gitea-wiki:/data/gitea-wiki
+      - ${HOST_PROJECT_PATH:-.}/apps/openkb/src:/app/src
     working_dir: /data/openkb

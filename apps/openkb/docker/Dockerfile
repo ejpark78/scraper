@@ -3,6 +3,12 @@
 # ==============================================================================
 FROM python:3.13-slim
 
+# Install system dependencies (git, openssh)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    openssh-client \
+    && rm -rf /var/lib/apt/lists/*
+
 # ghcr.io/astral-sh/uv 이미지에서 uv 바이너리를 복사하여 시스템에 설치
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 

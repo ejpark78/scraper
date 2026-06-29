@@ -22,6 +22,10 @@ CACHE_PATH = OPENKB_DIR / ".openkb_cache.json"
 OLLAMA_ENDPOINT = f"http://{OLLAMA_HOST}:11434/api/generate"
 OLLAMA_TAGS_ENDPOINT = f"http://{OLLAMA_HOST}:11434/api/tags"
 
+# Ensure runtime working directory is set to openkb base directory for sqlite/settings lookup
+import os
+os.chdir(OPENKB_DIR)
+
 class OpenKbCache:
     def __init__(self, cache_path: Path):
         self.cache_path = cache_path
@@ -109,7 +113,10 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     issue_match = re.search(r"(?:#|이슈\s*|버그\s*|feature/)([0-9]{3})", content, re.IGNORECASE)
     
     # 모든 에이전트 단계의 설명 문장(자연어 보고내용) 추출 및 노이즈 제거
-    agent_blocks = re.findall(r"### \[Step \d+\] 🤖 Agent([\s\S]*?)(?=### \[Step \d+\]|$)", content)
+    agent_blocks = re.findall(
+        r"(?:### \[Step \d+\] 🤖 Agent|## 🤖 Agent Answer)([\s\S]*?)(?=### \[Step \d+\]|# 📌 Turn \d+|$)", 
+        content
+    )
     agent_summaries = []
     for block in agent_blocks:
         # Tool Call, Result 등의 아티팩트 구역 제거
@@ -129,7 +136,8 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     
     # 요약용 입력을 위해 빈 텍스트 대체
     if not agent_response_combined:
-        agent_response_combined = content[-500:]
+        # Fallback: 만약 포맷이 완전히 다르면 사용자 요청과 에이전트 답변 본문에서 앞부분이라도 추출
+        agent_response_combined = content[:2000]
 
     # Ollama 요약 활용
     summary = OllamaClient.summarize(agent_response_combined, model)
@@ -259,6 +267,8 @@ def main():
     if raw_contents:
         try:
             subprocess.run(["openkb", "add", str(RAW_STORE)], check=True)
+            print("🧠 Building knowledge via OpenKB (Static HTML compilation)...")
+            subprocess.run(["openkb", "build"], check=True)
             print("✅ OpenKB Compile execution complete.")
         except subprocess.CalledProcessError as e:
             print(f"❌ [OpenKB] 컴파일 명령어 실행 실패: {str(e)}")
