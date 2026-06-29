@@ -185,6 +185,12 @@ class GiteaClient {
     console.log(`✅ 이슈 #${issueId} 가 마감(Closed)되었습니다.`);
   }
 
+  public async reopenIssue(issueId: string): Promise<void> {
+    console.log(`🔓 이슈 #${issueId} 재오픈 중...`);
+    await this.request<void>(`/repos/${this.config.repo}/issues/${issueId}`, 'PATCH', { state: 'open' });
+    console.log(`✅ 이슈 #${issueId} 가 다시 오픈(Open)되었습니다.`);
+  }
+
   public async fixLegacyIssues(issueIds: string[]): Promise<void> {
     console.log(`⚙️ 기존 깨진 이슈 본문 복구 프로세스 시작... 대상 이슈: [${issueIds.join(', ')}]`);
     for (const id of issueIds) {
@@ -330,6 +336,14 @@ class GiteaController {
           process.exit(1);
         }
         await client.closeIssue(args[1]);
+        break;
+
+      case 'reopen-issue':
+        if (args.length < 2) {
+          console.error('Usage: npm run gitea reopen-issue <issueId>');
+          process.exit(1);
+        }
+        await client.reopenIssue(args[1]);
         break;
 
       case 'fix-legacy-issues':

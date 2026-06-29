@@ -11,19 +11,19 @@ build:
 	$(COMPOSE) build openkb
 
 compile:
-	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb compile
+	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb -C /app compile
 
 wiki:
-	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb wiki
+	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb -C /app wiki
 
 shell:
 	$(COMPOSE) run --rm $(RUN_USER) --entrypoint bash openkb
 
 lint:
-	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb lint
+	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb -C /app lint
 
 format:
-	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb format
+	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb -C /app format
 
 type-check:
-	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb type-check
+	$(COMPOSE) run --rm $(RUN_USER) --entrypoint poe openkb -C /app type-check

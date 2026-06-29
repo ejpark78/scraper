@@ -6,6 +6,11 @@ FROM python:3.13-slim
 # ghcr.io/astral-sh/uv 이미지에서 uv 바이너리를 복사하여 시스템에 설치
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+ENV UV_CACHE_DIR=/tmp/uv-cache
+ENV UV_NO_VENV=1
+ENV UV_FROZEN=1
+ENV UV_PROJECT_ENVIRONMENT=/usr/local
+
 WORKDIR /app
 
 # 의존성 복사 및 패키지 인스톨

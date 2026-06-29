@@ -16,6 +16,7 @@ services:
       - LLM_API_KEY=anything
       - OLLAMA_API_BASE=http://host.docker.internal:11434
       - OPENAI_API_BASE=http://host.docker.internal:11434/v1
+      - UV_CACHE_DIR=/tmp/uv_cache
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
