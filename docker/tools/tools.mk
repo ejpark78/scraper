@@ -61,8 +61,34 @@ up-gitea:
 opencode:
 	$(COMPOSE) --profile tools run --rm $(RUN_USER) opencode
 
-ollama:
-	ollama launch opencode --model gemma4:31b-cloud
+# --- Native Ollama Control Commands ---
+
+.PHONY: ollama-run ollama-logs ollama-ps ollama-stop
+
+ollama-run:
+	@echo "🚀 맥북 네이티브 Ollama App/Service 실행 및 gemma4:26b 실행..."
+	@open -a Ollama 2>/dev/null || (pgrep -x "ollama" >/dev/null && echo "Ollama가 이미 실행 중입니다.") || echo "⚠️ Ollama 앱이 애플리케이션 디렉토리에 없습니다. 백그라운드 CLI 실행을 시도합니다."
+	@sleep 2
+	@ollama run gemma4:26b
+
+ollama-logs:
+	@echo "📋 맥북 네이티브 Ollama 로그를 조회합니다..."
+	@if [ -f ~/Library/Logs/Ollama/app.log ]; then \
+		tail -n 50 -f ~/Library/Logs/Ollama/app.log; \
+	elif [ -f ~/.ollama/logs/server.log ]; then \
+		tail -n 50 -f ~/.ollama/logs/server.log; \
+	else \
+		echo "❌ Ollama 로그 파일을 찾을 수 없습니다."; \
+	fi
+
+ollama-ps:
+	@echo "📊 현재 메모리에 로드된 Ollama 모델 리스트:"
+	@ollama ps
+
+ollama-stop:
+	@echo "🛑 맥북 네이티브 Ollama 프로세스를 중지합니다..."
+	@killall Ollama || killall ollama || echo "실행 중인 Ollama가 없습니다."
+
 
 # --- Gitea Token Utilities ---
 

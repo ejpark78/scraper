@@ -10,8 +10,6 @@ services:
     container_name: scraper-openkb
     profiles:
       - tools
-    depends_on:
-      - ollama
     environment:
       # OpenAI / litellm 규격을 만족시키기 위한 더미 api_key 주입
       - OPENAI_API_KEY=anything
