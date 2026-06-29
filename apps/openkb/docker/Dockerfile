@@ -19,7 +19,7 @@ COPY pyproject.toml uv.lock /app/
 RUN uv pip install --system --no-cache --prerelease=allow -r pyproject.toml
 
 # 스크립트 복사
-COPY src/ /app/src/
+COPY . /app/
 
 # 기본 작업 디렉토리 지정 (기록할 볼륨이 마운트되는 경로)
 WORKDIR /data/openkb
