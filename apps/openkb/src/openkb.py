@@ -14,7 +14,7 @@ else:
     PROJECT_ROOT = Path("/Users/ejpark/workspace/scraper")
     OLLAMA_HOST = "127.0.0.1"
 
-DUMP_DIR = (PROJECT_ROOT / "agents/agy").resolve()
+DUMP_DIR = (PROJECT_ROOT / "agents").resolve()
 OPENKB_DIR = (PROJECT_ROOT / "openkb").resolve()
 RAW_STORE = OPENKB_DIR / "raw"
 CACHE_PATH = OPENKB_DIR / ".openkb_cache.json"
