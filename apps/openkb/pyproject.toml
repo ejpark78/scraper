@@ -2,10 +2,38 @@
 name = "openkb-app"
 version = "0.1.0"
 description = "OpenKB compiling and wiki deployment scripts"
+readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "openkb==0.3.0",
+    "poethepoet>=0.32.2",
+    "ruff>=0.9.1",
+    "mypy>=1.14.1",
 ]
 
 [tool.uv]
 prerelease = "allow"
+
+[tool.poe.tasks]
+compile = "python -m src.openkb"
+wiki = "python -m src.update_wiki"
+lint = "ruff check src/"
+format = "ruff format src/"
+format-check = "ruff format --check src/"
+type-check = "mypy src/"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "S"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+ignore_missing_imports = true
+warn_unused_configs = true

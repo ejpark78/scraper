@@ -21,10 +21,6 @@
     "gitea": "ts-node .agents/scripts/gitea.ts",
     "commit": "ts-node .agents/scripts/commit-changes.ts",
     "push": "ts-node .agents/scripts/push-changes.ts",
-    "openkb": "docker compose -p scraper run --rm --entrypoint python openkb /app/src/openkb.py",
-    "openkb:local": "uv run --project apps/openkb apps/openkb/src/openkb.py",
-    "wiki": "docker compose -p scraper run --rm --entrypoint python openkb /app/src/update_wiki.py",
-    "wiki:local": "uv run --project apps/openkb apps/openkb/src/update_wiki.py",
     "agents:sessions": "ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts",
     "agents:rules": "ts-node --project apps/agents/tsconfig.json apps/agents/rules.ts",
     "agents:usage": "ts-node --project apps/agents/tsconfig.json apps/agents/usage.ts"

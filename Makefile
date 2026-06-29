@@ -58,3 +58,7 @@ ebook-%:
 # viewer utils
 viewer-%:
 	@$(MAKE) -C apps/viewer $*
+
+# openkb utils
+openkb-%:
+	@$(MAKE) -C apps/openkb $*
