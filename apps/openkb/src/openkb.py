@@ -68,9 +68,16 @@ class OllamaClient:
         return 'gemma4:e4b'
 
     @staticmethod
-    def summarize(content: str, model: str) -> str:
+    def summarize(user_req: str, agent_res: str, model: str) -> str:
         try:
-            prompt = f"Below is a segment of an agent's workspace conversation. Generate a very brief Korean summary (under 20 characters, using letters, numbers, and underscores, no spaces) representing the core topic of this conversation. Output ONLY the summary text, with no extra explanation, quotes, or markdown.\n\nConversation Segment:\n{content[:1500]}"
+            prompt = (
+                "Below is the user's request and the agent's response in an agent workspace session.\n"
+                "Please generate a very brief Korean summary (under 40 characters, using Korean, English, numbers, and underscores, no spaces)\n"
+                "representing what was requested and how it was resolved (e.g. '이슈번호_작업요약' or '작업내용_조치결과').\n"
+                "Output ONLY the summary text, with no extra explanation, quotes, or markdown.\n\n"
+                f"User Request:\n{user_req[:800]}\n\n"
+                f"Agent Response:\n{agent_res[:1000]}"
+            )
             
             payload = {
                 "model": model,
@@ -89,7 +96,7 @@ class OllamaClient:
                     res_data = json.loads(response.read().decode("utf-8"))
                     raw_summary = res_data.get("response", "").strip()
                     clean = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s_]", "", raw_summary)
-                    clean = re.sub(r"\s+", "_", clean)[:30]
+                    clean = re.sub(r"\s+", "_", clean)[:50]
                     return clean
         except Exception as e:
             print(f"⚠️ Ollama 요약 생성 실패: {str(e)}")
@@ -105,11 +112,35 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     first_request_match = re.search(r"<USER_REQUEST>([\s\S]*?)</USER_REQUEST>", content)
     first_request_text = first_request_match.group(1).strip() if first_request_match else ""
     
+    # 에이전트의 마지막 답변 구역(### [Step ...] 🤖 Agent 이후의 최종 응답 텍스트) 추출 시도
+    agent_blocks = re.findall(r"### \[Step \d+\] 🤖 Agent([\s\S]*?)(?=### \[Step \d+\]|$)", content)
+    agent_response = ""
+    if agent_blocks:
+        # 가장 마지막 에이전트 블록에서 툴 호출(> **🛠️ Tool Call**...) 부분을 제거하고 텍스트만 추출
+        last_block = agent_blocks[-1].strip()
+        last_block_cleaned = re.sub(r">\s*\*\*🛠️ Tool Call\*\*[\s\S]*?(?=> \*\*Result\*\*|$)", "", last_block)
+        last_block_cleaned = re.sub(r">\s*\*\*Result\*\*[\s\S]*?(?=\n\n|$)", "", last_block_cleaned)
+        agent_response = last_block_cleaned.strip()
+    
+    # 요약용 입력을 위해 빈 텍스트 대체
+    if not first_request_text:
+        first_request_text = content[:500]
+    if not agent_response:
+        agent_response = content[-500:]
+
+    # Ollama 요약 활용
+    summary = OllamaClient.summarize(first_request_text, agent_response, model)
+    if summary:
+        if issue_match:
+            issue_no = f"#{issue_match.group(1)}"
+            if issue_no not in summary:
+                return f"{date_part}_{issue_no}_{summary}.md"
+        return f"{date_part}_{summary}.md"
+    
+    # Ollama 요약 실패 시 Fallback 로직
     if issue_match:
         issue_no = f"_#{issue_match.group(1)}"
-        # 첫 번째 USER_REQUEST의 첫 줄이나 대표 문장을 가공해 파일명에 활용
-        ref_text = first_request_text if first_request_text else content[:300]
-        first_line = ref_text.split("\n")[0]
+        first_line = first_request_text.split("\n")[0]
         first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line)
         first_line = re.sub(r"https?://[^\s]+", "", first_line).strip()
         clean_title = re.sub(r"[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]", "", first_line)
@@ -118,12 +149,6 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
             clean_title = "issue_task"
         return f"{date_part}{issue_no}_{clean_title}.md"
     
-    # 이슈 번호가 없으면 Ollama 요약 활용
-    summary = OllamaClient.summarize(content, model)
-    if summary:
-        return f"{date_part}_{summary}.md"
-    
-    # Ollama 요약 실패 시 첫 요청 기반 타이틀링
     if first_request_text:
         first_line = first_request_text.split("\n")[0]
         first_line = re.sub(r"[#*`~\[\]\(\)<>\-_]", " ", first_line).strip()
