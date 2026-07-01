@@ -315,21 +315,18 @@ def check_ollama_health(model: str) -> bool:
         print(f"   ❌ Ollama connection health check failed: {str(e)}")
         print("   Please make sure Ollama is running and accessible at the current host address.")
         return False
-    return False
-
 def main():
     print("🤖 Starting OpenKB Compiling Pipeline (Containerized Python Version)...")
-    
-    # SAMPLE 모드이거나 캐시가 깨졌을 때 깨끗하게 수집되도록 RAW_STORE 초기화
     sample_env = os.getenv("SAMPLE")
     sample_limit = int(sample_env) if sample_env and sample_env.strip().isdigit() else None
-    
-    if sample_limit is not None:
-        print(f"🧹 Clearing RAW_STORE to ensure fresh sample collection...")
-        if RAW_STORE.exists():
-            for item in RAW_STORE.iterdir():
-                if item.is_file():
-                    item.unlink()
+
+    # 컴파일 기동 시 RAW_STORE 디렉토리 내부를 언제나 완전히 초기화하여 
+    # 캐시/수집 상태가 왜곡되어 잔여 파일만 빌드되는 현상을 원천 방지
+    print(f"🧹 Clearing RAW_STORE to ensure fresh document sync...")
+    if RAW_STORE.exists():
+        for item in RAW_STORE.iterdir():
+            if item.is_file():
+                item.unlink()
     RAW_STORE.mkdir(parents=True, exist_ok=True)
 
     model = os.getenv("OLLAMA_MODEL") or OllamaClient.get_available_model()
