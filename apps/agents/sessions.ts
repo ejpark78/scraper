@@ -141,7 +141,23 @@ class TranscriptDumper {
     messages: { role: string; content: string; toolCalls: AgentToolCall[]; stepIndex: number }[],
     taskLogs?: { id: string; localPath: string }[]
   ): string {
+    const isCodex = this.agentName === 'codex';
     const title = rawTitle !== sessionId ? rawTitle : `Session ${sessionId}`;
+    const summarize = (text: string, maxLen = 180): string => {
+      const compact = text.replace(/\s+/g, ' ').trim();
+      return compact.length > maxLen ? `${compact.slice(0, maxLen - 1)}…` : compact;
+    };
+    const normalizeContent = (text: string): string => {
+      const trimmed = text.trim();
+      if (!isCodex) return trimmed;
+      const lines = trimmed
+        .split('\n')
+        .filter((line) => !line.startsWith('[['))
+        .filter((line) => !line.startsWith('session_loop{'))
+        .filter((line) => !line.startsWith('unhandled responses event:'));
+      const compact = lines.join('\n').trim();
+      return compact || trimmed.split('\n').filter(Boolean)[0] || '';
+    };
     let md = `---\n`;
     md += `title: ${title}\n`;
     md += `session_id: ${sessionId}\n`;
@@ -165,20 +181,16 @@ class TranscriptDumper {
       md += `\n### [Step ${msg.stepIndex}] ${roleIcon}\n`;
       
       if (msg.content) {
-        md += `\n${this.sanitizeAbsolutePaths(msg.content.trim())}\n`;
+        const content = this.sanitizeAbsolutePaths(normalizeContent(msg.content));
+        md += `\n${isCodex ? summarize(content, 240) : content}\n`;
       }
 
       if (msg.toolCalls && msg.toolCalls.length > 0) {
         msg.toolCalls.forEach(call => {
           md += `\n> **🛠️ Tool Call**: \`${call.name}\`\n`;
-          md += `> \`\`\`json\n> ${JSON.stringify(call.arguments, null, 2).replace(/\n/g, '\n> ')}\n> \`\`\`\n`;
+          md += `> \`${summarize(JSON.stringify(call.arguments), isCodex ? 160 : 240)}\`\n`;
           if (call.result) {
-            md += `>\n> **Result**:\n`;
-            const lines = call.result.split('\n');
-            const hasLongOutput = lines.length > 150;
-            const outputText = hasLongOutput ? this.truncateOutput(call.result) : call.result;
-            
-            md += `> \`\`\`\n> ${this.sanitizeAbsolutePaths(outputText.trim()).replace(/\n/g, '\n> ')}\n> \`\`\`\n`;
+            md += `> **Result**: \`${summarize(this.sanitizeAbsolutePaths(call.result), isCodex ? 220 : 320)}\`\n`;
           }
         });
       }
