@@ -93,6 +93,10 @@ interface CodexHandlerRow {
   feedback_log_body: string | null;
 }
 
+interface CodexHistoryRow {
+  body: string;
+}
+
 // ─── agy adapter ──────────────────────────────────────────
 
 class AgyAdapter implements AgentAdapter {
@@ -331,6 +335,7 @@ class CodexAdapter implements AgentAdapter {
     let stepIndex = 0;
     let firstUserText = '';
     let activeAssistant: AgentMessage | null = null;
+    const seenUserTexts = new Set<string>();
 
     const userTextFrom = (body: string): string => {
       const match = body.match(/UserInput \{ items: \[Text \{ text: "([\s\S]*?)", text_elements: \[\] \}\]/);
@@ -359,6 +364,7 @@ class CodexAdapter implements AgentAdapter {
         if (!firstUserText) {
           firstUserText = text;
         }
+        seenUserTexts.add(text);
         messages.push({
           role: 'user',
           content: text,
@@ -421,6 +427,32 @@ class CodexAdapter implements AgentAdapter {
       };
       messages.push(assistantMessage);
       activeAssistant = assistantMessage;
+    }
+
+    const historyPath = path.join(os.homedir(), '.codex', 'history.jsonl');
+    if (fs.existsSync(historyPath)) {
+      const historyLines = fs.readFileSync(historyPath, 'utf-8').split('\n');
+      for (const line of historyLines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const parsed = JSON.parse(trimmed) as { role?: string; content?: string; text?: string };
+          if (parsed.role === 'user') {
+            const text = parsed.content || parsed.text || '';
+            if (text && !seenUserTexts.has(text)) {
+              messages.unshift({
+                role: 'user',
+                content: text,
+                toolCalls: [],
+                stepIndex: 0,
+              });
+              seenUserTexts.add(text);
+            }
+          }
+        } catch {
+          // history.jsonl가 세션 메타 일부를 포함하지 않을 수 있어 무시
+        }
+      }
     }
 
     const session: AgentSession = {
