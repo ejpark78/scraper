@@ -346,13 +346,25 @@ class GiteaController {
     const client = new GiteaClient(config);
 
     switch (action) {
-      case 'create-issue':
-        if (args.length < 3) {
-          console.error('Usage: npm run gitea create-issue <title> <body>');
+      case 'create-issue': {
+        let title = '';
+        let body = '';
+        if (args.includes('--title') || args.includes('--body')) {
+          const titleIdx = args.indexOf('--title');
+          const bodyIdx = args.indexOf('--body');
+          if (titleIdx >= 0 && args[titleIdx + 1]) title = args[titleIdx + 1];
+          if (bodyIdx >= 0 && args[bodyIdx + 1]) body = args[bodyIdx + 1];
+        } else {
+          title = args[1];
+          body = args[2];
+        }
+        if (!title || !body) {
+          console.error('Usage: npm run gitea create-issue <title> <body> OR --title <title> --body <body>');
           process.exit(1);
         }
-        await client.createIssue(args[1], args[2]);
+        await client.createIssue(title, body);
         break;
+      }
 
       case 'comment':
         if (args.length < 3) {
@@ -360,6 +372,14 @@ class GiteaController {
           process.exit(1);
         }
         await client.createComment(args[1], args[2]);
+        break;
+
+      case 'update-issue':
+        if (args.length < 4) {
+          console.error('Usage: npm run gitea update-issue <issueId> <title> <body>');
+          process.exit(1);
+        }
+        await client.updateIssue(args[1], args[2], args[3]);
         break;
 
       case 'update-comment':
@@ -420,7 +440,7 @@ class GiteaController {
         break;
 
       default:
-        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, update-comment, close-issue, reopen-issue, update-title, show-issue, find-title-errors, fix-legacy-issues, retroactive-commit-links');
+        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, update-issue, comment, update-comment, close-issue, reopen-issue, update-title, show-issue, find-title-errors, fix-legacy-issues, retroactive-commit-links');
         process.exit(1);
     }
   }
