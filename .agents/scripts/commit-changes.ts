@@ -369,13 +369,12 @@ class ReleaseCoordinator {
       this.pushToRemote();
 
       // 커밋 해시 획득 및 Gitea 이슈 자동 코멘트 & 클로즈
-      if (issueId && this.config.accessToken) {
-        const latestCommitHash = this.git.runCmd('git rev-parse HEAD');
-        await this.postGiteaReport(issueId, latestCommitHash);
-      } else if (!issueId) {
-        console.log('ℹ️ Gitea 이슈 번호가 지정되지 않아 댓글 등록 및 마감은 건너뜁니다.');
-      }
+      await this.reportToGitea(issueId);
+      return;
     }
+
+    this.pushCurrentBranchToRemote(branchName);
+    await this.reportToGitea(issueId);
   }
 
   private pushToRemote(): void {
@@ -387,6 +386,27 @@ class ReleaseCoordinator {
     const pushUrl = `https://gitea-admin:${this.config.accessToken}@gitea.localhost/${this.config.repo}.git`;
     this.git.runCmd(`git push "${pushUrl}" develop --no-verify`);
     console.log('✅ 원격 저장소 동기화가 정상 완료되었습니다.');
+  }
+
+  private pushCurrentBranchToRemote(branchName: string): void {
+    console.log(`📤 현재 브랜치 '${branchName}' 변경 사항을 원격 Gitea 서버로 푸시(push) 중...`);
+    if (!this.config.accessToken) {
+      console.warn('⚠️  Warning: GITEA_ACCESS_TOKEN이 유효하지 않아 Push를 진행할 수 없습니다.');
+      return;
+    }
+    const pushUrl = `https://gitea-admin:${this.config.accessToken}@gitea.localhost/${this.config.repo}.git`;
+    this.git.runCmd(`git push "${pushUrl}" "${branchName}" --no-verify`);
+    console.log('✅ 원격 저장소 동기화가 정상 완료되었습니다.');
+  }
+
+  private async reportToGitea(issueId: string | null): Promise<void> {
+    if (issueId && this.config.accessToken) {
+      const latestCommitHash = this.git.runCmd('git rev-parse HEAD');
+      await this.postGiteaReport(issueId, latestCommitHash);
+      return;
+    }
+
+    console.log('ℹ️ Gitea 이슈 번호가 지정되지 않아 댓글 등록 및 마감은 건너뜁니다.');
   }
 
   private async postGiteaReport(issueId: string, commitHash: string): Promise<void> {
