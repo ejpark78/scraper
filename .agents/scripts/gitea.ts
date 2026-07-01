@@ -208,6 +208,29 @@ class GiteaClient {
     console.log(`✅ 이슈 #${issueId} 제목이 정상 수정되었습니다.`);
   }
 
+  public async printIssueBody(issueId: string): Promise<void> {
+    const issue = await this.getIssue(issueId);
+    console.log(`====== Issue #${issue.number} Body ======`);
+    console.log(issue.body);
+    console.log(`==========================================`);
+  }
+
+  public async printTitleErrorIssues(): Promise<void> {
+    console.log('🔍 제목이 --title로 시작하는 오염된 이슈를 검색 중...');
+    const issues = await this.getIssues();
+    const targets = issues.filter(i => i.title.startsWith('--title') || i.title === '--title');
+    
+    if (targets.length === 0) {
+      console.log('✅ --title 제목 오류를 가진 이슈가 존재하지 않습니다.');
+      return;
+    }
+
+    console.log(`⚠️ 총 ${targets.length}개의 오염된 이슈를 발견했습니다:`);
+    targets.forEach(t => {
+      console.log(`   - [#${t.number}] 제목: "${t.title}" (URL: ${t.html_url})`);
+    });
+  }
+
   public async fixLegacyIssues(issueIds: string[]): Promise<void> {
     console.log(`⚙️ 기존 깨진 이슈 본문 복구 프로세스 시작... 대상 이슈: [${issueIds.join(', ')}]`);
     for (const id of issueIds) {
@@ -384,8 +407,20 @@ class GiteaController {
         await client.updateIssueTitle(args[1], args[2]);
         break;
 
+      case 'find-title-errors':
+        await client.printTitleErrorIssues();
+        break;
+
+      case 'show-issue':
+        if (args.length < 2) {
+          console.error('Usage: npm run gitea show-issue <issueId>');
+          process.exit(1);
+        }
+        await client.printIssueBody(args[1]);
+        break;
+
       default:
-        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, update-comment, close-issue, reopen-issue, update-title, fix-legacy-issues, retroactive-commit-links');
+        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, update-comment, close-issue, reopen-issue, update-title, show-issue, find-title-errors, fix-legacy-issues, retroactive-commit-links');
         process.exit(1);
     }
   }
