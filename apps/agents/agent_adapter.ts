@@ -312,23 +312,25 @@ class CodexAdapter implements AgentAdapter {
 
     const messages: AgentMessage[] = [];
     let stepIndex = 0;
-    const grouped: string[] = [];
-
     for (const row of rows) {
       const body = (row.feedback_log_body || '').trim();
       if (!body) continue;
-      grouped.push(`[${row.level}] ${row.target}\n${body}`);
-    }
 
-    const chunkSize = grouped.length > 1 ? Math.ceil(grouped.length / 2) : 1;
-    const firstChunk = grouped.slice(0, chunkSize).join('\n\n');
-    const secondChunk = grouped.slice(chunkSize).join('\n\n');
+      const isUser = row.target.includes('user_input') || body.includes('codex.op="user_input"');
+      const isTool = row.target.includes('tool') || body.includes('tool');
+      const content = `[${row.level}] ${row.target}\n${body}`;
 
-    if (firstChunk) {
-      messages.push({ role: 'user', content: firstChunk, toolCalls: [], stepIndex: stepIndex++ });
-    }
-    if (secondChunk) {
-      messages.push({ role: 'assistant', content: secondChunk, toolCalls: [], stepIndex: stepIndex++ });
+      if (isUser) {
+        messages.push({ role: 'user', content, toolCalls: [], stepIndex: stepIndex++ });
+        continue;
+      }
+
+      if (isTool) {
+        messages.push({ role: 'assistant', content: `${content}\n[tool-event]`, toolCalls: [], stepIndex: stepIndex++ });
+        continue;
+      }
+
+      messages.push({ role: 'assistant', content, toolCalls: [], stepIndex: stepIndex++ });
     }
 
     const session: AgentSession = {
