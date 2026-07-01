@@ -22,6 +22,14 @@ export COMPOSE
 lint:
 	$(COMPOSE) run --rm $(RUN_USER) worker npx yaml-lint compose.yml "docker/**/*.yml"
 
+mkcert:
+	@echo "🔐 Traefik 로컬 인증서를 호스트에서 생성합니다..."
+	@command -v mkcert >/dev/null 2>&1 || { echo "❌ 호스트에 mkcert가 설치되어 있지 않습니다."; exit 1; }
+	@mkcert -install
+	@mkdir -p data/.services/traefik/certs
+	@mkcert -cert-file data/.services/traefik/certs/local-cert.pem -key-file data/.services/traefik/certs/local-key.pem localhost gitea.localhost route.localhost viewer.localhost docs.localhost me.localhost redis.localhost search.localhost "*.localhost" 127.0.0.1
+	@echo "✅ Traefik 인증서 생성이 완료되었습니다."
+
 -include docker/browser.mk
 -include docker/docker.mk
 -include docker/tools/tools.mk

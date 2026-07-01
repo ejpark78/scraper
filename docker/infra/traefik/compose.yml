@@ -11,7 +11,9 @@
 
 services:
   traefik:
-    image: traefik:v3.7.1
+    build:
+      context: .
+      dockerfile: Dockerfile
     profiles:
       - tools
       - viewer
@@ -26,6 +28,8 @@ services:
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--entrypoints.websecure.http.tls=true"
       - "--serverstransport.insecureskipverify=true"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"      
     ports:
       - "80:80"
       - "443:443"
@@ -34,23 +38,10 @@ services:
       - DOCKER_API_VERSION=1.40
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${HOST_PROJECT_PATH:-.}/data/.services/traefik/certs:/certs:ro
     restart: unless-stopped
-    networks:
-      default:
-        aliases:
-          - mcp.localhost
-          - viewer.localhost
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 10s
       timeout: 5s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik-dashboard.rule=Host(`route.localhost`) || Host(`route.127.0.0.1.nip.io`)"
-      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
-      - "traefik.http.routers.traefik-dashboard.tls=true"
-      - "traefik.http.routers.traefik-dashboard.service=api@internal"
-      - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-redirect"
-      - "traefik.http.middlewares.dashboard-redirect.redirectregex.regex=^https://route.localhost/$$"
-      - "traefik.http.middlewares.dashboard-redirect.redirectregex.replacement=https://route.localhost/dashboard/"

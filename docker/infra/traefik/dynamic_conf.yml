@@ -1,0 +1,28 @@
+http:
+  routers:
+    route-dashboard:
+      rule: Host(`route.localhost`) || Host(`route.127.0.0.1.nip.io`)
+      entryPoints:
+        - websecure
+      tls: {}
+      service: api@internal
+      middlewares:
+        - dashboard-redirect
+
+  middlewares:
+    dashboard-redirect:
+      redirectRegex:
+        regex: ^https://route.localhost/$
+        replacement: https://route.localhost/dashboard/
+        permanent: true
+
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+
+tls:
+  certificates:
+    - certFile: /certs/local-cert.pem
+      keyFile: /certs/local-key.pem
