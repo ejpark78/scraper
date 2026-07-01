@@ -258,6 +258,18 @@ class TranscriptDumper {
   }
 
   private writeWikiLog(sessionDir: string, sessionId: string, messages: AgentMessage[]): void {
+    const summarize = (text: string, maxLen = 90): string => {
+      const oneLine = text.replace(/\s+/g, ' ').trim();
+      if (!oneLine) return 'Untitled';
+      return oneLine.length > maxLen ? `${oneLine.slice(0, maxLen - 1)}…` : oneLine;
+    };
+
+    const stripBlockPrefix = (text: string): string => {
+      const lines = text.split('\n');
+      if (lines.length <= 1) return text.trim();
+      return lines.slice(1).join('\n').trim();
+    };
+
     const turns: { user: AgentMessage; assistant: AgentMessage | null }[] = [];
     let currentTurn: { user: AgentMessage; assistant: AgentMessage | null } | null = null;
 
@@ -283,12 +295,12 @@ class TranscriptDumper {
 
     turns.forEach((turn, idx) => {
       const userReq = turn.user.content.trim();
-      const assistantAns = turn.assistant ? turn.assistant.content.trim() : 'N/A';
+      const assistantAns = turn.assistant ? stripBlockPrefix(turn.assistant.content.trim()) : 'N/A';
       const stepIdx = turn.user.stepIndex;
 
       let category = 'General';
-      let summary = userReq.split('\n')[0].substring(0, 60);
-      if (!summary) summary = `Turn ${idx + 1}`;
+      let summary = summarize(userReq, 60);
+      if (summary === 'Untitled') summary = `Turn ${idx + 1}`;
       let tags = '#general';
       const touchedFiles: string[] = [];
 
@@ -354,7 +366,7 @@ class TranscriptDumper {
         wikiContent += `\n---\n\n`;
       }
 
-      wikiContent += `# 📌 Turn: [${category}] ${summary}\n`;
+      wikiContent += `# Turn ${idx + 1}: [${category}] ${summary}\n`;
       wikiContent += `- **Tags**: ${tags}\n`;
       wikiContent += `- **Related Files**:\n${filesList.split('\n').map(l => '  ' + l).join('\n')}\n`;
       wikiContent += `- **Date**: ${datetime}\n\n`;
@@ -363,11 +375,14 @@ class TranscriptDumper {
       wikiContent += `## 🛠️ Action Taken & Implementation Details\n- ${implementation}\n\n`;
       wikiContent += `### 💻 Executed CLI Commands\n`;
       if (commands.length > 0) {
-        wikiContent += commands.map(c => `- \`${c}\``).join('\n') + '\n';
+        wikiContent += commands.map(c => `- \`${summarize(c, 140)}\``).join('\n') + '\n';
       } else {
         wikiContent += `- None\n`;
       }
       wikiContent += `\n## 💡 Troubleshooting / Learnings (LLM Knowledge Base)\n- ${learnings.replace(/\n/g, '\n  ')}\n`;
+      wikiContent += `\n## 🧾 Turn Evidence\n`;
+      wikiContent += `- **Step Index**: ${stepIdx}\n`;
+      wikiContent += `- **Assistant Present**: ${turn.assistant ? 'Yes' : 'No'}\n`;
     });
 
     const destPath = path.join(sessionDir, 'session.md');
