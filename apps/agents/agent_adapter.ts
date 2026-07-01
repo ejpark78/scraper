@@ -93,10 +93,6 @@ interface CodexHandlerRow {
   feedback_log_body: string | null;
 }
 
-interface CodexHistoryRow {
-  body: string;
-}
-
 // ─── agy adapter ──────────────────────────────────────────
 
 class AgyAdapter implements AgentAdapter {
@@ -281,6 +277,18 @@ class CodexAdapter implements AgentAdapter {
     return JSON.parse(output) as T[];
   }
 
+  private extractQuotedText(body: string): string {
+    const matches = body.match(/OutputText \{ text: "([\s\S]*?)" \}/);
+    return matches ? matches[1] : '';
+  }
+
+  private extractFunctionCall(body: string): { name: string; callId: string | null } | null {
+    const nameMatch = body.match(/FunctionCall \{[\s\S]*?name: "([^"]+)"/);
+    if (!nameMatch) return null;
+    const callIdMatch = body.match(/call_id: "([^"]+)"/);
+    return { name: nameMatch[1], callId: callIdMatch ? callIdMatch[1] : null };
+  }
+
   getSessions(all: boolean): AgentSession[] {
     const rows = this.query<CodexSessionRow>(`
       SELECT
@@ -336,6 +344,7 @@ class CodexAdapter implements AgentAdapter {
     let firstUserText = '';
     let activeAssistant: AgentMessage | null = null;
     const seenUserTexts = new Set<string>();
+    const seenAssistantTexts = new Set<string>();
 
     const userTextFrom = (body: string): string => {
       const match = body.match(/UserInput \{ items: \[Text \{ text: "([\s\S]*?)", text_elements: \[\] \}\]/);
@@ -429,28 +438,52 @@ class CodexAdapter implements AgentAdapter {
       activeAssistant = assistantMessage;
     }
 
-    const historyPath = path.join(os.homedir(), '.codex', 'history.jsonl');
-    if (fs.existsSync(historyPath)) {
-      const historyLines = fs.readFileSync(historyPath, 'utf-8').split('\n');
-      for (const line of historyLines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        try {
-          const parsed = JSON.parse(trimmed) as { role?: string; content?: string; text?: string };
-          if (parsed.role === 'user') {
-            const text = parsed.content || parsed.text || '';
-            if (text && !seenUserTexts.has(text)) {
-              messages.unshift({
-                role: 'user',
-                content: text,
-                toolCalls: [],
-                stepIndex: 0,
-              });
-              seenUserTexts.add(text);
-            }
+    const assistantRows = rows.filter((r) => r.target === 'codex_core::stream_events_utils' || r.target === 'log');
+    for (const row of assistantRows) {
+      const body = (row.feedback_log_body || '').trim();
+      if (!body) continue;
+
+      if (body.includes('role: "assistant"') && body.includes('OutputText { text: "')) {
+        const text = this.extractQuotedText(body);
+        if (text && !seenAssistantTexts.has(text)) {
+          const assistantMessage: AgentMessage = {
+            role: 'assistant',
+            content: text,
+            toolCalls: [],
+            stepIndex: stepIndex++,
+          };
+          messages.push(assistantMessage);
+          activeAssistant = assistantMessage;
+          seenAssistantTexts.add(text);
+        }
+        continue;
+      }
+
+      if (body.includes('FunctionCall {')) {
+        const fn = this.extractFunctionCall(body);
+        if (fn) {
+          const toolCall: AgentToolCall = {
+            name: fn.name,
+            arguments: {
+              callId: fn.callId || '',
+              target: row.target,
+              ts: row.ts,
+              tsNanos: row.ts_nanos,
+            },
+            result: body,
+          };
+          if (activeAssistant) {
+            activeAssistant.toolCalls.push(toolCall);
+          } else {
+            const assistantMessage: AgentMessage = {
+              role: 'assistant',
+              content: body,
+              toolCalls: [toolCall],
+              stepIndex: stepIndex++,
+            };
+            messages.push(assistantMessage);
+            activeAssistant = assistantMessage;
           }
-        } catch {
-          // history.jsonl가 세션 메타 일부를 포함하지 않을 수 있어 무시
         }
       }
     }
