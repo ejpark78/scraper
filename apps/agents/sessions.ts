@@ -141,22 +141,10 @@ class TranscriptDumper {
     messages: { role: string; content: string; toolCalls: AgentToolCall[]; stepIndex: number }[],
     taskLogs?: { id: string; localPath: string }[]
   ): string {
-    const isCodex = this.agentName === 'codex';
     const title = rawTitle !== sessionId ? rawTitle : `Session ${sessionId}`;
     const summarize = (text: string, maxLen = 180): string => {
       const compact = text.replace(/\s+/g, ' ').trim();
       return compact.length > maxLen ? `${compact.slice(0, maxLen - 1)}…` : compact;
-    };
-    const normalizeContent = (text: string): string => {
-      const trimmed = text.trim();
-      if (!isCodex) return trimmed;
-      const lines = trimmed
-        .split('\n')
-        .filter((line) => !line.startsWith('[['))
-        .filter((line) => !line.startsWith('session_loop{'))
-        .filter((line) => !line.startsWith('unhandled responses event:'));
-      const compact = lines.join('\n').trim();
-      return compact || trimmed.split('\n').filter(Boolean)[0] || '';
     };
     let md = `---\n`;
     md += `title: ${title}\n`;
@@ -181,16 +169,16 @@ class TranscriptDumper {
       md += `\n### [Step ${msg.stepIndex}] ${roleIcon}\n`;
       
       if (msg.content) {
-        const content = this.sanitizeAbsolutePaths(normalizeContent(msg.content));
-        md += `\n${isCodex ? summarize(content, 240) : content}\n`;
+        const content = this.sanitizeAbsolutePaths(msg.content);
+        md += `\n${content}\n`;
       }
 
       if (msg.toolCalls && msg.toolCalls.length > 0) {
         msg.toolCalls.forEach(call => {
           md += `\n> **🛠️ Tool Call**: \`${call.name}\`\n`;
-          md += `> \`${summarize(JSON.stringify(call.arguments), isCodex ? 160 : 240)}\`\n`;
+          md += `> \`${summarize(JSON.stringify(call.arguments), 240)}\`\n`;
           if (call.result) {
-            md += `> **Result**: \`${summarize(this.sanitizeAbsolutePaths(call.result), isCodex ? 220 : 320)}\`\n`;
+            md += `> **Result**: \`${summarize(this.sanitizeAbsolutePaths(call.result), 320)}\`\n`;
           }
         });
       }

@@ -86,24 +86,6 @@ interface CodexSessionRow {
   last_ts: number;
 }
 
-interface CodexHandlerRow {
-  ts: number;
-  ts_nanos: number;
-  target: string;
-  feedback_log_body: string | null;
-}
-
-interface CodexTurnEvent {
-  kind: 'user' | 'assistant' | 'approval' | 'tool' | 'system';
-  turnId: string | null;
-  ts: number;
-  tsNanos: number;
-  text: string;
-  target: string;
-  toolName?: string;
-  toolCallId?: string | null;
-}
-
 // ─── agy adapter ──────────────────────────────────────────
 
 class AgyAdapter implements AgentAdapter {
@@ -256,383 +238,355 @@ class AgyAdapter implements AgentAdapter {
 }
 
 // ─── codex adapter ─────────────────────────────────────────
+// ─── Primary: rollout JSONL (~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl)
+// ─── Fallback: SQLite logs_2.sqlite (for sessions without JSONL files)
 
 class CodexAdapter implements AgentAdapter {
   public readonly baseBrainDir: string;
   private readonly dbPath: string;
+  private readonly sessionsDir: string;
 
   constructor() {
     this.baseBrainDir = path.join(os.homedir(), '.codex');
     this.dbPath = path.join(this.baseBrainDir, 'logs_2.sqlite');
+    this.sessionsDir = path.join(this.baseBrainDir, 'sessions');
   }
 
   getName(): string { return 'codex'; }
 
-  private getDb(): string {
-    if (!fs.existsSync(this.dbPath)) {
-      throw new Error(`Codex log DB not found: ${this.dbPath}`);
+  private isDir(p: string): boolean {
+    try { return fs.statSync(p).isDirectory(); } catch { return false; }
+  }
+
+  private getFileMtime(p: string): number {
+    try { return fs.statSync(p).mtimeMs; } catch { return Date.now(); }
+  }
+
+  // ── Session metadata from rollout JSONL first line ──
+
+  private parseSessionMetaFromRollout(filePath: string): {
+    session_id: string; title: string; model: string; cwd: string;
+    timeCreated: number; timeUpdated: number;
+  } | null {
+    const firstLine = fs.readFileSync(filePath, 'utf-8').split('\n')[0];
+    if (!firstLine) return null;
+    const obj = JSON.parse(firstLine);
+    if (obj.type !== 'session_meta') return null;
+    const p = obj.payload;
+    if (typeof p !== 'object' || p === null) return null;
+    const sid = p.session_id || null;
+    if (!sid) return null;
+    const model = p.model || '';
+    const cwd = p.cwd || '';
+    const ts = p.timestamp || '';
+    const timeCreated = ts ? new Date(ts).getTime() : this.getFileMtime(filePath);
+    const timeUpdated = this.getFileMtime(filePath);
+    const title = `Codex: ${path.basename(filePath).replace(/^rollout-/, '').replace(/\.jsonl$/, '')}`;
+    return { session_id: sid, title, model, cwd, timeCreated, timeUpdated };
+  }
+
+  // ── Scan ~/.codex/sessions/ for rollout JSONL files ──
+
+  private gatherRolloutSessions(): Map<string, AgentSession> {
+    const result = new Map<string, AgentSession>();
+    if (!fs.existsSync(this.sessionsDir)) return result;
+    for (const year of fs.readdirSync(this.sessionsDir)) {
+      const yd = path.join(this.sessionsDir, year);
+      if (!this.isDir(yd)) continue;
+      for (const month of fs.readdirSync(yd)) {
+        const md = path.join(yd, month);
+        if (!this.isDir(md)) continue;
+        for (const day of fs.readdirSync(md)) {
+          const dd = path.join(md, day);
+          if (!this.isDir(dd)) continue;
+          for (const f of fs.readdirSync(dd).filter(x => x.startsWith('rollout-') && x.endsWith('.jsonl'))) {
+            const fp = path.join(dd, f);
+            try {
+              const meta = this.parseSessionMetaFromRollout(fp);
+              if (meta && !result.has(meta.session_id)) {
+                result.set(meta.session_id, {
+                  id: meta.session_id,
+                  title: meta.title,
+                  agent: 'codex',
+                  model: meta.model || null,
+                  timeCreated: meta.timeCreated,
+                  timeUpdated: meta.timeUpdated,
+                  tokensInput: 0, tokensOutput: 0, tokensReasoning: 0, cost: 0,
+                });
+              }
+            } catch { /* skip corrupt */ }
+          }
+        }
+      }
     }
+    return result;
+  }
+
+  // ── SQLite session gathering (fallback) ──
+
+  private getDb(): string {
+    if (!fs.existsSync(this.dbPath)) throw new Error(`Codex log DB not found: ${this.dbPath}`);
     return this.dbPath;
   }
 
   private query<T>(sql: string): T[] {
-    const dbPath = this.getDb();
-    const safeSql = sql.replace(/"/g, '\\"');
-    const cmd = `sqlite3 -json "${dbPath}" "${safeSql}"`;
-    const output = execSync(cmd, {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      maxBuffer: 20 * 1024 * 1024,
-    }).trim();
-    if (!output) return [];
-    return JSON.parse(output) as T[];
+    const d = this.getDb();
+    const s = sql.replace(/"/g, '\\"');
+    const out = execSync(`sqlite3 -json "${d}" "${s}"`, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 20 * 1024 * 1024 }).trim();
+    if (!out) return [];
+    return JSON.parse(out) as T[];
   }
 
-  private extractQuotedText(body: string): string {
-    const matches = body.match(/OutputText \{ text: "([\s\S]*?)" \}/);
-    return matches ? matches[1] : '';
+  private gatherSqliteSessions(): AgentSession[] {
+    if (!fs.existsSync(this.dbPath)) return [];
+    try {
+      const rows = this.query<CodexSessionRow>(`
+        SELECT thread_id as id, MIN(ts) as first_ts, MAX(ts) as last_ts, COUNT(*) as log_count
+        FROM logs WHERE thread_id IS NOT NULL AND trim(thread_id) != ''
+        GROUP BY thread_id ORDER BY last_ts DESC
+      `);
+      return rows.map(r => ({
+        id: r.id,
+        title: `Codex Session ${r.id}`,
+        agent: 'codex',
+        model: this.resolveModelFromConfig(),
+        timeCreated: Number(r.first_ts || 0) * 1000,
+        timeUpdated: Number(r.last_ts || 0) * 1000,
+        tokensInput: 0, tokensOutput: 0, tokensReasoning: 0, cost: 0,
+      }));
+    } catch { return []; }
   }
 
-  private extractFunctionCall(body: string): { name: string; callId: string | null } | null {
-    const nameMatch = body.match(/FunctionCall \{[\s\S]*?name: "([^"]+)"/);
-    if (!nameMatch) return null;
-    const callIdMatch = body.match(/call_id: "([^"]+)"/);
-    return { name: nameMatch[1], callId: callIdMatch ? callIdMatch[1] : null };
-  }
+  // ── Find rollout JSONL for a specific session ID ──
 
-  private extractTurnId(body: string): string | null {
-    const matches = [
-      body.match(/turn\.id=([0-9a-f-]+)/),
-      body.match(/turn_id: Some\("([^"]+)"\)/),
-      body.match(/turn_id=([0-9a-f-]+)/),
-    ];
-    for (const match of matches) {
-      if (match && match[1]) return match[1];
+  private findRolloutFile(sessionId: string): string | null {
+    if (!fs.existsSync(this.sessionsDir)) return null;
+    for (const year of fs.readdirSync(this.sessionsDir)) {
+      const yd = path.join(this.sessionsDir, year);
+      if (!this.isDir(yd)) continue;
+      for (const month of fs.readdirSync(yd)) {
+        const md = path.join(yd, month);
+        if (!this.isDir(md)) continue;
+        for (const day of fs.readdirSync(md)) {
+          const dd = path.join(md, day);
+          if (!this.isDir(dd)) continue;
+          for (const f of fs.readdirSync(dd)) {
+            if (f.includes(sessionId) && f.endsWith('.jsonl')) {
+              return path.join(dd, f);
+            }
+          }
+        }
+      }
     }
     return null;
   }
 
-  private extractSubmissionId(body: string): string | null {
-    const match = body.match(/submission\.id=([0-9a-f-]+)/);
-    return match ? match[1] : null;
-  }
+  // ── Extract text from response_item content array ──
 
-  private formatEventBody(target: string, kind: CodexTurnEvent['kind'], text: string): string {
-    const labelMap: Record<CodexTurnEvent['kind'], string> = {
-      user: 'User Input',
-      assistant: 'Assistant Output',
-      approval: 'Approval',
-      tool: 'Tool Call',
-      system: 'System Log',
-    };
-
-    const header = `[[${target} :: ${labelMap[kind]}]]`;
-    const trimmed = text.trim();
-    return trimmed ? `${header}\n${trimmed}` : header;
-  }
-
-  private condenseSystemText(text: string): string {
-    const raw = text.trim();
-    if (!raw) {
-      return '';
-    }
-
-    const marker = raw.lastIndexOf('}: ');
-    if (marker !== -1 && marker + 3 < raw.length) {
-      return raw.slice(marker + 3).trim();
-    }
-
-    return raw;
-  }
-
-  private buildAssistantMessage(events: CodexTurnEvent[], stepIndexRef: { value: number }): AgentMessage | null {
-    const lines: string[] = [];
-    const toolCalls: AgentToolCall[] = [];
-
-    for (const event of events) {
-      if (event.kind === 'approval') {
-        lines.push(this.condenseSystemText(event.text) || 'Approval event');
-        toolCalls.push({
-          name: event.toolName || 'ExecApproval',
-          arguments: {
-            approvalId: event.toolCallId || '',
-            turnId: event.turnId || '',
-            target: event.target,
-          },
-          result: event.text,
-        });
-        continue;
-      }
-
-      if (event.kind === 'tool') {
-        lines.push(this.condenseSystemText(event.text) || `${event.toolName || 'unknown'} tool call`);
-        toolCalls.push({
-          name: event.toolName || 'unknown',
-          arguments: {
-            callId: event.toolCallId || '',
-            target: event.target,
-            ts: event.ts,
-            tsNanos: event.tsNanos,
-          },
-          result: event.text,
-        });
-        continue;
-      }
-
-      if (event.kind === 'system') {
-        const condensed = this.condenseSystemText(event.text);
-        if (condensed) {
-          lines.push(condensed);
-        }
-      } else if (event.kind === 'assistant') {
-        lines.push(event.text.trim());
+  private extractTextFromContent(content: unknown): string {
+    if (!Array.isArray(content) || content.length === 0) return '';
+    const parts: string[] = [];
+    for (const item of content) {
+      if (item && typeof item.text === 'string') {
+        parts.push(item.text);
       }
     }
-
-    if (lines.length === 0) {
-      return null;
-    }
-
-    return {
-      role: 'assistant',
-      content: lines.join('\n\n'),
-      toolCalls,
-      stepIndex: stepIndexRef.value++,
-    };
+    return parts.join('\n');
   }
 
-  getSessions(all: boolean): AgentSession[] {
-    const rows = this.query<CodexSessionRow>(`
-      SELECT
-        thread_id as id,
-        MIN(ts) as first_ts,
-        MAX(ts) as last_ts,
-        COUNT(*) as log_count
-      FROM logs
-      WHERE thread_id IS NOT NULL AND trim(thread_id) != ''
-      GROUP BY thread_id
-      ORDER BY last_ts DESC
-    `);
+  // ── Parse rollout JSONL into AgentMessage[] ──
 
-    if (rows.length === 0) {
-      throw new Error('No codex sessions found in logs_2.sqlite.');
-    }
-
-    const selected = all ? rows : rows.slice(0, 1);
-    return selected.map((r) => ({
-      id: r.id,
-      title: `Codex Session ${r.id}`,
-      agent: 'codex',
-      model: null,
-      timeCreated: Number(r.first_ts || 0) * 1000,
-      timeUpdated: Number(r.last_ts || 0) * 1000,
-      tokensInput: 0,
-      tokensOutput: 0,
-      tokensReasoning: 0,
-      cost: 0,
-    }));
-  }
-
-  getSessionDetail(sessionId: string): SessionDetail {
-    const rows = this.query<CodexLogRow>(`
-      SELECT id, ts, ts_nanos, level, target, feedback_log_body, thread_id
-      FROM logs
-      WHERE thread_id = '${sessionId.replace(/'/g, "''")}'
-      ORDER BY ts ASC, ts_nanos ASC, id ASC
-    `);
-    const handlerRows = this.query<CodexHandlerRow>(`
-      SELECT ts, ts_nanos, target, feedback_log_body
-      FROM logs
-      WHERE thread_id = '${sessionId.replace(/'/g, "''")}' AND target = 'codex_core::session::handlers'
-      ORDER BY ts ASC, ts_nanos ASC, id ASC
-    `);
-
-    if (rows.length === 0) {
-      throw new Error(`Codex session not found: ${sessionId}`);
-    }
-
+  private parseRolloutSession(sessionId: string, filePath: string): SessionDetail {
+    const lines = fs.readFileSync(filePath, 'utf-8').split('\n').filter(Boolean);
     const messages: AgentMessage[] = [];
-    const stepIndexRef = { value: 0 };
-    const turnEvents = new Map<string, CodexTurnEvent[]>();
-    const orphanEvents: CodexTurnEvent[] = [];
-    let firstUserText = '';
+    let stepIndex = 0;
+    let sessionModel = '';
 
-    const pushEvent = (event: CodexTurnEvent): void => {
-      if (event.turnId) {
-        if (!turnEvents.has(event.turnId)) {
-          turnEvents.set(event.turnId, []);
-        }
-        turnEvents.get(event.turnId)!.push(event);
-      } else {
-        orphanEvents.push(event);
-      }
+    const pendingToolCalls = new Map<string, AgentToolCall>();
+
+    interface TurnState {
+      userTexts: string[];
+      assistantTexts: string[];
+      toolCalls: AgentToolCall[];
+    }
+
+    let currentTurn: TurnState | null = null;
+    const ensureTurn = (): TurnState => {
+      if (!currentTurn) currentTurn = { userTexts: [], assistantTexts: [], toolCalls: [] };
+      return currentTurn;
     };
 
-    const userTextFrom = (body: string): string => {
-      const match = body.match(/UserInput \{ items: \[Text \{ text: "([\s\S]*?)", text_elements: \[\] \}\]/);
-      return match ? match[1] : body;
+    const emitTurn = (): void => {
+      if (!currentTurn) return;
+      const turn = currentTurn;
+      for (const ut of turn.userTexts) {
+        if (ut.trim()) messages.push({ role: 'user', content: ut.trim(), toolCalls: [], stepIndex: stepIndex++ });
+      }
+      const combined = turn.assistantTexts.join('\n\n').trim();
+      if (combined || turn.toolCalls.length > 0) {
+        messages.push({ role: 'assistant', content: combined, toolCalls: turn.toolCalls, stepIndex: stepIndex++ });
+      }
+      currentTurn = null;
     };
 
-    const execApprovalFrom = (body: string): { id: string; decision: string } | null => {
-      const idMatch = body.match(/op: ExecApproval \{ id: "([^"]+)"/);
-      const decisionMatch = body.match(/decision: ([A-Za-z]+)/);
-      if (!idMatch || !decisionMatch) return null;
-      return { id: idMatch[1], decision: decisionMatch[1] };
-    };
+    for (const line of lines) {
+      let obj: Record<string, unknown>;
+      try { obj = JSON.parse(line) as Record<string, unknown>; } catch { continue; }
 
-    for (const row of rows) {
-      const body = (row.feedback_log_body || '').trim();
-      if (!body) continue;
-      const turnId = this.extractTurnId(body) || this.extractSubmissionId(body);
+      const type = obj.type as string | undefined;
+      const p = obj.payload;
 
-      if (body.includes('op: UserInput')) {
-        if (!firstUserText) {
-          firstUserText = userTextFrom(body);
-        }
-        pushEvent({
-          kind: 'user',
-          turnId,
-          ts: row.ts,
-          tsNanos: row.ts_nanos,
-          text: userTextFrom(body),
-          target: row.target,
-        });
+      if (typeof p !== 'object' || p === null) continue;
+
+      const payload = p as Record<string, unknown>;
+
+      if (type === 'session_meta') {
+        sessionModel = (payload.model as string) || sessionModel;
         continue;
       }
 
-      if (body.includes('op: ExecApproval')) {
-        const approval = execApprovalFrom(body);
-        pushEvent({
-          kind: 'approval',
-          turnId,
-          ts: row.ts,
-          tsNanos: row.ts_nanos,
-          text: body,
-          toolName: 'ExecApproval',
-          toolCallId: approval?.id || null,
-          target: row.target,
-        });
+      if (type === 'turn_context') {
+        emitTurn();
+        ensureTurn();
         continue;
       }
 
-      if (body.includes('role: "assistant"') && body.includes('OutputText { text: "')) {
-        pushEvent({
-          kind: 'assistant',
-          turnId,
-          ts: row.ts,
-          tsNanos: row.ts_nanos,
-          text: this.extractQuotedText(body),
-          target: row.target,
-        });
+      if (type !== 'response_item') continue;
+
+      const innerType = payload.type as string | undefined;
+      const role = payload.role as string | undefined;
+
+      if (innerType === 'message' && role === 'user') {
+        ensureTurn();
+        const text = this.extractTextFromContent(payload.content);
+        if (text) currentTurn!.userTexts.push(text);
         continue;
       }
 
-      if (body.includes('FunctionCall {')) {
-        const fn = this.extractFunctionCall(body);
-        pushEvent({
-          kind: 'tool',
-          turnId,
-          ts: row.ts,
-          tsNanos: row.ts_nanos,
-          text: body,
-          toolName: fn?.name || 'unknown',
-          toolCallId: fn?.callId || null,
-          target: row.target,
-        });
+      if (innerType === 'message' && role === 'assistant') {
+        ensureTurn();
+        const text = this.extractTextFromContent(payload.content);
+        if (text) currentTurn!.assistantTexts.push(text);
         continue;
       }
 
-      if (
-        body.includes('codex.request.reasoning_effort') ||
-        body.includes('stream_request') ||
-        body.includes('message_from_assistant') ||
-        row.target === 'log' ||
-        row.target === 'feedback_tags' ||
-        row.target.includes('codex_api::sse::responses') ||
-        row.target.includes('codex_core::stream_events_utils')
-      ) {
-        pushEvent({
-          kind: 'system',
-          turnId,
-          ts: row.ts,
-          tsNanos: row.ts_nanos,
-          text: body,
-          target: row.target,
-        });
+      if (innerType === 'reasoning') continue;
+
+      const name = payload.name as string | undefined;
+      const callId = payload.call_id as string | undefined;
+
+      if (innerType === 'tool_use' && name && callId) {
+        ensureTurn();
+        const args: Record<string, unknown> = { callId };
+        if (payload.input !== undefined) args.input = payload.input;
+        if (payload.arguments !== undefined) args.arguments = payload.arguments;
+        const tc: AgentToolCall = { name, arguments: args };
+        currentTurn!.toolCalls.push(tc);
+        pendingToolCalls.set(callId, tc);
+        continue;
+      }
+
+      if (callId && pendingToolCalls.has(callId)) {
+        const tc = pendingToolCalls.get(callId)!;
+        const output = (payload.output !== undefined ? String(payload.output) : '') ||
+                       (payload.status !== undefined ? `Status: ${payload.status}` : '');
+        if (output) tc.result = output;
+        pendingToolCalls.delete(callId);
+        continue;
       }
     }
 
-    const sortedTurnIds = [...turnEvents.keys()].sort((a, b) => {
-      const left = turnEvents.get(a)?.[0];
-      const right = turnEvents.get(b)?.[0];
-      const leftTs = left ? left.ts * 1e6 + left.tsNanos : 0;
-      const rightTs = right ? right.ts * 1e6 + right.tsNanos : 0;
-      return leftTs - rightTs;
-    });
+    emitTurn();
 
-    const buildTurnMessages = (events: CodexTurnEvent[]): AgentMessage[] => {
-      const turnMessages: AgentMessage[] = [];
-      const ordered = [...events].sort((a, b) => {
-        const left = a.ts * 1e6 + a.tsNanos;
-        const right = b.ts * 1e6 + b.tsNanos;
-        return left - right;
-      });
-
-      const userEvents = ordered.filter((e) => e.kind === 'user');
-      const assistantLikeEvents = ordered.filter((e) => e.kind !== 'user');
-
-      for (const userEvent of userEvents) {
-        turnMessages.push({
-          role: 'user',
-          content: userEvent.text.trim(),
-          toolCalls: [],
-          stepIndex: stepIndexRef.value++,
-        });
-      }
-
-      const assistantMessage = this.buildAssistantMessage(assistantLikeEvents, stepIndexRef);
-      if (assistantMessage) {
-        turnMessages.push(assistantMessage);
-      }
-
-      return turnMessages;
-    };
-
-    for (const turnId of sortedTurnIds) {
-      const turnMessages = buildTurnMessages(turnEvents.get(turnId) || []);
-      messages.push(...turnMessages);
-    }
-
-    if (orphanEvents.length > 0) {
-      const orphanMessages = buildTurnMessages(orphanEvents);
-      messages.push(...orphanMessages);
-    }
+    const firstUserMsg = messages.find(m => m.role === 'user');
+    const title = firstUserMsg
+      ? `Codex: ${firstUserMsg.content.slice(0, 60)}`
+      : `Codex: ${sessionId.slice(0, 12)}`;
 
     const session: AgentSession = {
-      id: sessionId,
-      title: firstUserText ? `Codex: ${firstUserText.slice(0, 40)}` : `Codex Session ${sessionId}`,
-      agent: 'codex',
-      model: this.resolveModel(),
-      timeCreated: Number(rows[0].ts || 0) * 1000,
-      timeUpdated: Number(rows[rows.length - 1].ts || 0) * 1000,
-      tokensInput: 0,
-      tokensOutput: 0,
-      tokensReasoning: 0,
-      cost: 0,
+      id: sessionId, title, agent: 'codex',
+      model: sessionModel || this.resolveModelFromConfig(),
+      timeCreated: Date.now(), timeUpdated: Date.now(),
+      tokensInput: 0, tokensOutput: 0, tokensReasoning: 0, cost: 0,
     };
 
     return { session, messages };
   }
 
-  private resolveModel(): string {
-    const configPath = path.join(this.baseBrainDir, 'config.toml');
-    if (!fs.existsSync(configPath)) {
-      return 'gpt-5.4-mini';
+  // ── Fallback: simplified SQLite parsing ──
+
+  private parseSqliteSession(sessionId: string): SessionDetail {
+    const rows = this.query<CodexLogRow>(`
+      SELECT id, ts, ts_nanos, level, target, feedback_log_body, thread_id
+      FROM logs WHERE thread_id = '${sessionId.replace(/'/g, "''")}'
+      ORDER BY ts ASC, ts_nanos ASC, id ASC
+    `);
+    if (rows.length === 0) throw new Error(`Codex session not found: ${sessionId}`);
+
+    const messages: AgentMessage[] = [];
+    let stepIndex = 0;
+    let firstUserText = '';
+
+    const userTextFrom = (body: string): string => {
+      const m = body.match(/UserInput \{ items: \[Text \{ text: "([\s\S]*?)", text_elements: \[\] \}\]/);
+      return m ? m[1] : body;
+    };
+    const extractQT = (body: string): string => {
+      const m = body.match(/OutputText \{ text: "([\s\S]*?)" \}/);
+      return m ? m[1] : '';
+    };
+
+    for (const row of rows) {
+      const body = (row.feedback_log_body || '').trim();
+      if (!body) continue;
+      if (body.includes('op: UserInput')) {
+        if (!firstUserText) firstUserText = userTextFrom(body);
+        messages.push({ role: 'user', content: userTextFrom(body), toolCalls: [], stepIndex: stepIndex++ });
+        continue;
+      }
+      if (body.includes('role: "assistant"') && body.includes('OutputText { text: "')) {
+        messages.push({ role: 'assistant', content: extractQT(body), toolCalls: [], stepIndex: stepIndex++ });
+        continue;
+      }
     }
 
-    const content = fs.readFileSync(configPath, 'utf-8');
-    const match = content.match(/^\s*model\s*=\s*"([^"]+)"/m);
-    return match ? match[1] : 'gpt-5.4-mini';
+    const session: AgentSession = {
+      id: sessionId,
+      title: firstUserText ? `Codex: ${firstUserText.slice(0, 60)}` : `Codex Session ${sessionId}`,
+      agent: 'codex',
+      model: this.resolveModelFromConfig(),
+      timeCreated: Number(rows[0].ts || 0) * 1000,
+      timeUpdated: Number(rows[rows.length - 1].ts || 0) * 1000,
+      tokensInput: 0, tokensOutput: 0, tokensReasoning: 0, cost: 0,
+    };
+    return { session, messages };
+  }
+
+  private resolveModelFromConfig(): string {
+    const cp = path.join(this.baseBrainDir, 'config.toml');
+    if (!fs.existsSync(cp)) return 'gpt-5.4-mini';
+    const c = fs.readFileSync(cp, 'utf-8');
+    const m = c.match(/^\s*model\s*=\s*"([^"]+)"/m);
+    return m ? m[1] : 'gpt-5.4-mini';
+  }
+
+  // ── Public API ──
+
+  getSessions(all: boolean): AgentSession[] {
+    const rollout = this.gatherRolloutSessions();
+    const sqlite = this.gatherSqliteSessions();
+    const merged = new Map<string, AgentSession>();
+    for (const [id, s] of rollout) merged.set(id, s);
+    for (const s of sqlite) { if (!merged.has(s.id)) merged.set(s.id, s); }
+    const sorted = [...merged.values()].sort((a, b) => b.timeCreated - a.timeCreated);
+    if (sorted.length === 0) throw new Error('No codex sessions found.');
+    return all ? sorted : [sorted[0]];
+  }
+
+  getSessionDetail(sessionId: string): SessionDetail {
+    const rf = this.findRolloutFile(sessionId);
+    if (rf) return this.parseRolloutSession(sessionId, rf);
+    return this.parseSqliteSession(sessionId);
   }
 }
 
