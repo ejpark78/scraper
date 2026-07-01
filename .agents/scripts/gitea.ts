@@ -255,6 +255,117 @@ class GiteaClient {
     console.log('🎉 일괄 복구 프로세스가 성공적으로 완료되었습니다.');
   }
 
+  public async generateTokenWithTea(): Promise<void> {
+    console.log('🍵 tea CLI 로그인 설정을 추가하고 토큰을 확인합니다...');
+    try {
+      execSync('tea logins delete local-gitea >/dev/null 2>&1', { stdio: 'ignore' });
+    } catch {
+      // 삭제할 로그인이 없어도 무시
+    }
+    try {
+      execSync('tea logins add --name local-gitea --url https://gitea.localhost --user gitea-admin --password admin12345 --insecure', { stdio: 'inherit' });
+    } catch (e) {
+      const err = e as Error;
+      console.error('❌ tea 로그인 추가 실패:', err.message);
+      process.exit(1);
+    }
+
+    const configPaths = [
+      path.join(process.env.XDG_CONFIG_HOME || path.join(process.env.HOME || '', '.config'), 'tea', 'config.yml'),
+      path.join(process.env.HOME || '', 'Library', 'Application Support', 'tea', 'config.yml'),
+    ];
+
+    for (const configPath of configPaths) {
+      if (fs.existsSync(configPath)) {
+        const content = fs.readFileSync(configPath, 'utf-8');
+        const lines = content.split('\n');
+        let inLogin = false;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!inLogin && trimmed.startsWith('-') && trimmed.includes('name:') && trimmed.includes('local-gitea')) {
+            inLogin = true;
+            continue;
+          }
+          if (inLogin && trimmed.startsWith('name:') && trimmed.includes('local-gitea')) {
+            inLogin = true;
+            continue;
+          }
+          if (inLogin && trimmed.startsWith('token:')) {
+            const token = trimmed.split(':').slice(1).join(':').trim();
+            console.log(`🔑 생성된 tea API 토큰: ${token}`);
+            return;
+          }
+          if (inLogin && trimmed.startsWith('-')) {
+            inLogin = false;
+          }
+        }
+      }
+    }
+    console.error('❌ tea 토큰을 확인할 수 없습니다.');
+    process.exit(1);
+  }
+
+  public async generateToken(): Promise<void> {
+    console.log('🔑 Gitea API를 통해 신규 토큰을 발급합니다...');
+    const baseUrl = this.config.apiUrl;
+    const username = 'gitea-admin';
+    const password = 'admin12345';
+    const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
+
+    try {
+      // 1. 기존 토큰 목록 조회 및 삭제 (cleanup)
+      const listResponse = await fetch(`${baseUrl}/users/${username}/tokens`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+        },
+      });
+      if (listResponse.ok) {
+        const tokens: TokenResponse[] = await listResponse.json();
+        for (const token of tokens) {
+          await fetch(`${baseUrl}/users/${username}/tokens/${token.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Basic ${basicAuth}`,
+            },
+          });
+        }
+        if (tokens.length > 0) {
+          console.log(`   🧹 ${tokens.length}개의 기존 토큰을 정리했습니다.`);
+        }
+      }
+
+      // 2. 새 토큰 생성
+      const tokenName = `antigravity-token-${Math.floor(Date.now() / 1000)}`;
+      const createResponse = await fetch(`${baseUrl}/users/${username}/tokens`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: tokenName, scopes: ['all'] }),
+      });
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        throw new Error(`토큰 생성 실패: ${createResponse.status} ${errorText}`);
+      }
+
+      const newToken: TokenResponse = await createResponse.json();
+      if (newToken.sha1) {
+        console.log(`✅ 새 토큰이 생성되었습니다!`);
+        console.log(`   토큰: ${newToken.sha1}`);
+        console.log(`   이름: ${newToken.name}`);
+      } else {
+        console.log('⚠️ 토큰이 생성되었으나 SHA1 값을 확인할 수 없습니다.');
+      }
+    } catch (error) {
+      const err = error as Error;
+      console.error('❌ 토큰 생성 중 오류 발생:', err.message);
+      process.exit(1);
+    }
+  }
+
   public async retroactiveCommitLinks(): Promise<void> {
     console.log('🔍 전체 이슈 대상 Commit Diff 링크 소급 매핑 프로세스 기동 (v3)...');
     try {
@@ -441,8 +552,16 @@ class GiteaController {
         await client.printIssueBody(args[1]);
         break;
 
+      case 'generate-token':
+        await client.generateToken();
+        break;
+
+      case 'generate-token-tea':
+        await client.generateTokenWithTea();
+        break;
+
       default:
-        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, update-issue, comment, update-comment, close-issue, reopen-issue, update-title, show-issue, find-title-errors, fix-legacy-issues, retroactive-commit-links');
+        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, update-issue, comment, update-comment, close-issue, reopen-issue, update-title, show-issue, find-title-errors, fix-legacy-issues, retroactive-commit-links, generate-token, generate-token-tea');
         process.exit(1);
     }
   }
