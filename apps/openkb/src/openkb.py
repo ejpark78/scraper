@@ -266,15 +266,17 @@ def find_agent_docs(directory: Path) -> list[Path]:
         return results
     seen_sessions = set()
     for root, _, files in os.walk(directory):
-        for f in files:
-            if f not in ("transcript.md", "session.md"):
-                continue
-            full = Path(root) / f
-            session_id = full.parent.name
-            if session_id in seen_sessions:
-                continue
+        session_id = Path(root).name
+        if session_id in seen_sessions:
+            continue
+        
+        # session.md가 존재하면 transcript.md보다 우선적으로 채택
+        if "session.md" in files:
+            results.append(Path(root) / "session.md")
             seen_sessions.add(session_id)
-            results.append(full)
+        elif "transcript.md" in files:
+            results.append(Path(root) / "transcript.md")
+            seen_sessions.add(session_id)
     return results
 
 def find_joplin_files(directory: Path) -> list[Path]:
