@@ -1,6 +1,6 @@
 /**
  * @module agent_adapter
- * @description Provides unified adapters to fetch and query session information from agy logs and opencode databases.
+ * @description Provides unified adapters to fetch and query session information from agy, codex, and opencode sessions.
  * @constraints
  *   - Strictly typed, avoiding 'any' except where library-specific types are undefined.
  *   - Dynamically resolves log paths and queries SQLite databases.
@@ -11,6 +11,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { execSync } from 'child_process';
 
 export interface AgentSession {
   id: string;
@@ -67,6 +68,22 @@ interface LogStep {
   source?: string;
   content?: string;
   tool_calls?: LogToolCall[];
+}
+
+interface CodexLogRow {
+  id: number;
+  ts: number;
+  ts_nanos: number;
+  level: string;
+  target: string;
+  feedback_log_body: string | null;
+  thread_id: string | null;
+}
+
+interface CodexSessionRow {
+  id: string;
+  first_ts: number;
+  last_ts: number;
 }
 
 // ─── agy adapter ──────────────────────────────────────────
@@ -217,6 +234,117 @@ class AgyAdapter implements AgentAdapter {
     };
 
     return { session, messages, sessionDir: path.join(foundBaseDir, sessionId) };
+  }
+}
+
+// ─── codex adapter ─────────────────────────────────────────
+
+class CodexAdapter implements AgentAdapter {
+  public readonly baseBrainDir: string;
+  private readonly dbPath: string;
+
+  constructor() {
+    this.baseBrainDir = path.join(os.homedir(), '.codex');
+    this.dbPath = path.join(this.baseBrainDir, 'logs_2.sqlite');
+  }
+
+  getName(): string { return 'codex'; }
+
+  private getDb(): string {
+    if (!fs.existsSync(this.dbPath)) {
+      throw new Error(`Codex log DB not found: ${this.dbPath}`);
+    }
+    return this.dbPath;
+  }
+
+  private query<T>(sql: string): T[] {
+    const dbPath = this.getDb();
+    const safeSql = sql.replace(/"/g, '\\"');
+    const cmd = `sqlite3 -json "${dbPath}" "${safeSql}"`;
+    const output = execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    if (!output) return [];
+    return JSON.parse(output) as T[];
+  }
+
+  getSessions(all: boolean): AgentSession[] {
+    const rows = this.query<CodexSessionRow>(`
+      SELECT
+        thread_id as id,
+        MIN(ts) as first_ts,
+        MAX(ts) as last_ts,
+        COUNT(*) as log_count
+      FROM logs
+      WHERE thread_id IS NOT NULL AND trim(thread_id) != ''
+      GROUP BY thread_id
+      ORDER BY last_ts DESC
+    `);
+
+    if (rows.length === 0) {
+      throw new Error('No codex sessions found in logs_2.sqlite.');
+    }
+
+    const selected = all ? rows : rows.slice(0, 1);
+    return selected.map((r) => ({
+      id: r.id,
+      title: `Codex Session ${r.id}`,
+      agent: 'codex',
+      model: null,
+      timeCreated: Number(r.first_ts || 0) * 1000,
+      timeUpdated: Number(r.last_ts || 0) * 1000,
+      tokensInput: 0,
+      tokensOutput: 0,
+      tokensReasoning: 0,
+      cost: 0,
+    }));
+  }
+
+  getSessionDetail(sessionId: string): SessionDetail {
+    const rows = this.query<CodexLogRow>(`
+      SELECT id, ts, ts_nanos, level, target, feedback_log_body, thread_id
+      FROM logs
+      WHERE thread_id = '${sessionId.replace(/'/g, "''")}'
+      ORDER BY ts ASC, ts_nanos ASC, id ASC
+    `);
+
+    if (rows.length === 0) {
+      throw new Error(`Codex session not found: ${sessionId}`);
+    }
+
+    const messages: AgentMessage[] = [];
+    let stepIndex = 0;
+    const grouped: string[] = [];
+
+    for (const row of rows) {
+      const body = (row.feedback_log_body || '').trim();
+      if (!body) continue;
+      grouped.push(`[${row.level}] ${row.target}\n${body}`);
+    }
+
+    const chunkSize = grouped.length > 1 ? Math.ceil(grouped.length / 2) : 1;
+    const firstChunk = grouped.slice(0, chunkSize).join('\n\n');
+    const secondChunk = grouped.slice(chunkSize).join('\n\n');
+
+    if (firstChunk) {
+      messages.push({ role: 'user', content: firstChunk, toolCalls: [], stepIndex: stepIndex++ });
+    }
+    if (secondChunk) {
+      messages.push({ role: 'assistant', content: secondChunk, toolCalls: [], stepIndex: stepIndex++ });
+    }
+
+    const session: AgentSession = {
+      id: sessionId,
+      title: `Codex Session ${sessionId}`,
+      agent: 'codex',
+      model: null,
+      timeCreated: Number(rows[0].ts || 0) * 1000,
+      timeUpdated: Number(rows[rows.length - 1].ts || 0) * 1000,
+      tokensInput: 0,
+      tokensOutput: 0,
+      tokensReasoning: 0,
+      cost: 0,
+    };
+
+    return { session, messages };
   }
 }
 
@@ -409,10 +537,12 @@ export function createAdapter(agentName: string): AgentAdapter {
   switch (agentName) {
     case 'agy':
       return new AgyAdapter();
+    case 'codex':
+      return new CodexAdapter();
     case 'opencode':
       return new OpencodeAdapter();
     default:
-      throw new Error(`Unknown agent: ${agentName}. Supported: agy, opencode`);
+      throw new Error(`Unknown agent: ${agentName}. Supported: agy, codex, opencode`);
   }
 }
 
