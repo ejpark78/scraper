@@ -51,10 +51,10 @@ down-obsidian:
 .PHONY: ollama-run ollama-logs ollama-ps ollama-stop
 
 ollama-run:
-	@echo "🚀 맥북 네이티브 Ollama App/Service 실행 및 gemma4:26b 실행..."
+	@echo "🚀 맥북 네이티브 Ollama App/Service 실행 및 gemma4:e4b-mlx 실행..."
 	@open -a Ollama 2>/dev/null || (pgrep -x "ollama" >/dev/null && echo "Ollama가 이미 실행 중입니다.") || echo "⚠️ Ollama 앱이 애플리케이션 디렉토리에 없습니다. 백그라운드 CLI 실행을 시도합니다."
 	@sleep 2
-	@ollama run gemma4:26b
+	@ollama run gemma4:e4b-mlx
 
 ollama-logs:
 	@echo "📋 맥북 네이티브 Ollama 로그를 조회합니다..."

@@ -63,9 +63,9 @@ class OllamaClient:
                     data = json.loads(response.read().decode("utf-8"))
                     models = [m["name"] for m in data.get("models", [])]
                     # 경량 모델 우선순위 배치
-                    preferred = ['gemma4:e4b', 'gemma4:26b']
+                    preferred = ['gemma4:e4b-mlx', 'gemma4:26b-mlx']
                     if agent == 'codex':
-                        preferred = ['gemma4:e4b', 'gemma4:26b'] + preferred
+                        preferred = ['gemma4:e4b-mlx', 'gemma4:26b-mlx'] + preferred
                     for model in preferred:
                         if model in models:
                             return model
@@ -73,7 +73,7 @@ class OllamaClient:
                         return models[0]
         except Exception:
             pass
-        return 'gemma4:e4b'
+        return 'gemma4:e4b-mlx'
 
     @staticmethod
     def summarize(agent_res: str, model: str, agent: str | None = None) -> str:
