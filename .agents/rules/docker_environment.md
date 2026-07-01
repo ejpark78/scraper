@@ -45,4 +45,6 @@ trigger: docker, compose, container, port, volume, network
   - 네트워크 통신 장애나 API 검증 시, 서비스용 경량 이미지에 직접 `curl`이나 `ping` 도구를 추가 설치하지 않습니다.
   - 네트워크 진단용 전용 이미지가 포함된 `nicolaka/netshoot` 진단용 임시 컨테이너를 구동하여 네트워크 디버깅을 진행합니다.
 * **DB 진단 MCP 도구 사용**:
-  - 데이터베이스 상태, Meilisearch 인덱스 상태, Redis 상태 확인 시 셸 CLI를 실행하는 대신, 이미 구축되어 있는 전용 MCP 도구(`run_mongo_query`, `run_meili_query`, `run_redis_query`)를 적극 활용하여 불필요한 시스템 승인 절차를 간소화합니다.
+  - 데이터베이스 상태, Meilisearch 인덱스 상태, Redis 상태 확인은 먼저 전용 MCP 도구(`run_mongo_query`, `run_meili_query`, `run_redis_query`)로 시도합니다.
+  - MCP 도구가 지원하지 않는 재현 명령이나 컨테이너 내부 CLI 검증이 필요한 경우에만 `docker compose exec` / `run` 기반 셸 진단을 사용합니다.
+  - 호스트에서 직접 포트에 붙는 방식은 사용하지 않습니다.

@@ -10,4 +10,4 @@ When the user types `/startcycle <idea>`, orchestrate the development process st
    *(Wait for the user to explicitly approve the spec. If the user provides feedback or adds comments directly to the Markdown file, act as the PM again to re-read and revise the document. Loop this step until they type "Approved").*
 2. Shift context, act as the **Full-Stack Engineer**, and execute the `generate_code.md` skill.
 3. Shift context, act as the **QA Engineer**, and execute the `audit_code.md` skill.
-4. Shift context, act as the **DevOps Master**, and execute the `deploy_app.md` skill.
+4. Shift context, act as the **DevOps Master**, and execute the deployment or hosting skill that is actually present in `.agents/skills/`.
