@@ -6,7 +6,7 @@
 # Dependencies:   make, ts-node, bash, usage.ts
 # ==============================================================================
 
-AGENTS ?= agy,opencode
+AGENTS ?= agy,opencode,codex
 AGENTS_FLAG = --agent=$(AGENTS)
 
  .PHONY: dump \
@@ -48,7 +48,6 @@ code-review review:
 
 push:
 	@npm run push
-
 
 
 

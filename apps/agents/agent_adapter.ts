@@ -268,7 +268,11 @@ class CodexAdapter implements AgentAdapter {
     const dbPath = this.getDb();
     const safeSql = sql.replace(/"/g, '\\"');
     const cmd = `sqlite3 -json "${dbPath}" "${safeSql}"`;
-    const output = execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    const output = execSync(cmd, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      maxBuffer: 20 * 1024 * 1024,
+    }).trim();
     if (!output) return [];
     return JSON.parse(output) as T[];
   }
