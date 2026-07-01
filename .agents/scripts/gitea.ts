@@ -50,7 +50,9 @@ class Config {
       const parts = trimmed.split('=');
       const key = parts[0].trim();
       const value = parts.slice(1).join('=').trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
-      process.env[key] = value;
+      if (process.env[key] === undefined || process.env[key] === '') {
+        process.env[key] = value;
+      }
     });
   }
 }
