@@ -79,13 +79,26 @@ ollama-stop:
 
 gitea-token-curl:
 	@echo "🔑 Gitea API를 통해 신규 토큰을 발급합니다..."
+	@curl -s -k -u "gitea-admin:admin12345" \
+		"https://gitea.localhost/api/v1/users/gitea-admin/tokens" \
+		| grep -o '"id":[0-9]*' \
+		| cut -d: -f2 \
+		| while read -r token_id; do \
+			[ -n "$$token_id" ] || continue; \
+			curl -s -k -X DELETE -u "gitea-admin:admin12345" \
+				"https://gitea.localhost/api/v1/users/gitea-admin/tokens/$$token_id" >/dev/null; \
+		done
 	@curl -s -k -X POST -u "gitea-admin:admin12345" \
 		-H "Content-Type: application/json" \
-		-d '{"name":"antigravity-token-$$(shell date +%s)","scopes":["all"]}' \
+		-d "{\"name\":\"antigravity-token-$$(date +%s)\",\"scopes\":[\"all\"]}" \
 		"https://gitea.localhost/api/v1/users/gitea-admin/tokens" | grep -o '"sha1":"[^"]*' | cut -d'"' -f4 || echo "❌ 토큰 생성 실패"
 
 gitea-token-tea:
 	@echo "🍵 tea CLI 로그인 설정을 추가하고 토큰을 확인합니다..."
-	@tea logins add --name local-gitea --url https://gitea.localhost --user gitea-admin --password admin12345 --insecure || true
+	@tea logins delete local-gitea >/dev/null 2>&1 || true
+	@tea logins add --name local-gitea --url https://gitea.localhost --user gitea-admin --password admin12345 --insecure
 	@echo "🔑 생성된 tea API 토큰:"
-	@cat ~/.config/tea/config.yml 2>/dev/null | grep -A 5 "local-gitea" || echo "❌ tea 설정 파일을 읽을 수 없습니다."
+	@config_file="$${XDG_CONFIG_HOME:-$$HOME/.config}/tea/config.yml"; \
+	if [ ! -f "$$config_file" ]; then config_file="$$HOME/Library/Application Support/tea/config.yml"; fi; \
+	awk '$$1 == "-" && $$2 == "name:" { in_login = ($$3 == "local-gitea") } in_login && $$1 == "token:" { print $$2; found = 1; exit } END { if (!found) exit 1 }' "$$config_file" \
+		|| echo "❌ tea 토큰을 확인할 수 없습니다."
