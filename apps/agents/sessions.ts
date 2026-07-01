@@ -370,10 +370,10 @@ class TranscriptDumper {
       wikiContent += `\n## 💡 Troubleshooting / Learnings (LLM Knowledge Base)\n- ${learnings.replace(/\n/g, '\n  ')}\n`;
     });
 
-    const destPath = path.join(sessionDir, 'session_wiki.md');
+    const destPath = path.join(sessionDir, 'session.md');
     fs.mkdirSync(path.dirname(destPath), { recursive: true });
     fs.writeFileSync(destPath, wikiContent, 'utf-8');
-    console.log(`  ✨ Saved session wiki transcript: ${destPath}`);
+    console.log(`  ✨ Saved session transcript: ${destPath}`);
   }
 }
 
@@ -672,14 +672,14 @@ class SessionPruner {
       removed++;
 
       const transcriptDir = path.join(this.transcriptsDir, sessionId);
-      const transcriptFile = path.join(this.transcriptsDir, sessionId, 'session_wiki.md');
+      const transcriptFile = path.join(this.transcriptsDir, sessionId, 'session.md');
       if (fs.existsSync(transcriptDir)) {
         fs.rmSync(transcriptDir, { recursive: true, force: true });
         console.log(`     📄 Also removed: data/agents/${sessionId}/`);
       }
       if (fs.existsSync(transcriptFile)) {
         fs.rmSync(transcriptFile, { force: true });
-        console.log(`     📄 Also removed: data/agents/${sessionId}/session_wiki.md`);
+        console.log(`     📄 Also removed: data/agents/${sessionId}/session.md`);
       }
     }
 
