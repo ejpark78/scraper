@@ -81,9 +81,9 @@ ollama-stop:
 
 gitea-token:
 	@if [ "$(BY)" = "curl" ]; then \
-		npx ts-node .agents/scripts/gitea.ts generate-token; \
+		npm run gitea:token; \
 	elif [ "$(BY)" = "tea" ]; then \
-		npx ts-node .agents/scripts/gitea.ts generate-token-tea; \
+		npm run gitea:token:tea; \
 	else \
 		echo "⚠️  BY 변수를 지정하세요. 예: make gitea-token BY=curl"; \
 		echo "   지원: BY=curl (gitea.ts), BY=tea (tea CLI)"; \

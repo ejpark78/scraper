@@ -19,6 +19,8 @@
     "type-check": "npm run type-check:crawler && npm run type-check:viewer && npm run type-check:ebook",
     "review": "ts-node .agents/scripts/review-changes.ts",
     "gitea": "ts-node .agents/scripts/gitea.ts",
+    "gitea:token": "npm run gitea generate-token",
+    "gitea:token:tea": "npm run gitea generate-token-tea",
     "commit": "ts-node .agents/scripts/commit-changes.ts",
     "push": "ts-node .agents/scripts/push-changes.ts",
     "agents:sessions": "ts-node --project apps/agents/tsconfig.json apps/agents/sessions.ts",
