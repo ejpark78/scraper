@@ -110,7 +110,19 @@ class OllamaClient:
 
 def extract_title(content: str, date_folder: str, model: str) -> str:
     date_part = date_folder.split("T")[0]
-    
+
+    # frontmatter 기반 메타데이터가 있으면 우선 사용
+    frontmatter_title = re.search(r"^title:\s*(.+)$", content, re.MULTILINE)
+    frontmatter_model = re.search(r"^model:\s*(.+)$", content, re.MULTILINE)
+    if frontmatter_title:
+        title_value = frontmatter_title.group(1).strip()
+        if title_value:
+            return f"{date_part}_{re.sub(r'[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]', '', title_value)[:40]}.md"
+    if frontmatter_model:
+        model_value = frontmatter_model.group(1).strip()
+        if model_value:
+            model = model_value
+
     # 세션 전체에서 이슈 번호 감지 시도 (가장 먼저 나오는 것을 대표로 설정)
     issue_match = re.search(r"(?:#|이슈\s*|버그\s*|feature/)([0-9]{3})", content, re.IGNORECASE)
     
@@ -176,6 +188,12 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
             return f"{date_part}_{clean_title}.md"
             
     return f"{date_part}_agent_session.md"
+
+def normalize_agent_content(content: str) -> str:
+    cleaned = re.sub(r"^\[tool-event\]\s*$", "", content, flags=re.MULTILINE)
+    cleaned = re.sub(r"^\[(TRACE|DEBUG|INFO|WARN|ERROR)\]\s+[^\n]+\n", "", cleaned, flags=re.MULTILINE)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
 
 def find_transcripts(directory: Path, filename: str) -> list[Path]:
     results = []
@@ -271,6 +289,7 @@ def main():
                 date_folder = file_path.parent.parent.name
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
+                content = normalize_agent_content(content)
                     
                 title = extract_title(content, date_folder, model)
                 dest_path = RAW_STORE / title

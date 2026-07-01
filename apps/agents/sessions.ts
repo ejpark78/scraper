@@ -137,11 +137,19 @@ class TranscriptDumper {
   private buildTranscript(
     sessionId: string,
     rawTitle: string,
+    model: string | null,
     messages: { role: string; content: string; toolCalls: AgentToolCall[]; stepIndex: number }[],
     taskLogs?: { id: string; localPath: string }[]
   ): string {
     const title = rawTitle !== sessionId ? rawTitle : `Session ${sessionId}`;
-    let md = `# 📝 Transcript: ${title}\n- **Session ID**: ${sessionId}\n`;
+    let md = `---\n`;
+    md += `title: ${title}\n`;
+    md += `session_id: ${sessionId}\n`;
+    if (model) {
+      md += `model: ${model}\n`;
+    }
+    md += `---\n\n`;
+    md += `# 📝 Transcript: ${title}\n- **Session ID**: ${sessionId}\n`;
     md += `- **Related Reports**: [Brain Dump](./brain_dump.md) | [Context Snapshot](./context_memory.md) | [Raw Logs](./logs/)\n`;
     if (taskLogs && taskLogs.length > 0) {
       md += `- **Tasks Execution Logs**:\n`;
@@ -204,7 +212,7 @@ class TranscriptDumper {
           }
         }
 
-        const md = this.buildTranscript(s.id, s.title || s.id, detail.messages, taskLogs);
+        const md = this.buildTranscript(s.id, s.title || s.id, detail.session.model, detail.messages, taskLogs);
 
         const outDir = path.join(this.outputBase, this.agentName, info.dateDir);
         const destSessionDir = path.join(outDir, info.tag);

@@ -325,6 +325,7 @@ class CodexAdapter implements AgentAdapter {
 
     const messages: AgentMessage[] = [];
     let stepIndex = 0;
+    let firstUserText = '';
     let activeAssistant: AgentMessage | null = null;
 
     const userTextFrom = (body: string): string => {
@@ -346,6 +347,9 @@ class CodexAdapter implements AgentAdapter {
 
       if (body.includes('op: UserInput')) {
         const text = userTextFrom(body);
+        if (!firstUserText) {
+          firstUserText = text;
+        }
         messages.push({
           role: 'user',
           content: text,
@@ -394,9 +398,9 @@ class CodexAdapter implements AgentAdapter {
 
     const session: AgentSession = {
       id: sessionId,
-      title: `Codex Session ${sessionId}`,
+      title: firstUserText ? `Codex: ${firstUserText.slice(0, 40)}` : `Codex Session ${sessionId}`,
       agent: 'codex',
-      model: null,
+      model: this.resolveModel(),
       timeCreated: Number(rows[0].ts || 0) * 1000,
       timeUpdated: Number(rows[rows.length - 1].ts || 0) * 1000,
       tokensInput: 0,
@@ -406,6 +410,17 @@ class CodexAdapter implements AgentAdapter {
     };
 
     return { session, messages };
+  }
+
+  private resolveModel(): string {
+    const configPath = path.join(this.baseBrainDir, 'config.toml');
+    if (!fs.existsSync(configPath)) {
+      return 'gpt-5.4-mini';
+    }
+
+    const content = fs.readFileSync(configPath, 'utf-8');
+    const match = content.match(/^\s*model\s*=\s*"([^"]+)"/m);
+    return match ? match[1] : 'gpt-5.4-mini';
   }
 }
 
