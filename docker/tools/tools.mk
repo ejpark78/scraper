@@ -79,10 +79,10 @@ ollama-stop:
 
 gitea-token-curl:
 	@echo "🔑 Gitea API를 통해 신규 토큰을 발급합니다..."
-	@curl -sS -k -w "\nHTTP_STATUS:%{http_code}\n" -X POST -u "gitea-admin:admin12345" \
+	@curl -s -k -X POST -u "gitea-admin:admin12345" \
 		-H "Content-Type: application/json" \
 		-d '{"name":"antigravity-token-$$(shell date +%s)","scopes":["all"]}' \
-		"https://gitea.localhost/api/v1/users/gitea-admin/tokens"
+		"https://gitea.localhost/api/v1/users/gitea-admin/tokens" | grep -o '"sha1":"[^"]*' | cut -d'"' -f4 || echo "❌ 토큰 생성 실패"
 
 gitea-token-tea:
 	@echo "🍵 tea CLI 로그인 설정을 추가하고 토큰을 확인합니다..."

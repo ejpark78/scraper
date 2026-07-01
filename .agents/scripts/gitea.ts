@@ -55,6 +55,7 @@ class Config {
       }
     });
   }
+
 }
 
 interface IssueResponse {
@@ -67,6 +68,12 @@ interface IssueResponse {
 interface CommentResponse {
   id: number;
   body: string;
+}
+
+interface TokenResponse {
+  id: number;
+  name: string;
+  sha1?: string;
 }
 
 interface TimelineEvent {
