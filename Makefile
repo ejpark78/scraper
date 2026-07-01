@@ -69,4 +69,4 @@ viewer-%:
 
 # openkb utils
 openkb-%:
-	@$(MAKE) -C apps/openkb $* MODEL="$(MODEL)" RAW="$(RAW)"
+	@$(MAKE) -C apps/openkb $* MODEL="$(MODEL)" RAW="$(RAW)" SAMPLE="$(SAMPLE)"

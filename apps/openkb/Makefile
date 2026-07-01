@@ -11,7 +11,7 @@ build:
 	$(COMPOSE) build openkb
 
 compile:
-	$(COMPOSE) run --rm $(RUN_USER) -e OLLAMA_MODEL="$(MODEL)" -e RAW="$(RAW)" --entrypoint poe openkb -C /app compile
+	$(COMPOSE) run --rm $(RUN_USER) -e PYTHONUNBUFFERED=1 -e OLLAMA_MODEL="$(MODEL)" -e RAW="$(RAW)" -e SAMPLE="$(SAMPLE)" --entrypoint poe openkb -C /app compile
 
 shell:
 	$(COMPOSE) run --rm $(RUN_USER) --entrypoint bash openkb

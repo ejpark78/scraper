@@ -205,6 +205,37 @@ def extract_agent(content: str) -> str | None:
     match = re.search(r"^agent:\s*(.+)$", content, re.MULTILINE)
     return match.group(1).strip() if match else None
 
+def clean_broken_links(content: str, session_dir: Path) -> str:
+    """
+    마크다운 내 [text](url) 링크 중 task-*.log 혹은 로컬 파일을 찾아 
+    실제 파일이 세션 디렉토리에 없으면 링크 포맷을 해제하고 일반 텍스트로 치환합니다.
+    """
+    def replace_link(match: re.Match) -> str:
+        text = match.group(1)
+        url = match.group(2)
+        
+        # http/https 절대 경로는 무시
+        if url.startswith("http://") or url.startswith("https://"):
+            return match.group(0)
+            
+        # file:// 혹은 local path 분석
+        clean_url = url.replace("file://", "")
+        # 상대 경로인 경우 세션 디렉토리 기준으로 검사
+        if clean_url.startswith("./") or not clean_url.startswith("/"):
+            target_path = (session_dir / clean_url).resolve()
+        else:
+            target_path = Path(clean_url).resolve()
+            
+        # 파일이 존재하지 않는 경우 링크 제거 (일반 텍스트만 표시)
+        if not target_path.exists():
+            return text
+            
+        return match.group(0)
+
+    # [text](url) 형식 매칭 정규식
+    markdown_link_re = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+    return markdown_link_re.sub(replace_link, content)
+
 def normalize_agent_content(content: str) -> str:
     cleaned = re.sub(r"^\[tool-event\]\s*$", "", content, flags=re.MULTILINE)
     cleaned = re.sub(r"^\[(TRACE|DEBUG|INFO|WARN|ERROR)\]\s+[^\n]+\n", "", cleaned, flags=re.MULTILINE)
@@ -288,6 +319,17 @@ def check_ollama_health(model: str) -> bool:
 
 def main():
     print("🤖 Starting OpenKB Compiling Pipeline (Containerized Python Version)...")
+    
+    # SAMPLE 모드이거나 캐시가 깨졌을 때 깨끗하게 수집되도록 RAW_STORE 초기화
+    sample_env = os.getenv("SAMPLE")
+    sample_limit = int(sample_env) if sample_env and sample_env.strip().isdigit() else None
+    
+    if sample_limit is not None:
+        print(f"🧹 Clearing RAW_STORE to ensure fresh sample collection...")
+        if RAW_STORE.exists():
+            for item in RAW_STORE.iterdir():
+                if item.is_file():
+                    item.unlink()
     RAW_STORE.mkdir(parents=True, exist_ok=True)
 
     model = os.getenv("OLLAMA_MODEL") or OllamaClient.get_available_model()
@@ -300,11 +342,18 @@ def main():
 
     # RAW 환경변수를 통한 컴파일 대상 지정 (기본값은 둘 다 컴파일)
     raw_env = os.getenv("RAW", "data/agents,data/joplin")
+    print(f"📡 RAW env received: '{raw_env}'")
     targets = [t.strip() for t in raw_env.split(",") if t.strip()]
     
     # 디렉토리 이름 매핑
     compile_agents = any("agents" in t for t in targets)
     compile_joplin = any("joplin" in t for t in targets)
+
+    if sample_limit is not None:
+        print(f"🧪 SAMPLE mode enabled: Limiting execution up to first {sample_limit} files per target category.")
+        # SAMPLE 테스트 모드이고 RAW 인자에 joplin이 명시적으로 주어지지 않았다면 강제 비활성화
+        if not any("joplin" in t for t in targets):
+            compile_joplin = False
 
     cache = OpenKbCache(CACHE_PATH)
     processed_count = 0
@@ -312,8 +361,14 @@ def main():
 
     if compile_agents:
         transcripts = find_agent_docs(DUMP_DIR)
-        print(f"📁 Processing and splitting raw dump session transcripts (Found {len(transcripts)} files)...")
+        print(f"📁 Processing raw dump session transcripts (Found {len(transcripts)} files)...")
+        saved_count = 0
         for i, file_path in enumerate(transcripts):
+            # 1. 루프 시작 시점에서 확실히 브레이크 작동
+            if sample_limit is not None and saved_count >= sample_limit:
+                print(f"   🧪 Sample limit of {sample_limit} reached. Breaking agent loop.")
+                break
+                
             mtime = file_path.stat().st_mtime
             percent = int(((i + 1) / len(transcripts)) * 100)
     
@@ -328,18 +383,50 @@ def main():
     
             try:
                 date_folder = file_path.parent.parent.name
+                session_dir = file_path.parent
+                
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
+                    
+                # 1단계: 유효하지 않은 내용 조기 감정 (빈 파일 방어)
+                if not content or len(content.strip()) < 10:
+                    print(f"   ⚠️ Skipping empty/invalid transcript document: {relative_path}")
+                    continue
+                    
                 content = normalize_agent_content(content)
+                
+                # 2단계: 실제 미존재 파일에 대한 링크 정제
+                content = clean_broken_links(content, session_dir)
                     
                 title = extract_title(content, date_folder, model)
+                
+                # 3단계: Ollama 오류 등으로 인해 생성된 제목이 비정상이거나 빈 파일명이 되는 것 차단
+                # 날짜 부분(10자)을 뺀 나머지 제목 영역이 비었거나 언더바만 남은 비정상 파일명 감지
+                title_clean = title.replace(".md", "")
+                if len(title_clean) <= 12 or title_clean[10:].strip(" _") == "":
+                    print(f"   ⚠️ Skipping due to invalid title generation: '{title}' for {relative_path}")
+                    continue
+                    
+                # 3.5단계: "조치_없음" 이나 "no suggestions" 등 유의미한 분석 결과가 없는 세션 파일 저장 스킵
+                # '무엇이든 답변', '조치없음', 'suggestions_none', 'no_suggestions' 등 광범위한 무의미 세션 스킵 적용
+                skip_keywords = ["조치_없음", "no suggestions", "no_suggestions", "suggestions_none", "조치없음", "무엇이든 답변", "무엇이든답변"]
+                if any(k in title_clean.lower() for k in skip_keywords):
+                    print(f"   ⚠️ Skipping empty action/no-op session: '{title}'")
+                    continue
+                    
                 dest_path = RAW_STORE / title
                 with open(dest_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 print(f"      + Saved: {title}")
     
                 cache.update(str(file_path), mtime)
+                saved_count += 1
                 processed_count += 1
+                
+                # 2. 저장 직후 시점에서도 확실히 브레이크 작동
+                if sample_limit is not None and saved_count >= sample_limit:
+                    print(f"   🧪 Sample limit of {sample_limit} reached (Saved {saved_count} files). Breaking agent loop.")
+                    break
             except Exception as e:
                 print(f"❌ 파일 처리 중 오류 발생 [{file_path}]: {str(e)}")
     else:
@@ -354,6 +441,10 @@ def main():
         print(f"📁 Processing Joplin notes (Found {len(joplin_files)} files)...")
         
         for i, file_path in enumerate(joplin_files):
+            if sample_limit is not None and joplin_processed >= sample_limit:
+                print(f"   🧪 Sample limit of {sample_limit} reached. Breaking joplin loop.")
+                break
+                
             mtime = file_path.stat().st_mtime
             percent = int(((i + 1) / len(joplin_files)) * 100)
     
