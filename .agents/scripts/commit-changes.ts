@@ -2,9 +2,10 @@
  * ==============================================================================
  * 🤖 All-In-One Commit, Push, and Gitea Issue Automator (commit-changes.ts)
  * ==============================================================================
- * @description  로컬 변경 사항을 검증/커밋하고, develop 브랜치에 병합(Merge)한 뒤,
- *               자동으로 원격 저장소에 Push하고 해당 Gitea 이슈에 완료 보고 댓글(Commit Diff 포함)과
- *               이슈 마감(Close)까지 원스톱으로 처리하는 통합 릴리즈 파이프라인입니다.
+ * @description  로컬 변경 사항을 검증/커밋하고, 브랜치 정책에 따라 원격 저장소에 Push한 뒤,
+ *               해당 Gitea 이슈에 완료 보고 댓글(Commit Diff 포함)과 이슈 마감(Close)까지
+ *               원스톱으로 처리하는 통합 릴리즈 파이프라인입니다.
+ *               이슈 번호는 feature/hotfix 브랜치명, `GITEA_ISSUE_ID`, `--issue`, `--issue-id` 순으로 해석합니다.
  * @constraints  main 브랜치 직접 커밋 방지 기능 내장.
  *               Strict Typing 및 OOP Patterns 아키텍처 규칙을 상시 준수합니다.
  * @dependencies git CLI, Node.js child_process, Gitea API (fetch)
