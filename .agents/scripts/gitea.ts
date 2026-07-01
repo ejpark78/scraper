@@ -162,7 +162,9 @@ class GiteaClient {
   }
 
   public async updateIssue(issueId: string, title: string, body: string): Promise<void> {
-    await this.request<void>(`/repos/${this.config.repo}/issues/${issueId}`, 'PATCH', { title, body });
+    const formattedTitle = this.formatText(title);
+    const formattedBody = this.formatText(body);
+    await this.request<void>(`/repos/${this.config.repo}/issues/${issueId}`, 'PATCH', { title: formattedTitle, body: formattedBody });
   }
 
   public async createIssue(title: string, body: string): Promise<void> {
