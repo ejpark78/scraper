@@ -200,6 +200,14 @@ class GiteaClient {
     console.log(`✅ 이슈 #${issueId} 가 다시 오픈(Open)되었습니다.`);
   }
 
+  public async updateIssueTitle(issueId: string, title: string): Promise<void> {
+    console.log(`⚙️ Gitea 이슈 #${issueId} 제목 수정 중... [${title}]`);
+    const formattedTitle = this.formatText(title);
+    // 제목만 수정하기 위해 body 생략
+    await this.request<void>(`/repos/${this.config.repo}/issues/${issueId}`, 'PATCH', { title: formattedTitle });
+    console.log(`✅ 이슈 #${issueId} 제목이 정상 수정되었습니다.`);
+  }
+
   public async fixLegacyIssues(issueIds: string[]): Promise<void> {
     console.log(`⚙️ 기존 깨진 이슈 본문 복구 프로세스 시작... 대상 이슈: [${issueIds.join(', ')}]`);
     for (const id of issueIds) {
@@ -368,8 +376,16 @@ class GiteaController {
         await client.retroactiveCommitLinks();
         break;
 
+      case 'update-title':
+        if (args.length < 3) {
+          console.error('Usage: npm run gitea update-title <issueId> <newTitle>');
+          process.exit(1);
+        }
+        await client.updateIssueTitle(args[1], args[2]);
+        break;
+
       default:
-        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, update-comment, close-issue, fix-legacy-issues, retroactive-commit-links');
+        console.error('❌ 알 수 없는 작업명입니다. 지원하는 명령어: create-issue, comment, update-comment, close-issue, reopen-issue, update-title, fix-legacy-issues, retroactive-commit-links');
         process.exit(1);
     }
   }
