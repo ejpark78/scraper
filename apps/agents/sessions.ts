@@ -223,7 +223,7 @@ class TranscriptDumper {
         fs.writeFileSync(outPath, md, 'utf-8');
         console.log(`  ✨ Saved transcript: ${outPath}`);
 
-        this.writeWikiLog(s.id, detail.messages);
+        this.writeWikiLog(destSessionDir, s.id, detail.messages);
 
         const srcSessionDir = detail.sessionDir || (this.adapter.baseBrainDir ? path.join(this.adapter.baseBrainDir, s.id) : '');
         if (srcSessionDir && fs.existsSync(srcSessionDir)) {
@@ -257,7 +257,7 @@ class TranscriptDumper {
     });
   }
 
-  private writeWikiLog(sessionId: string, messages: AgentMessage[]): void {
+  private writeWikiLog(sessionDir: string, sessionId: string, messages: AgentMessage[]): void {
     const turns: { user: AgentMessage; assistant: AgentMessage | null }[] = [];
     let currentTurn: { user: AgentMessage; assistant: AgentMessage | null } | null = null;
 
@@ -370,10 +370,10 @@ class TranscriptDumper {
       wikiContent += `\n## 💡 Troubleshooting / Learnings (LLM Knowledge Base)\n- ${learnings.replace(/\n/g, '\n  ')}\n`;
     });
 
-    const destPath = path.join(this.outputBase, `${sessionId}.md`);
+    const destPath = path.join(sessionDir, 'session_wiki.md');
     fs.mkdirSync(path.dirname(destPath), { recursive: true });
     fs.writeFileSync(destPath, wikiContent, 'utf-8');
-    console.log(`  ✨ Saved unified wiki transcript: ${destPath}`);
+    console.log(`  ✨ Saved session wiki transcript: ${destPath}`);
   }
 }
 
@@ -672,14 +672,14 @@ class SessionPruner {
       removed++;
 
       const transcriptDir = path.join(this.transcriptsDir, sessionId);
-      const transcriptFile = path.join(this.transcriptsDir, `${sessionId}.md`);
+      const transcriptFile = path.join(this.transcriptsDir, sessionId, 'session_wiki.md');
       if (fs.existsSync(transcriptDir)) {
         fs.rmSync(transcriptDir, { recursive: true, force: true });
         console.log(`     📄 Also removed: data/agents/${sessionId}/`);
       }
       if (fs.existsSync(transcriptFile)) {
         fs.rmSync(transcriptFile, { force: true });
-        console.log(`     📄 Also removed: data/agents/${sessionId}.md`);
+        console.log(`     📄 Also removed: data/agents/${sessionId}/session_wiki.md`);
       }
     }
 
