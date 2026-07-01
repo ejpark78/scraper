@@ -96,3 +96,6 @@
 다음 명령어/스크립트는 사전 승인되었으며, 승인 절차에서 제외됩니다:
 - `git ls-files` (프로젝트 코드베이스 매핑용)
 - `npm run commit` (편집 후 자동 저장용, 내부적으로 `.agents/scripts/commit-changes.ts` 실행)
+- `npm run gitea` (Gitea 이슈 생성, 댓글 등록, 마감 등 상태 제어용)
+- `npx ts-node .agents/scripts/gitea.ts` (이슈 관리 헬퍼 스크립트 실행용)
+
