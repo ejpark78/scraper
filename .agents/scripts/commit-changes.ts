@@ -21,6 +21,7 @@ import * as path from 'path';
  */
 class PipelineConfig {
   public readonly autoMerge: boolean;
+  public readonly issueId: string | null;
   public readonly apiUrl: string;
   public readonly accessToken: string | undefined;
   public readonly repo: string = 'gitea-admin/scraper';
@@ -28,6 +29,7 @@ class PipelineConfig {
   constructor() {
     const args = process.argv.slice(2);
     this.autoMerge = !args.includes('--no-merge');
+    this.issueId = this.parseIssueId(args);
 
     this.loadEnv();
     this.apiUrl = process.env.GITEA_API_URL || 'https://gitea.localhost/api/v1';
@@ -35,6 +37,16 @@ class PipelineConfig {
 
     // Self-signed 인증서 오류 우회
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  }
+
+  private parseIssueId(args: string[]): string | null {
+    const explicitFlagIndex = args.findIndex((arg) => arg === '--issue' || arg === '--issue-id');
+    if (explicitFlagIndex >= 0 && args[explicitFlagIndex + 1]) {
+      return args[explicitFlagIndex + 1];
+    }
+
+    const envIssueId = process.env.GITEA_ISSUE_ID;
+    return envIssueId && envIssueId.trim().length > 0 ? envIssueId.trim() : null;
   }
 
   private loadEnv(): void {
@@ -304,11 +316,13 @@ class ReleaseCoordinator {
       process.exit(1);
     }
 
-    let parsedIssueId: string | null = null;
+    let parsedIssueId: string | null = this.config.issueId;
     const featureMatch = branchName.match(/^feature\/([0-9]{3})-(.+)$/);
     const hotfixMatch = branchName.match(/^hotfix\/([0-9]{3})-(.+)$/);
-    if (featureMatch) parsedIssueId = featureMatch[1];
-    else if (hotfixMatch) parsedIssueId = hotfixMatch[1];
+    if (!parsedIssueId) {
+      if (featureMatch) parsedIssueId = featureMatch[1];
+      else if (hotfixMatch) parsedIssueId = hotfixMatch[1];
+    }
 
     if (statusPorcelain) {
       this.validator.runCodeReview();
@@ -358,6 +372,8 @@ class ReleaseCoordinator {
       if (issueId && this.config.accessToken) {
         const latestCommitHash = this.git.runCmd('git rev-parse HEAD');
         await this.postGiteaReport(issueId, latestCommitHash);
+      } else if (!issueId) {
+        console.log('ℹ️ Gitea 이슈 번호가 지정되지 않아 댓글 등록 및 마감은 건너뜁니다.');
       }
     }
   }
@@ -387,8 +403,9 @@ class ReleaseCoordinator {
       await this.gitea.createComment(issueId, commentBody);
       await this.gitea.closeIssue(issueId);
       console.log('🎉 Gitea 이슈 코멘트 작성 및 마감 완료!');
-    } catch (error: any) {
-      console.error('⚠️ Gitea API 호출 실패:', error.message);
+    } catch (error) {
+      const err = error as Error;
+      console.error('⚠️ Gitea API 호출 실패:', err.message);
     }
   }
 }
