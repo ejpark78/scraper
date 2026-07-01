@@ -229,6 +229,23 @@ def find_transcripts(directory: Path, filename: str) -> list[Path]:
                 results.append(Path(root) / f)
     return results
 
+def find_agent_docs(directory: Path) -> list[Path]:
+    results = []
+    if not directory.exists():
+        return results
+    seen_sessions = set()
+    for root, _, files in os.walk(directory):
+        for f in files:
+            if f not in ("transcript.md", "session.md"):
+                continue
+            full = Path(root) / f
+            session_id = full.parent.name
+            if session_id in seen_sessions:
+                continue
+            seen_sessions.add(session_id)
+            results.append(full)
+    return results
+
 def find_joplin_files(directory: Path) -> list[Path]:
     results = []
     if not directory.exists():
@@ -294,7 +311,7 @@ def main():
     skipped_count = 0
 
     if compile_agents:
-        transcripts = find_transcripts(DUMP_DIR, "transcript.md")
+        transcripts = find_agent_docs(DUMP_DIR)
         print(f"📁 Processing and splitting raw dump session transcripts (Found {len(transcripts)} files)...")
         for i, file_path in enumerate(transcripts):
             mtime = file_path.stat().st_mtime
