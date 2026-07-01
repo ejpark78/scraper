@@ -10,16 +10,12 @@
 
 # --- Infrastructure Tools ---
 
-up-tools: up-kasm up-mongo up-redis up-yacht up-gitea
+up-tools: up-me up-redis up-gitea up-obsidian
 	@echo "✅ 모든 Tools가 실행되었습니다."
 
 down-tools:
-	$(COMPOSE) --profile tools down traefik kasm mongo-express redisinsight yacht gitea
+	$(COMPOSE) --profile tools down traefik mongo-express redisinsight gitea obsidian
 	@echo "🛑 Tools가 중지되었습니다."
-
-up-kasm:
-	$(COMPOSE) --profile tools up -d --build kasm
-	@echo "🚀 KASM VDI가 실행되었습니다. https://kasm.localhost 에 접속하세요."
 
 up-me:
 	$(COMPOSE) --profile tools up -d mongo-express
@@ -28,10 +24,6 @@ up-me:
 up-redis:
 	$(COMPOSE) --profile tools up -d redisinsight
 	@echo "🚀 RedisInsight GUI가 실행되었습니다. https://redis.localhost 에 접속하세요."
-
-up-yacht:
-	$(COMPOSE) --profile tools up -d yacht
-	@echo "🚀 Yacht GUI가 실행되었습니다. https://yacht.localhost 에 접속하세요."
 
 up-gitea:
 	$(COMPOSE) --profile tools up -d gitea
@@ -42,6 +34,14 @@ up-gitea:
 		$(COMPOSE) exec -T -u 1000 gitea gitea admin user create --admin --username gitea-admin --password admin12345 --email admin@example.com || true; \
 	fi
 	@echo "🚀 Gitea GUI가 실행되었습니다. https://gitea.localhost 에 접속하세요."
+
+up-obsidian:
+	$(COMPOSE) --profile tools up -d obsidian
+	@echo "🚀 Obsidian GUI가 실행되었습니다. https://docs.localhost 에 접속하세요."
+
+down-obsidian:
+	$(COMPOSE) --profile tools down obsidian
+	@echo "🛑 Obsidian GUI 서비스가 중지되었습니다."
 
 
 # --- Coding Agents ---
