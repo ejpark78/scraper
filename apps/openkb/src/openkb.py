@@ -338,7 +338,10 @@ def main():
     print(f"🧠 Using Ollama Model for semantic summarization: [{model}]")
 
     # RAW 환경변수를 통한 컴파일 대상 지정 (기본값은 둘 다 컴파일)
-    raw_env = os.getenv("RAW", "data/agents,data/joplin")
+    raw_env = os.getenv("RAW")
+    if not raw_env or raw_env.strip() == "":
+        raw_env = "data/agents,data/joplin"
+        
     print(f"📡 RAW env received: '{raw_env}'")
     targets = [t.strip() for t in raw_env.split(",") if t.strip()]
     
