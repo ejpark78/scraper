@@ -55,7 +55,7 @@ class OpenKbCache:
 
 class OllamaClient:
     @staticmethod
-    def get_available_model() -> str:
+    def get_available_model(agent: str | None = None) -> str:
         try:
             req = urllib.request.Request(OLLAMA_TAGS_ENDPOINT)
             with urllib.request.urlopen(req, timeout=3) as response:
@@ -64,6 +64,8 @@ class OllamaClient:
                     models = [m["name"] for m in data.get("models", [])]
                     # 경량 모델 우선순위 배치
                     preferred = ['gemma4:e4b', 'gemma4:26b']
+                    if agent == 'codex':
+                        preferred = ['gemma4:e4b', 'gemma4:26b'] + preferred
                     for model in preferred:
                         if model in models:
                             return model
@@ -74,15 +76,18 @@ class OllamaClient:
         return 'gemma4:e4b'
 
     @staticmethod
-    def summarize(agent_res: str, model: str) -> str:
+    def summarize(agent_res: str, model: str, agent: str | None = None) -> str:
         try:
-            prompt = (
-                "Below is the list of key response summaries and conclusions from an agent during a session.\n"
-                "Please generate a very brief Korean summary (under 45 characters, using Korean, English, numbers, spaces, and underscores)\n"
-                "representing the core resolution or actions taken during this session.\n"
-                "Output ONLY the summary text, with no extra explanation, quotes, or markdown.\n\n"
-                f"Agent Response:\n{agent_res[:1500]}"
-            )
+            if agent == "codex":
+                prompt = build_codex_summary_prompt(agent_res)
+            else:
+                prompt = (
+                    "Below is the list of key response summaries and conclusions from an agent during a session.\n"
+                    "Please generate a very brief Korean summary (under 45 characters, using Korean, English, numbers, spaces, and underscores)\n"
+                    "representing the core resolution or actions taken during this session.\n"
+                    "Output ONLY the summary text, with no extra explanation, quotes, or markdown.\n\n"
+                    f"Agent Response:\n{agent_res[:1500]}"
+                )
             
             payload = {
                 "model": model,
@@ -114,10 +119,17 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
     # frontmatter 기반 메타데이터가 있으면 우선 사용
     frontmatter_title = re.search(r"^title:\s*(.+)$", content, re.MULTILINE)
     frontmatter_model = re.search(r"^model:\s*(.+)$", content, re.MULTILINE)
+    frontmatter_agent = re.search(r"^agent:\s*(.+)$", content, re.MULTILINE)
     if frontmatter_title:
         title_value = frontmatter_title.group(1).strip()
         if title_value:
             return f"{date_part}_{re.sub(r'[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]', '', title_value)[:40]}.md"
+    if frontmatter_agent and frontmatter_agent.group(1).strip() == "codex":
+        codex_title = re.search(r"^title:\s*Codex:\s*(.+)$", content, re.MULTILINE)
+        if codex_title:
+            title_value = codex_title.group(1).strip()
+            if title_value:
+                return f"{date_part}_codex_{re.sub(r'[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s]', '', title_value)[:36]}.md"
     if frontmatter_model:
         model_value = frontmatter_model.group(1).strip()
         if model_value:
@@ -154,7 +166,7 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
         agent_response_combined = content[:2000]
 
     # Ollama 요약 활용
-    summary = OllamaClient.summarize(agent_response_combined, model)
+    summary = OllamaClient.summarize(agent_response_combined, model, extract_agent(content))
     if summary:
         if issue_match:
             issue_no = f"#{issue_match.group(1)}"
@@ -189,11 +201,23 @@ def extract_title(content: str, date_folder: str, model: str) -> str:
             
     return f"{date_part}_agent_session.md"
 
+def extract_agent(content: str) -> str | None:
+    match = re.search(r"^agent:\s*(.+)$", content, re.MULTILINE)
+    return match.group(1).strip() if match else None
+
 def normalize_agent_content(content: str) -> str:
     cleaned = re.sub(r"^\[tool-event\]\s*$", "", content, flags=re.MULTILINE)
     cleaned = re.sub(r"^\[(TRACE|DEBUG|INFO|WARN|ERROR)\]\s+[^\n]+\n", "", cleaned, flags=re.MULTILINE)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned.strip()
+
+def build_codex_summary_prompt(agent_res: str) -> str:
+    return (
+        "다음은 Codex 세션 transcript에서 추출한 최종 요약 재료입니다.\n"
+        "세션의 핵심 작업, 결과, 해결 여부를 45자 이내 한국어 한 줄로 요약하세요.\n"
+        "불필요한 설명, 따옴표, 마크다운, 접두어는 출력하지 마세요.\n\n"
+        f"Codex Session Material:\n{agent_res[:1500]}"
+    )
 
 def find_transcripts(directory: Path, filename: str) -> list[Path]:
     results = []

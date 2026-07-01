@@ -333,6 +333,11 @@ class CodexAdapter implements AgentAdapter {
       return match ? match[1] : body;
     };
 
+    const opTypeFrom = (body: string): string | null => {
+      const match = body.match(/op:\s*([A-Za-z0-9_]+)/);
+      return match ? match[1] : null;
+    };
+
     const execApprovalFrom = (body: string): { id: string; decision: string; turnId: string | null } | null => {
       const idMatch = body.match(/op: ExecApproval \{ id: "([^"]+)"/);
       const turnMatch = body.match(/turn_id: Some\("([^"]+)"\)/);
@@ -383,6 +388,24 @@ class CodexAdapter implements AgentAdapter {
           messages.push(assistantMessage);
           activeAssistant = assistantMessage;
         }
+        continue;
+      }
+
+      const opType = opTypeFrom(body);
+      if (opType) {
+        const toolCall: AgentToolCall = {
+          name: opType,
+          arguments: { target: row.target, ts: row.ts, tsNanos: row.ts_nanos },
+          result: body,
+        };
+        const assistantMessage: AgentMessage = {
+          role: 'assistant',
+          content: body,
+          toolCalls: [toolCall],
+          stepIndex: stepIndex++,
+        };
+        messages.push(assistantMessage);
+        activeAssistant = assistantMessage;
         continue;
       }
 

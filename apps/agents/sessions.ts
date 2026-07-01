@@ -145,6 +145,7 @@ class TranscriptDumper {
     let md = `---\n`;
     md += `title: ${title}\n`;
     md += `session_id: ${sessionId}\n`;
+    md += `agent: ${this.agentName}\n`;
     if (model) {
       md += `model: ${model}\n`;
     }
