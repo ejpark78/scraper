@@ -86,6 +86,13 @@ interface CodexSessionRow {
   last_ts: number;
 }
 
+interface CodexHandlerRow {
+  ts: number;
+  ts_nanos: number;
+  target: string;
+  feedback_log_body: string | null;
+}
+
 // ─── agy adapter ──────────────────────────────────────────
 
 class AgyAdapter implements AgentAdapter {
@@ -305,6 +312,12 @@ class CodexAdapter implements AgentAdapter {
       WHERE thread_id = '${sessionId.replace(/'/g, "''")}'
       ORDER BY ts ASC, ts_nanos ASC, id ASC
     `);
+    const handlerRows = this.query<CodexHandlerRow>(`
+      SELECT ts, ts_nanos, target, feedback_log_body
+      FROM logs
+      WHERE thread_id = '${sessionId.replace(/'/g, "''")}' AND target = 'codex_core::session::handlers'
+      ORDER BY ts ASC, ts_nanos ASC, id ASC
+    `);
 
     if (rows.length === 0) {
       throw new Error(`Codex session not found: ${sessionId}`);
@@ -312,25 +325,71 @@ class CodexAdapter implements AgentAdapter {
 
     const messages: AgentMessage[] = [];
     let stepIndex = 0;
-    for (const row of rows) {
+    let activeAssistant: AgentMessage | null = null;
+
+    const userTextFrom = (body: string): string => {
+      const match = body.match(/UserInput \{ items: \[Text \{ text: "([\s\S]*?)", text_elements: \[\] \}\]/);
+      return match ? match[1] : body;
+    };
+
+    const execApprovalFrom = (body: string): { id: string; decision: string; turnId: string | null } | null => {
+      const idMatch = body.match(/op: ExecApproval \{ id: "([^"]+)"/);
+      const turnMatch = body.match(/turn_id: Some\("([^"]+)"\)/);
+      const decisionMatch = body.match(/decision: ([A-Za-z]+)/);
+      if (!idMatch || !decisionMatch) return null;
+      return { id: idMatch[1], decision: decisionMatch[1], turnId: turnMatch ? turnMatch[1] : null };
+    };
+
+    for (const row of handlerRows) {
       const body = (row.feedback_log_body || '').trim();
       if (!body) continue;
 
-      const isUser = row.target.includes('user_input') || body.includes('codex.op="user_input"');
-      const isTool = row.target.includes('tool') || body.includes('tool');
-      const content = `[${row.level}] ${row.target}\n${body}`;
-
-      if (isUser) {
-        messages.push({ role: 'user', content, toolCalls: [], stepIndex: stepIndex++ });
+      if (body.includes('op: UserInput')) {
+        const text = userTextFrom(body);
+        messages.push({
+          role: 'user',
+          content: text,
+          toolCalls: [],
+          stepIndex: stepIndex++,
+        });
+        activeAssistant = null;
         continue;
       }
 
-      if (isTool) {
-        messages.push({ role: 'assistant', content: `${content}\n[tool-event]`, toolCalls: [], stepIndex: stepIndex++ });
+      if (body.includes('op: ExecApproval')) {
+        const approval = execApprovalFrom(body);
+        const toolCall: AgentToolCall = {
+          name: 'ExecApproval',
+          arguments: {
+            approvalId: approval?.id || '',
+            turnId: approval?.turnId || '',
+            decision: approval?.decision || '',
+          },
+          result: body,
+        };
+        if (activeAssistant) {
+          activeAssistant.toolCalls.push(toolCall);
+        } else {
+          const assistantMessage: AgentMessage = {
+            role: 'assistant',
+            content: body,
+            toolCalls: [toolCall],
+            stepIndex: stepIndex++,
+          };
+          messages.push(assistantMessage);
+          activeAssistant = assistantMessage;
+        }
         continue;
       }
 
-      messages.push({ role: 'assistant', content, toolCalls: [], stepIndex: stepIndex++ });
+      const assistantMessage: AgentMessage = {
+        role: 'assistant',
+        content: body,
+        toolCalls: [],
+        stepIndex: stepIndex++,
+      };
+      messages.push(assistantMessage);
+      activeAssistant = assistantMessage;
     }
 
     const session: AgentSession = {
