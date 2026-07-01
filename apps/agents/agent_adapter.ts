@@ -93,6 +93,16 @@ interface CodexHandlerRow {
   feedback_log_body: string | null;
 }
 
+interface CodexTurnEvent {
+  kind: 'user' | 'assistant' | 'approval' | 'tool' | 'system';
+  turnId: string | null;
+  ts: number;
+  tsNanos: number;
+  text: string;
+  toolName?: string;
+  toolCallId?: string | null;
+}
+
 // ─── agy adapter ──────────────────────────────────────────
 
 class AgyAdapter implements AgentAdapter {
@@ -289,6 +299,23 @@ class CodexAdapter implements AgentAdapter {
     return { name: nameMatch[1], callId: callIdMatch ? callIdMatch[1] : null };
   }
 
+  private extractTurnId(body: string): string | null {
+    const matches = [
+      body.match(/turn\.id=([0-9a-f-]+)/),
+      body.match(/turn_id: Some\("([^"]+)"\)/),
+      body.match(/turn_id=([0-9a-f-]+)/),
+    ];
+    for (const match of matches) {
+      if (match && match[1]) return match[1];
+    }
+    return null;
+  }
+
+  private extractSubmissionId(body: string): string | null {
+    const match = body.match(/submission\.id=([0-9a-f-]+)/);
+    return match ? match[1] : null;
+  }
+
   getSessions(all: boolean): AgentSession[] {
     const rows = this.query<CodexSessionRow>(`
       SELECT
@@ -342,150 +369,215 @@ class CodexAdapter implements AgentAdapter {
     const messages: AgentMessage[] = [];
     let stepIndex = 0;
     let firstUserText = '';
-    let activeAssistant: AgentMessage | null = null;
     const seenUserTexts = new Set<string>();
-    const seenAssistantTexts = new Set<string>();
+    const turnEvents = new Map<string, CodexTurnEvent[]>();
+    const orphanEvents: CodexTurnEvent[] = [];
+
+    const pushEvent = (event: CodexTurnEvent): void => {
+      if (event.turnId) {
+        if (!turnEvents.has(event.turnId)) {
+          turnEvents.set(event.turnId, []);
+        }
+        turnEvents.get(event.turnId)!.push(event);
+      } else {
+        orphanEvents.push(event);
+      }
+    };
 
     const userTextFrom = (body: string): string => {
       const match = body.match(/UserInput \{ items: \[Text \{ text: "([\s\S]*?)", text_elements: \[\] \}\]/);
       return match ? match[1] : body;
     };
 
-    const opTypeFrom = (body: string): string | null => {
-      const match = body.match(/op:\s*([A-Za-z0-9_]+)/);
-      return match ? match[1] : null;
-    };
-
-    const execApprovalFrom = (body: string): { id: string; decision: string; turnId: string | null } | null => {
+    const execApprovalFrom = (body: string): { id: string; decision: string } | null => {
       const idMatch = body.match(/op: ExecApproval \{ id: "([^"]+)"/);
-      const turnMatch = body.match(/turn_id: Some\("([^"]+)"\)/);
       const decisionMatch = body.match(/decision: ([A-Za-z]+)/);
       if (!idMatch || !decisionMatch) return null;
-      return { id: idMatch[1], decision: decisionMatch[1], turnId: turnMatch ? turnMatch[1] : null };
+      return { id: idMatch[1], decision: decisionMatch[1] };
     };
 
-    for (const row of handlerRows) {
+    for (const row of rows) {
       const body = (row.feedback_log_body || '').trim();
       if (!body) continue;
+      const turnId = this.extractTurnId(body) || this.extractSubmissionId(body);
 
       if (body.includes('op: UserInput')) {
-        const text = userTextFrom(body);
-        if (!firstUserText) {
-          firstUserText = text;
-        }
-        seenUserTexts.add(text);
-        messages.push({
-          role: 'user',
-          content: text,
-          toolCalls: [],
-          stepIndex: stepIndex++,
+        pushEvent({
+          kind: 'user',
+          turnId,
+          ts: row.ts,
+          tsNanos: row.ts_nanos,
+          text: userTextFrom(body),
         });
-        activeAssistant = null;
         continue;
       }
 
       if (body.includes('op: ExecApproval')) {
         const approval = execApprovalFrom(body);
-        const toolCall: AgentToolCall = {
-          name: 'ExecApproval',
-          arguments: {
-            approvalId: approval?.id || '',
-            turnId: approval?.turnId || '',
-            decision: approval?.decision || '',
-          },
-          result: body,
-        };
-        if (activeAssistant) {
-          activeAssistant.toolCalls.push(toolCall);
-        } else {
-          const assistantMessage: AgentMessage = {
-            role: 'assistant',
-            content: body,
-            toolCalls: [toolCall],
-            stepIndex: stepIndex++,
-          };
-          messages.push(assistantMessage);
-          activeAssistant = assistantMessage;
-        }
+        pushEvent({
+          kind: 'approval',
+          turnId,
+          ts: row.ts,
+          tsNanos: row.ts_nanos,
+          text: body,
+          toolName: 'ExecApproval',
+          toolCallId: approval?.id || null,
+        });
         continue;
       }
-
-      const opType = opTypeFrom(body);
-      if (opType) {
-        const toolCall: AgentToolCall = {
-          name: opType,
-          arguments: { target: row.target, ts: row.ts, tsNanos: row.ts_nanos },
-          result: body,
-        };
-        const assistantMessage: AgentMessage = {
-          role: 'assistant',
-          content: body,
-          toolCalls: [toolCall],
-          stepIndex: stepIndex++,
-        };
-        messages.push(assistantMessage);
-        activeAssistant = assistantMessage;
-        continue;
-      }
-
-      const assistantMessage: AgentMessage = {
-        role: 'assistant',
-        content: body,
-        toolCalls: [],
-        stepIndex: stepIndex++,
-      };
-      messages.push(assistantMessage);
-      activeAssistant = assistantMessage;
-    }
-
-    const assistantRows = rows.filter((r) => r.target === 'codex_core::stream_events_utils' || r.target === 'log');
-    for (const row of assistantRows) {
-      const body = (row.feedback_log_body || '').trim();
-      if (!body) continue;
 
       if (body.includes('role: "assistant"') && body.includes('OutputText { text: "')) {
-        const text = this.extractQuotedText(body);
-        if (text && !seenAssistantTexts.has(text)) {
-          const assistantMessage: AgentMessage = {
-            role: 'assistant',
-            content: text,
-            toolCalls: [],
-            stepIndex: stepIndex++,
-          };
-          messages.push(assistantMessage);
-          activeAssistant = assistantMessage;
-          seenAssistantTexts.add(text);
-        }
+        pushEvent({
+          kind: 'assistant',
+          turnId,
+          ts: row.ts,
+          tsNanos: row.ts_nanos,
+          text: this.extractQuotedText(body),
+        });
         continue;
       }
 
       if (body.includes('FunctionCall {')) {
         const fn = this.extractFunctionCall(body);
-        if (fn) {
-          const toolCall: AgentToolCall = {
-            name: fn.name,
-            arguments: {
-              callId: fn.callId || '',
-              target: row.target,
-              ts: row.ts,
-              tsNanos: row.ts_nanos,
-            },
-            result: body,
-          };
-          if (activeAssistant) {
-            activeAssistant.toolCalls.push(toolCall);
+        pushEvent({
+          kind: 'tool',
+          turnId,
+          ts: row.ts,
+          tsNanos: row.ts_nanos,
+          text: body,
+          toolName: fn?.name || 'unknown',
+          toolCallId: fn?.callId || null,
+        });
+        continue;
+      }
+
+      if (body.includes('codex.request.reasoning_effort') || body.includes('stream_request') || body.includes('message_from_assistant')) {
+        pushEvent({
+          kind: 'system',
+          turnId,
+          ts: row.ts,
+          tsNanos: row.ts_nanos,
+          text: body,
+        });
+      }
+    }
+
+    const sortedTurnIds = [...turnEvents.keys()].sort((a, b) => {
+      const left = turnEvents.get(a)?.[0];
+      const right = turnEvents.get(b)?.[0];
+      const leftTs = left ? left.ts * 1e6 + left.tsNanos : 0;
+      const rightTs = right ? right.ts * 1e6 + right.tsNanos : 0;
+      return leftTs - rightTs;
+    });
+
+    const buildTurnMessages = (events: CodexTurnEvent[]): AgentMessage[] => {
+      const turnMessages: AgentMessage[] = [];
+      let currentAssistant: AgentMessage | null = null;
+      const userEvents = events.filter((e) => e.kind === 'user');
+      const assistantEvents = events.filter((e) => e.kind === 'assistant');
+      const approvalEvents = events.filter((e) => e.kind === 'approval');
+      const toolEvents = events.filter((e) => e.kind === 'tool');
+
+      for (const userEvent of userEvents) {
+        if (!firstUserText) {
+          firstUserText = userEvent.text;
+        }
+        seenUserTexts.add(userEvent.text);
+        turnMessages.push({
+          role: 'user',
+          content: userEvent.text,
+          toolCalls: [],
+          stepIndex: stepIndex++,
+        });
+      }
+
+      for (const assistantEvent of assistantEvents) {
+        if (!assistantEvent.text) continue;
+        const assistantMessage: AgentMessage = {
+          role: 'assistant',
+          content: assistantEvent.text,
+          toolCalls: [],
+          stepIndex: stepIndex++,
+        };
+        turnMessages.push(assistantMessage);
+        currentAssistant = assistantMessage;
+      }
+
+      for (const approvalEvent of approvalEvents) {
+        const toolCall: AgentToolCall = {
+          name: approvalEvent.toolName || 'ExecApproval',
+          arguments: {
+            approvalId: approvalEvent.toolCallId || '',
+            turnId: approvalEvent.turnId || '',
+            decision: approvalEvent.text.includes('Approved') ? 'Approved' : 'Unknown',
+          },
+          result: approvalEvent.text,
+        };
+        if (currentAssistant) {
+          currentAssistant.toolCalls.push(toolCall);
+        } else if (turnMessages.length > 0) {
+          const lastMessage = turnMessages[turnMessages.length - 1];
+          if (lastMessage.role === 'assistant') {
+            lastMessage.toolCalls.push(toolCall);
+            currentAssistant = lastMessage;
           } else {
             const assistantMessage: AgentMessage = {
               role: 'assistant',
-              content: body,
+              content: approvalEvent.text,
               toolCalls: [toolCall],
               stepIndex: stepIndex++,
             };
-            messages.push(assistantMessage);
-            activeAssistant = assistantMessage;
+            turnMessages.push(assistantMessage);
+            currentAssistant = assistantMessage;
           }
+        } else {
+          const assistantMessage: AgentMessage = {
+            role: 'assistant',
+            content: approvalEvent.text,
+            toolCalls: [toolCall],
+            stepIndex: stepIndex++,
+          };
+          turnMessages.push(assistantMessage);
+          currentAssistant = assistantMessage;
         }
       }
+
+      for (const toolEvent of toolEvents) {
+        const toolCall: AgentToolCall = {
+          name: toolEvent.toolName || 'unknown',
+          arguments: {
+            callId: toolEvent.toolCallId || '',
+            target: 'codex_core::stream_events_utils',
+            ts: toolEvent.ts,
+            tsNanos: toolEvent.tsNanos,
+          },
+          result: toolEvent.text,
+        };
+        if (currentAssistant) {
+          currentAssistant.toolCalls.push(toolCall);
+        } else {
+          const assistantMessage: AgentMessage = {
+            role: 'assistant',
+            content: toolEvent.text,
+            toolCalls: [toolCall],
+            stepIndex: stepIndex++,
+          };
+          turnMessages.push(assistantMessage);
+          currentAssistant = assistantMessage;
+        }
+      }
+
+      return turnMessages;
+    };
+
+    for (const turnId of sortedTurnIds) {
+      const turnMessages = buildTurnMessages(turnEvents.get(turnId) || []);
+      messages.push(...turnMessages);
+    }
+
+    if (orphanEvents.length > 0) {
+      const orphanMessages = buildTurnMessages(orphanEvents);
+      messages.push(...orphanMessages);
     }
 
     const session: AgentSession = {
