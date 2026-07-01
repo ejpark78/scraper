@@ -77,8 +77,6 @@ ollama-stop:
 
 # --- Gitea Token Utilities ---
 
-# gitea-token-curl: migrated to .agents/scripts/gitea.ts - use `npm run gitea generate-token`
-
 gitea-token:
 	@if [ "$(BY)" = "curl" ]; then \
 		npm run gitea:token; \
