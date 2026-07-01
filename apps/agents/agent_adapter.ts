@@ -331,14 +331,27 @@ class CodexAdapter implements AgentAdapter {
     return trimmed ? `${header}\n${trimmed}` : header;
   }
 
+  private condenseSystemText(text: string): string {
+    const raw = text.trim();
+    if (!raw) {
+      return '';
+    }
+
+    const marker = raw.lastIndexOf('}: ');
+    if (marker !== -1 && marker + 3 < raw.length) {
+      return raw.slice(marker + 3).trim();
+    }
+
+    return raw;
+  }
+
   private buildAssistantMessage(events: CodexTurnEvent[], stepIndexRef: { value: number }): AgentMessage | null {
     const lines: string[] = [];
     const toolCalls: AgentToolCall[] = [];
 
     for (const event of events) {
-      lines.push(this.formatEventBody(event.target, event.kind, event.text));
-
       if (event.kind === 'approval') {
+        lines.push(this.condenseSystemText(event.text) || 'Approval event');
         toolCalls.push({
           name: event.toolName || 'ExecApproval',
           arguments: {
@@ -352,6 +365,7 @@ class CodexAdapter implements AgentAdapter {
       }
 
       if (event.kind === 'tool') {
+        lines.push(this.condenseSystemText(event.text) || `${event.toolName || 'unknown'} tool call`);
         toolCalls.push({
           name: event.toolName || 'unknown',
           arguments: {
@@ -362,6 +376,16 @@ class CodexAdapter implements AgentAdapter {
           },
           result: event.text,
         });
+        continue;
+      }
+
+      if (event.kind === 'system') {
+        const condensed = this.condenseSystemText(event.text);
+        if (condensed) {
+          lines.push(condensed);
+        }
+      } else if (event.kind === 'assistant') {
+        lines.push(event.text.trim());
       }
     }
 
@@ -560,7 +584,7 @@ class CodexAdapter implements AgentAdapter {
       for (const userEvent of userEvents) {
         turnMessages.push({
           role: 'user',
-          content: this.formatEventBody(userEvent.target, userEvent.kind, userEvent.text),
+          content: userEvent.text.trim(),
           toolCalls: [],
           stepIndex: stepIndexRef.value++,
         });
