@@ -123,3 +123,38 @@ tasks:
     desc: Generate a Gitea API token through tea.
     cmds:
       - npm run gitea:token:tea
+
+  gitea:create-issue:
+    desc: "Create a Gitea issue. Variables: TITLE, BODY."
+    cmds:
+      - npm run gitea create-issue "{{.TITLE}}" "{{.BODY}}"
+
+  gitea:update-issue:
+    desc: "Update a Gitea issue title and body. Variables: ISSUE_ID, TITLE, BODY."
+    cmds:
+      - npm run gitea update-issue "{{.ISSUE_ID}}" "{{.TITLE}}" "{{.BODY}}"
+
+  gitea:comment:
+    desc: "Add a comment to a Gitea issue. Variables: ISSUE_ID, BODY."
+    cmds:
+      - npm run gitea comment "{{.ISSUE_ID}}" "{{.BODY}}"
+
+  gitea:update-comment:
+    desc: "Update a Gitea issue comment. Variables: COMMENT_ID, BODY."
+    cmds:
+      - npm run gitea update-comment "{{.COMMENT_ID}}" "{{.BODY}}"
+
+  gitea:close-issue:
+    desc: "Close a Gitea issue. Variables: ISSUE_ID."
+    cmds:
+      - npm run gitea close-issue "{{.ISSUE_ID}}"
+
+  gitea:reopen-issue:
+    desc: "Reopen a Gitea issue. Variables: ISSUE_ID."
+    cmds:
+      - npm run gitea reopen-issue "{{.ISSUE_ID}}"
+
+  gitea:show-issue:
+    desc: "Print a Gitea issue body. Variables: ISSUE_ID."
+    cmds:
+      - npm run gitea show-issue "{{.ISSUE_ID}}"
