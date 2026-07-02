@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
+import * as readline from 'readline';
+import { Writable } from 'stream';
 
 const execAsync = promisify(exec);
 
@@ -18,6 +20,43 @@ export interface WikiDocsChapter {
 export interface WikiDocsBook {
   title: string;
   chapters: WikiDocsChapter[];
+}
+
+// ==============================================================================
+// 🔐 Class: PasswordPrompt (Secure terminal password input utility)
+// ==============================================================================
+
+export class PasswordPrompt {
+  /**
+   * 입력을 터미널 화면에 노출하지 않고(마스킹) 입력을 받습니다.
+   */
+  public static getPassword(query: string): Promise<string> {
+    return new Promise((resolve) => {
+      let muted = false;
+      const mutableStdout = new Writable({
+        write: (chunk, encoding, callback) => {
+          if (!muted) {
+            process.stdout.write(chunk, encoding);
+          }
+          callback();
+        }
+      });
+
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: mutableStdout,
+        terminal: true
+      });
+
+      rl.question(query, (password) => {
+        rl.close();
+        process.stdout.write('\n');
+        resolve(password);
+      });
+      
+      muted = true;
+    });
+  }
 }
 
 // ==============================================================================
@@ -201,6 +240,14 @@ export class JoplinCliService {
   public async exportNotebook(notebookName: string, destDir: string): Promise<void> {
     await this.runCommandStream('joplin', ['export', '--format', 'md', '--notebook', notebookName, destDir]);
   }
+
+  /**
+   * 로컬 마크다운 디렉터리를 Joplin CLI DB에 임포트합니다.
+   */
+  public async importNotebook(srcDir: string, notebookName: string): Promise<void> {
+    console.log(`[JoplinCliService] Importing markdown directory "${srcDir}" to notebook "${notebookName}"...`);
+    await this.runCommandStream('joplin', ['import', '--format', 'md', srcDir, notebookName]);
+  }
 }
 
 // ==============================================================================
@@ -218,6 +265,58 @@ export class JoplinWebClipperService {
 
   private sanitizeFilename(filename: string): string {
     return filename.replace(/[\\/:*?"<>|]/g, '_');
+  }
+
+  /**
+   * Joplin Web Clipper API를 호출해 전체 폴더(노트북) 목록을 받습니다.
+   */
+  public async getFolders(): Promise<any[]> {
+    const url = `${this.apiUrl}/folders?token=${encodeURIComponent(this.token)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`폴더 목록 가져오기 실패: ${response.statusText}\n${errText}`);
+    }
+    return (await response.json()) as any[];
+  }
+
+  /**
+   * 특정 폴더 하위의 노트 목록을 메타데이터와 함께 조회합니다.
+   */
+  public async getNotesInFolder(folderId: string): Promise<any[]> {
+    const url = `${this.apiUrl}/folders/${folderId}/notes?token=${encodeURIComponent(this.token)}&fields=id,title,body`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`노트 목록 가져오기 실패: ${response.statusText}\n${errText}`);
+    }
+    const responseData = (await response.json()) as any;
+    return (responseData.items || responseData) as any[];
+  }
+
+  /**
+   * 특정 이미지 리소스의 메타데이터를 조회합니다.
+   */
+  public async getResourceMetadata(resourceId: string): Promise<any> {
+    const url = `${this.apiUrl}/resources/${resourceId}?token=${encodeURIComponent(this.token)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`리소스 메타데이터 조회 실패: ${response.statusText}`);
+    }
+    return await response.json();
+  }
+
+  /**
+   * 특정 이미지 리소스 바이너리를 다운로드합니다.
+   */
+  public async downloadResourceFile(resourceId: string): Promise<Buffer> {
+    const url = `${this.apiUrl}/resources/${resourceId}/file?token=${encodeURIComponent(this.token)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`리소스 파일 다운로드 실패: ${response.statusText}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
   }
 
   /**
@@ -277,16 +376,25 @@ export class JoplinTaskRunner {
   }
 
   /**
-   * Joplin CLI 동기화 및 마크다운 내보내기 흐름을 제어합니다.
+   * [1] server:sync
+   * Joplin CLI를 이용하여 Joplin Server와 동기화하고 로컬 노트북을 export합니다.
    */
-  public async runSync(targetPath: string): Promise<void> {
+  public async runServerSync(targetPath: string): Promise<void> {
     const serverUrl = process.env.JOPLIN_SERVER_URL;
     const username = process.env.JOPLIN_USERNAME;
-    const password = process.env.JOPLIN_PASSWORD;
+    let password = process.env.JOPLIN_PASSWORD;
     const decPassword = process.env.JOPLIN_DEC_PASSWORD;
 
-    if (!serverUrl || !username || !password) {
-      throw new Error('Joplin CLI Sync를 기동하려면 JOPLIN_SERVER_URL, JOPLIN_USERNAME, JOPLIN_PASSWORD 환경변수가 필요합니다.');
+    if (!serverUrl || !username) {
+      throw new Error('Joplin CLI Server Sync를 기동하려면 JOPLIN_SERVER_URL, JOPLIN_USERNAME 환경변수가 필수입니다.');
+    }
+
+    if (!password) {
+      console.log('🔑 Joplin Password 환경 변수가 누락되었습니다.');
+      password = await PasswordPrompt.getPassword('Enter Joplin Password: ');
+      if (!password.trim()) {
+        throw new Error('Joplin 비밀번호 입력이 누락되어 동기화를 취소합니다.');
+      }
     }
 
     const cliService = new JoplinCliService();
@@ -325,38 +433,177 @@ export class JoplinTaskRunner {
       }
     }
 
-    // 임시 디렉터리 클린업
     const tempDirParent = path.join(resolvedTargetDir, '.tmp_export');
     if (fs.existsSync(tempDirParent)) {
       fs.rmSync(tempDirParent, { recursive: true, force: true });
     }
 
-    console.log('[JoplinTaskRunner] CLI Sync and export completed.');
+    console.log('[JoplinTaskRunner] Server sync and export completed.');
   }
 
   /**
-   * 로컬 마크다운 문서를 Joplin Web Clipper API를 통해 푸시하는 흐름을 제어합니다.
+   * [2] server:push
+   * 로컬의 마크다운 서적 디렉터리를 Joplin CLI를 사용해 로컬 DB에 임포트하고, sync를 실행하여 서버로 푸시합니다.
    */
-  public async runPush(fromPath: string, toPath?: string): Promise<void> {
-    const token = process.env.JOPLIN_TOKEN;
+  public async runServerPush(fromPath: string, toPath?: string): Promise<void> {
+    const serverUrl = process.env.JOPLIN_SERVER_URL;
+    const username = process.env.JOPLIN_USERNAME;
+    let password = process.env.JOPLIN_PASSWORD;
+    const decPassword = process.env.JOPLIN_DEC_PASSWORD;
+
+    if (!serverUrl || !username) {
+      throw new Error('Joplin CLI Server Push를 기동하려면 JOPLIN_SERVER_URL, JOPLIN_USERNAME 환경변수가 필수입니다.');
+    }
+
+    if (!password) {
+      console.log('🔑 Joplin Password 환경 변수가 누락되었습니다.');
+      password = await PasswordPrompt.getPassword('Enter Joplin Password: ');
+      if (!password.trim()) {
+        throw new Error('Joplin 비밀번호 입력이 누락되어 푸시를 취소합니다.');
+      }
+    }
+
+    // 마크다운 책 정보 파싱
+    console.log(`[JoplinTaskRunner] Loading local book from: ${fromPath}`);
+    const book = MarkdownBookLoader.loadBook(fromPath);
+    const targetNotebookName = toPath || book.title;
+
+    const cliService = new JoplinCliService();
+    await cliService.configureCredentials(serverUrl, username, password, decPassword);
+
+    // Joplin CLI 로컬 DB로 임포트
+    await cliService.importNotebook(fromPath, targetNotebookName);
+
+    // 서버 동기화
+    console.log('[JoplinTaskRunner] Pushing imported notebook to server via CLI sync...');
+    await cliService.sync();
+
+    console.log('[JoplinTaskRunner] Server push completed.');
+  }
+
+  /**
+   * [3] client:sync
+   * 호스트 데스크톱 Joplin App Web Clipper API를 사용해 데이터를 백업/가져옵니다.
+   */
+  public async runClientSync(targetPath: string): Promise<void> {
+    let token = process.env.JOPLIN_TOKEN;
     const apiUrl = process.env.JOPLIN_API_URL || 'http://host.docker.internal:41184';
 
     if (!token) {
-      throw new Error('Joplin Web Clipper API로 push를 전송하려면 JOPLIN_TOKEN 환경변수가 제공되어야 합니다.');
+      console.log('🔑 Joplin Web Clipper API 토큰 환경 변수가 누락되었습니다.');
+      token = await PasswordPrompt.getPassword('Enter Joplin Web Clipper Token: ');
+      if (!token.trim()) {
+        throw new Error('Joplin Web Clipper Token 입력이 누락되어 동기화를 취소합니다.');
+      }
+    }
+
+    const clipperService = new JoplinWebClipperService(token, apiUrl);
+    const folders = await clipperService.getFolders();
+    console.log(`[JoplinTaskRunner] Found ${folders.length} notebooks in 데스크톱 Joplin. Commencing import...`);
+
+    const resolvedTargetDir = path.resolve(targetPath);
+
+    for (let i = 0; i < folders.length; i++) {
+      const folder = folders[i];
+      const progressPrefix = `[${i + 1}/${folders.length}]`;
+      console.log(`${progressPrefix} Processing notebook "${folder.title}"...`);
+
+      const cleanFolderName = JoplinTaskRunner.sanitizeDir(folder.title);
+      const targetDir = path.join(resolvedTargetDir, cleanFolderName);
+      const imagesDir = path.join(targetDir, 'images');
+
+      try {
+        const notes = await clipperService.getNotesInFolder(folder.id);
+        if (!notes || notes.length === 0) {
+          console.log(`   ${progressPrefix} No notes found in notebook "${folder.title}". Skipping.`);
+          continue;
+        }
+
+        if (!fs.existsSync(imagesDir)) {
+          fs.mkdirSync(imagesDir, { recursive: true });
+        }
+
+        let successCount = 0;
+        for (const note of notes) {
+          try {
+            const cleanTitle = JoplinTaskRunner.sanitizeDir(note.title) || `Untitled_${note.id}`;
+            const filePath = path.join(targetDir, `${cleanTitle}.md`);
+            
+            let bodyContent = note.body || '';
+
+            // 이미지 리소스 다운로드 및 상대 경로 매핑 (:/리소스ID)
+            const resourceRegex = /\(:\/([a-zA-Z0-9]{32})\)/g;
+            let match;
+            const processedResources = new Set<string>();
+
+            while ((match = resourceRegex.exec(bodyContent)) !== null) {
+              const resourceId = match[1];
+              if (processedResources.has(resourceId)) continue;
+              processedResources.add(resourceId);
+
+              try {
+                const meta = await clipperService.getResourceMetadata(resourceId);
+                const fileExt = meta.file_extension ? `.${meta.file_extension}` : '.png';
+                const imageFileName = `${resourceId}${fileExt}`;
+                const imagePath = path.join(imagesDir, imageFileName);
+
+                if (!fs.existsSync(imagePath)) {
+                  console.log(`      Downloading image resource: ${resourceId}`);
+                  const fileBuffer = await clipperService.downloadResourceFile(resourceId);
+                  fs.writeFileSync(imagePath, fileBuffer);
+                }
+
+                const targetLink = `(:/${resourceId})`;
+                const localLink = `(images/${imageFileName})`;
+                bodyContent = bodyContent.split(targetLink).join(localLink);
+              } catch (resourceErr: any) {
+                console.error(`      Failed to process resource ${resourceId} for note ${note.title}:`, resourceErr.message);
+              }
+            }
+
+            fs.writeFileSync(filePath, bodyContent, 'utf8');
+            successCount++;
+          } catch (noteErr: any) {
+            console.error(`      Failed to save note ${note.title}:`, noteErr.message);
+          }
+        }
+        console.log(`   ${progressPrefix} Notebook "${folder.title}" processed (${successCount} notes saved).`);
+      } catch (err: any) {
+        console.error(`   ${progressPrefix} Failed to sync notebook "${folder.title}": ${err.message}`);
+      }
+    }
+
+    console.log('[JoplinTaskRunner] Client sync completed.');
+  }
+
+  /**
+   * [4] client:push
+   * 로컬 마크다운 서적을 호스트 데스크톱 Joplin App Web Clipper API로 전송(push)합니다.
+   */
+  public async runClientPush(fromPath: string, toPath?: string): Promise<void> {
+    let token = process.env.JOPLIN_TOKEN;
+    const apiUrl = process.env.JOPLIN_API_URL || 'http://host.docker.internal:41184';
+
+    if (!token) {
+      console.log('🔑 Joplin Web Clipper API 토큰 환경 변수가 누락되었습니다.');
+      token = await PasswordPrompt.getPassword('Enter Joplin Web Clipper Token: ');
+      if (!token.trim()) {
+        throw new Error('Joplin Web Clipper Token 입력이 누락되어 푸시를 취소합니다.');
+      }
     }
 
     console.log(`[JoplinTaskRunner] Scanning local markdown directories in: ${fromPath}`);
     const book = MarkdownBookLoader.loadBook(fromPath);
     const targetNotebookName = toPath || book.title;
 
-    console.log(`[JoplinTaskRunner] Pushing book "${book.title}" to target notebook "${targetNotebookName}"...`);
+    console.log(`[JoplinTaskRunner] Pushing book "${book.title}" to 데스크톱 Joplin notebook "${targetNotebookName}"...`);
     const apiService = new JoplinWebClipperService(token, apiUrl);
     
     let folder: { id: string };
     try {
       folder = await apiService.createFolder(targetNotebookName);
     } catch (err: any) {
-      throw new Error(`Joplin 서버에 노트북 폴더를 생성하지 못했습니다: ${err.message}`);
+      throw new Error(`Joplin 데스크톱 앱에 노트북 폴더를 생성하지 못했습니다: ${err.message}`);
     }
 
     console.log(`[JoplinTaskRunner] Folder created (ID: ${folder.id}). Starting node push loop...`);
@@ -372,7 +619,7 @@ export class JoplinTaskRunner {
       }
     }
 
-    console.log('[JoplinTaskRunner] Web Clipper push task completed.');
+    console.log('[JoplinTaskRunner] Client push completed.');
   }
 }
 
@@ -387,22 +634,31 @@ async function main() {
   const runner = new JoplinTaskRunner();
 
   try {
-    if (command === 'sync') {
+    if (command === 'server:sync') {
       const targetPath = args[1] || 'data/joplin';
-      await runner.runSync(targetPath);
-    } else if (command === 'push') {
+      await runner.runServerSync(targetPath);
+    } else if (command === 'server:push') {
       const fromPath = args[1];
       const toPath = args[2];
-
       if (!fromPath) {
-        console.error('Usage: npm run push -- <FROM_PATH> [TO_PATH]');
+        console.error('Usage: npm run sync -- server:push <FROM_PATH> [TO_PATH]');
         process.exit(1);
       }
-      await runner.runPush(fromPath, toPath);
+      await runner.runServerPush(fromPath, toPath);
+    } else if (command === 'client:sync') {
+      const targetPath = args[1] || 'data/joplin';
+      await runner.runClientSync(targetPath);
+    } else if (command === 'client:push') {
+      const fromPath = args[1];
+      const toPath = args[2];
+      if (!fromPath) {
+        console.error('Usage: npm run push -- client:push <FROM_PATH> [TO_PATH]');
+        process.exit(1);
+      }
+      await runner.runClientPush(fromPath, toPath);
     } else {
-      console.error('알 수 없는 명령어입니다. 지원 명령어: sync, push');
-      console.error('Usage: npm run sync -- [TARGET_PATH]');
-      console.error('Usage: npm run push -- <FROM_PATH> [TO_PATH]');
+      console.error('알 수 없는 명령어입니다. 지원 명령어: server:sync, server:push, client:sync, client:push');
+      console.error('Usage: npm run sync -- <command> [args]');
       process.exit(1);
     }
   } catch (err: any) {
