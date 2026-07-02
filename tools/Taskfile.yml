@@ -1,0 +1,152 @@
+version: '3'
+
+includes:
+  obsidian:
+    taskfile: ./obsidian/Taskfile.yml
+    dir: ./tools/obsidian
+
+tasks:
+  agents:dump:
+    desc: "Dump agent sessions. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --all-targets --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+
+  agents:dump-transcripts:
+    desc: "Dump agent transcripts. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --transcript --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+
+  agents:dump-context:
+    desc: "Dump agent context. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --context --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+
+  agents:dump-brain:
+    desc: "Dump agent brain/session memory. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --brain --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+
+  agents:dump-sysinfo:
+    desc: Dump agent system information.
+    cmds:
+      - npm run agents:sessions -- --sysinfo
+
+  agents:compress-rules:
+    desc: "Compress agent rules context. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --context --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+      - npm run agents:rules -- --compress
+
+  agents:lint-rules:
+    desc: Lint agent rules.
+    cmds:
+      - npm run agents:rules -- --lint
+
+  agents:dump-all:
+    desc: "Dump all agent diagnostics. Variables: AGENTS."
+    cmds:
+      - task tools:agents:dump-sysinfo
+      - task tools:agents:dump-transcripts AGENTS={{.AGENTS | default "agy,opencode,codex"}}
+      - task tools:agents:dump-context AGENTS={{.AGENTS | default "agy,opencode,codex"}}
+      - task tools:agents:dump-brain AGENTS={{.AGENTS | default "agy,opencode,codex"}}
+      - task tools:agents:compress-rules AGENTS={{.AGENTS | default "agy,opencode,codex"}}
+      - task tools:agents:lint-rules
+
+  agents:usage:
+    desc: Print agent usage diagnostics.
+    cmds:
+      - npm run agents:usage
+
+  agents:prune:
+    desc: Prune agent session data.
+    cmds:
+      - npm run agents:sessions -- --prune
+
+  agents:commit:
+    desc: Commit changes through the project commit helper.
+    cmds:
+      - npm run commit
+
+  agents:wiki:
+    desc: Compile the OpenKB wiki through the app task.
+    cmds:
+      - task app:openkb:compile
+
+  agents:code-review:
+    desc: Run AI code review through Antigravity CLI.
+    cmds:
+      - agy --skill code_review "Run semantic code review on my latest modifications."
+
+  agents:review:
+    desc: Run AI code review through Antigravity CLI.
+    cmds:
+      - agy --skill code_review "Run semantic code review on my latest modifications."
+
+  agents:push:
+    desc: Push changes through the project push helper.
+    cmds:
+      - npm run push
+
+  up:
+    desc: Start current web tools profile services.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d traefik mongo-express redisinsight gitea obsidian'
+
+  down:
+    desc: Stop current web tools profile services.
+    cmds:
+      - '{{.COMPOSE}} --profile tools stop mongo-express redisinsight gitea obsidian'
+
+  up-me:
+    desc: Start Mongo Express.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d mongo-express'
+
+  up-redis:
+    desc: Start RedisInsight.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d redisinsight'
+
+  up-gitea:
+    desc: Start Gitea and ensure local admin account.
+    cmds:
+      - task infra:gitea:up
+
+  up-obsidian:
+    desc: Start Obsidian docs viewer.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d obsidian'
+
+  down-obsidian:
+    desc: Stop Obsidian docs viewer.
+    cmds:
+      - '{{.COMPOSE}} --profile tools stop obsidian'
+
+  ollama:run:
+    desc: Start native Ollama and run the configured model.
+    cmds:
+      - open -a Ollama 2>/dev/null || (pgrep -x "ollama" >/dev/null && echo "Ollama가 이미 실행 중입니다.") || echo "Ollama 앱이 애플리케이션 디렉토리에 없습니다. 백그라운드 CLI 실행을 시도합니다."
+      - sleep 2
+      - ollama run {{.MODEL | default "gemma4:e4b-mlx"}}
+
+  ollama:logs:
+    desc: Follow native Ollama logs.
+    cmds:
+      - |
+        if [ -f ~/Library/Logs/Ollama/app.log ]; then
+          tail -n 50 -f ~/Library/Logs/Ollama/app.log
+        elif [ -f ~/.ollama/logs/server.log ]; then
+          tail -n 50 -f ~/.ollama/logs/server.log
+        else
+          echo "Ollama 로그 파일을 찾을 수 없습니다."
+        fi
+
+  ollama:ps:
+    desc: List loaded native Ollama models.
+    cmds:
+      - ollama ps
+
+  ollama:stop:
+    desc: Stop native Ollama.
+    cmds:
+      - killall Ollama || killall ollama || echo "실행 중인 Ollama가 없습니다."

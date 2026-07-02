@@ -1,0 +1,271 @@
+version: '3'
+
+includes:
+  crawler:
+    taskfile: ./crawler/Taskfile.yml
+    dir: ./apps/crawler
+  ebook:
+    taskfile: ./ebook/Taskfile.yml
+    dir: ./apps/ebook
+  openkb:
+    taskfile: ./openkb/Taskfile.yml
+    dir: ./apps/openkb
+  viewer:
+    taskfile: ./viewer/Taskfile.yml
+    dir: ./apps/viewer
+
+tasks:
+  browser:login:
+    desc: "Log into a browser-backed site session. Variables: SITE."
+    cmds:
+      - task app:crawler:login SITE={{.SITE | default "linkedin"}}
+
+  browser:open:
+    desc: "Open the Playwright browser helper. Variables: SITE."
+    cmds:
+      - task app:crawler:open SITE={{.SITE | default "linkedin"}}
+
+  browser:inspect-layout:
+    desc: Inspect a browser-rendered layout.
+    cmds:
+      - task app:crawler:inspect-layout
+
+  browser:logout:
+    desc: "Remove a browser-backed site session. Variables: SITE."
+    cmds:
+      - task app:crawler:logout SITE={{.SITE | default "linkedin"}}
+
+  gmail:sync:
+    desc: Sync Gmail messages through the crawler Gmail tool.
+    cmds:
+      - task app:crawler:gmail:sync
+
+  worker:rebuild:
+    desc: Rebuild crawler worker images.
+    cmds:
+      - task app:crawler:build
+
+  worker:restart:
+    desc: "Restart crawler workers. Variables: SCALE."
+    cmds:
+      - task app:crawler:up SCALE={{.SCALE | default "1"}}
+
+  worker:clear-queue:
+    desc: Clear crawler queues.
+    cmds:
+      - task app:crawler:clear-queue
+
+  worker:grep-errors:
+    desc: Grep scraper and converter errors from logs.
+    cmds:
+      - task app:crawler:grep-errors
+
+  worker:dump-queue:
+    desc: Dump active crawler queues.
+    cmds:
+      - task app:crawler:queue:dump
+
+  worker:fix-urls:
+    desc: Run crawler URL cleanup.
+    cmds:
+      - task app:crawler:queue:fix-urls
+
+  worker:queue-status:
+    desc: Print crawler queue status.
+    cmds:
+      - task app:crawler:queue:status
+
+  tests:urls:
+    desc: Run URL manager tests.
+    cmds:
+      - task app:crawler:test:urls
+
+  tests:mcp:
+    desc: Run MCP client tests.
+    cmds:
+      - task app:crawler:test:mcp
+
+  tests:sites:
+    desc: Run crawler site converter tests.
+    cmds:
+      - task app:crawler:test
+
+  tests:extract:
+    desc: "Extract an article. Variables: SITE, ID."
+    cmds:
+      - task app:crawler:extract SITE={{.SITE}} ID={{.ID}}
+
+  tests:debug:
+    desc: "Debug HTML extraction. Variables: FILE or SITE and ID."
+    cmds:
+      - task app:crawler:debug FILE={{.FILE}} SITE={{.SITE}} ID={{.ID}}
+
+  sites:list:
+    desc: "Run crawler list command. Variables: SITE, PAGE, LIST_SLACK."
+    cmds:
+      - task app:crawler:site SITE={{.SITE}} CMD=list PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:refresh-urls:
+    desc: "Refresh crawler URLs. Variables: SITE."
+    cmds:
+      - task app:crawler:site SITE={{.SITE}} CMD=refresh-urls
+
+  sites:refresh-silver:
+    desc: "Refresh crawler Silver documents. Variables: SITE."
+    cmds:
+      - task app:crawler:site SITE={{.SITE}} CMD=refresh-silver
+
+  sites:aicasebook:list:
+    desc: "List AiCasebook targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=aicasebook PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:aicasebook:refresh-urls:
+    desc: Refresh AiCasebook URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=aicasebook
+
+  sites:aicasebook:refresh-silver:
+    desc: Refresh AiCasebook Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=aicasebook
+
+  sites:dailydoseofds:list:
+    desc: "List Daily Dose of DS targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=dailydoseofds PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:dailydoseofds:refresh-urls:
+    desc: Refresh Daily Dose of DS URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=dailydoseofds
+
+  sites:dailydoseofds:refresh-silver:
+    desc: Refresh Daily Dose of DS Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=dailydoseofds
+
+  sites:geeknews:list:
+    desc: "List GeekNews targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=geeknews PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:geeknews:refresh:
+    desc: Refresh GeekNews list targets.
+    cmds:
+      - task app:sites:geeknews:list
+
+  sites:geeknews:refresh-urls:
+    desc: Refresh GeekNews URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=geeknews
+
+  sites:geeknews:refresh-silver:
+    desc: Refresh GeekNews Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=geeknews
+
+  sites:gpters:list:
+    desc: "List GPTERS targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=gpters PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:gpters:refresh:
+    desc: Refresh GPTERS list targets.
+    cmds:
+      - task app:sites:gpters:list
+
+  sites:gpters:refresh-urls:
+    desc: Refresh GPTERS URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=gpters
+
+  sites:gpters:refresh-silver:
+    desc: Refresh GPTERS Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=gpters
+
+  sites:linkedin:list:
+    desc: "List LinkedIn targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=linkedin PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:linkedin:company:
+    desc: "List LinkedIn company targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:linkedin:list PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:linkedin:refresh-urls:
+    desc: Refresh LinkedIn URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=linkedin
+
+  sites:linkedin:refresh-silver:
+    desc: Refresh LinkedIn Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=linkedin
+
+  sites:maily-josh:list:
+    desc: "List Maily Josh targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=maily_josh PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:maily-josh:refresh-urls:
+    desc: Refresh Maily Josh URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=maily_josh
+
+  sites:maily-josh:refresh-silver:
+    desc: Refresh Maily Josh Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=maily_josh
+
+  sites:pytorch-kr:list:
+    desc: "List PyTorch KR targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=pytorch_kr PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:pytorch-kr:refresh:
+    desc: Refresh PyTorch KR list targets.
+    cmds:
+      - task app:sites:pytorch-kr:list
+
+  sites:pytorch-kr:refresh-urls:
+    desc: Refresh PyTorch KR URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=pytorch_kr
+
+  sites:pytorch-kr:refresh-silver:
+    desc: Refresh PyTorch KR Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=pytorch_kr
+
+  sites:uppity:list:
+    desc: "List Uppity targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=uppity PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:uppity:refresh-urls:
+    desc: Refresh Uppity URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=uppity
+
+  sites:uppity:refresh-silver:
+    desc: Refresh Uppity Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=uppity
+
+  sites:yozm:list:
+    desc: "List Yozm targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task app:sites:list SITE=yozm PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:yozm:refresh-urls:
+    desc: Refresh Yozm URLs.
+    cmds:
+      - task app:sites:refresh-urls SITE=yozm
+
+  sites:yozm:refresh-silver:
+    desc: Refresh Yozm Silver documents.
+    cmds:
+      - task app:sites:refresh-silver SITE=yozm
