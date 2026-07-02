@@ -3,7 +3,7 @@ version: '3'
 tasks:
   config:
     cmds:
-      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/tools/obsidian/docker/compose.yml config'
+      - '{{.COMPOSE}} config'
   up:
     cmds:
       - '{{.COMPOSE}} --profile tools up -d obsidian'

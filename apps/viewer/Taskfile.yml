@@ -4,7 +4,7 @@ tasks:
   config:
     desc: Validate viewer Docker Compose.
     cmds:
-      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/apps/viewer/docker/compose.yml config'
+      - '{{.COMPOSE}} config'
 
   build:
     desc: Build viewer services after regenerating static site config.

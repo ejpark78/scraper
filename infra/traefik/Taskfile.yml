@@ -3,7 +3,7 @@ version: '3'
 tasks:
   config:
     cmds:
-      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/infra/traefik/docker/compose.yml config'
+      - '{{.COMPOSE}} config'
   build:
     cmds:
       - '{{.COMPOSE}} build --no-cache traefik'

@@ -4,7 +4,7 @@ tasks:
   config:
     desc: Validate crawler Docker Compose files.
     cmds:
-      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/apps/crawler/docker/gmail/compose.yml -f {{.ROOT_DIR}}/apps/crawler/docker/worker/compose.yml config'
+      - '{{.COMPOSE}} config'
 
   build:
     desc: Build crawler worker images.

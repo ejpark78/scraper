@@ -4,7 +4,7 @@ tasks:
   config:
     desc: Validate OpenKB Docker Compose.
     cmds:
-      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/apps/openkb/docker/compose.yml config'
+      - '{{.COMPOSE}} config'
 
   build:
     cmds:

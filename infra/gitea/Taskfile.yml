@@ -3,7 +3,7 @@ version: '3'
 tasks:
   config:
     cmds:
-      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/infra/gitea/docker/compose.yml config'
+      - '{{.COMPOSE}} config'
 
   up:
     desc: Start Gitea and ensure the local admin account exists.

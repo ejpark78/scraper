@@ -8,7 +8,7 @@ vars:
 tasks:
   config:
     cmds:
-      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/infra/mongodb/docker/compose.yml config'
+      - '{{.COMPOSE}} config'
 
   up:
     cmds:
