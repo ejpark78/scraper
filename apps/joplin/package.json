@@ -4,8 +4,8 @@
   "description": "Dockerized Joplin CLI Sync and Web Clipper Push Tool",
   "private": true,
   "scripts": {
-    "sync": "ts-node src/index.ts sync",
-    "push": "ts-node src/index.ts push"
+    "sync": "ts-node src/joplin.ts sync",
+    "push": "ts-node src/joplin.ts push"
   },
   "dependencies": {
     "dotenv": "^16.4.5"

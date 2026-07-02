@@ -14,12 +14,12 @@ tasks:
   sync:
     desc: "Sync Joplin CLI and export notebooks. Variables: TARGET_PATH."
     cmds:
-      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -e JOPLIN_SERVER_URL -e JOPLIN_USERNAME -e JOPLIN_PASSWORD -e JOPLIN_DEC_PASSWORD joplin-tool npx ts-node src/index.ts sync "{{.TARGET_PATH | default "data/joplin"}}"'
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -e JOPLIN_SERVER_URL -e JOPLIN_USERNAME -e JOPLIN_PASSWORD -e JOPLIN_DEC_PASSWORD joplin-tool npx ts-node src/joplin.ts sync "{{.TARGET_PATH | default "data/joplin"}}"'
 
   push:
     desc: "Push local markdown book to Joplin via Web Clipper API. Variables: FROM_PATH, TO_PATH."
     cmds:
-      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -e JOPLIN_TOKEN -e JOPLIN_API_URL joplin-tool npx ts-node src/index.ts push "{{.FROM_PATH}}" "{{.TO_PATH}}"'
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -e JOPLIN_TOKEN -e JOPLIN_API_URL joplin-tool npx ts-node src/joplin.ts push "{{.FROM_PATH}}" "{{.TO_PATH}}"'
 
   shell:
     desc: Open joplin-tool container shell.

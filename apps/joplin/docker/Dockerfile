@@ -27,4 +27,4 @@ RUN npm install && npm cache clean --force
 
 COPY . .
 
-CMD ["npx", "ts-node", "src/index.ts"]
+CMD ["npx", "ts-node", "src/joplin.ts"]
