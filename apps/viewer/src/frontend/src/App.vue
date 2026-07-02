@@ -43,9 +43,7 @@ function selectDashboard() {
   router.push({ name: 'Dashboard' });
 }
 
-function selectExternal() {
-  router.push({ name: 'External' });
-}
+
 </script>
 
 <template>
@@ -68,14 +66,7 @@ function selectExternal() {
           <span style="vertical-align:middle;margin-right:8px;font-size:16px;">📊</span>
           <span style="vertical-align:middle;">Dashboard</span>
         </li>
-        <li 
-          class="collection-item"
-          :class="{ active: route.name === 'External' }"
-          @click="selectExternal"
-        >
-          <span style="vertical-align:middle;margin-right:8px;font-size:16px;">🔄</span>
-          <span style="vertical-align:middle;">External (Joplin)</span>
-        </li>
+
       </ul>
 
       <div class="section-title" style="margin-top:20px;">Collections</div>

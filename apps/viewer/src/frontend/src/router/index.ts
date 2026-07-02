@@ -1,9 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import DashboardView from '../views/DashboardView.vue';
 import DocumentView from '../views/DocumentView.vue';
-import ExternalView from '../views/ExternalView.vue';
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     redirect: '/dashboard',
@@ -18,11 +17,6 @@ const routes = [
     name: 'Collection',
     component: DocumentView,
     props: true,
-  },
-  {
-    path: '/external',
-    name: 'External',
-    component: ExternalView,
   },
 ];
 

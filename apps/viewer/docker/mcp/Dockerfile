@@ -22,9 +22,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install && npm cache clean --force
 
-# Install Joplin CLI
-RUN npm install -g joplin
-
 
 
 # Copy source files
