@@ -17,7 +17,7 @@ description: AI-based semantic code review using Gemini API to audit strict typi
 
 ### 1단계: Git Diff 추출 및 분석 자료 수집
 * 현재 작업 공간의 `git diff` 및 `git diff --cached`를 분석용 데이터로 확보합니다.
-* `/Users/ejpark/workspace/scraper/docs/prompts/review_checklist.md` 및 프로젝트 루트의 `AGENTS.md` 내용을 가이드로 읽어들입니까.
+* `docs/prompts/review_checklist.md` 및 프로젝트 루트의 `AGENTS.md` 내용을 가이드로 읽어들입니다.
 
 ### 2단계: AI 분석 수행 (System Instruction)
 Gemini 또는 외부 LLM API를 사용하여 수집된 diff 내용에 대해 다음 사항을 중점 감사(Audit)합니다.
