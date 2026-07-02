@@ -12,7 +12,7 @@ services:
       - tools
       - viewer
     environment:
-      - TZ=Asia/Seoul
+      - TZ=${TZ:-Asia/Seoul}
     restart: unless-stopped
     depends_on:
       traefik:
@@ -44,11 +44,11 @@ services:
       - tools
       - viewer
     environment:
-      - TZ=Asia/Seoul
-      - MONGO_URL=mongodb://mongodb:27017
-      - REDIS_URL=redis://redis:6379
-      - PORT=3000
-      - IS_VIEWER=true
+      - TZ=${TZ:-Asia/Seoul}
+      - MONGO_URL=${MONGO_URL:-mongodb://mongodb:27017}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - PORT=${VIEWER_API_PORT:-3000}
+      - IS_VIEWER=${IS_VIEWER:-true}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -88,10 +88,10 @@ services:
       - tools
       - viewer
     environment:
-      - TZ=Asia/Seoul
-      - MONGO_URL=mongodb://mongodb:27017
-      - REDIS_URL=redis://redis:6379
-      - PORT=3001
+      - TZ=${TZ:-Asia/Seoul}
+      - MONGO_URL=${MONGO_URL:-mongodb://mongodb:27017}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - PORT=${VIEWER_MCP_PORT:-3001}
     restart: unless-stopped
     depends_on:
       traefik:

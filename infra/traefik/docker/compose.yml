@@ -34,8 +34,8 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - TZ=Asia/Seoul
-      - DOCKER_API_VERSION=1.40
+      - TZ=${TZ:-Asia/Seoul}
+      - DOCKER_API_VERSION=${DOCKER_API_VERSION:-1.40}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ${HOST_PROJECT_PATH:-.}/data/.services/traefik/certs:/certs:ro

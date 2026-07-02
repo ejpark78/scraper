@@ -15,19 +15,19 @@ services:
       traefik:
         condition: service_healthy      
     environment:
-      - GITEA__database__DB_TYPE=sqlite3
-      - GITEA__database__PATH=/data/gitea/gitea.db
-      - GITEA__server__ROOT_URL=https://gitea.localhost/
-      - GITEA__server__SSH_PORT=2222
-      - GITEA__server__DOMAIN=gitea.localhost
-      - GITEA__security__INSTALL_LOCK=true
-      - GITEA__security__ADMIN_USERNAME=gitea-admin
-      - GITEA__security__ADMIN_PASSWORD=admin12345
-      - GITEA__security__ADMIN_EMAIL=admin@example.com
-      - GITEA__actions__ENABLED=true
-      - GITEA__repository.unit__DISABLED_REPOSITORY_UNITS=
-      - GITEA__repository.unit__DEFAULT_REPOSITORY_UNITS=code,issues,pulls,releases,wiki
-      - TZ=Asia/Seoul
+      - GITEA__database__DB_TYPE=${GITEA_DATABASE_DB_TYPE:-sqlite3}
+      - GITEA__database__PATH=${GITEA_DATABASE_PATH:-/data/gitea/gitea.db}
+      - GITEA__server__ROOT_URL=${GITEA_SERVER_ROOT_URL:-https://gitea.localhost/}
+      - GITEA__server__SSH_PORT=${GITEA_SERVER_SSH_PORT:-2222}
+      - GITEA__server__DOMAIN=${GITEA_SERVER_DOMAIN:-gitea.localhost}
+      - GITEA__security__INSTALL_LOCK=${GITEA_SECURITY_INSTALL_LOCK:-true}
+      - GITEA__security__ADMIN_USERNAME=${GITEA_SECURITY_ADMIN_USERNAME:-gitea-admin}
+      - GITEA__security__ADMIN_PASSWORD=${GITEA_SECURITY_ADMIN_PASSWORD:-admin12345}
+      - GITEA__security__ADMIN_EMAIL=${GITEA_SECURITY_ADMIN_EMAIL:-admin@example.com}
+      - GITEA__actions__ENABLED=${GITEA_ACTIONS_ENABLED:-true}
+      - GITEA__repository.unit__DISABLED_REPOSITORY_UNITS=${GITEA_REPOSITORY_UNIT_DISABLED_REPOSITORY_UNITS:-}
+      - GITEA__repository.unit__DEFAULT_REPOSITORY_UNITS=${GITEA_REPOSITORY_UNIT_DEFAULT_REPOSITORY_UNITS:-code,issues,pulls,releases,wiki}
+      - TZ=${TZ:-Asia/Seoul}
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/gitea/data:/data
       - ${HOST_PROJECT_PATH:-.}/data/.services/gitea/repositories:/var/lib/gitea/git
@@ -52,10 +52,10 @@ services:
       gitea:
         condition: service_healthy
     environment:
-      - GITEA_INSTANCE_URL=http://gitea:3000
-      - GITEA_RUNNER_REGISTRATION_TOKEN_FILE=/data/token
-      - GITEA_RUNNER_NAME=local-runner
-      - GITEA_RUNNER_LABELS=ubuntu-latest:docker://node:18-bullseye,ubuntu-22.04:docker://node:18-bullseye
+      - GITEA_INSTANCE_URL=${GITEA_INSTANCE_URL:-http://gitea:3000}
+      - GITEA_RUNNER_REGISTRATION_TOKEN_FILE=${GITEA_RUNNER_REGISTRATION_TOKEN_FILE:-/data/token}
+      - GITEA_RUNNER_NAME=${GITEA_RUNNER_NAME:-local-runner}
+      - GITEA_RUNNER_LABELS=${GITEA_RUNNER_LABELS:-ubuntu-latest:docker://node:18-bullseye,ubuntu-22.04:docker://node:18-bullseye}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${HOST_PROJECT_PATH:-.}/data/.services/gitea/act_runner:/data

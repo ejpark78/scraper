@@ -14,8 +14,8 @@ services:
       - worker
       - crawler
     environment:
-      - AUTOHEAL_CONTAINER_LABEL=autoheal
-      - TZ=Asia/Seoul
+      - AUTOHEAL_CONTAINER_LABEL=${AUTOHEAL_CONTAINER_LABEL:-autoheal}
+      - TZ=${TZ:-Asia/Seoul}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped

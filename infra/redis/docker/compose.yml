@@ -16,7 +16,7 @@ services:
   redis:
     image: redis:alpine
     environment:
-      - TZ=Asia/Seoul
+      - TZ=${TZ:-Asia/Seoul}
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/redis:/data
     restart: unless-stopped
@@ -36,7 +36,7 @@ services:
       traefik:
         condition: service_healthy
     environment:
-      - TZ=Asia/Seoul
+      - TZ=${TZ:-Asia/Seoul}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5540/', (r) => process.exit(r.statusCode < 400 ? 0 : 1)).on('error', () => process.exit(1))"]

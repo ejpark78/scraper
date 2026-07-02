@@ -17,8 +17,8 @@ services:
   mongodb:
     image: mongo:7.0
     environment:
-      - TZ=Asia/Seoul
-      - MONGO_INITDB_DATABASE=linkedin
+      - TZ=${TZ:-Asia/Seoul}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE:-linkedin}
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/.services/mongodb:/data/db
     restart: unless-stopped
@@ -35,11 +35,11 @@ services:
   mongo-express:
     image: mongo-express:latest
     environment:
-      - TZ=Asia/Seoul
-      - MONGODB_SERVER=mongodb
-      - ME_CONFIG_MONGODB_SERVER=mongodb
-      - ME_CONFIG_MONGODB_PORT=27017
-      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - TZ=${TZ:-Asia/Seoul}
+      - MONGODB_SERVER=${MONGODB_SERVER:-mongodb}
+      - ME_CONFIG_MONGODB_SERVER=${ME_CONFIG_MONGODB_SERVER:-mongodb}
+      - ME_CONFIG_MONGODB_PORT=${ME_CONFIG_MONGODB_PORT:-27017}
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=${ME_CONFIG_MONGODB_ENABLE_ADMIN:-true}
     profiles:
       - tools
     depends_on:

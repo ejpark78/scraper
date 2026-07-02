@@ -15,7 +15,7 @@ services:
     profiles:
       - gmail
     environment:
-      - TZ=Asia/Seoul
+      - TZ=${TZ:-Asia/Seoul}
       - EMAIL_USER=${EMAIL_USER:-}
       - EMAIL_PASSWORD=${EMAIL_PASSWORD:-}
       - IMAP_HOST=${IMAP_HOST:-}

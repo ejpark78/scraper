@@ -16,18 +16,18 @@ services:
       - runtime
       - crawler
     environment:
-      - MONGO_URL=mongodb://mongodb:27017
-      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=${MONGO_URL:-mongodb://mongodb:27017}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - AUTH=${AUTH:-}
       - LIST_SLACK=${LIST_SLACK:-}
       - CHUNK_SIZE=${CHUNK_SIZE:-}
-      - SESSION_DIR=/app/data/sessions
+      - SESSION_DIR=${SESSION_DIR:-/app/data/sessions}
       - LISTS=${LISTS:-}
       - URLS=${URLS:-}
       - HTML=${HTML:-}
       - MD=${MD:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - TZ=Asia/Seoul
+      - TZ=${TZ:-Asia/Seoul}
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
       - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
@@ -47,12 +47,12 @@ services:
     labels:
       autoheal: "true"
     environment:
-      - TZ=Asia/Seoul
-      - JSON_LOG=true
-      - LIST_SLACK=0
-      - REDIS_URL=redis://redis:6379
-      - MONGO_URL=mongodb://mongodb:27017
-      - SESSION_DIR=/app/data/sessions
+      - TZ=${TZ:-Asia/Seoul}
+      - JSON_LOG=${JSON_LOG:-true}
+      - LIST_SLACK=${LIST_SLACK:-0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - MONGO_URL=${MONGO_URL:-mongodb://mongodb:27017}
+      - SESSION_DIR=${SESSION_DIR:-/app/data/sessions}
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sessions:/app/data/sessions
       - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
@@ -80,12 +80,12 @@ services:
     labels:
       autoheal: "true"
     environment:
-      - TZ=Asia/Seoul
+      - TZ=${TZ:-Asia/Seoul}
       - AUTH=${AUTH:-}
-      - JSON_LOG=true
-      - LIST_SLACK=0
-      - REDIS_URL=redis://redis:6379
-      - MONGO_URL=mongodb://mongodb:27017
+      - JSON_LOG=${JSON_LOG:-true}
+      - LIST_SLACK=${LIST_SLACK:-0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - MONGO_URL=${MONGO_URL:-mongodb://mongodb:27017}
     volumes:
       - ${HOST_PROJECT_PATH:-.}/data/sites:/app/data/sites
     restart: unless-stopped
@@ -110,13 +110,13 @@ services:
       - worker
       - crawler
     environment:
-      - TZ=Asia/Seoul
+      - TZ=${TZ:-Asia/Seoul}
       - AUTH=${AUTH:-}
-      - JSON_LOG=true
-      - LIST_SLACK=0
-      - REDIS_URL=redis://redis:6379
-      - MONGO_URL=mongodb://mongodb:27017
-      - MEILI_URL=http://meilisearch:7700
+      - JSON_LOG=${JSON_LOG:-true}
+      - LIST_SLACK=${LIST_SLACK:-0}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - MONGO_URL=${MONGO_URL:-mongodb://mongodb:27017}
+      - MEILI_URL=${MEILI_URL:-http://meilisearch:7700}
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-}
     restart: unless-stopped
     healthcheck:
@@ -126,4 +126,3 @@ services:
       retries: 3
     deploy:
       replicas: 1
-
