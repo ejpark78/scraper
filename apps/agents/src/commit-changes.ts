@@ -219,10 +219,10 @@ class GiteaClient {
  */
 class ValidationService {
   public runCodeReview(): void {
-    if (fs.existsSync('.agents/scripts/review-changes.ts')) {
+    if (fs.existsSync('apps/agents/src/review-changes.ts')) {
       console.log('🤖 Running Code Review Check...');
       try {
-        execSync('npx ts-node .agents/scripts/review-changes.ts', { stdio: 'inherit' });
+        execSync('npx ts-node apps/agents/src/review-changes.ts', { stdio: 'inherit' });
       } catch (e) {
         console.log('⚠️ Review check script failed to run. Proceeding with commit...');
       }

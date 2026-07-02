@@ -28,7 +28,7 @@
   * **Plan 계획서 및 분석 결과를 이슈 본문에 포함**: Gitea 이슈 생성 시 분석 결과(문제점 진단, 근거), 목표, 단계별 실행 계획, 대상 파일 목록을 본문에 상세 기술합니다. 작업 범위와 근거가 명확히 전달되어야 승인 프로세스가 의미를 가집니다. (로컬 `plan.md` 및 `action_items.md` 작성 절차는 폐지하고 Gitea 이슈로 단일화합니다.)
   * **진단 중 개발 작업 전환 시 이슈 생성 강제**: 진단/탐색 중이라도 **구체적인 Plan(수정 대상 파일, 단계별 실행 계획, 예상 결과)이 수립되는 즉시** Gitea 이슈를 생성하고 계획서와 분석 결과를 본문에 포함합니다. 이후 해당 Plan 범위 내의 모든 편집은 추가 이슈 없이 진행 가능합니다. 범위를 벗어나는 새 작업이 발생하면 새 Plan 수립 → 새 이슈를 생성합니다.
   * **하위 규칙 파일의 사전 스캔 의무**: 세션 시작 시 최상위 `AGENTS.md` 외에 `.agents/rules/*.md` 내의 규칙 변경 사항을 반드시 사전 스캔하여 최신 지침을 누락 없이 적용해야 합니다.
-  * **Gitea API 및 헬퍼 스크립트 활용**: 이슈 발행, 댓글 등록, 이슈 마감 등의 상태 제어 시 `task gitea:*` 래퍼를 우선 사용합니다. 래퍼는 프로젝트에 마련된 TypeScript 헬퍼 스크립트(`npx ts-node .agents/scripts/gitea.ts`, `npm run gitea`)를 호출하는 표준 진입점입니다. 기존 Gitea MCP 및 대화형 CLI 명령어(tea, curl 등)를 사용해 직접 수동으로 Gitea API를 제어하는 셸 호출은 지양합니다.
+  * **Gitea API 및 헬퍼 스크립트 활용**: 이슈 발행, 댓글 등록, 이슈 마감 등의 상태 제어 시 `task gitea:*` 래퍼를 우선 사용합니다. 래퍼는 프로젝트에 마련된 TypeScript 헬퍼 스크립트(`npx ts-node apps/agents/src/gitea.ts`, `npm run gitea`)를 호출하는 표준 진입점입니다. 기존 Gitea MCP 및 대화형 CLI 명령어(tea, curl 등)를 사용해 직접 수동으로 Gitea API를 제어하는 셸 호출은 지양합니다.
   * **Gitea 이슈 본문 작성 규격**: 쉘 명령어로 Gitea 이슈를 생성할 때(`task gitea:create-issue TITLE="..." BODY="..."`), 마크다운 본문의 줄바꿈(LF)은 반드시 `[br]` 기호를 사용해 작성합니다. 단순 `\n`을 쓰면 개행 치환이 되지 않고 본문 포맷이 깨지므로 엄금합니다. npm 인자 전달 경로에서는 `--title`/`--body` 플래그가 npm에 의해 가로채져 동작하지 않으므로 **절대 사용 금지**. 긴 본문이나 특수문자가 포함된 본문은 `GITEA_BODY_FILE=<파일경로>` 환경변수를 사용하여 파일에서 읽어오는 것을 권장합니다.
   * **CLI 셸 이스케이프 및 특수문자 바인딩**: 셸 명령어 인자(`run_command` 등)로 Gitea 이슈 생성/댓글/마감/수정 메시지 등을 전달할 때, 쌍따옴표(`"`) 내부에 백틱(`` ` ``), 큰따옴표, 또는 `$` 기호 등이 노출되면 zsh/bash 셸이 명령 실행이나 프로세스 치환으로 해석하여 `permission denied` 또는 `command not found` 오류가 납니다. 임의 텍스트를 인자로 보낼 때는 반드시 특수문자를 제거하거나 셸 이스케이프 처리를 철저히 하여 안전한 텍스트 형태로만 전송해야하며, 스크립트 기능 미비 시 임의 `curl` PATCH 등 땜빵식(ad-hoc) 명령어로 우회 수정을 가하지 말고 스크립트 도구 자체를 확장·수정하여 사용하십시오. 셸 이스케이프 문제를 피하려면 `GITEA_BODY_FILE=<파일경로>` 환경변수를 통해 파일에서 본문을 읽어오는 방식을 권장합니다.
 * **일관된 릴리즈 및 이슈 자동 종결**: 작업이 완료된 후에는 `npm run commit` 명령을 활용하여 로컬 커밋, 원격 저장소 동기화(Push), 그리고 해당 Gitea 이슈에 대한 Commit Diff 링크가 포함된 완료 댓글 등록 및 이슈 마감(Close)까지 올인원으로 일괄 처리합니다. 이슈 번호는 브랜치명에서 자동 추출되며, 브랜치명이 없거나 추출이 불가능한 경우 `GITEA_ISSUE_ID` 환경변수 또는 `--issue` / `--issue-id` 인자로 명시해야 합니다.
@@ -97,7 +97,7 @@
 ## 🔓 사전 승인 명령어 (Pre-Approved Commands)
 다음 명령어/스크립트는 사전 승인되었으며, 승인 절차에서 제외됩니다:
 - `git ls-files` (프로젝트 코드베이스 매핑용)
-- `npm run commit` (편집 후 자동 저장용, 내부적으로 `.agents/scripts/commit-changes.ts` 실행)
+- `npm run commit` (편집 후 자동 저장용, 내부적으로 `apps/agents/src/commit-changes.ts` 실행)
 - `npm run gitea` (Gitea 이슈 생성, 댓글 등록, 마감 등 상태 제어용)
-- `npx ts-node .agents/scripts/gitea.ts` (이슈 관리 헬퍼 스크립트 실행용)
+- `npx ts-node apps/agents/src/gitea.ts` (이슈 관리 헬퍼 스크립트 실행용)
 - `task` (Docker 런타임 및 앱/인프라/도구 태스크 실행용)
