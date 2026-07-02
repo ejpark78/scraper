@@ -7,7 +7,7 @@ async function main() {
 
   try {
     if (!command) {
-      console.error('사용할 명령어를 선택하세요. (지원 명령어: joplin:server:sync, joplin:server:push, joplin:client:sync, joplin:client:push, obsidian:push)');
+      console.error('사용할 명령어를 선택하세요. (지원 명령어: joplin:server:pull, joplin:server:push, joplin:client:pull, joplin:client:push, obsidian:push)');
       process.exit(1);
     }
 
@@ -15,9 +15,9 @@ async function main() {
       const joplinCommand = command.replace('joplin:', '');
       const runner = new JoplinTaskRunner();
 
-      if (joplinCommand === 'server:sync') {
+      if (joplinCommand === 'server:pull') {
         const targetPath = args[1] || 'data/joplin';
-        await runner.runServerSync(targetPath);
+        await runner.runServerPull(targetPath);
       } else if (joplinCommand === 'server:push') {
         const fromPath = args[1];
         const toPath = args[2];
@@ -26,9 +26,9 @@ async function main() {
           process.exit(1);
         }
         await runner.runServerPush(fromPath, toPath);
-      } else if (joplinCommand === 'client:sync') {
+      } else if (joplinCommand === 'client:pull') {
         const targetPath = args[1] || 'data/joplin';
-        await runner.runClientSync(targetPath);
+        await runner.runClientPull(targetPath);
       } else if (joplinCommand === 'client:push') {
         const fromPath = args[1];
         const toPath = args[2];
@@ -70,7 +70,7 @@ async function main() {
       console.log('[Wiki Entrypoint] Obsidian push completed.');
     } else {
       console.error(`알 수 없는 명령어입니다: ${command}`);
-      console.error('지원 명령어: joplin:server:sync, joplin:server:push, joplin:client:sync, joplin:client:push, obsidian:push');
+      console.error('지원 명령어: joplin:server:pull, joplin:server:push, joplin:client:pull, joplin:client:push, obsidian:push');
       process.exit(1);
     }
   } catch (err: any) {

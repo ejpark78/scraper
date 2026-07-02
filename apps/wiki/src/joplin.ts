@@ -387,17 +387,17 @@ export class JoplinTaskRunner {
   }
 
   /**
-   * [1] server:sync
+   * [1] server:pull
    * Joplin CLI를 이용하여 Joplin Server와 동기화하고 로컬 노트북을 export합니다.
    */
-  public async runServerSync(targetPath: string): Promise<void> {
+  public async runServerPull(targetPath: string): Promise<void> {
     const serverUrl = process.env.JOPLIN_SERVER_URL;
     const username = process.env.JOPLIN_USERNAME;
     let password = process.env.JOPLIN_PASSWORD;
     const decPassword = process.env.JOPLIN_DEC_PASSWORD;
 
     if (!serverUrl || !username) {
-      throw new Error('Joplin CLI Server Sync를 기동하려면 JOPLIN_SERVER_URL, JOPLIN_USERNAME 환경변수가 필수입니다.');
+      throw new Error('Joplin CLI Server Pull을 기동하려면 JOPLIN_SERVER_URL, JOPLIN_USERNAME 환경변수가 필수입니다.');
     }
 
     if (!password) {
@@ -493,10 +493,10 @@ export class JoplinTaskRunner {
   }
 
   /**
-   * [3] client:sync
+   * [3] client:pull
    * 호스트 데스크톱 Joplin App Web Clipper API를 사용해 데이터를 백업/가져옵니다.
    */
-  public async runClientSync(targetPath: string): Promise<void> {
+  public async runClientPull(targetPath: string): Promise<void> {
     let token = process.env.JOPLIN_TOKEN;
     const apiUrl = process.env.JOPLIN_API_URL || 'http://host.docker.internal:41184';
 
@@ -504,7 +504,7 @@ export class JoplinTaskRunner {
       console.log('🔑 Joplin Web Clipper API 토큰 환경 변수가 누락되었습니다.');
       token = await PasswordPrompt.getPassword('Enter Joplin Web Clipper Token: ');
       if (!token.trim()) {
-        throw new Error('Joplin Web Clipper Token 입력이 누락되어 동기화를 취소합니다.');
+        throw new Error('Joplin Web Clipper Token 입력이 누락되어 가져오기를 취소합니다.');
       }
     }
 
@@ -580,11 +580,11 @@ export class JoplinTaskRunner {
         }
         console.log(`   ${progressPrefix} Notebook "${folder.title}" processed (${successCount} notes saved).`);
       } catch (err: any) {
-        console.error(`   ${progressPrefix} Failed to sync notebook "${folder.title}": ${err.message}`);
+        console.error(`   ${progressPrefix} Failed to pull notebook "${folder.title}": ${err.message}`);
       }
     }
 
-    console.log('[JoplinTaskRunner] Client sync completed.');
+    console.log('[JoplinTaskRunner] Client pull completed.');
   }
 
   /**
