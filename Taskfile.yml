@@ -77,6 +77,52 @@ tasks:
     cmds:
       - '{{.COMPOSE}} logs -f scraper converter'
 
+  agents:dump:
+    desc: "Dump agent sessions. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --all-targets --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+
+  agents:dump-sysinfo:
+    desc: Dump agent system information.
+    cmds:
+      - npm run agents:sessions -- --sysinfo
+
+  agents:compress-rules:
+    desc: "Compress agent rules context. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --context --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+      - npm run agents:rules -- --compress
+
+  agents:lint-rules:
+    desc: Lint agent rules.
+    cmds:
+      - npm run agents:rules -- --lint
+
+  agents:usage:
+    desc: Print agent usage diagnostics.
+    cmds:
+      - npm run agents:usage
+
+  agents:prune:
+    desc: Prune agent session data.
+    cmds:
+      - npm run agents:sessions -- --prune
+
+  agents:wiki:
+    desc: Compile the OpenKB wiki through the app task.
+    cmds:
+      - task app:openkb:compile
+
+  agents:review:
+    desc: Run AI code review through Antigravity CLI.
+    cmds:
+      - agy --skill code_review "Run semantic code review on my latest modifications."
+
+  agents:push:
+    desc: Push changes through the project push helper.
+    cmds:
+      - npm run push
+
   mkcert:
     desc: Generate local Traefik certificates with mkcert.
     cmds:
