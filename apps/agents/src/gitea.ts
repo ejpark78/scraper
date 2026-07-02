@@ -321,7 +321,7 @@ class GiteaClient {
         },
       });
       if (listResponse.ok) {
-        const tokens: TokenResponse[] = await listResponse.json();
+        const tokens = await listResponse.json() as unknown as TokenResponse[];
         for (const token of tokens) {
           await fetch(`${baseUrl}/users/${username}/tokens/${token.id}`, {
             method: 'DELETE',
@@ -351,7 +351,7 @@ class GiteaClient {
         throw new Error(`토큰 생성 실패: ${createResponse.status} ${errorText}`);
       }
 
-      const newToken: TokenResponse = await createResponse.json();
+      const newToken = await createResponse.json() as unknown as TokenResponse;
       if (newToken.sha1) {
         console.log(`✅ 새 토큰이 생성되었습니다!`);
         console.log(`   토큰: ${newToken.sha1}`);
