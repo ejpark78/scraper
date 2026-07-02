@@ -16,22 +16,51 @@ includes:
 
 tasks:
   browser:login:
-    desc: "Log into a browser-backed site session. Variables: SITE."
+    desc: "Log into a browser-backed site session."
+    summary: |
+      Log into a Playwright browser-backed site session (LinkedIn, GPTERS, etc.) to store authentication state.
+      
+      [Variables]
+        - SITE: (옵션) 로그인 세션을 생성할 대상 사이트 식별자 (기본값: "linkedin")
+        
+      [Usage Examples]
+        - task app:browser:login SITE="linkedin"
     cmds:
       - task app:crawler:login SITE={{.SITE | default "linkedin"}}
 
   browser:open:
-    desc: "Open the Playwright browser helper. Variables: SITE."
+    desc: "Open the Playwright browser helper."
+    summary: |
+      Open Playwright in non-headless/headed mode to inspect current pages or debug sessions manually.
+      
+      [Variables]
+        - SITE: (옵션) 로그인 세션을 디버깅할 대상 사이트 식별자 (기본값: "linkedin")
+        
+      [Usage Examples]
+        - task app:browser:open SITE="linkedin"
     cmds:
       - task app:crawler:open SITE={{.SITE | default "linkedin"}}
 
   browser:inspect-layout:
     desc: Inspect a browser-rendered layout.
+    summary: |
+      Launches browser layout diagnostics to inspect crawler conversion.
+      
+      [Usage Examples]
+        - task app:browser:inspect-layout
     cmds:
       - task app:crawler:inspect-layout
 
   browser:logout:
-    desc: "Remove a browser-backed site session. Variables: SITE."
+    desc: "Remove a browser-backed site session."
+    summary: |
+      Remove stored authentication credentials and cookie states for a given site session.
+      
+      [Variables]
+        - SITE: (옵션) 로그아웃시킬 대상 사이트 식별자 (기본값: "linkedin")
+        
+      [Usage Examples]
+        - task app:browser:logout SITE="linkedin"
     cmds:
       - task app:crawler:logout SITE={{.SITE | default "linkedin"}}
 
@@ -46,7 +75,15 @@ tasks:
       - task app:crawler:build
 
   worker:restart:
-    desc: "Restart crawler workers. Variables: SCALE."
+    desc: "Restart crawler workers."
+    summary: |
+      Restart all crawler worker processes and scale them horizontally.
+      
+      [Variables]
+        - SCALE: (옵션) 확장할 워커 복제본(Replica) 수 (기본값: "1")
+        
+      [Usage Examples]
+        - task app:worker:restart SCALE=3
     cmds:
       - task app:crawler:up SCALE={{.SCALE | default "1"}}
 
@@ -91,32 +128,89 @@ tasks:
       - task app:crawler:test
 
   tests:extract:
-    desc: "Extract an article. Variables: SITE, ID."
+    desc: "Extract an article."
+    summary: |
+      Manually run extraction and Silver conversion for a specific article ID.
+      
+      [Variables]
+        - SITE: (필수) 추출할 대상 사이트명 (예: gpters, yozm, geeknews)
+        - ID: (필수) 문서의 고유 ID 식별자 (MongoDB bronze.urls 내 _id 값 또는 URL 핑거프린트)
+        
+      [Usage Examples]
+        - task app:tests:extract SITE="yozm" ID="2451"
     cmds:
       - task app:crawler:extract SITE={{.SITE}} ID={{.ID}}
 
   tests:debug:
-    desc: "Debug HTML extraction. Variables: FILE or SITE and ID."
+    desc: "Debug HTML extraction."
+    summary: |
+      Run deep parser diagnostics on a raw HTML dump or a target document path.
+      
+      [Variables]
+        - FILE: 로컬 raw HTML 파일의 경로 (이 옵션 지정 시 아래 SITE, ID 생략 가능)
+        - SITE: 분석할 대상 사이트명
+        - ID: 분석할 문서 고유 ID 식별자
+        
+      [Usage Examples]
+        - task app:tests:debug FILE="/tmp/dump.html"
+        - task app:tests:debug SITE="gpters" ID="102"
     cmds:
       - task app:crawler:debug FILE={{.FILE}} SITE={{.SITE}} ID={{.ID}}
 
   sites:list:
-    desc: "Run crawler list command. Variables: SITE, PAGE, LIST_SLACK."
+    desc: "Run crawler list command."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for a specific site.
+      
+      [Variables]
+        - SITE: (필수) 목록을 출력할 사이트명 (예: geeknews, linkedin, yozm)
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙(Slack) 로깅 제한 설정값 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:list SITE="geeknews"
+        - task app:sites:list SITE="yozm" PAGE=2
     cmds:
       - task app:crawler:site SITE={{.SITE}} CMD=list PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
   sites:refresh-urls:
-    desc: "Refresh crawler URLs. Variables: SITE."
+    desc: "Refresh crawler URLs."
+    summary: |
+      Trigger crawling and scraping cycle to fetch newest URLs for a specific site.
+      
+      [Variables]
+        - SITE: (필수) 새로운 URL 목록을 갱신할 사이트명 (예: gpters, linkedin)
+        
+      [Usage Examples]
+        - task app:sites:refresh-urls SITE="gpters"
     cmds:
       - task app:crawler:site SITE={{.SITE}} CMD=refresh-urls
 
   sites:refresh-silver:
-    desc: "Refresh crawler Silver documents. Variables: SITE."
+    desc: "Refresh crawler Silver documents."
+    summary: |
+      Re-process raw HTML data (Bronze) and convert it into structured markdown (Silver) for a specific site.
+      
+      [Variables]
+        - SITE: (필수) 실버 데이터를 재생성할 사이트명 (예: maily_josh, uppity)
+        
+      [Usage Examples]
+        - task app:sites:refresh-silver SITE="uppity"
     cmds:
       - task app:crawler:site SITE={{.SITE}} CMD=refresh-silver
 
   sites:aicasebook:list:
-    desc: "List AiCasebook targets. Variables: PAGE, LIST_SLACK."
+    desc: "List AiCasebook targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for AiCasebook.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:aicasebook:list
+        - task app:sites:aicasebook:list PAGE=2
     cmds:
       - task app:sites:list SITE=aicasebook PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
@@ -131,7 +225,16 @@ tasks:
       - task app:sites:refresh-silver SITE=aicasebook
 
   sites:dailydoseofds:list:
-    desc: "List Daily Dose of DS targets. Variables: PAGE, LIST_SLACK."
+    desc: "List Daily Dose of DS targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for Daily Dose of DS.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:dailydoseofds:list
     cmds:
       - task app:sites:list SITE=dailydoseofds PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
@@ -146,7 +249,16 @@ tasks:
       - task app:sites:refresh-silver SITE=dailydoseofds
 
   sites:geeknews:list:
-    desc: "List GeekNews targets. Variables: PAGE, LIST_SLACK."
+    desc: "List GeekNews targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for GeekNews.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:geeknews:list
     cmds:
       - task app:sites:list SITE=geeknews PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
@@ -166,7 +278,16 @@ tasks:
       - task app:sites:refresh-silver SITE=geeknews
 
   sites:gpters:list:
-    desc: "List GPTERS targets. Variables: PAGE, LIST_SLACK."
+    desc: "List GPTERS targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for GPTERS.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:gpters:list
     cmds:
       - task app:sites:list SITE=gpters PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
@@ -186,12 +307,30 @@ tasks:
       - task app:sites:refresh-silver SITE=gpters
 
   sites:linkedin:list:
-    desc: "List LinkedIn targets. Variables: PAGE, LIST_SLACK."
+    desc: "List LinkedIn targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for LinkedIn posts.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:linkedin:list
     cmds:
       - task app:sites:list SITE=linkedin PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
   sites:linkedin:company:
-    desc: "List LinkedIn company targets. Variables: PAGE, LIST_SLACK."
+    desc: "List LinkedIn company targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for LinkedIn company pages.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:linkedin:company
     cmds:
       - task app:sites:linkedin:list PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
@@ -206,7 +345,16 @@ tasks:
       - task app:sites:refresh-silver SITE=linkedin
 
   sites:maily-josh:list:
-    desc: "List Maily Josh targets. Variables: PAGE, LIST_SLACK."
+    desc: "List Maily Josh targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for Maily Josh newsletters.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:maily-josh:list
     cmds:
       - task app:sites:list SITE=maily_josh PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
@@ -221,7 +369,16 @@ tasks:
       - task app:sites:refresh-silver SITE=maily_josh
 
   sites:pytorch-kr:list:
-    desc: "List PyTorch KR targets. Variables: PAGE, LIST_SLACK."
+    desc: "List PyTorch KR targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for PyTorch KR forum.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:pytorch-kr:list
     cmds:
       - task app:sites:list SITE=pytorch_kr PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
@@ -241,7 +398,16 @@ tasks:
       - task app:sites:refresh-silver SITE=pytorch_kr
 
   sites:uppity:list:
-    desc: "List Uppity targets. Variables: PAGE, LIST_SLACK."
+    desc: "List Uppity targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for Uppity financial newsletters.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:uppity:list
     cmds:
       - task app:sites:list SITE=uppity PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 
@@ -256,7 +422,16 @@ tasks:
       - task app:sites:refresh-silver SITE=uppity
 
   sites:yozm:list:
-    desc: "List Yozm targets. Variables: PAGE, LIST_SLACK."
+    desc: "List Yozm targets."
+    summary: |
+      List crawled target URLs, metadata, and status distribution for Yozm IT articles.
+      
+      [Variables]
+        - PAGE: (옵션) 조회할 페이지 번호 (기본값: "1")
+        - LIST_SLACK: (옵션) 슬랙 로깅 제한 수준 (기본값: "2")
+        
+      [Usage Examples]
+        - task app:sites:yozm:list
     cmds:
       - task app:sites:list SITE=yozm PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
 

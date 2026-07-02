@@ -27,11 +27,21 @@ includes:
 tasks:
   config:
     desc: Validate the full Docker Compose graph.
+    summary: |
+      Validate the full Docker Compose graph and print resolved service structure.
+      
+      [Usage Examples]
+        - task config
     cmds:
       - '{{.COMPOSE}} config'
 
   build:
     desc: Build all runtime, tool, worker, and viewer images.
+    summary: |
+      Build all Docker images for runtime, developer tools, scrapers, and views without cache.
+      
+      [Usage Examples]
+        - task build
     vars:
       BUILD_DATE:
         sh: date -u +%Y-%m-%dT%H:%M:%SZ
@@ -42,21 +52,41 @@ tasks:
 
   up:
     desc: Start the default worker profile.
+    summary: |
+      Start default worker profiles (MongoDB, Redis, RabbitMQ, scrapers, converters) in the background.
+      
+      [Usage Examples]
+        - task up
     cmds:
       - '{{.COMPOSE}} --profile worker up -d'
 
   down:
     desc: Stop all project services.
+    summary: |
+      Stop and remove all running containers, networks, and profiles.
+      
+      [Usage Examples]
+        - task down
     cmds:
       - '{{.COMPOSE}} --profile "*" down'
 
   logs:
     desc: Follow scraper and converter logs.
+    summary: |
+      Follow real-time output streams from scraper and converter worker containers.
+      
+      [Usage Examples]
+        - task logs
     cmds:
       - '{{.COMPOSE}} logs -f scraper converter'
 
   mkcert:
     desc: Generate local Traefik certificates with mkcert.
+    summary: |
+      Automatically generate trusted SSL certificates for *.localhost and route domains on the host using mkcert.
+      
+      [Usage Examples]
+        - task mkcert
     cmds:
       - command -v mkcert >/dev/null 2>&1 || { echo "호스트에 mkcert가 설치되어 있지 않습니다."; exit 1; }
       - mkcert -install
@@ -65,45 +95,114 @@ tasks:
 
   gitea:token:
     desc: Generate a Gitea API token through the TypeScript helper.
+    summary: |
+      Generate or refresh the Gitea REST API token for PMS integration.
+      
+      [Usage Examples]
+        - task gitea:token
     cmds:
       - npm run gitea:token
 
   gitea:token:tea:
     desc: Generate a Gitea API token through tea.
+    summary: |
+      Generate a Gitea API token using the tea interactive CLI tool.
+      
+      [Usage Examples]
+        - task gitea:token:tea
     cmds:
       - npm run gitea:token:tea
 
   gitea:create-issue:
-    desc: "Create a Gitea issue. Variables: TITLE, BODY."
+    desc: "Create a Gitea issue."
+    summary: |
+      Create a new issue on the Gitea repository.
+      
+      [Variables]
+        - TITLE: (필수) 생성할 이슈의 제목
+        - BODY: (필수) 이슈 본문 내용 (개행은 [br] 기호로 변환 권장)
+        
+      [Usage Examples]
+        - task gitea:create-issue TITLE="이슈 제목" BODY="상세 내용[br]두번째 줄"
     cmds:
       - npm run gitea create-issue "{{.TITLE}}" "{{.BODY}}"
 
   gitea:update-issue:
-    desc: "Update a Gitea issue title and body. Variables: ISSUE_ID, TITLE, BODY."
+    desc: "Update a Gitea issue title and body."
+    summary: |
+      Update the title and description body of an existing Gitea issue.
+      
+      [Variables]
+        - ISSUE_ID: (필수) 대상 이슈 ID 번호 (예: 104)
+        - TITLE: (필수) 새로운 이슈 제목
+        - BODY: (필수) 새로운 이슈 본문
+        
+      [Usage Examples]
+        - task gitea:update-issue ISSUE_ID="104" TITLE="수정된 제목" BODY="수정된 내용"
     cmds:
       - npm run gitea update-issue "{{.ISSUE_ID}}" "{{.TITLE}}" "{{.BODY}}"
 
   gitea:comment:
-    desc: "Add a comment to a Gitea issue. Variables: ISSUE_ID, BODY."
+    desc: "Add a comment to a Gitea issue."
+    summary: |
+      Post a new comment on a Gitea issue.
+      
+      [Variables]
+        - ISSUE_ID: (필수) 대상 이슈 ID 번호
+        - BODY: (필수) 댓글 본문 (개행은 [br] 기호 활용)
+        
+      [Usage Examples]
+        - task gitea:comment ISSUE_ID="104" BODY="진행 경과 보고[br]- 완료"
     cmds:
       - npm run gitea comment "{{.ISSUE_ID}}" "{{.BODY}}"
 
   gitea:update-comment:
-    desc: "Update a Gitea issue comment. Variables: COMMENT_ID, BODY."
+    desc: "Update a Gitea issue comment."
+    summary: |
+      Modify the text content of a previously written Gitea issue comment.
+      
+      [Variables]
+        - COMMENT_ID: (필수) 대상 댓글 ID 번호 (예: 2642)
+        - BODY: (필수) 새로운 댓글 본문
+        
+      [Usage Examples]
+        - task gitea:update-comment COMMENT_ID="2642" BODY="수정된 댓글 내용"
     cmds:
       - npm run gitea update-comment "{{.COMMENT_ID}}" "{{.BODY}}"
 
   gitea:close-issue:
-    desc: "Close a Gitea issue. Variables: ISSUE_ID."
+    desc: "Close a Gitea issue."
+    summary: |
+      Close an active Gitea issue.
+      
+      [Variables]
+        - ISSUE_ID: (필수) 닫으려는 이슈 ID 번호
+        
+      [Usage Examples]
+        - task gitea:close-issue ISSUE_ID="142"
     cmds:
       - npm run gitea close-issue "{{.ISSUE_ID}}"
 
   gitea:reopen-issue:
-    desc: "Reopen a Gitea issue. Variables: ISSUE_ID."
+    desc: "Reopen a Gitea issue."
+    summary: |
+      Reopen a previously closed Gitea issue.
+      
+      [Variables]
+        - ISSUE_ID: (필수) 다시 열려는 이슈 ID 번호
+        
+      [Usage Examples]
+        - task gitea:reopen-issue ISSUE_ID="142"
     cmds:
       - npm run gitea reopen-issue "{{.ISSUE_ID}}"
 
   gitea:show-issue:
-    desc: "Print a Gitea issue body. Variables: ISSUE_ID."
-    cmds:
-      - npm run gitea show-issue "{{.ISSUE_ID}}"
+    desc: "Print a Gitea issue body."
+    summary: |
+      Fetch and output the description body and status of a specific Gitea issue.
+      
+      [Variables]
+        - ISSUE_ID: (필수) 조회할 이슈 ID 번호
+        
+      [Usage Examples]
+        - task gitea:show-issue ISSUE_ID="104"
