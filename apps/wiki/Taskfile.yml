@@ -1,0 +1,42 @@
+version: '3'
+
+tasks:
+  config:
+    desc: Validate Wiki Docker Compose.
+    cmds:
+      - '{{.COMPOSE}} config'
+
+  build:
+    desc: Build Wiki CLI tool image.
+    cmds:
+      - '{{.COMPOSE}} build wiki-tool'
+
+  joplin:server:sync:
+    desc: "Sync Joplin CLI and export notebooks from Joplin Server. Variables: TARGET_PATH."
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e JOPLIN_SERVER_URL -e JOPLIN_USERNAME -e JOPLIN_PASSWORD -e JOPLIN_DEC_PASSWORD wiki-tool npx ts-node src/wiki.ts joplin:server:sync "{{.TARGET_PATH | default "data/joplin"}}"'
+
+  joplin:server:push:
+    desc: "Push local markdown book to Joplin Server via CLI import/sync. Variables: FROM_PATH, TO_PATH."
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e JOPLIN_SERVER_URL -e JOPLIN_USERNAME -e JOPLIN_PASSWORD -e JOPLIN_DEC_PASSWORD wiki-tool npx ts-node src/wiki.ts joplin:server:push "{{.FROM_PATH}}" "{{.TO_PATH}}"'
+
+  joplin:client:sync:
+    desc: "Sync/download markdown notebooks from Local Joplin App Web Clipper API. Variables: TARGET_PATH."
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e JOPLIN_TOKEN -e JOPLIN_API_URL wiki-tool npx ts-node src/wiki.ts joplin:client:sync "{{.TARGET_PATH | default "data/joplin"}}"'
+
+  joplin:client:push:
+    desc: "Push local markdown book to Local Joplin App Web Clipper API. Variables: FROM_PATH, TO_PATH."
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e JOPLIN_TOKEN -e JOPLIN_API_URL wiki-tool npx ts-node src/wiki.ts joplin:client:push "{{.FROM_PATH}}" "{{.TO_PATH}}"'
+
+  obsidian:push:
+    desc: "Push local markdown book to Obsidian Vault via Local REST API. Variables: FROM_PATH, TO_PATH."
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e OBSIDIAN_API_KEY -e OBSIDIAN_API_URL wiki-tool npx ts-node src/wiki.ts obsidian:push "{{.FROM_PATH}}" "{{.TO_PATH}}"'
+
+  shell:
+    desc: Open wiki-tool container shell.
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} --entrypoint bash wiki-tool'

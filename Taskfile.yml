@@ -19,8 +19,8 @@ includes:
   tools:
     taskfile: ./tools/Taskfile.yml
     dir: .
-  joplin:
-    taskfile: ./apps/joplin/Taskfile.yml
+  wiki:
+    taskfile: ./apps/wiki/Taskfile.yml
     dir: .
 
 

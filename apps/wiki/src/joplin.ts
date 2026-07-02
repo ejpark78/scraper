@@ -623,48 +623,4 @@ export class JoplinTaskRunner {
   }
 }
 
-// ==============================================================================
-// 🎬 System Execution Bootstrapper
-// ==============================================================================
 
-async function main() {
-  const args = process.argv.slice(2);
-  const command = args[0];
-
-  const runner = new JoplinTaskRunner();
-
-  try {
-    if (command === 'server:sync') {
-      const targetPath = args[1] || 'data/joplin';
-      await runner.runServerSync(targetPath);
-    } else if (command === 'server:push') {
-      const fromPath = args[1];
-      const toPath = args[2];
-      if (!fromPath) {
-        console.error('Usage: npm run sync -- server:push <FROM_PATH> [TO_PATH]');
-        process.exit(1);
-      }
-      await runner.runServerPush(fromPath, toPath);
-    } else if (command === 'client:sync') {
-      const targetPath = args[1] || 'data/joplin';
-      await runner.runClientSync(targetPath);
-    } else if (command === 'client:push') {
-      const fromPath = args[1];
-      const toPath = args[2];
-      if (!fromPath) {
-        console.error('Usage: npm run push -- client:push <FROM_PATH> [TO_PATH]');
-        process.exit(1);
-      }
-      await runner.runClientPush(fromPath, toPath);
-    } else {
-      console.error('알 수 없는 명령어입니다. 지원 명령어: server:sync, server:push, client:sync, client:push');
-      console.error('Usage: npm run sync -- <command> [args]');
-      process.exit(1);
-    }
-  } catch (err: any) {
-    console.error(`❌ 실행 실패: ${err.message}`);
-    process.exit(1);
-  }
-}
-
-main();

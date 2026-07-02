@@ -1,11 +1,11 @@
 {
-  "name": "scraper-joplin-tool",
+  "name": "scraper-wiki-tool",
   "version": "1.0.0",
-  "description": "Dockerized Joplin CLI Sync and Web Clipper Push Tool",
+  "description": "Dockerized Wiki Sync and Export Tool (Joplin & Obsidian)",
   "private": true,
   "scripts": {
-    "sync": "ts-node src/joplin.ts sync",
-    "push": "ts-node src/joplin.ts push"
+    "sync": "ts-node src/wiki.ts sync",
+    "push": "ts-node src/wiki.ts push"
   },
   "dependencies": {
     "dotenv": "^16.4.5"
