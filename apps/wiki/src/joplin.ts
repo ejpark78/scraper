@@ -287,7 +287,8 @@ export class JoplinWebClipperService {
       const errText = await response.text();
       throw new Error(`폴더 목록 가져오기 실패: ${response.statusText}\n${errText}`);
     }
-    return (await response.json()) as any[];
+    const responseData = (await response.json()) as any;
+    return (responseData.items || responseData) as any[];
   }
 
   /**
