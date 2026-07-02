@@ -794,30 +794,26 @@ export function parseAgentsFromArg(raw: string): string[] {
 
 // ─── Output path helpers ────────────────────────────────────
 
-export function formatTimestampDir(ts: number): string {
+export function formatDateDir(ts: number): string {
   const d = new Date(ts);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export function formatTimeTag(ts: number): string {
+  const d = new Date(ts);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 }
 
 export function assignSessionNumbers(sessions: AgentSession[]): Map<string, { dateDir: string; seqNum: string; tag: string }> {
-  // Group by second-level timestamp
-  const groups = new Map<string, AgentSession[]>();
-  for (const s of sessions) {
-    const dir = formatTimestampDir(s.timeCreated);
-    if (!groups.has(dir)) groups.set(dir, []);
-    groups.get(dir)!.push(s);
-  }
-
   const result = new Map<string, { dateDir: string; seqNum: string; tag: string }>();
-  for (const [dateDir, group] of groups) {
-    // Sort by timeCreated (ms) ascending for stable numbering
-    group.sort((a, b) => a.timeCreated - b.timeCreated);
-    group.forEach((s, i) => {
-      const seqNum = String(i + 1).padStart(4, '0');
-      result.set(s.id, { dateDir, seqNum, tag: `${seqNum}-${s.id}` });
-    });
-  }
+
+  sessions.forEach((s) => {
+    const dateDir = formatDateDir(s.timeCreated);
+    const timeTag = formatTimeTag(s.timeCreated);
+    result.set(s.id, { dateDir, seqNum: '', tag: `${timeTag}_${s.id}` });
+  });
 
   return result;
 }
