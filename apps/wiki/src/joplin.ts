@@ -31,6 +31,16 @@ export class PasswordPrompt {
    * 입력을 터미널 화면에 노출하지 않고(마스킹) 입력을 받습니다.
    */
   public static getPassword(query: string): Promise<string> {
+    // TTY가 아니거나 비대화형 환경인 경우 readline 실행 방지 및 예외 처리 가이드 출력
+    if (!process.stdin.isTTY) {
+      console.error(`\n❌ [Wiki CLI] TTY가 활성화되지 않은 비대화형 터미널 환경입니다.`);
+      console.error(`👉 대화형 패스워드 입력을 구동할 수 없으므로, 필요한 자격 증명 환경 변수를 미리 선언하거나 주입해 주세요.`);
+      console.error(`   - Joplin Server 연동 시: JOPLIN_PASSWORD 환경변수 기입`);
+      console.error(`   - Web Clipper API 연동 시: JOPLIN_TOKEN 환경변수 기입`);
+      console.error(`   - Obsidian 연동 시: OBSIDIAN_API_KEY 환경변수 기입\n`);
+      return Promise.resolve('');
+    }
+
     return new Promise((resolve) => {
       let muted = false;
       const mutableStdout = new Writable({

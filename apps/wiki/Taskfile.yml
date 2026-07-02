@@ -26,6 +26,8 @@ tasks:
       [Usage Examples]
         - task wiki:joplin:server:sync
         - task wiki:joplin:server:sync TARGET_PATH="data/custom_sync"
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e JOPLIN_SERVER_URL -e JOPLIN_USERNAME -e JOPLIN_PASSWORD -e JOPLIN_DEC_PASSWORD wiki-tool ./node_modules/.bin/ts-node src/wiki.ts joplin:server:sync "{{.TARGET_PATH | default "data/joplin"}}"'
 
   joplin:server:push:
     desc: "Push local markdown book to Joplin Server via CLI import/sync."
@@ -42,6 +44,8 @@ tasks:
       [Usage Examples]
         - task wiki:joplin:server:push FROM_PATH="data/ebook/output/python_guide"
         - task wiki:joplin:server:push FROM_PATH="data/ebook/output/python_guide" TO_PATH="Python Programming Wiki"
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e JOPLIN_SERVER_URL -e JOPLIN_USERNAME -e JOPLIN_PASSWORD -e JOPLIN_DEC_PASSWORD wiki-tool ./node_modules/.bin/ts-node src/wiki.ts joplin:server:push "{{.FROM_PATH}}" "{{.TO_PATH}}"'
 
   joplin:client:sync:
     desc: "Sync/download markdown notebooks from Local Joplin App Web Clipper API."
@@ -56,6 +60,8 @@ tasks:
       [Usage Examples]
         - task wiki:joplin:client:sync
         - task wiki:joplin:client:sync TARGET_PATH="data/my_backup"
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e JOPLIN_TOKEN -e JOPLIN_API_URL wiki-tool ./node_modules/.bin/ts-node src/wiki.ts joplin:client:sync "{{.TARGET_PATH | default "data/joplin"}}"'
 
   joplin:client:push:
     desc: "Push local markdown book to Local Joplin App Web Clipper API."
@@ -71,6 +77,8 @@ tasks:
       [Usage Examples]
         - task wiki:joplin:client:push FROM_PATH="data/ebook/output/git_guide"
         - task wiki:joplin:client:push FROM_PATH="data/ebook/output/git_guide" TO_PATH="Git Guide Notebook"
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e JOPLIN_TOKEN -e JOPLIN_API_URL wiki-tool ./node_modules/.bin/ts-node src/wiki.ts joplin:client:push "{{.FROM_PATH}}" "{{.TO_PATH}}"'
 
   obsidian:push:
     desc: "Push local markdown book to Obsidian Vault via Local REST API."
@@ -86,6 +94,8 @@ tasks:
       [Usage Examples]
         - task wiki:obsidian:push FROM_PATH="data/ebook/output/rust_guide"
         - task wiki:obsidian:push FROM_PATH="data/ebook/output/rust_guide" TO_PATH="Rust Guide Vault"
+    cmds:
+      - '{{.COMPOSE}} run -i --rm {{.RUN_USER}} -e OBSIDIAN_API_KEY -e OBSIDIAN_API_URL wiki-tool ./node_modules/.bin/ts-node src/wiki.ts obsidian:push "{{.FROM_PATH}}" "{{.TO_PATH}}"'
 
   shell:
     desc: Open wiki-tool container shell.
