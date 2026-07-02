@@ -1,0 +1,23 @@
+version: '3'
+
+tasks:
+  config:
+    desc: Validate ebook Docker Compose.
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/apps/ebook/docker/compose.yml config'
+
+  build:
+    cmds:
+      - '{{.COMPOSE}} build --no-cache ebook'
+
+  up:
+    cmds:
+      - '{{.COMPOSE}} --profile ebook up -d ebook'
+
+  down:
+    cmds:
+      - '{{.COMPOSE}} stop ebook'
+
+  logs:
+    cmds:
+      - '{{.COMPOSE}} logs -f ebook'

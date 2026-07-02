@@ -1,0 +1,18 @@
+version: '3'
+
+tasks:
+  config:
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/tools/obsidian/docker/compose.yml config'
+  up:
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d obsidian'
+  down:
+    cmds:
+      - '{{.COMPOSE}} stop obsidian'
+  logs:
+    cmds:
+      - '{{.COMPOSE}} logs -f obsidian'
+  ps:
+    cmds:
+      - '{{.COMPOSE}} ps obsidian'

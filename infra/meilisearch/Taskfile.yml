@@ -1,0 +1,43 @@
+version: '3'
+
+tasks:
+  config:
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/infra/meilisearch/docker/compose.yml config'
+
+  up:
+    cmds:
+      - '{{.COMPOSE}} up -d meilisearch'
+
+  down:
+    cmds:
+      - '{{.COMPOSE}} stop meilisearch'
+
+  logs:
+    cmds:
+      - '{{.COMPOSE}} logs -f meilisearch'
+
+  ps:
+    cmds:
+      - '{{.COMPOSE}} ps meilisearch'
+
+  refresh-index:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -v /app/node_modules -T worker npx ts-node src/scripts/meili-manager.ts {{if .SITE}}{{printf "--site %s" .SITE}}{{end}}'
+
+  reset-index:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -v /app/node_modules -T worker npx ts-node src/scripts/meili-manager.ts --clean {{if .SITE}}{{printf "--site %s" .SITE}}{{end}}'
+
+  reindex:
+    cmds:
+      - task: reset-index
+
+  status:
+    cmds:
+      - |
+        {{.COMPOSE}} run --rm {{.RUN_USER}} -v /app/node_modules -T worker node -e "\
+          fetch('http://meilisearch:7700/stats', { headers: { Authorization: 'Bearer superMasterKeySecret123' } })\
+            .then(r => r.json())\
+            .then(data => console.log(JSON.stringify(data, null, 2)))\
+            .catch(err => console.error('Error fetching stats:', err.message))"

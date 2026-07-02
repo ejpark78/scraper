@@ -100,4 +100,4 @@
 - `npm run commit` (편집 후 자동 저장용, 내부적으로 `.agents/scripts/commit-changes.ts` 실행)
 - `npm run gitea` (Gitea 이슈 생성, 댓글 등록, 마감 등 상태 제어용)
 - `npx ts-node .agents/scripts/gitea.ts` (이슈 관리 헬퍼 스크립트 실행용)
-
+- `task` (Docker 런타임 및 앱/인프라/도구 태스크 실행용)

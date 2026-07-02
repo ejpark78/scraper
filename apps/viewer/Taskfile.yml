@@ -1,0 +1,26 @@
+version: '3'
+
+tasks:
+  config:
+    desc: Validate viewer Docker Compose.
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/apps/viewer/docker/compose.yml config'
+
+  build:
+    desc: Build viewer services after regenerating static site config.
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -v {{.ROOT_DIR}}:/app -v /app/node_modules worker npm --prefix apps/crawler run config:generate'
+      - '{{.COMPOSE}} build --no-cache viewer-fe viewer-api viewer-mcp'
+      - rm -f {{.ROOT_DIR}}/apps/viewer/config/sites.json
+
+  up:
+    cmds:
+      - '{{.COMPOSE}} up -d viewer-fe viewer-api viewer-mcp'
+
+  down:
+    cmds:
+      - '{{.COMPOSE}} stop viewer-fe viewer-api viewer-mcp'
+
+  logs:
+    cmds:
+      - '{{.COMPOSE}} logs -f viewer-fe viewer-api viewer-mcp'

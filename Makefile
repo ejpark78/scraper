@@ -2,37 +2,45 @@
 # 🤖 Design Context & Constraints (AGENTS.md Compliance)
 # ==============================================================================
 # @module Makefile
-# @description Entrypoint for CLI tasks. Routes site scraper runs, testing, and db utils.
+# @description Compatibility entrypoint for legacy Make targets. Docker runtime tasks are routed through Taskfile.yml.
 # @constraints
 #   - Do NOT execute make commands or custom bash scripts without explicit user permission.
-#   - Integrates environment vars from `scripts/environments.mk`.
-#   - Includes site-specific sub-makefiles (gpters, geeknews, dailydoseofds, etc.).
-# @dependencies GNU Make, docker compose, scripts/**/*.mk
-# @lastUpdated 2026-06-11
+#   - Prefer `task ...` commands for Docker runtime control.
+# @dependencies GNU Make, Task, docker compose
+# @lastUpdated 2026-07-02
 # ==============================================================================
 
-include docker/environments.mk
-
-COMPOSE := HOST_PROJECT_PATH=$(shell pwd) docker compose -p scraper
-export COMPOSE
-
-# RUN_USER and others are now defined in environments.mk
 .PHONY: *
 
 lint:
-	$(COMPOSE) run --rm $(RUN_USER) worker npx yaml-lint compose.yml "docker/**/*.yml"
+	task config
 
 mkcert:
-	@echo "🔐 Traefik 로컬 인증서를 호스트에서 생성합니다..."
-	@command -v mkcert >/dev/null 2>&1 || { echo "❌ 호스트에 mkcert가 설치되어 있지 않습니다."; exit 1; }
-	@mkcert -install
-	@mkdir -p data/.services/traefik/certs
-	@mkcert -cert-file data/.services/traefik/certs/local-cert.pem -key-file data/.services/traefik/certs/local-key.pem localhost gitea.localhost route.localhost viewer.localhost docs.localhost me.localhost redis.localhost search.localhost "*.localhost" 127.0.0.1
-	@echo "✅ Traefik 인증서 생성이 완료되었습니다."
+	task mkcert
 
--include docker/browser.mk
--include docker/docker.mk
--include docker/tools/tools.mk
+build up down logs:
+	task $@
+
+up-gitea:
+	task infra:gitea:up
+
+up-obsidian:
+	task tool:obsidian:up
+
+down-obsidian:
+	task tool:obsidian:down
+
+up-me:
+	task infra:mongodb:gui:up
+
+up-redis:
+	task infra:redis:gui:up
+
+gitea-token:
+	task infra:gitea:token
+
+ollama-run ollama-logs ollama-ps ollama-stop:
+	task $(subst -,:,$@)
 
 # crawler app forwarding
 list refresh-urls refresh-silver rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status extract debug:
@@ -49,7 +57,7 @@ gpt-% gn-% ddds-% pk-% ab-% up-% mj-% yz-% li-%:
 
 # db utils
 mongo-%:
-	@$(MAKE) -f docker/infra/mongodb/mongo.mk $*
+	task infra:mongodb:$*
 
 # agent utils
 agents-%:
@@ -57,7 +65,7 @@ agents-%:
 
 # meili utils
 ms-%:
-	@$(MAKE) -f docker/infra/meilisearch/meili.mk $*
+	task infra:meilisearch:$*
 
 # ebook utils
 ebook-%:

@@ -1,0 +1,40 @@
+version: '3'
+
+tasks:
+  config:
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/infra/gitea/docker/compose.yml config'
+
+  up:
+    desc: Start Gitea and ensure the local admin account exists.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d gitea'
+      - sleep 5
+      - |
+        if ! {{.COMPOSE}} exec -T -u 1000 gitea gitea admin user list | grep -q "gitea-admin"; then
+          {{.COMPOSE}} exec -T -u 1000 gitea gitea admin user create --admin --username gitea-admin --password admin12345 --email admin@example.com || true
+        fi
+
+  runner:up:
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d gitea_runner'
+
+  down:
+    cmds:
+      - '{{.COMPOSE}} stop gitea gitea_runner'
+
+  logs:
+    cmds:
+      - '{{.COMPOSE}} logs -f gitea gitea_runner'
+
+  ps:
+    cmds:
+      - '{{.COMPOSE}} ps gitea gitea_runner'
+
+  token:
+    cmds:
+      - npm run gitea:token
+
+  token:tea:
+    cmds:
+      - npm run gitea:token:tea

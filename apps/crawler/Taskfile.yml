@@ -1,0 +1,84 @@
+version: '3'
+
+tasks:
+  config:
+    desc: Validate crawler Docker Compose files.
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/apps/crawler/docker/gmail/compose.yml -f {{.ROOT_DIR}}/apps/crawler/docker/worker/compose.yml config'
+
+  build:
+    desc: Build crawler worker images.
+    cmds:
+      - '{{.COMPOSE}} build --no-cache worker scraper converter indexer'
+
+  up:
+    desc: Start crawler workers.
+    cmds:
+      - SCALE={{.SCALE | default "1"}} {{.COMPOSE}} up -d worker scraper converter indexer
+
+  logs:
+    desc: Follow crawler logs.
+    cmds:
+      - '{{.COMPOSE}} logs -f scraper converter'
+
+  down:
+    desc: Stop crawler workers.
+    cmds:
+      - '{{.COMPOSE}} stop worker scraper converter indexer'
+
+  test:
+    desc: Run crawler site tests.
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npm run test:sites'
+
+  test:urls:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npm run test:urls'
+
+  test:mcp:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} viewer npm run test:mcp'
+
+  login:
+    desc: Log into a browser-backed site session.
+    cmds:
+      - SITE={{.SITE | default "linkedin"}} npx ts-node src/sites/linkedin/Crawler.ts login
+
+  open:
+    desc: Open the Playwright browser helper.
+    cmds:
+      - SITE={{.SITE | default "linkedin"}} npx ts-node src/tools/browser/open.ts
+
+  inspect-layout:
+    cmds:
+      - npx ts-node src/scripts/inspect-layout.ts
+
+  logout:
+    cmds:
+      - rm -f {{.ROOT_DIR}}/data/sessions/{{.SITE | default "linkedin"}}.json
+
+  clear-queue:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npm run queue:clear'
+
+  queue:status:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npm run queue:status'
+
+  queue:dump:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -v {{.ROOT_DIR}}/data:/app/data worker npm run queue:dump'
+
+  queue:fix-urls:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npm run queue:status'
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npm run queue:fix-urls'
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npm run queue:status'
+
+  grep-errors:
+    cmds:
+      - '{{.COMPOSE}} logs --no-color scraper converter | {{.COMPOSE}} run --rm -T {{.RUN_USER}} worker npm run log:grep-errors'
+
+  gmail:sync:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -v {{.ROOT_DIR}}/data/gmail:/data gmail npm run gmail:sync'

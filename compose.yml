@@ -7,7 +7,7 @@
 #   - Do NOT run arbitrary Docker commands without explicit user permission.
 #   - Respect ports mapping; gateway/traefik serves as reverse proxy on ports 80/443.
 #   - Sub-compose files are linked via the `include` block.
-# @dependencies Docker Compose v2.20+, docker/**/*.yml
+# @dependencies Docker Compose v2.20+, apps/**/docker/*.yml, infra/**/docker/*.yml, tools/**/docker/*.yml
 # @lastUpdated 2026-06-11
 # ==============================================================================
 
@@ -15,12 +15,12 @@ include:
   - apps/crawler/docker/gmail/compose.yml
   - apps/crawler/docker/worker/compose.yml
   - apps/ebook/docker/compose.yml
-  - apps/viewer/compose.yml
-  - docker/tools/gitea/compose.yml
-  - docker/infra/mongodb/compose.yml
-  - docker/infra/meilisearch/compose.yml
-  - docker/infra/redis/compose.yml
-  - docker/infra/traefik/compose.yml
-  - docker/tools/obsidian/compose.yml
+  - apps/viewer/docker/compose.yml
+  - infra/gitea/docker/compose.yml
+  - infra/mongodb/docker/compose.yml
+  - infra/meilisearch/docker/compose.yml
+  - infra/redis/docker/compose.yml
+  - infra/traefik/docker/compose.yml
+  - tools/obsidian/docker/compose.yml
   - apps/openkb/docker/compose.yml
-  - docker/infra/autoheal/compose.yml
+  - infra/autoheal/docker/compose.yml

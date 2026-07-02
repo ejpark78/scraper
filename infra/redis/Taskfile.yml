@@ -1,0 +1,21 @@
+version: '3'
+
+tasks:
+  config:
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/infra/redis/docker/compose.yml config'
+  up:
+    cmds:
+      - '{{.COMPOSE}} up -d redis'
+  gui:up:
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d redisinsight'
+  down:
+    cmds:
+      - '{{.COMPOSE}} stop redis redisinsight'
+  logs:
+    cmds:
+      - '{{.COMPOSE}} logs -f redis redisinsight'
+  ps:
+    cmds:
+      - '{{.COMPOSE}} ps redis redisinsight'

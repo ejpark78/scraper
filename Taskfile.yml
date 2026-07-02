@@ -1,0 +1,125 @@
+version: '3'
+
+vars:
+  PROJECT: scraper
+  ROOT_DIR:
+    sh: pwd
+  COMPOSE: HOST_PROJECT_PATH={{.ROOT_DIR}} docker compose -p {{.PROJECT}} --project-directory {{.ROOT_DIR}} -f {{.ROOT_DIR}}/compose.yml
+  RUN_USER:
+    sh: echo "--user $(id -u):$(id -g)"
+  ENV_COMMON: -e LIST_SLACK={{.LIST_SLACK | default "3"}} -e SCRAPER_SLACK={{.SCRAPER_SLACK | default "0"}} -e PRIORITY={{.PRIORITY | default "medium"}} -e OVERWRITE={{.OVERWRITE | default "false"}} -e AUTH={{.AUTH | default "false"}} -e CHUNK_SIZE={{.CHUNK_SIZE | default "500"}} -e ERROR_RESET={{.ERROR_RESET | default "false"}} -e RESET={{.RESET | default "false"}} -e TS_NODE_PROJECT=tsconfig.json
+
+includes:
+  app:crawler:
+    taskfile: ./apps/crawler/Taskfile.yml
+    dir: ./apps/crawler
+  app:ebook:
+    taskfile: ./apps/ebook/Taskfile.yml
+    dir: ./apps/ebook
+  app:openkb:
+    taskfile: ./apps/openkb/Taskfile.yml
+    dir: ./apps/openkb
+  app:viewer:
+    taskfile: ./apps/viewer/Taskfile.yml
+    dir: ./apps/viewer
+
+  infra:autoheal:
+    taskfile: ./infra/autoheal/Taskfile.yml
+    dir: ./infra/autoheal
+  infra:gitea:
+    taskfile: ./infra/gitea/Taskfile.yml
+    dir: ./infra/gitea
+  infra:meilisearch:
+    taskfile: ./infra/meilisearch/Taskfile.yml
+    dir: ./infra/meilisearch
+  infra:mongodb:
+    taskfile: ./infra/mongodb/Taskfile.yml
+    dir: ./infra/mongodb
+  infra:redis:
+    taskfile: ./infra/redis/Taskfile.yml
+    dir: ./infra/redis
+  infra:traefik:
+    taskfile: ./infra/traefik/Taskfile.yml
+    dir: ./infra/traefik
+
+  tool:obsidian:
+    taskfile: ./tools/obsidian/Taskfile.yml
+    dir: ./tools/obsidian
+
+tasks:
+  config:
+    desc: Validate the full Docker Compose graph.
+    cmds:
+      - '{{.COMPOSE}} config'
+
+  build:
+    desc: Build all runtime, tool, worker, and viewer images.
+    vars:
+      BUILD_DATE:
+        sh: date -u +%Y-%m-%dT%H:%M:%SZ
+      VCS_REF:
+        sh: git rev-parse --short HEAD 2>/dev/null || echo unknown
+    cmds:
+      - BUILD_DATE={{.BUILD_DATE}} VCS_REF={{.VCS_REF}} {{.COMPOSE}} --profile runtime --profile tools --profile worker --profile viewer build --no-cache
+
+  up:
+    desc: Start the default worker profile.
+    cmds:
+      - '{{.COMPOSE}} --profile worker up -d'
+
+  down:
+    desc: Stop all project services.
+    cmds:
+      - '{{.COMPOSE}} --profile "*" down'
+
+  logs:
+    desc: Follow scraper and converter logs.
+    cmds:
+      - '{{.COMPOSE}} logs -f scraper converter'
+
+  mkcert:
+    desc: Generate local Traefik certificates with mkcert.
+    cmds:
+      - command -v mkcert >/dev/null 2>&1 || { echo "호스트에 mkcert가 설치되어 있지 않습니다."; exit 1; }
+      - mkcert -install
+      - mkdir -p data/.services/traefik/certs
+      - mkcert -cert-file data/.services/traefik/certs/local-cert.pem -key-file data/.services/traefik/certs/local-key.pem localhost gitea.localhost route.localhost viewer.localhost docs.localhost me.localhost redis.localhost search.localhost "*.localhost" 127.0.0.1
+
+  ollama:run:
+    desc: Start native Ollama and run the configured model.
+    cmds:
+      - open -a Ollama 2>/dev/null || (pgrep -x "ollama" >/dev/null && echo "Ollama가 이미 실행 중입니다.") || echo "Ollama 앱이 애플리케이션 디렉토리에 없습니다. 백그라운드 CLI 실행을 시도합니다."
+      - sleep 2
+      - ollama run {{.MODEL | default "gemma4:e4b-mlx"}}
+
+  ollama:logs:
+    desc: Follow native Ollama logs.
+    cmds:
+      - |
+        if [ -f ~/Library/Logs/Ollama/app.log ]; then
+          tail -n 50 -f ~/Library/Logs/Ollama/app.log
+        elif [ -f ~/.ollama/logs/server.log ]; then
+          tail -n 50 -f ~/.ollama/logs/server.log
+        else
+          echo "Ollama 로그 파일을 찾을 수 없습니다."
+        fi
+
+  ollama:ps:
+    desc: List loaded native Ollama models.
+    cmds:
+      - ollama ps
+
+  ollama:stop:
+    desc: Stop native Ollama.
+    cmds:
+      - killall Ollama || killall ollama || echo "실행 중인 Ollama가 없습니다."
+
+  gitea:token:
+    desc: Generate a Gitea API token through the TypeScript helper.
+    cmds:
+      - npm run gitea:token
+
+  gitea:token:tea:
+    desc: Generate a Gitea API token through tea.
+    cmds:
+      - npm run gitea:token:tea

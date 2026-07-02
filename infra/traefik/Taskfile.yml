@@ -1,0 +1,21 @@
+version: '3'
+
+tasks:
+  config:
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/infra/traefik/docker/compose.yml config'
+  build:
+    cmds:
+      - '{{.COMPOSE}} build --no-cache traefik'
+  up:
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d traefik'
+  down:
+    cmds:
+      - '{{.COMPOSE}} stop traefik'
+  logs:
+    cmds:
+      - '{{.COMPOSE}} logs -f traefik'
+  ps:
+    cmds:
+      - '{{.COMPOSE}} ps traefik'

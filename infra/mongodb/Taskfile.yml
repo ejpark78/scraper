@@ -1,0 +1,62 @@
+version: '3'
+
+vars:
+  DB: '{{.DB | default "bronze,silver,crawler"}}'
+  DUMP_DIR:
+    sh: echo "{{.ROOT_DIR}}/data/backup/mongodb/$(date +%Y%m%dT%H%M%S)"
+
+tasks:
+  config:
+    cmds:
+      - '{{.COMPOSE}} -f {{.ROOT_DIR}}/infra/mongodb/docker/compose.yml config'
+
+  up:
+    cmds:
+      - '{{.COMPOSE}} up -d mongodb'
+
+  gui:up:
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d mongo-express'
+
+  down:
+    cmds:
+      - '{{.COMPOSE}} stop mongodb mongo-express'
+
+  logs:
+    cmds:
+      - '{{.COMPOSE}} logs -f mongodb mongo-express'
+
+  ps:
+    cmds:
+      - '{{.COMPOSE}} ps mongodb mongo-express'
+
+  dump:
+    cmds:
+      - mkdir -p {{.DUMP_DIR}}
+      - '{{.COMPOSE}} exec -T mongodb sh -c "rm -rf /tmp/mongodb_backup && mkdir -p /tmp/mongodb_backup"'
+      - |
+        for db in $(echo "{{.DB}}" | tr ',' ' '); do
+          {{.COMPOSE}} exec -T mongodb mongodump --db=$db --gzip --out=/tmp/mongodb_backup
+        done
+      - '{{.COMPOSE}} cp mongodb:/tmp/mongodb_backup/. {{.DUMP_DIR}}'
+      - '{{.COMPOSE}} exec -T mongodb rm -rf /tmp/mongodb_backup'
+
+  restore:
+    cmds:
+      - |
+        if [ -z "{{.BACKUP_DIR}}" ]; then
+          echo "BACKUP_DIR 변수를 지정해야 합니다."
+          exit 1
+        fi
+      - '{{.COMPOSE}} exec -T mongodb sh -c "rm -rf /tmp/mongodb_restore"'
+      - '{{.COMPOSE}} cp {{.ROOT_DIR}}/data/{{.BACKUP_DIR}} mongodb:/tmp/mongodb_restore'
+      - '{{.COMPOSE}} exec -T mongodb mongorestore --gzip /tmp/mongodb_restore'
+      - '{{.COMPOSE}} exec -T mongodb rm -rf /tmp/mongodb_restore'
+
+  index:
+    cmds:
+      - '{{.COMPOSE}} run --rm -T worker npx ts-node src/scripts/sync-indexes.ts'
+
+  show-columns:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -v /app/node_modules worker npx ts-node src/scripts/show_collection_columns.ts'

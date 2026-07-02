@@ -52,10 +52,10 @@ All notable changes to the viewer and web dashboard service will be documented i
 
 ### Fixed (Bugfixes)
 - **Bugfix: Exporter 설정 카드 높이 잘림 문제 해결**: 설정 카드 오버플로우가 발생할 때 화면 스크롤이 차단되던 현상을 `.queue-section-card`에 `overflow-y: auto` 스타일을 부여하고 높이 제한을 상향하여 수정.
-- **Bugfix: viewer-api 컨테이너 내 /app/data 볼륨 마운트 누락 수정**: 대상 도서 목록 드롭다운이 비어있는 오동작을 조사하여, `apps/viewer/compose.yml` 내 `data` 볼륨 매핑 구문을 추가하여 복구 완료.
-- **Bugfix: host.docker.internal 게이트웨이 해석 에러 해결**: 리눅스 Docker에서 호스트 Joplin 연동을 지원하기 위해 `apps/viewer/compose.yml` 내에 `extra_hosts` 라우팅 설정 보완.
+- **Bugfix: viewer-api 컨테이너 내 /app/data 볼륨 마운트 누락 수정**: 대상 도서 목록 드롭다운이 비어있는 오동작을 조사하여, `apps/viewer/docker/compose.yml` 내 `data` 볼륨 매핑 구문을 추가하여 복구 완료.
+- **Bugfix: host.docker.internal 게이트웨이 해석 에러 해결**: 리눅스 Docker에서 호스트 Joplin 연동을 지원하기 위해 `apps/viewer/docker/compose.yml` 내에 `extra_hosts` 라우팅 설정 보완.
 
 ## [1.2.0] - 2026-06-20
 
 ### Changed
-- **Monorepo Separation**: `apps/viewer/docker/compose.yml`을 `apps/viewer/compose.yml`로 단일화/이동하고 내부 빌드 컨텍스트를 정렬. `apps/viewer/Makefile`에 `down` 타겟 추가 및 호환 구조 결합.
+- **Monorepo Separation**: viewer compose 진입점을 `apps/viewer/docker/compose.yml`로 정렬하고 내부 빌드 컨텍스트를 유지. `apps/viewer/Makefile`에 `down` 타겟 추가 및 호환 구조 결합.

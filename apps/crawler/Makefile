@@ -7,6 +7,15 @@ export HOST_PROJECT_PATH = $(ROOT_DIR)
 # Fallbacks for variables if not called from root Makefile
 COMPOSE  ?= docker compose -p scraper -f $(ROOT_DIR)/compose.yml
 RUN_USER ?= --user $$(id -u):$$(id -g)
+LIST_SLACK       ?= 3
+SCRAPER_SLACK    ?= 0
+PRIORITY         ?= medium
+OVERWRITE        ?= false
+AUTH             ?= false
+CHUNK_SIZE       ?= 500
+ERROR_RESET      ?= false
+RESET            ?= false
+ENV_COMMON       ?= -e LIST_SLACK=$(LIST_SLACK) -e SCRAPER_SLACK=$(SCRAPER_SLACK) -e PRIORITY=$(PRIORITY) -e OVERWRITE=$(OVERWRITE) -e AUTH=$(AUTH) -e CHUNK_SIZE=$(CHUNK_SIZE) -e ERROR_RESET=$(ERROR_RESET) -e RESET=$(RESET) -e TS_NODE_PROJECT=tsconfig.json
 
 .PHONY: rebuild restart clear-queue grep-errors dump-queue fix-urls get-queue-status run-scrape test-urls test-mcp test-recursive test-sites extract debug
 
@@ -104,7 +113,7 @@ debug:
 
 # gmail tools
 gmail-sync:
-	$(COMPOSE) run --rm $(RUN_USER) -v $$(HOST_PROJECT_PATH)/data/gmail:/data gmail npm run gmail:sync
+	$(COMPOSE) run --rm $(RUN_USER) -v $(ROOT_DIR)/data/gmail:/data gmail npm run gmail:sync
 
 # queue & utils (forward to npm scripts)
 clear-queue:
