@@ -26,7 +26,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.viewer-fe.rule=Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.viewer-fe.rule=Host(`viewer.localhost`)"
       - "traefik.http.routers.viewer-fe.entrypoints=websecure"
       - "traefik.http.routers.viewer-fe.tls=true"
       - "traefik.http.services.viewer-fe.loadbalancer.server.port=5173"
@@ -70,7 +70,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.viewer-api.rule=(Host(`viewer.localhost`) || Host(`viewer.127.0.0.1.nip.io`)) && PathPrefix(`/api`)"
+      - "traefik.http.routers.viewer-api.rule=Host(`viewer.localhost`) && PathPrefix(`/api`)"
       - "traefik.http.routers.viewer-api.entrypoints=websecure"
       - "traefik.http.routers.viewer-api.tls=true"
       - "traefik.http.services.viewer-api.loadbalancer.server.port=3000"

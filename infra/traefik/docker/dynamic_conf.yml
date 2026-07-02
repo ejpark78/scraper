@@ -1,7 +1,7 @@
 http:
   routers:
     route-dashboard:
-      rule: Host(`route.localhost`) || Host(`route.127.0.0.1.nip.io`)
+      rule: Host(`route.localhost`)
       entryPoints:
         - websecure
       tls: {}

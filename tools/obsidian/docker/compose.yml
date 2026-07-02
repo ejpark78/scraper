@@ -1,7 +1,7 @@
 # ==============================================================================
 # 📝 Obsidian Docs Service Block (Self-Hosted Wiki Viewer)
 # ==============================================================================
-# - 주소: https://docs.localhost/ 또는 https://docs.127.0.0.1.nip.io/
+# - 주소: https://docs.localhost/
 # - 용도: OpenKB로 컴파일된 Gitea Wiki(data/gitea-wiki/) 문서를 시각적으로 탐색하고 편집
 # - 포트: Traefik을 통한 80/443 SSL 프록시 포트 포워딩 (호스트 포트 직접 노출 없음)
 # ==============================================================================
@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.docs.rule=Host(`docs.localhost`) || Host(`docs.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.docs.rule=Host(`docs.localhost`)"
       - "traefik.http.routers.docs.entrypoints=websecure"
       - "traefik.http.routers.docs.tls=true"
       - "traefik.http.services.docs.loadbalancer.server.port=3000"

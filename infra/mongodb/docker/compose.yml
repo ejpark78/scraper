@@ -8,7 +8,7 @@
 #
 # 2. mongo-express (profile: tools)
 #    - 용도: 웹 GUI 기반 MongoDB 관리 대시보드
-#    - 접속 URL: https://me.localhost 또는 https://me.127.0.0.1.nip.io
+#    - 접속 URL: https://me.localhost
 #    - 기본 계정: ID: admin / PW: pass
 #    - 라우팅: Traefik 프록시를 통해 TLS 라우팅 서비스 (포트 8081)
 # ==============================================================================
@@ -55,7 +55,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mongoexpress.rule=Host(`me.localhost`) || Host(`me.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.mongoexpress.rule=Host(`me.localhost`)"
       - "traefik.http.routers.mongoexpress.entrypoints=websecure"
       - "traefik.http.routers.mongoexpress.tls=true"
       - "traefik.http.services.mongoexpress.loadbalancer.server.port=8081"

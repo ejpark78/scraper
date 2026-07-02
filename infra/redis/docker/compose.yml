@@ -8,7 +8,7 @@
 #
 # 2. redisinsight (profile: tools)
 #    - 용도: Redis 메모리 데이터베이스 시각화 관리 대시보드
-#    - 접속 URL: https://redis.localhost 또는 https://redis.127.0.0.1.nip.io
+#    - 접속 URL: https://redis.localhost
 #    - 라우팅: Traefik 프록시를 통해 TLS 라우팅 서비스 (포트 5540)
 # ==============================================================================
 
@@ -45,7 +45,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.redisinsight.rule=Host(`redis.localhost`) || Host(`redis.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.redisinsight.rule=Host(`redis.localhost`)"
       - "traefik.http.routers.redisinsight.entrypoints=websecure"
       - "traefik.http.routers.redisinsight.tls=true"
       - "traefik.http.services.redisinsight.loadbalancer.server.port=5540"

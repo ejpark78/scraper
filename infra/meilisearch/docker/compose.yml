@@ -4,7 +4,7 @@
 # - 용도: 고속 텍스트 검색 및 다국어 필터링 전용 검색엔진
 # - 볼륨: 프로젝트 루트의 `data/.services/meilisearch` 경로에 데이터 보존
 # - 라우팅: Traefik 프록시를 통해 TLS 라우팅 서비스 (포트 7700)
-# - 접속 URL: https://search.localhost 또는 https://search.127.0.0.1.nip.io
+# - 접속 URL: https://search.localhost
 # ==============================================================================
 
 services:
@@ -24,7 +24,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.meilisearch.rule=Host(`search.localhost`) || Host(`search.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.meilisearch.rule=Host(`search.localhost`)"
       - "traefik.http.routers.meilisearch.entrypoints=websecure"
       - "traefik.http.routers.meilisearch.tls=true"
       - "traefik.http.services.meilisearch.loadbalancer.server.port=7700"

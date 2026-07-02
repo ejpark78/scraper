@@ -2,10 +2,10 @@
 # 🌐 Traefik Reverse Proxy Service Block
 # ==============================================================================
 # 1. traefik (profile: tools)
-#    - 용도: 컨테이너들에 대해 `*.localhost` 및 `*.127.0.0.1.nip.io` 도메인을 기반으로 한 SSL/TLS 라우팅 및
+#    - 용도: 컨테이너들에 대해 `*.localhost` 도메인을 기반으로 한 SSL/TLS 라우팅 및
 #            포트 80(HTTP) ➡ 443(HTTPS) 강제 리다이렉션을 수행하는 중앙 게이트웨이 프록시
 #    - 포트: 호스트의 80, 443 포트 점유
-#    - 대시보드 URL: https://route.localhost/dashboard/ 또는 https://route.127.0.0.1.nip.io/dashboard/
+#    - 대시보드 URL: https://route.localhost/dashboard/
 #    - 보안 설정: `--serverstransport.insecureskipverify=true`를 통한 자가서명 인증서(Self-signed) 신뢰 지원
 # ==============================================================================
 

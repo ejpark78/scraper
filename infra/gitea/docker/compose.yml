@@ -1,7 +1,7 @@
 # ==============================================================================
 # 🐙 Gitea Service Block (Local Git Mirroring & Hosting)
 # ==============================================================================
-# - 주소: https://gitea.localhost/ 또는 https://gitea.127.0.0.1.nip.io/
+# - 주소: https://gitea.localhost/
 # - DB: SQLite3 내장 데이터베이스
 # - 데이터 경로: ${HOST_PROJECT_PATH}/data/.services/gitea
 # ==============================================================================
@@ -39,7 +39,7 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.gitea.rule=Host(`gitea.localhost`) || Host(`gitea.127.0.0.1.nip.io`)"
+      - "traefik.http.routers.gitea.rule=Host(`gitea.localhost`)"
       - "traefik.http.routers.gitea.entrypoints=websecure"
       - "traefik.http.routers.gitea.tls=true"
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
