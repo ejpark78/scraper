@@ -23,4 +23,6 @@ include:
   - infra/traefik/docker/compose.yml
   - tools/obsidian/docker/compose.yml
   - apps/openkb/docker/compose.yml
+  - apps/joplin/docker/compose.yml
   - infra/autoheal/docker/compose.yml
+
