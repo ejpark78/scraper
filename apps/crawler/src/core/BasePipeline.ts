@@ -354,7 +354,7 @@ export abstract class BasePipeline<TMeta> {
                     if (useLoginEnv) {
                         console.error(`\n🛑 [핵심 차단] 링크드인 로그인 세션이 만료되었거나 풀렸습니다.`);
                         console.error(`💡 [해결 방법]:`);
-                        console.error(`   1. 터미널에 [make login]을 다시 실행하여 링크드인 브라우저 로그인을 갱신해 주세요.`);
+                        console.error(`   1. 터미널에 [task app:crawler:login]을 다시 실행하여 링크드인 브라우저 로그인을 갱신해 주세요.`);
                         console.error(`   2. 완료되면 다시 파이프라인을 기동하시면 중단된 지점부터 이어서 수집이 가능해집니다.\n`);
                         if (redis) await redis.quit();
                         process.exit(1);

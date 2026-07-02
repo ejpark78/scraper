@@ -36,7 +36,7 @@ browserType.launch: Executable doesn't exist at /ms-playwright/chromium-...
 
 ## 3. Redis Completed Cache Inconsistencies (All Items Re-queued)
 ### Symptom:
-Running `make list` repeatedly queues all documents to Redis scraper queues even if they exist in MongoDB.
+Running `task app:crawler:site SITE=<site> CMD=list` repeatedly queues all documents to Redis scraper queues even if they exist in MongoDB.
 
 ### Resolution:
 1. Check if the site key's `completedSetKey` is shared with other sites in `site.config.ts`. (All sites must have unique `sites:${siteKey}:completed` keys).
@@ -72,4 +72,3 @@ Articles failed to crawl with HTTP 400 Bad Request error because trailing Korean
    ```bash
    docker compose -p scraper exec -T mongodb mongosh bronze --eval "db['geeknews.urls'].find({id: /.*[가-힣%].*/})"
    ```
-

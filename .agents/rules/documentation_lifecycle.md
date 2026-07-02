@@ -37,4 +37,4 @@ graph LR
 
 * **로컬 파일 차단 (100% Gitea 이관)**: 중요 의사 결정서(ADR)를 포함한 상세 계획, 태스크, 결과보고서는 모두 Gitea 이슈 히스토리에 영구 보존되므로 로컬 `docs/artifacts/` 폴더에 마크다운 파일을 개별 생성하여 보존하지 않습니다.
 * **ADR 관리 규칙**: 의사 결정서(ADR)는 Gitea 이슈 생성 시 `type/adr` 라벨을 달아 Gitea 저장소 상에서 직접 검색 및 누적 관리합니다.
-* **Squash & Archive 정책 폐지**: 로컬 파일 생성이 완전히 배제되므로 기존 `make agents-squash` 및 `###-###.archive.md` 압축/보관 절차는 더 이상 수행하지 않습니다.
+* **Squash & Archive 정책 폐지**: 로컬 파일 생성이 완전히 배제되므로 기존 agents squash 및 `###-###.archive.md` 압축/보관 절차는 더 이상 수행하지 않습니다.

@@ -18,10 +18,9 @@ LABEL org.opencontainers.image.created="${BUILD_DATE}"
 LABEL org.opencontainers.image.revision="${VCS_REF}"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# Install Korean fonts and build tools
+# Install Korean fonts
 RUN apt-get update && apt-get install -y \
     fonts-nanum \
-    make \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

@@ -8,7 +8,7 @@ tasks:
 
   build:
     cmds:
-      - '{{.COMPOSE}} build --no-cache openkb'
+      - '{{.COMPOSE}} build openkb'
 
   up:
     cmds:
@@ -21,3 +21,23 @@ tasks:
   logs:
     cmds:
       - '{{.COMPOSE}} logs -f openkb'
+
+  compile:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} -e PYTHONUNBUFFERED=1 -e OLLAMA_MODEL="{{.MODEL}}" -e RAW="{{.RAW}}" -e SAMPLE="{{.SAMPLE}}" --entrypoint poe openkb -C /app compile'
+
+  shell:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} --entrypoint bash openkb'
+
+  lint:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} --entrypoint poe openkb -C /app lint'
+
+  format:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} --entrypoint poe openkb -C /app format'
+
+  type-check:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} --entrypoint poe openkb -C /app type-check'

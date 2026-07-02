@@ -21,3 +21,31 @@ tasks:
   logs:
     cmds:
       - '{{.COMPOSE}} logs -f ebook'
+
+  summary:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} ebook uv run poe summary --path "{{.OUT_PATH | default "data/output"}}"'
+
+  analyze:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} ebook uv run poe analyze --raw "{{.RAW | default "data/raw"}}" {{if eq .OVERWRITE "true"}}--overwrite{{end}}'
+
+  split:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} ebook uv run poe split --raw "{{.RAW | default "data/raw"}}" --path "{{.OUT_PATH | default "data/output"}}"'
+
+  to-html:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} ebook uv run poe to-html --path "{{.OUT_PATH | default "data/output"}}"'
+
+  to-md:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} ebook uv run poe to-md --path "{{.OUT_PATH | default "data/output"}}"'
+
+  shell:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} ebook bash'
+
+  test:
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} ebook uv run poe test'
