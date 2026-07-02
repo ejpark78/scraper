@@ -737,7 +737,7 @@ if (require.main === module) {
   const agents = agentFlag ? parseAgentsFromArg(agentFlag.split('=')[1]) : ['agy'];
 
   // Parse output directory option
-  let outputBase = path.join(__dirname, '../../data/agents');
+  let outputBase = path.join(__dirname, '../../../data/agents');
   const outputFlag = args.find(a => a.startsWith('--output='));
   if (outputFlag) {
     outputBase = outputFlag.split('=')[1];
