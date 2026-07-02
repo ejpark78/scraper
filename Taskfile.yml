@@ -77,10 +77,45 @@ tasks:
     cmds:
       - '{{.COMPOSE}} logs -f scraper converter'
 
+  browser:login:
+    desc: "Log into a browser-backed site session. Variables: SITE."
+    cmds:
+      - task app:crawler:login SITE={{.SITE | default "linkedin"}}
+
+  browser:open:
+    desc: "Open the Playwright browser helper. Variables: SITE."
+    cmds:
+      - task app:crawler:open SITE={{.SITE | default "linkedin"}}
+
+  browser:inspect-layout:
+    desc: Inspect a browser-rendered layout.
+    cmds:
+      - task app:crawler:inspect-layout
+
+  browser:logout:
+    desc: "Remove a browser-backed site session. Variables: SITE."
+    cmds:
+      - task app:crawler:logout SITE={{.SITE | default "linkedin"}}
+
   agents:dump:
     desc: "Dump agent sessions. Variables: AGENTS."
     cmds:
       - npm run agents:sessions -- --all-targets --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+
+  agents:dump-transcripts:
+    desc: "Dump agent transcripts. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --transcript --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+
+  agents:dump-context:
+    desc: "Dump agent context. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --context --all --agent={{.AGENTS | default "agy,opencode,codex"}}
+
+  agents:dump-brain:
+    desc: "Dump agent brain/session memory. Variables: AGENTS."
+    cmds:
+      - npm run agents:sessions -- --brain --all --agent={{.AGENTS | default "agy,opencode,codex"}}
 
   agents:dump-sysinfo:
     desc: Dump agent system information.
@@ -98,6 +133,16 @@ tasks:
     cmds:
       - npm run agents:rules -- --lint
 
+  agents:dump-all:
+    desc: "Dump all agent diagnostics. Variables: AGENTS."
+    cmds:
+      - task agents:dump-sysinfo
+      - task agents:dump-transcripts AGENTS={{.AGENTS | default "agy,opencode,codex"}}
+      - task agents:dump-context AGENTS={{.AGENTS | default "agy,opencode,codex"}}
+      - task agents:dump-brain AGENTS={{.AGENTS | default "agy,opencode,codex"}}
+      - task agents:compress-rules AGENTS={{.AGENTS | default "agy,opencode,codex"}}
+      - task agents:lint-rules
+
   agents:usage:
     desc: Print agent usage diagnostics.
     cmds:
@@ -108,10 +153,20 @@ tasks:
     cmds:
       - npm run agents:sessions -- --prune
 
+  agents:commit:
+    desc: Commit changes through the project commit helper.
+    cmds:
+      - npm run commit
+
   agents:wiki:
     desc: Compile the OpenKB wiki through the app task.
     cmds:
       - task app:openkb:compile
+
+  agents:code-review:
+    desc: Run AI code review through Antigravity CLI.
+    cmds:
+      - agy --skill code_review "Run semantic code review on my latest modifications."
 
   agents:review:
     desc: Run AI code review through Antigravity CLI.
@@ -122,6 +177,333 @@ tasks:
     desc: Push changes through the project push helper.
     cmds:
       - npm run push
+
+  tools:up:
+    desc: Start current web tools profile services.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d traefik mongo-express redisinsight gitea obsidian'
+
+  tools:down:
+    desc: Stop current web tools profile services.
+    cmds:
+      - '{{.COMPOSE}} --profile tools stop mongo-express redisinsight gitea obsidian'
+
+  tools:up-me:
+    desc: Start Mongo Express.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d mongo-express'
+
+  tools:up-redis:
+    desc: Start RedisInsight.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d redisinsight'
+
+  tools:up-gitea:
+    desc: Start Gitea and ensure local admin account.
+    cmds:
+      - task infra:gitea:up
+
+  tools:up-obsidian:
+    desc: Start Obsidian docs viewer.
+    cmds:
+      - '{{.COMPOSE}} --profile tools up -d obsidian'
+
+  tools:down-obsidian:
+    desc: Stop Obsidian docs viewer.
+    cmds:
+      - '{{.COMPOSE}} --profile tools stop obsidian'
+
+  gmail:sync:
+    desc: Sync Gmail messages through the crawler Gmail tool.
+    cmds:
+      - task app:crawler:gmail:sync
+
+  meili:refresh-index:
+    desc: "Sync MongoDB Silver documents to Meilisearch. Variables: SITE."
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npx ts-node src/scripts/meili-manager.ts {{if .SITE}}--site {{.SITE}}{{end}}'
+
+  meili:reset-index:
+    desc: "Clear and rebuild Meilisearch index. Variables: SITE."
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npx ts-node src/scripts/meili-manager.ts --clean {{if .SITE}}--site {{.SITE}}{{end}}'
+
+  meili:reindex:
+    desc: "Alias for meili:reset-index. Variables: SITE."
+    cmds:
+      - task meili:reset-index SITE={{.SITE}}
+
+  meili:status:
+    desc: Check Meilisearch index statistics.
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker node -e "const key=process.env.MEILI_MASTER_KEY; fetch(''http://meilisearch:7700/stats'', {headers: key ? {Authorization: ''Bearer '' + key} : {}}).then(r => r.json()).then(d => console.log(JSON.stringify(d, null, 2))).catch(e => { console.error(e.message); process.exit(1); })"'
+
+  mongo:dump:
+    desc: "Back up MongoDB databases. Variables: DB, DUMP_DIR."
+    cmds:
+      - |
+        DB_VALUE="{{.DB | default "bronze,silver,crawler"}}"
+        DUMP_DIR_VALUE="{{.DUMP_DIR | default "data/backup/mongodb/manual"}}"
+        mkdir -p "$DUMP_DIR_VALUE"
+        {{.COMPOSE}} exec -T mongodb sh -c "rm -rf /tmp/mongodb_backup && mkdir -p /tmp/mongodb_backup"
+        for db in $(echo "$DB_VALUE" | tr ',' ' '); do
+          {{.COMPOSE}} exec -T mongodb mongodump --db="$db" --gzip --out=/tmp/mongodb_backup
+        done
+        {{.COMPOSE}} cp mongodb:/tmp/mongodb_backup/. "$DUMP_DIR_VALUE"
+        {{.COMPOSE}} exec -T mongodb rm -rf /tmp/mongodb_backup
+
+  mongo:restore:
+    desc: "Restore MongoDB backup. Variables: BACKUP_DIR."
+    cmds:
+      - |
+        if [ -z "{{.BACKUP_DIR}}" ]; then
+          echo "BACKUP_DIR is required. Example: task mongo:restore BACKUP_DIR=data/backup/mongodb/manual"
+          exit 1
+        fi
+        {{.COMPOSE}} exec -T mongodb sh -c "rm -rf /tmp/mongodb_restore"
+        {{.COMPOSE}} cp "{{.BACKUP_DIR}}" mongodb:/tmp/mongodb_restore
+        {{.COMPOSE}} exec -T mongodb mongorestore --gzip /tmp/mongodb_restore
+        {{.COMPOSE}} exec -T mongodb rm -rf /tmp/mongodb_restore
+
+  mongo:index:
+    desc: Synchronize MongoDB indexes.
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npx ts-node src/scripts/sync-indexes.ts'
+
+  mongo:show-columns:
+    desc: Map MongoDB collection columns.
+    cmds:
+      - '{{.COMPOSE}} run --rm {{.RUN_USER}} worker npx ts-node src/scripts/show_collection_columns.ts'
+
+  worker:rebuild:
+    desc: Rebuild crawler worker images.
+    cmds:
+      - task app:crawler:build
+
+  worker:restart:
+    desc: "Restart crawler workers. Variables: SCALE."
+    cmds:
+      - task app:crawler:up SCALE={{.SCALE | default "1"}}
+
+  worker:clear-queue:
+    desc: Clear crawler queues.
+    cmds:
+      - task app:crawler:clear-queue
+
+  worker:grep-errors:
+    desc: Grep scraper and converter errors from logs.
+    cmds:
+      - task app:crawler:grep-errors
+
+  worker:dump-queue:
+    desc: Dump active crawler queues.
+    cmds:
+      - task app:crawler:queue:dump
+
+  worker:fix-urls:
+    desc: Run crawler URL cleanup.
+    cmds:
+      - task app:crawler:queue:fix-urls
+
+  worker:queue-status:
+    desc: Print crawler queue status.
+    cmds:
+      - task app:crawler:queue:status
+
+  tests:urls:
+    desc: Run URL manager tests.
+    cmds:
+      - task app:crawler:test:urls
+
+  tests:mcp:
+    desc: Run MCP client tests.
+    cmds:
+      - task app:crawler:test:mcp
+
+  tests:sites:
+    desc: Run crawler site converter tests.
+    cmds:
+      - task app:crawler:test
+
+  tests:extract:
+    desc: "Extract an article. Variables: SITE, ID."
+    cmds:
+      - task app:crawler:extract SITE={{.SITE}} ID={{.ID}}
+
+  tests:debug:
+    desc: "Debug HTML extraction. Variables: FILE or SITE and ID."
+    cmds:
+      - task app:crawler:debug FILE={{.FILE}} SITE={{.SITE}} ID={{.ID}}
+
+  sites:list:
+    desc: "Run crawler list command. Variables: SITE, PAGE, LIST_SLACK."
+    cmds:
+      - task app:crawler:site SITE={{.SITE}} CMD=list PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:refresh-urls:
+    desc: "Refresh crawler URLs. Variables: SITE."
+    cmds:
+      - task app:crawler:site SITE={{.SITE}} CMD=refresh-urls
+
+  sites:refresh-silver:
+    desc: "Refresh crawler Silver documents. Variables: SITE."
+    cmds:
+      - task app:crawler:site SITE={{.SITE}} CMD=refresh-silver
+
+  sites:aicasebook:list:
+    desc: "List AiCasebook targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=aicasebook PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:aicasebook:refresh-urls:
+    desc: Refresh AiCasebook URLs.
+    cmds:
+      - task sites:refresh-urls SITE=aicasebook
+
+  sites:aicasebook:refresh-silver:
+    desc: Refresh AiCasebook Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=aicasebook
+
+  sites:dailydoseofds:list:
+    desc: "List Daily Dose of DS targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=dailydoseofds PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:dailydoseofds:refresh-urls:
+    desc: Refresh Daily Dose of DS URLs.
+    cmds:
+      - task sites:refresh-urls SITE=dailydoseofds
+
+  sites:dailydoseofds:refresh-silver:
+    desc: Refresh Daily Dose of DS Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=dailydoseofds
+
+  sites:geeknews:list:
+    desc: "List GeekNews targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=geeknews PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:geeknews:refresh:
+    desc: Refresh GeekNews list targets.
+    cmds:
+      - task sites:geeknews:list
+
+  sites:geeknews:refresh-urls:
+    desc: Refresh GeekNews URLs.
+    cmds:
+      - task sites:refresh-urls SITE=geeknews
+
+  sites:geeknews:refresh-silver:
+    desc: Refresh GeekNews Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=geeknews
+
+  sites:gpters:list:
+    desc: "List GPTERS targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=gpters PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:gpters:refresh:
+    desc: Refresh GPTERS list targets.
+    cmds:
+      - task sites:gpters:list
+
+  sites:gpters:refresh-urls:
+    desc: Refresh GPTERS URLs.
+    cmds:
+      - task sites:refresh-urls SITE=gpters
+
+  sites:gpters:refresh-silver:
+    desc: Refresh GPTERS Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=gpters
+
+  sites:linkedin:list:
+    desc: "List LinkedIn targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=linkedin PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:linkedin:company:
+    desc: "List LinkedIn company targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:linkedin:list PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:linkedin:refresh-urls:
+    desc: Refresh LinkedIn URLs.
+    cmds:
+      - task sites:refresh-urls SITE=linkedin
+
+  sites:linkedin:refresh-silver:
+    desc: Refresh LinkedIn Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=linkedin
+
+  sites:maily-josh:list:
+    desc: "List Maily Josh targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=maily_josh PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:maily-josh:refresh-urls:
+    desc: Refresh Maily Josh URLs.
+    cmds:
+      - task sites:refresh-urls SITE=maily_josh
+
+  sites:maily-josh:refresh-silver:
+    desc: Refresh Maily Josh Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=maily_josh
+
+  sites:pytorch-kr:list:
+    desc: "List PyTorch KR targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=pytorch_kr PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:pytorch-kr:refresh:
+    desc: Refresh PyTorch KR list targets.
+    cmds:
+      - task sites:pytorch-kr:list
+
+  sites:pytorch-kr:refresh-urls:
+    desc: Refresh PyTorch KR URLs.
+    cmds:
+      - task sites:refresh-urls SITE=pytorch_kr
+
+  sites:pytorch-kr:refresh-silver:
+    desc: Refresh PyTorch KR Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=pytorch_kr
+
+  sites:uppity:list:
+    desc: "List Uppity targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=uppity PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:uppity:refresh-urls:
+    desc: Refresh Uppity URLs.
+    cmds:
+      - task sites:refresh-urls SITE=uppity
+
+  sites:uppity:refresh-silver:
+    desc: Refresh Uppity Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=uppity
+
+  sites:yozm:list:
+    desc: "List Yozm targets. Variables: PAGE, LIST_SLACK."
+    cmds:
+      - task sites:list SITE=yozm PAGE={{.PAGE | default "1"}} LIST_SLACK={{.LIST_SLACK | default "2"}}
+
+  sites:yozm:refresh-urls:
+    desc: Refresh Yozm URLs.
+    cmds:
+      - task sites:refresh-urls SITE=yozm
+
+  sites:yozm:refresh-silver:
+    desc: Refresh Yozm Silver documents.
+    cmds:
+      - task sites:refresh-silver SITE=yozm
 
   mkcert:
     desc: Generate local Traefik certificates with mkcert.
